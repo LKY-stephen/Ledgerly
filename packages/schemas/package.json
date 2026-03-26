@@ -1,0 +1,15 @@
+{
+  "name": "@creator-cfo/schemas",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json --emitDeclarationOnly false",
+    "format": "prettier --check 'src/**/*.{ts,tsx}'",
+    "lint": "eslint src --ext .ts",
+    "test": "echo 'No package-level tests yet'",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  }
+}

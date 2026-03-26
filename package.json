@@ -1,0 +1,25 @@
+{
+  "name": "creator-cfo-monorepo",
+  "private": true,
+  "packageManager": "pnpm@10.28.0",
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev --parallel",
+    "format": "turbo run format",
+    "lint": "turbo run lint",
+    "smoke": "turbo run smoke",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck",
+    "contract:check": "python3 -m uv run --directory apps/api python scripts/export_openapi.py --check",
+    "contract:write": "python3 -m uv run --directory apps/api python scripts/export_openapi.py"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.21.0",
+    "@next/eslint-plugin-next": "^15.0.0",
+    "eslint": "^9.21.0",
+    "prettier": "^3.5.3",
+    "turbo": "^2.5.0",
+    "typescript": "^5.8.2",
+    "typescript-eslint": "^8.26.0"
+  }
+}

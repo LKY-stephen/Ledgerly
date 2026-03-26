@@ -1,0 +1,16 @@
+{
+  "name": "@creator-cfo/sdk",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "build": "echo 'No generated SDK yet'",
+    "format": "echo 'No generated SDK yet'",
+    "lint": "echo 'No generated SDK yet'",
+    "test": "echo 'No generated SDK yet'",
+    "typecheck": "echo 'No generated SDK yet'"
+  }
+}
+

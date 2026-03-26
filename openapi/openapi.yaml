@@ -1,0 +1,71 @@
+openapi: 3.1.0
+info:
+  title: Creator CFO API
+  version: 0.1.0
+paths:
+  /api/v1/health:
+    get:
+      tags:
+      - system
+      summary: Health check
+      operationId: get_health_api_v1_health_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+  /api/v1/bootstrap/summary:
+    get:
+      tags:
+      - bootstrap
+      summary: Bootstrap summary
+      operationId: get_bootstrap_summary_api_v1_bootstrap_summary_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BootstrapSummaryResponse'
+components:
+  schemas:
+    BootstrapSummaryResponse:
+      properties:
+        product_name:
+          type: string
+          title: Product Name
+        supported_platforms:
+          items:
+            type: string
+          type: array
+          title: Supported Platforms
+        product_modules:
+          items:
+            type: string
+          type: array
+          title: Product Modules
+        contract_version:
+          type: string
+          title: Contract Version
+      type: object
+      required:
+      - product_name
+      - supported_platforms
+      - product_modules
+      - contract_version
+      title: BootstrapSummaryResponse
+    HealthResponse:
+      properties:
+        status:
+          type: string
+          title: Status
+        service:
+          type: string
+          title: Service
+      type: object
+      required:
+      - status
+      - service
+      title: HealthResponse

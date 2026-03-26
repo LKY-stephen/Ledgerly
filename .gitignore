@@ -1,0 +1,14 @@
+.DS_Store
+.next
+.turbo
+.venv
+.pytest_cache
+.ruff_cache
+node_modules
+coverage
+dist
+build
+*.pyc
+__pycache__
+.env
+.env.local

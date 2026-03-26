@@ -1,0 +1,36 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+
+  - repo: local
+    hooks:
+      - id: frontend-lint
+        name: frontend-lint
+        entry: pnpm lint
+        language: system
+        pass_filenames: false
+      - id: frontend-test
+        name: frontend-test
+        entry: pnpm --filter @creator-cfo/web test
+        language: system
+        pass_filenames: false
+      - id: backend-lint
+        name: backend-lint
+        entry: python3 -m uv run --directory apps/api ruff check .
+        language: system
+        pass_filenames: false
+      - id: backend-test
+        name: backend-test
+        entry: python3 -m uv run --directory apps/api pytest
+        language: system
+        pass_filenames: false
+      - id: contract-check
+        name: contract-check
+        entry: python3 -m uv run --directory apps/api python scripts/export_openapi.py --check
+        language: system
+        pass_filenames: false
