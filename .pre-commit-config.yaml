@@ -14,23 +14,18 @@ repos:
         entry: pnpm lint
         language: system
         pass_filenames: false
+      - id: frontend-typecheck
+        name: frontend-typecheck
+        entry: pnpm typecheck
+        language: system
+        pass_filenames: false
       - id: frontend-test
         name: frontend-test
-        entry: pnpm --filter @creator-cfo/web test
-        language: system
-        pass_filenames: false
-      - id: backend-lint
-        name: backend-lint
-        entry: python3 -m uv run --directory apps/api ruff check .
-        language: system
-        pass_filenames: false
-      - id: backend-test
-        name: backend-test
-        entry: python3 -m uv run --directory apps/api pytest
+        entry: pnpm test
         language: system
         pass_filenames: false
       - id: contract-check
         name: contract-check
-        entry: python3 -m uv run --directory apps/api python scripts/export_openapi.py --check
+        entry: pnpm contract:check
         language: system
         pass_filenames: false

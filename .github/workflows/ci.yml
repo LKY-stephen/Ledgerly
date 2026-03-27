@@ -8,7 +8,7 @@ on:
   pull_request:
 
 jobs:
-  web:
+  mobile:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -22,18 +22,6 @@ jobs:
       - run: pnpm install --frozen-lockfile=false
       - run: pnpm lint
       - run: pnpm typecheck
-      - run: pnpm --filter @creator-cfo/web test
+      - run: pnpm test
+      - run: pnpm contract:check
       - run: pnpm build
-
-  api:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-      - uses: astral-sh/setup-uv@v5
-      - run: uv sync --directory apps/api
-      - run: uv run --directory apps/api ruff check .
-      - run: uv run --directory apps/api pytest
-      - run: uv run --directory apps/api python scripts/export_openapi.py --check

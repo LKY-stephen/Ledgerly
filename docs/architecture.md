@@ -6,25 +6,22 @@ The repository is prepared for a creator finance platform that will unify income
 
 ## Top-Level Design
 
-- `apps/web`: Next.js App Router entry point for the operator console.
-- `apps/api`: FastAPI service that owns HTTP contracts and domain orchestration.
-- `packages/ui`: Shared presentation primitives for the web surface.
-- `packages/schemas`: Shared frontend-safe domain constants and lightweight TS types.
-- `packages/sdk`: Generated API client target.
-- `openapi`: API contract snapshot used by frontend and CI checks.
+- `apps/mobile`: Expo Router entry point for the React Native application.
+- `packages/ui`: Shared presentation primitives for React Native screens.
+- `packages/schemas`: Shared creator-finance domain constants and lightweight TS types.
+- `packages/storage`: Local database and document-vault contracts used by the mobile app.
 - `tests`: Cross-app smoke guidance and future end-to-end suites.
 - `docs`: ADRs, contracts, engineering rules, and test strategy.
 
 ## Boundary Rules
 
-- Contracts flow from `apps/api` schemas into `openapi/openapi.yaml`.
-- `apps/web` consumes shared packages and generated clients only.
+- There is no backend in this phase. Core product data lives in on-device SQLite tables plus document-vault directories.
+- `apps/mobile` consumes shared packages only.
 - Shared packages cannot depend on app-specific implementation code.
 - Cross-cutting quality rules live at the repo root so agents and CI evaluate the same truth.
 
 ## Expansion Plan
 
-1. Add database models and migrations inside `apps/api` when finance entities are defined.
-2. Generate `packages/sdk` from the OpenAPI contract after the first user-facing API lands.
-3. Introduce smoke or end-to-end automation under `tests/` as soon as authenticated flows are available.
-
+1. Add richer finance entities and local migration steps in `packages/storage`.
+2. Introduce sync adapters only after the product needs remote collaboration or backup.
+3. Expand smoke or end-to-end automation under `tests/` as soon as authenticated flows are available.

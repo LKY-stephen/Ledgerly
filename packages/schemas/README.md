@@ -1,4 +1,3 @@
 # @creator-cfo/schemas
 
-This package stores frontend-safe domain constants and lightweight shared TypeScript shapes. Keep API DTOs aligned with `openapi/openapi.yaml` and reserve generated clients for `packages/sdk`.
-
+This package stores creator-domain constants and lightweight shared TypeScript shapes for the mobile app. Keep these values aligned with the storage contracts and product docs.

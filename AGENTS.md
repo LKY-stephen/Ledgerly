@@ -1,16 +1,16 @@
 # Source Of Truth
 
-- `openapi/openapi.yaml`
 - `docs/contracts/`
-- `apps/api/src/creator_cfo_api/schemas/`
-- `apps/api/migrations/` once database migrations are introduced
+- `packages/storage/src/contracts.ts`
+- `packages/schemas/src/index.ts`
 - `.cursor/context/main.md`
 
 # Rules
 
-- Keep the repository schema-first: update the OpenAPI contract before frontend integration changes.
+- This phase is mobile-first and local-first: there is no backend until a later PRD explicitly adds one.
+- Keep the storage schema-first: update the local data and file-vault contracts before feature integration changes.
 - Do not import across app layers directly. `apps/*` may depend on `packages/*`, but apps must not import each other.
-- Never hand-edit generated SDK files under `packages/sdk/generated/`.
+- Every storage contract change must update `docs/contracts/` and at least one automated test.
 - Every new domain flow must include one automated test and one smoke-path update.
 
 # Required Checks
@@ -19,4 +19,4 @@
 - `pnpm typecheck`
 - `pnpm test`
 - `pnpm build`
-- `python3 -m uv run --directory apps/api python scripts/export_openapi.py --check`
+- `pnpm contract:check`

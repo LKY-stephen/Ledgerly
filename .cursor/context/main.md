@@ -2,30 +2,24 @@
 
 ## Version
 
-- version: 0.1.0
-- updated_at: 2026-03-26
-- scope: project initialization foundation
+- version: 0.2.0
+- updated_at: 2026-03-27
+- scope: project architecture shifted from web+api to rn local-first
 
 ## Active Decisions
 
-- Monorepo is the required baseline.
-- Frontend stack is Next.js App Router with TypeScript.
-- Backend stack is FastAPI with Pydantic settings and OpenAPI output.
-- Shared repository truth lives in `openapi/`, `docs/`, `tests/`, and root agent rules.
-- `packages/sdk` is reserved for generated clients and should not be edited by hand.
+- Monorepo remains the baseline.
+- Frontend is now Expo + React Native + Expo Router.
+- There is no backend in the current phase.
+- Structured records live in SQLite; documents live in the local file vault.
+- Source of truth is `packages/storage`, `packages/schemas`, `docs/contracts`, and root agent rules.
 
 ## Implemented Structure
 
-- `apps/web`: starter landing page, shared workspace package consumption, Vitest starter test.
-- `apps/api`: health endpoint, bootstrap summary endpoint, pytest starter tests, OpenAPI export script.
-- `packages/ui`: presentation primitives for the web app.
-- `packages/schemas`: shared domain constants for creator modules and platforms.
-- `packages/sdk`: placeholder for generated API clients.
-
-## Pending Follow-Ups
-
-- Add migrations, auth, and generated SDK workflow when the first business slice is defined.
-- Decide whether to keep using `python3 -m uv` or add the user-installed `uv` binary to `PATH`.
+- `apps/mobile`: Expo Router app with a dashboard and local bootstrap status.
+- `packages/storage`: storage contracts, path helpers, and contract tests.
+- `packages/ui`: React Native presentation primitives.
+- `packages/schemas`: creator product modules, platforms, and workflow principles.
 
 ## Verification Snapshot
 
@@ -33,13 +27,11 @@
 - `pnpm lint`
 - `pnpm typecheck`
 - `pnpm test`
+- `pnpm contract:check`
 - `pnpm build`
-- `python3 -m compileall apps/api/src apps/api/scripts`
-- `python3 -m uv sync --directory apps/api`
-- `python3 -m uv run --directory apps/api ruff check .`
-- `python3 -m uv run --directory apps/api pytest`
-- `python3 -m uv run --directory apps/api python scripts/export_openapi.py --check`
 
-## Collaboration Note
+## Pending Follow-Ups
 
-- Follow `.cursor/rules/work_flow.md` with separate planning, execution, and evaluation roles for multi-module work.
+- Add real feature slices on top of the local SQLite and file-vault contracts.
+- Only reintroduce backend or sync infrastructure through a new PRD.
+

@@ -1,6 +1,5 @@
 # Project Reminders
 
-- Treat `openapi/openapi.yaml` as the shared contract between `apps/api` and `apps/web`.
-- Regenerate or update `packages/sdk` instead of editing generated client code by hand.
-- When migrations are introduced, require rollback notes and invariant checks in the same change.
-
+- This phase has no backend. Treat the mobile app plus local storage contracts as the product core.
+- `packages/storage/src/contracts.ts` and `docs/contracts/local-storage.md` are the contract source for local persistence.
+- Every change to the structured database or file vault must update tests and the contract docs in the same change.

@@ -4,6 +4,11 @@ export interface ProductModule {
   summary: string;
 }
 
+export interface WorkflowPrinciple {
+  title: string;
+  summary: string;
+}
+
 export const productModules: ProductModule[] = [
   {
     slug: "revenue-hub",
@@ -43,3 +48,17 @@ export const supportedPlatforms = [
 
 export type SupportedPlatform = (typeof supportedPlatforms)[number];
 
+export const workflowPrinciples: WorkflowPrinciple[] = [
+  {
+    title: "Local-first finance ops",
+    summary: "Creators can draft, inspect, and organize their records without waiting on a backend.",
+  },
+  {
+    title: "Structured plus file-based storage",
+    summary: "Operational records live in SQLite while receipts and exports live in a dedicated vault.",
+  },
+  {
+    title: "Contract-driven changes",
+    summary: "Storage tables, vault rules, docs, and tests move together as one change.",
+  },
+];

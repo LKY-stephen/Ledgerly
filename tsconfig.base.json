@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "lib": ["dom", "dom.iterable", "es2022"],
+    "lib": ["es2022"],
     "allowJs": false,
     "skipLibCheck": true,
     "strict": true,
@@ -11,12 +11,12 @@
     "moduleResolution": "Bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
       "@creator-cfo/schemas": ["packages/schemas/src/index.ts"],
+      "@creator-cfo/storage": ["packages/storage/src/index.ts"],
       "@creator-cfo/ui": ["packages/ui/src/index.ts"]
     }
   }
 }
-

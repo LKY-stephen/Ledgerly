@@ -1,30 +1,25 @@
 # Creator CFO Monorepo
 
-Creator CFO is a monorepo foundation for a unified finance console aimed at creators who operate across multiple revenue platforms. The initial architecture follows the local `Ai Agent friendly development guide`: Next.js App Router for the web app, FastAPI for the API, OpenAPI as the contract layer, and a repository layout that keeps product context, tests, and docs in one workspace.
+Creator CFO is now a mobile-first monorepo foundation for a unified finance console aimed at creators who operate across multiple revenue platforms. The original local guide defaults to `Next.js + FastAPI`, but this PRD explicitly overrides that baseline: the current phase is `Expo / React Native`, front-end owned local persistence, and no backend for now.
 
 ## Stack
 
-- Frontend: Next.js App Router + TypeScript + workspace UI package
-- Backend: FastAPI + Pydantic v2 style schemas
+- Frontend: Expo + React Native + Expo Router + TypeScript
+- Local persistence: Expo SQLite for structured finance data, Expo File System for document vault storage
 - Repo: pnpm workspace monorepo
-- Contract: `openapi/openapi.yaml`
+- Contract: `packages/storage/src/contracts.ts` and `docs/contracts/local-storage.md`
 - Quality gates: pre-commit, GitHub Actions, unit tests, smoke checklist, contract check
 
 ## Quick Start
 
-### Frontend
+### Mobile App
 
 ```bash
 pnpm install
-pnpm --filter @creator-cfo/web dev
-```
-
-### Backend
-
-```bash
-pip install uv
-python3 -m uv sync --directory apps/api
-python3 -m uv run --directory apps/api uvicorn creator_cfo_api.main:app --reload
+pnpm --filter @creator-cfo/mobile start
+pnpm --filter @creator-cfo/mobile ios
+pnpm --filter @creator-cfo/mobile android
+pnpm --filter @creator-cfo/mobile web
 ```
 
 ### Shared Checks
@@ -34,7 +29,7 @@ pnpm lint
 pnpm typecheck
 pnpm test
 pnpm build
-python3 -m uv run --directory apps/api python scripts/export_openapi.py --check
+pnpm contract:check
 ```
 
 ## Directory Layout
@@ -45,33 +40,19 @@ python3 -m uv run --directory apps/api python scripts/export_openapi.py --check
 |-- CLAUDE.md
 |-- README.md
 |-- apps
-|   |-- api
-|   |   |-- pyproject.toml
-|   |   |-- scripts
-|   |   |   `-- export_openapi.py
-|   |   |-- src/creator_cfo_api
-|   |   |   |-- app.py
-|   |   |   |-- config.py
-|   |   |   |-- main.py
-|   |   |   |-- routes
-|   |   |   |   |-- bootstrap.py
-|   |   |   |   `-- health.py
-|   |   |   `-- schemas
-|   |   |       |-- bootstrap.py
-|   |   |       `-- health.py
-|   |   `-- tests
-|   |       |-- test_bootstrap.py
-|   |       `-- test_health.py
-|   `-- web
+|   `-- mobile
 |       |-- app
-|       |   |-- globals.css
-|       |   |-- layout.tsx
-|       |   `-- page.tsx
-|       |-- src/lib
-|       |   |-- platforms.ts
-|       |   `-- site.ts
+|       |   |-- _layout.tsx
+|       |   `-- index.tsx
+|       |-- src
+|       |   |-- features/home
+|       |   |   |-- home-screen.tsx
+|       |   |   `-- sections.ts
+|       |   `-- storage
+|       |       |-- bootstrap.ts
+|       |       `-- status.ts
 |       `-- tests
-|           `-- site.test.ts
+|           `-- sections.test.ts
 |-- docs
 |   |-- adr/0001-monorepo-foundation.md
 |   |-- architecture.md
@@ -79,23 +60,26 @@ python3 -m uv run --directory apps/api python scripts/export_openapi.py --check
 |   |   `-- README.md
 |   |-- development.md
 |   `-- testing.md
-|-- openapi
-|   `-- openapi.yaml
 |-- packages
 |   |-- schemas
 |   |   |-- package.json
 |   |   |-- README.md
 |   |   `-- src/index.ts
-|   |-- sdk
+|   |-- storage
 |   |   |-- package.json
 |   |   |-- README.md
-|   |   `-- src/index.ts
+|   |   |-- src
+|   |   |   |-- contracts.ts
+|   |   |   `-- index.ts
+|   |   `-- tests
+|   |       `-- contracts.test.ts
 |   `-- ui
 |       |-- package.json
 |       |-- README.md
 |       `-- src
 |           |-- index.ts
 |           |-- section-card.tsx
+|           |-- stat-pill.tsx
 |           `-- tokens.ts
 |-- tests
 |   |-- README.md
@@ -111,14 +95,20 @@ python3 -m uv run --directory apps/api python scripts/export_openapi.py --check
 
 ## Working Agreements
 
-- Keep contracts in `openapi/` and companion notes in `docs/contracts/`.
+- Keep storage contracts in `packages/storage` and companion notes in `docs/contracts/`.
 - Route new domain features through the three-role workflow documented in `.cursor/rules/work_flow.md`.
-- Use `packages/ui` and `packages/schemas` as the only shared frontend-facing layers; apps stay isolated.
-- Reserve `packages/sdk` for generated API clients.
+- Use `packages/ui`, `packages/schemas`, and `packages/storage` as the shared mobile-facing layers; apps stay isolated.
+- Do not introduce a backend or cloud dependency until a later PRD explicitly reopens that scope.
 
-## What Is Implemented In This Initialization
+## Local Data Direction
 
-- A branded web landing page that mirrors the product direction.
-- A FastAPI service with `health` and bootstrap-summary endpoints.
-- Contract scaffolding, testing guidance, CI workflow, and agent-facing project rules.
-- A versioned context update in `.cursor/context/main.md` so later sessions can pick up the same architecture baseline.
+- Structured database: `expo-sqlite` stores creator finance records such as income snapshots, invoices, expenses, tax forecasts, and cash-flow snapshots.
+- File vault: `expo-file-system` stores receipts, invoice exports, statements, and tax support files directly on device.
+- Contracts: storage tables, migration SQL, and vault directory rules are versioned inside the repo and covered by tests.
+
+## What Is Implemented In This Adjustment
+
+- An Expo Router mobile shell with a dashboard that reflects the product direction.
+- A local storage bootstrap path that provisions SQLite tables and document-vault directories on device.
+- Shared schema, UI, and storage packages aligned to a mobile-first monorepo.
+- Updated CI, pre-commit hooks, contract docs, and context tracking for the RN baseline.
