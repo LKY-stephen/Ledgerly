@@ -28,13 +28,27 @@ export interface AppCopy {
     collectionsTitle: string;
     focusCards: Array<{ summary: string; title: string }>;
     focusTitle: string;
+    heroSummary: string;
+    metricBootstrapIdle: string;
+    metricBootstrapLabel: string;
+    metricBootstrapReady: string;
+    metricBootstrapSummary: string;
+    metricModulesLabel: string;
+    metricModulesSummary: string;
+    metricPlatformsLabel: string;
+    metricPlatformsSummary: string;
     moduleFooter: string;
     moduleTitle: string;
+    persistenceEyebrow: string;
     sessionApple: string;
     sessionGuest: string;
     sessionSignedOut: string;
+    signalTitle: string;
+    storageDeviceLabel: string;
+    storageDeviceTitle: string;
     storageLabel: string;
     storageTitle: string;
+    workflowEyebrow: string;
     workflowFooter: string;
     workflowTitle: string;
   };
@@ -52,6 +66,7 @@ export interface AppCopy {
     body: string;
     caption: string;
     eyebrow: string;
+    signals: [string, string, string];
     skip: string;
     title: string;
   };
@@ -123,13 +138,27 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
         },
       ],
       focusTitle: "Today at a glance",
+      heroSummary: "The shell is live, contracts are local, and the next actions stay easy to scan.",
+      metricBootstrapIdle: "Syncing",
+      metricBootstrapLabel: "Bootstrap",
+      metricBootstrapReady: "Ready",
+      metricBootstrapSummary: "SQLite and vault contracts on this device",
+      metricModulesLabel: "Modules",
+      metricModulesSummary: "Core finance surfaces already mapped",
+      metricPlatformsLabel: "Platforms",
+      metricPlatformsSummary: "Creator revenue sources supported in the shell",
       moduleFooter: "Shared via @creator-cfo/schemas.",
       moduleTitle: "Operating modules",
+      persistenceEyebrow: "Persistence",
       sessionApple: "Signed in with Apple ID",
       sessionGuest: "Exploring in guest mode",
       sessionSignedOut: "Waiting for a local session",
+      signalTitle: "Signal rail",
+      storageDeviceLabel: "AsyncStorage preferences ready",
+      storageDeviceTitle: "Device state",
       storageLabel: "Structured tables + local preference keys",
       storageTitle: "Storage contract pulse",
+      workflowEyebrow: "Workflow",
       workflowFooter: "No backend until a later PRD says so.",
       workflowTitle: "Guardrails for the next slice",
     },
@@ -151,16 +180,15 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
     },
     login: {
       appleButton: "Continue with Apple",
-      appleCancelled: "Apple sign-in was cancelled. You can retry or continue as a guest.",
-      appleHint: "Apple sign-in is available on supported iOS devices. Guest mode stays available everywhere.",
-      appleUnavailable:
-        "Apple sign-in is not available in this environment yet. Use guest mode for preview flows.",
-      body:
-        "Own your creator finance cockpit on device first: theme, language, dashboard context, and local storage stay with you.",
-      caption: "No backend in this phase. Apple credentials are treated as a device-local session summary.",
-      eyebrow: "Local-first launch",
+      appleCancelled: "Sign-in canceled. Retry or continue as a guest.",
+      appleHint: "Apple sign-in works on supported iPhone and iPad devices.",
+      appleUnavailable: "Apple sign-in is unavailable here. Continue as a guest.",
+      body: "Sign in with Apple or step in as a guest. Your shell stays local, calm, and ready.",
+      caption: "Theme and language stay in sync with your device.",
+      eyebrow: "Local-first login",
+      signals: ["On-device first", "Guest ready", "Theme aware"],
       skip: "Skip for now",
-      title: "A finance control room that starts before sync exists.",
+      title: "One calm place for creator cash.",
     },
     meScreen: {
       localeDescription: "Switch shell copy instantly and keep the choice on device.",
@@ -227,13 +255,27 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
         },
       ],
       focusTitle: "今日概览",
+      heroSummary: "应用壳层已就绪，契约都在本地，下一步该看什么一眼就能扫到。",
+      metricBootstrapIdle: "同步中",
+      metricBootstrapLabel: "启动状态",
+      metricBootstrapReady: "已就绪",
+      metricBootstrapSummary: "本机 SQLite 与文件仓契约",
+      metricModulesLabel: "模块数",
+      metricModulesSummary: "已映射好的核心财务工作面",
+      metricPlatformsLabel: "平台数",
+      metricPlatformsSummary: "当前壳层支持的创作者收入来源",
       moduleFooter: "共享自 @creator-cfo/schemas。",
       moduleTitle: "核心模块",
+      persistenceEyebrow: "本地持久化",
       sessionApple: "已通过 Apple ID 进入",
       sessionGuest: "当前为游客模式",
       sessionSignedOut: "尚未建立本地会话",
+      signalTitle: "信号总览",
+      storageDeviceLabel: "AsyncStorage 偏好已就绪",
+      storageDeviceTitle: "设备状态",
       storageLabel: "结构化表 + 本地偏好键位",
       storageTitle: "本地契约状态",
+      workflowEyebrow: "流程守则",
       workflowFooter: "后续 PRD 未明确前，不引入后端。",
       workflowTitle: "下一阶段守则",
     },
@@ -254,14 +296,15 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
     },
     login: {
       appleButton: "使用 Apple 登录",
-      appleCancelled: "Apple 登录已取消，你可以重试或先以游客进入。",
-      appleHint: "Apple 登录仅在支持的 iOS 设备上可用，游客模式始终可用。",
-      appleUnavailable: "当前环境暂不支持 Apple 登录，请先使用游客模式体验。",
-      body: "先把创作者财务驾驶舱落在设备本地，主题、语言、首页上下文和本地存储都由你掌控。",
-      caption: "本阶段没有后端。Apple 凭证只作为设备本地会话摘要使用。",
-      eyebrow: "本地优先启动",
+      appleCancelled: "已取消 Apple 登录，你可以重试或先以游客进入。",
+      appleHint: "Apple 登录仅在支持的 iPhone / iPad 设备上可用。",
+      appleUnavailable: "当前环境暂不支持 Apple 登录，请先使用游客模式。",
+      body: "用 Apple 登录，或先以游客进入。你的财务工作台会保持本地、清晰、轻量。",
+      caption: "主题与语言会继续跟随你的设备偏好。",
+      eyebrow: "本地优先登录",
+      signals: ["设备优先", "游客可用", "主题自适应"],
       skip: "暂不登录",
-      title: "在同步到来之前，先拥有一个能工作的财务控制台。",
+      title: "先给创作者现金流一个安静入口。",
     },
     meScreen: {
       localeDescription: "立即切换界面语言，并把选择保存在设备本地。",

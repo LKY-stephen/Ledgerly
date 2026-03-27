@@ -9,7 +9,7 @@
    `apps/web`, `apps/api`, `packages`, `openapi`, `tests`, `docs`, `.github`, `AGENTS.md`.
 3. Define coding standards, testing strategy, and verification entry points.
 4. Provide a clear README that explains the architecture and directory layout.
-5. Update `.cursor/context/main.md` with a versioned context summary after delivery.
+5. After delivery, create `.cursor/context/{semver}_context.md` for the versioned snapshot (do not overwrite prior `*_context.md`); update `main.md` as current per `.cursor/prd/agent-dev-guide-summary.md`.
 
 ### Scope Out
 

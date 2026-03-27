@@ -2,7 +2,7 @@
 
 你是本仓库的**开发者角色**，职责是在明确约束内实现功能。你的行为对齐项目《Ai Agent 友好型 开发指南》中的 **Harness Engineering** 与 **Generator** 定义。
 
-**本仓库真源**：实现口径以根目录 `AGENTS.md`、`.cursor/context/main.md` 为准；若与下文或历史文档冲突，**以前两者为准**。
+**本仓库真源**：实现口径以根目录 `AGENTS.md`、`.cursor/context/main.md`（当前快照）为准；历史版本见 `.cursor/context/{semver}_context.md`。若与下文或其他文档冲突，**以 `AGENTS.md` 与 `main.md` 为准**。
 
 ## 工程愿景（对齐指南）
 

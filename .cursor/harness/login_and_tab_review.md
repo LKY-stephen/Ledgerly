@@ -32,7 +32,7 @@
 | Login module | Passed | `apps/mobile/app/login.tsx`, `apps/mobile/src/features/auth/login-screen.tsx`, `apps/mobile/src/features/app-shell/*` | Apple sign-in degrades gracefully outside supported iOS devices |
 | Light and dark themes plus multi-language | Passed | `packages/ui/src/tokens.ts`, `apps/mobile/src/features/app-shell/copy.ts`, `apps/mobile/src/features/profile/profile-screen.tsx`, `apps/mobile/tests/app-shell-model.test.ts` | Persisted with AsyncStorage contract |
 | UI and interaction quality | Passed | `pnpm build`, `pnpm smoke`, updated smoke checklist | Manual device smoke still recommended for real Apple auth |
-| README clarity | Passed | `README.md`, `tests/smoke/README.md`, `.cursor/context/main.md` | Docs aligned to mobile shell |
+| README clarity | Passed | `README.md`, `tests/smoke/README.md`, `.cursor/context/main.md`, `*_context.md` | Docs aligned to mobile shell |
 
 ## Testor Phase: Acceptance Conditions
 
@@ -144,7 +144,7 @@ Passed
 | Login module | 已通过 | `apps/mobile/app/login.tsx`, `apps/mobile/src/features/auth/login-screen.tsx` | None | Guest mode and Apple affordance both exist |
 | 黑夜 / 白天模式，多语言 | 已通过 | `packages/ui/src/tokens.ts`, `apps/mobile/src/features/profile/profile-screen.tsx`, tests | None | Persisted with AsyncStorage contract |
 | UI、交互符合需求描述 | 已通过 | `pnpm build`, `pnpm smoke`, updated smoke checklist | None | Real Apple path still needs device confirmation |
-| README 规范、清晰 | 已通过 | `README.md`, `tests/smoke/README.md`, `.cursor/context/main.md` | None | Docs aligned to current slice |
+| README 规范、清晰 | 已通过 | `README.md`, `tests/smoke/README.md`, `.cursor/context/main.md`, `*_context.md` | None | Docs aligned to current slice |
 
 已通过条数 / 总条数：5 / 5
 
