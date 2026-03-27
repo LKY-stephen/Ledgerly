@@ -2,7 +2,8 @@ import * as AppleAuthentication from "expo-apple-authentication";
 import { Redirect, useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useState } from "react";
-import { Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import { LaunchScreen } from "../app-shell/launch-screen";
 import { useAppShell } from "../app-shell/provider";
@@ -89,16 +90,34 @@ export function LoginScreen() {
       colors={[palette.heroStart, palette.heroEnd, palette.shell]}
       style={styles.gradient}
     >
+      <View
+        pointerEvents="none"
+        style={[styles.backgroundOrbLarge, { backgroundColor: palette.accentSoft }]}
+      />
+      <View
+        pointerEvents="none"
+        style={[styles.backgroundOrbSmall, { backgroundColor: palette.paperMuted }]}
+      />
       <SafeAreaView style={styles.safeArea}>
         <ScrollView contentContainerStyle={styles.container}>
           <View style={styles.topBar}>
-            <Text style={[styles.topBarTitle, { color: palette.inkOnAccent }]}>{copy.common.appName}</Text>
+            <View style={styles.brandRow}>
+              <View style={[styles.brandMark, { backgroundColor: palette.accent }]} />
+              <Text style={[styles.topBarTitle, { color: palette.inkOnAccent }]}>
+                {copy.common.appName}
+              </Text>
+            </View>
             <Pressable
               accessibilityRole="button"
               onPress={handleGuestMode}
-              style={[styles.skipButton, { borderColor: palette.border }]}
+              style={[
+                styles.skipButton,
+                { backgroundColor: palette.accentSoft, borderColor: palette.border },
+              ]}
             >
-              <Text style={[styles.skipLabel, { color: palette.inkOnAccent }]}>{copy.login.skip}</Text>
+              <Text style={[styles.skipLabel, { color: palette.inkOnAccent }]}>
+                {copy.login.skip}
+              </Text>
             </Pressable>
           </View>
 
@@ -112,34 +131,25 @@ export function LoginScreen() {
               },
             ]}
           >
-            <Text style={[styles.eyebrow, { color: palette.accent }]}>{copy.login.eyebrow}</Text>
-            <Text style={[styles.title, { color: palette.ink }]}>{copy.login.title}</Text>
-            <Text style={[styles.summary, { color: palette.inkMuted }]}>{copy.login.body}</Text>
-
-            <View style={styles.benefits}>
-              <View
-                style={[
-                  styles.benefitCard,
-                  { backgroundColor: palette.accentSoft, borderColor: palette.border },
-                ]}
-              >
-                <Text style={[styles.benefitTitle, { color: palette.ink }]}>{copy.tabs.home}</Text>
-                <Text style={[styles.benefitSummary, { color: palette.inkMuted }]}>
-                  {copy.home.focusCards[0]?.summary}
-                </Text>
-              </View>
-              <View
-                style={[
-                  styles.benefitCard,
-                  { backgroundColor: palette.paperMuted, borderColor: palette.border },
-                ]}
-              >
-                <Text style={[styles.benefitTitle, { color: palette.ink }]}>{copy.common.theme}</Text>
-                <Text style={[styles.benefitSummary, { color: palette.inkMuted }]}>
-                  {copy.meScreen.themeDescription}
-                </Text>
+            <View style={styles.heroHeader}>
+              <Text style={[styles.eyebrow, { color: palette.accent }]}>{copy.login.eyebrow}</Text>
+              <View style={styles.signalRow}>
+                {copy.login.signals.map((signal) => (
+                  <View
+                    key={signal}
+                    style={[
+                      styles.signalPill,
+                      { backgroundColor: palette.accentSoft, borderColor: palette.border },
+                    ]}
+                  >
+                    <Text style={[styles.signalLabel, { color: palette.ink }]}>{signal}</Text>
+                  </View>
+                ))}
               </View>
             </View>
+
+            <Text style={[styles.title, { color: palette.ink }]}>{copy.login.title}</Text>
+            <Text style={[styles.summary, { color: palette.inkMuted }]}>{copy.login.body}</Text>
 
             <View style={styles.actions}>
               {appleAvailable ? (
@@ -175,15 +185,26 @@ export function LoginScreen() {
               <Pressable
                 accessibilityRole="button"
                 onPress={handleGuestMode}
-                style={[styles.guestButton, { backgroundColor: palette.accent }]}
+                style={[
+                  styles.guestButton,
+                  { backgroundColor: palette.shellElevated, borderColor: palette.border },
+                ]}
               >
-                <Text style={[styles.guestLabel, { color: palette.inkOnAccent }]}>
+                <Text style={[styles.guestLabel, { color: palette.ink }]}>
                   {copy.login.skip}
                 </Text>
               </Pressable>
             </View>
 
-            <Text style={[styles.caption, { color: palette.inkMuted }]}>{appleMessage}</Text>
+            <View
+              style={[
+                styles.statusPanel,
+                { backgroundColor: palette.paperMuted, borderColor: palette.border },
+              ]}
+            >
+              <View style={[styles.statusDot, { backgroundColor: palette.accent }]} />
+              <Text style={[styles.statusText, { color: palette.inkMuted }]}>{appleMessage}</Text>
+            </View>
             <Text style={[styles.caption, { color: palette.inkMuted }]}>{copy.login.caption}</Text>
           </View>
         </ScrollView>
@@ -200,25 +221,33 @@ const styles = StyleSheet.create({
     height: 52,
     width: "100%",
   },
-  benefitCard: {
-    borderRadius: 20,
-    borderWidth: 1,
-    flex: 1,
-    gap: 8,
-    minHeight: 120,
-    padding: 16,
+  backgroundOrbLarge: {
+    position: "absolute",
+    top: 100,
+    right: -40,
+    height: 220,
+    width: 220,
+    borderRadius: 999,
+    opacity: 0.32,
   },
-  benefitSummary: {
-    fontSize: 14,
-    lineHeight: 20,
+  backgroundOrbSmall: {
+    position: "absolute",
+    bottom: 120,
+    left: -30,
+    height: 160,
+    width: 160,
+    borderRadius: 999,
+    opacity: 0.28,
   },
-  benefitTitle: {
-    fontSize: 17,
-    fontWeight: "700",
+  brandMark: {
+    height: 10,
+    width: 10,
+    borderRadius: 999,
   },
-  benefits: {
+  brandRow: {
+    alignItems: "center",
     flexDirection: "row",
-    gap: 12,
+    gap: 10,
   },
   caption: {
     fontSize: 13,
@@ -253,6 +282,7 @@ const styles = StyleSheet.create({
   guestButton: {
     alignItems: "center",
     borderRadius: 18,
+    borderWidth: 1,
     justifyContent: "center",
     minHeight: 52,
     paddingHorizontal: 20,
@@ -264,14 +294,33 @@ const styles = StyleSheet.create({
   heroCard: {
     borderRadius: 32,
     borderWidth: 1,
-    gap: 18,
-    padding: 22,
+    gap: 20,
+    marginTop: 32,
+    padding: 24,
     shadowOffset: { width: 0, height: 16 },
     shadowOpacity: 1,
     shadowRadius: 30,
   },
+  heroHeader: {
+    gap: 12,
+  },
   safeArea: {
     flex: 1,
+  },
+  signalLabel: {
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  signalPill: {
+    borderRadius: 999,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  signalRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
   },
   skipButton: {
     borderRadius: 999,
@@ -285,12 +334,32 @@ const styles = StyleSheet.create({
   },
   summary: {
     fontSize: 16,
-    lineHeight: 24,
+    lineHeight: 23,
+    maxWidth: 460,
+  },
+  statusDot: {
+    height: 8,
+    width: 8,
+    borderRadius: 999,
+    marginTop: 6,
+  },
+  statusPanel: {
+    flexDirection: "row",
+    gap: 10,
+    borderRadius: 18,
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  statusText: {
+    flex: 1,
+    fontSize: 13,
+    lineHeight: 19,
   },
   title: {
-    fontSize: 34,
+    fontSize: 38,
     fontWeight: "800",
-    lineHeight: 40,
+    lineHeight: 42,
   },
   topBar: {
     alignItems: "center",

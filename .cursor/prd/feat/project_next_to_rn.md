@@ -33,5 +33,5 @@
 
 ## 本需求补充
 
-- `project_next_to_rn` 完结后更新 `.cursor/context/main.md` 时须**有序追加**，禁止覆盖历史上下文条目。
+- `project_next_to_rn` 完结后须在 `.cursor/context/` **新建** `{semver}_context.md` 留存该版本快照；**禁止**覆盖或删改既有 `*_context.md`；可按摘要同步 `main.md`。
 - 验证与门禁见摘要 **交付前检查** 与 **Feat PRD 公用约定**。

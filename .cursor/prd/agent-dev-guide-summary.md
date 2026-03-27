@@ -1,6 +1,6 @@
 # 《Ai Agent 友好型 开发指南》摘要（供 Agent 读取）
 
-本文件是仓库内 Agent 工作流的**可检索摘要**，与根目录 `AGENTS.md`、`.cursor/context/main.md` 一致处以二者为准。完整论述以项目提供的 PDF（若存在）为准。
+本文件是仓库内 Agent 工作流的**可检索摘要**，与根目录 `AGENTS.md`、`.cursor/context/` 下**当前快照**（`main.md`）及**按版本归档**的 `{version}_context.md` 一致处为准。完整论述以项目提供的 PDF（若存在）为准。
 
 ## 愿景
 
@@ -45,12 +45,12 @@ pnpm smoke
 ## PRD 与上下文
 
 - 新需求建议使用 `.cursor/prd/TEMPLATE.md`，并填写 **存储与契约影响**。
-- 需求闭环后更新 `.cursor/context/main.md`：**按版本叠加**——在 **History** 中 **新增** `### 0.x.0` 一节（次版本递增，如 `0.3.0` → `0.4.0`），写入本需求的 `updated_at`、scope、决策与结构增量；**勿删、勿改写**已有历史节。同步更新顶部 **Current** 的版本号、日期与一行摘要。细则见该文件内 **维护约定**。
+- 需求闭环后在 `.cursor/context/` **新建**版本化上下文文件，命名 `{semver}_context.md`（例如 `0.4.0_context.md`；次版本递增如 `0.3.0` → `0.4.0`），写入本版本的 `updated_at`、scope、决策与结构增量。**勿删、勿改写**已有 `*_context.md`。若仓库仍以 `main.md` 为**当前**真源，可同步更新其顶部版本号、日期与一行摘要，或注明「详见 `{semver}_context.md`」——以 `main.md` 内维护约定为准。
 
 ## Feat PRD 公用约定（单点引用）
 
-各 `.cursor/prd/feat/*.md` **不必重复**写长段交付门禁、三角角色说明或 `main.md` 更新细则；在文档中保留 **一行引用**即可：
+各 `.cursor/prd/feat/*.md` **不必重复**写长段交付门禁、三角角色说明或 `{version}_context.md` / `main.md` 维护细则；在文档中保留 **一行引用**即可：
 
-> **公用约定**：以本文 `.cursor/prd/agent-dev-guide-summary.md` 为准（愿景、角色与 `work_flow`、技术约束、交付前 `pnpm` 命令、PRD/上下文）。Cursor **始终应用**基线：`.cursor/rules/creator-cfo-always.mdc`。结构参考 `.cursor/prd/TEMPLATE.md`。若仓库内有《Ai Agent 友好型 开发指南》PDF，可作人工补充，**勿假设** Agent 已完整读取 PDF。
+> **公用约定**：以本文 `.cursor/prd/agent-dev-guide-summary.md` 为准（愿景、角色与 `work_flow`、技术约束、交付前 `pnpm` 命令、PRD/上下文与版本化 `*_context.md`）。Cursor **始终应用**基线：`.cursor/rules/creator-cfo-always.mdc`。结构参考 `.cursor/prd/TEMPLATE.md`。若仓库内有《Ai Agent 友好型 开发指南》PDF，可作人工补充，**勿假设** Agent 已完整读取 PDF。
 
 feat 内只写**本需求独有**的内容：平台/场景一句话（可指向 README）、存储与契约影响、需求与验收、参考 Skill、以及必要的**额外**交付说明（若有）。

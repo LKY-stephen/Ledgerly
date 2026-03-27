@@ -10,7 +10,7 @@
   - [ ] `docs/contracts/`  
   - [ ] `packages/schemas`  
   - [ ] 自动化测试  
-- **说明**：以仓库当前 `AGENTS.md` 与 `.cursor/context/main.md` 为准建立基线。
+- **说明**：以仓库当前 `AGENTS.md` 与 `.cursor/context/main.md`（及已有 `*_context.md` 归档）为准建立基线。
 
 ## 需求描述
 

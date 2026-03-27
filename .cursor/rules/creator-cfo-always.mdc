@@ -7,7 +7,7 @@ alwaysApply: true
 
 ## 真源与阶段
 
-- 实现与阶段边界以根目录 **`AGENTS.md`**、**`.cursor/context/main.md`** 为准。
+- 实现与阶段边界以根目录 **`AGENTS.md`**、**`.cursor/context/main.md`**（当前快照）及 **`.cursor/context/{semver}_context.md`**（按版本归档）为准。
 - **当前默认**：Expo + React Native + Expo Router；本地 SQLite + 文件仓；**无独立后端**（除非某 PRD 明确引入）。
 - 契约真源：`docs/contracts/`、`packages/storage/src/contracts.ts`、`packages/schemas/src/index.ts`。存储变更须 **schema-first**，并更新文档与测试。
 

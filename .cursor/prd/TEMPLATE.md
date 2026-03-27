@@ -33,7 +33,7 @@
 
 **一行引用即可**（详见其中 **Feat PRD 公用约定** 小节）：
 
-> 以 `.cursor/prd/agent-dev-guide-summary.md` 为准：流程与角色、`AGENTS.md` / `main.md`、存储 schema-first、`pnpm` 交付前检查、需求闭环后更新 `main.md`。PDF 指南（若存在）仅作人工补充。
+> 以 `.cursor/prd/agent-dev-guide-summary.md` 为准：流程与角色、`AGENTS.md` / `.cursor/context/main.md` / `{semver}_context.md`、存储 schema-first、`pnpm` 交付前检查、需求闭环后 **新建** `{semver}_context.md` 并按需同步 `main.md`。PDF 指南（若存在）仅作人工补充。
 
 下方仅写 **本 feat 独有** 的补充交付说明（没有则写「无」或删本节）。
 

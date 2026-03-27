@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
-import { SafeAreaView, ScrollView, StyleSheet, Text, View } from "react-native";
-import { SectionCard, StatPill } from "@creator-cfo/ui";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { SectionCard } from "@creator-cfo/ui";
 
 import { buildHomeSections } from "./sections";
+import { AppIcon } from "../../components/app-icon";
+import { IconMetricCard } from "../../components/icon-metric-card";
 import { bootstrapLocalStorage } from "../../storage/bootstrap";
 import type { BootstrapStatus } from "../../storage/status";
 import { useAppShell } from "../app-shell/provider";
@@ -67,55 +70,100 @@ export function HomeScreen() {
           <Text style={[styles.eyebrow, { color: palette.accent }]}>{sections.sessionTitle}</Text>
           <Text style={[styles.title, { color: palette.inkOnAccent }]}>{copy.home.focusTitle}</Text>
           <Text style={[styles.summary, { color: palette.inkOnAccent }]}>
-            {sessionDisplayName}. {copy.login.body}
+            {sessionDisplayName}. {copy.home.heroSummary}
           </Text>
 
-          <View style={styles.pills}>
-            <StatPill
-              label="Product modules"
-              palette={palette}
-              value={sections.modules.length.toString()}
-            />
-            <StatPill
-              label="Supported platforms"
-              palette={palette}
-              value={sections.platforms.length.toString()}
-            />
-            <StatPill
-              palette={palette}
-              label={bootstrapStatus.status === "ready" ? "Tables ready" : "Bootstrap state"}
-              value={
-                bootstrapStatus.status === "ready"
-                  ? bootstrapStatus.structuredTableCount.toString()
-                  : bootstrapStatus.status
-              }
-            />
+          <View style={styles.heroMetricGrid}>
+            <View style={styles.metricRow}>
+              {sections.heroMetrics.slice(0, 2).map((metric) => (
+                <IconMetricCard
+                  key={metric.label}
+                  icon={metric.icon}
+                  label={metric.label}
+                  palette={palette}
+                  style={styles.metricCard}
+                  summary={metric.summary}
+                  value={metric.value}
+                />
+              ))}
+            </View>
+            <View style={styles.metricRow}>
+              <IconMetricCard
+                icon="bootstrap"
+                label={copy.home.metricBootstrapLabel}
+                palette={palette}
+                style={styles.metricCardWide}
+                summary={copy.home.metricBootstrapSummary}
+                value={
+                  bootstrapStatus.status === "ready"
+                    ? `${bootstrapStatus.structuredTableCount}`
+                    : copy.home.metricBootstrapIdle
+                }
+              />
+            </View>
           </View>
         </View>
 
         <View style={styles.sectionStack}>
           <SectionCard
             eyebrow={copy.tabs.home}
-            footer={<Text style={[styles.footerText, { color: palette.inkMuted }]}>{copy.home.moduleFooter}</Text>}
+            footer={
+              <Text style={[styles.footerText, { color: palette.inkMuted }]}>{copy.home.moduleFooter}</Text>
+            }
             palette={palette}
-            title={copy.home.moduleTitle}
+            title={copy.home.signalTitle}
           >
             <View style={styles.focusGrid}>
-              {sections.focusCards.map((card) => (
-                <View
-                  key={card.title}
-                  style={[
-                    styles.focusCard,
-                    {
-                      backgroundColor: palette.accentSoft,
-                      borderColor: palette.border,
-                    },
-                  ]}
-                >
-                  <Text style={[styles.focusTitle, { color: palette.ink }]}>{card.title}</Text>
-                  <Text style={[styles.rowSummary, { color: palette.inkMuted }]}>{card.summary}</Text>
-                </View>
-              ))}
+              <View style={styles.focusRow}>
+                {sections.focusCards.slice(0, 2).map((card, index) => (
+                  <View
+                    key={card.title}
+                    style={[
+                      styles.focusCard,
+                      styles.focusCardHalf,
+                      {
+                        backgroundColor: palette.accentSoft,
+                        borderColor: palette.border,
+                      },
+                    ]}
+                  >
+                    <View style={styles.focusHeader}>
+                      <View style={[styles.focusIconWrap, { backgroundColor: palette.paperMuted }]}>
+                        <AppIcon
+                          color={palette.accent}
+                          name={index === 0 ? "modules" : "workflow"}
+                          size={18}
+                        />
+                      </View>
+                      <Text style={[styles.focusTitle, { color: palette.ink }]}>{card.title}</Text>
+                    </View>
+                    <Text style={[styles.rowSummary, { color: palette.inkMuted }]}>{card.summary}</Text>
+                  </View>
+                ))}
+              </View>
+              <View style={styles.focusRow}>
+                {sections.focusCards.slice(2).map((card) => (
+                  <View
+                    key={card.title}
+                    style={[
+                      styles.focusCard,
+                      styles.focusCardWide,
+                      {
+                        backgroundColor: palette.accentSoft,
+                        borderColor: palette.border,
+                      },
+                    ]}
+                  >
+                    <View style={styles.focusHeader}>
+                      <View style={[styles.focusIconWrap, { backgroundColor: palette.paperMuted }]}>
+                        <AppIcon color={palette.accent} name="profile" size={18} />
+                      </View>
+                      <Text style={[styles.focusTitle, { color: palette.ink }]}>{card.title}</Text>
+                    </View>
+                    <Text style={[styles.rowSummary, { color: palette.inkMuted }]}>{card.summary}</Text>
+                  </View>
+                ))}
+              </View>
             </View>
 
             {sections.modules.map((module) => (
@@ -127,18 +175,38 @@ export function HomeScreen() {
           </SectionCard>
 
           <SectionCard
-            eyebrow="Persistence"
-            footer={<Text style={[styles.footerText, { color: palette.inkMuted }]}>{bootstrapStatus.summary}</Text>}
+            eyebrow={copy.home.persistenceEyebrow}
+            footer={
+              <Text style={[styles.footerText, { color: palette.inkMuted }]}>{bootstrapStatus.summary}</Text>
+            }
             palette={palette}
             title={copy.home.storageTitle}
           >
-            {sections.storageCards.map((card) => (
-              <View key={card.title} style={styles.storageMetric}>
-                <Text style={[styles.storageTitle, { color: palette.accent }]}>{card.title}</Text>
-                <Text style={[styles.storageValue, { color: palette.ink }]}>{card.value}</Text>
-                <Text style={[styles.rowSummary, { color: palette.inkMuted }]}>{card.label}</Text>
+            <View style={styles.storageGrid}>
+              <View style={styles.metricRow}>
+                {sections.storageCards.slice(0, 2).map((card) => (
+                  <IconMetricCard
+                    key={card.title}
+                    icon={card.icon}
+                    label={card.title}
+                    palette={palette}
+                    style={styles.metricCard}
+                    summary={card.label}
+                    value={card.value}
+                  />
+                ))}
               </View>
-            ))}
+              <View style={styles.metricRow}>
+                <IconMetricCard
+                  icon={sections.storageCards[2]?.icon ?? "device"}
+                  label={sections.storageCards[2]?.title ?? ""}
+                  palette={palette}
+                  style={styles.metricCardWide}
+                  summary={sections.storageCards[2]?.label ?? ""}
+                  value={sections.storageCards[2]?.value ?? ""}
+                />
+              </View>
+            </View>
 
             <Text style={[styles.subheading, { color: palette.ink }]}>{copy.home.collectionsTitle}</Text>
             {sections.storageCollections.map((collection) => (
@@ -153,8 +221,10 @@ export function HomeScreen() {
           </SectionCard>
 
           <SectionCard
-            eyebrow="Workflow"
-            footer={<Text style={[styles.footerText, { color: palette.inkMuted }]}>{copy.home.workflowFooter}</Text>}
+            eyebrow={copy.home.workflowEyebrow}
+            footer={
+              <Text style={[styles.footerText, { color: palette.inkMuted }]}>{copy.home.workflowFooter}</Text>
+            }
             palette={palette}
             title={copy.home.workflowTitle}
           >
@@ -195,10 +265,33 @@ const styles = StyleSheet.create({
     gap: 8,
     padding: 14,
   },
+  focusCardHalf: {
+    flex: 1,
+  },
+  focusCardWide: {
+    flex: 1,
+  },
+  focusHeader: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 10,
+  },
+  focusIconWrap: {
+    alignItems: "center",
+    borderRadius: 12,
+    height: 30,
+    justifyContent: "center",
+    width: 30,
+  },
   focusGrid: {
     gap: 10,
   },
+  focusRow: {
+    flexDirection: "row",
+    gap: 10,
+  },
   focusTitle: {
+    flex: 1,
     fontSize: 16,
     fontWeight: "700",
   },
@@ -211,16 +304,24 @@ const styles = StyleSheet.create({
     shadowOpacity: 1,
     shadowRadius: 30,
   },
+  heroMetricGrid: {
+    gap: 12,
+    paddingTop: 10,
+  },
   listRow: {
     gap: 6,
     paddingTop: 10,
     borderTopWidth: 1,
   },
-  pills: {
+  metricCard: {
+    flex: 1,
+  },
+  metricCardWide: {
+    flex: 1,
+  },
+  metricRow: {
     flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
-    paddingTop: 8,
+    gap: 12,
   },
   rowSummary: {
     fontSize: 14,
@@ -236,17 +337,8 @@ const styles = StyleSheet.create({
   sectionStack: {
     gap: 16,
   },
-  storageMetric: {
-    gap: 4,
-    paddingVertical: 6,
-  },
-  storageTitle: {
-    fontSize: 14,
-    fontWeight: "700",
-  },
-  storageValue: {
-    fontSize: 28,
-    fontWeight: "700",
+  storageGrid: {
+    gap: 12,
   },
   subheading: {
     paddingTop: 8,

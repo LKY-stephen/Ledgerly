@@ -3,7 +3,8 @@
 - `docs/contracts/`
 - `packages/storage/src/contracts.ts`
 - `packages/schemas/src/index.ts`
-- `.cursor/context/main.md`
+- `.cursor/context/main.md`（当前快照）
+- `.cursor/context/{semver}_context.md`（按版本归档；每版需求闭环 **新建**，勿删、勿改写既有文件）
 
 # Rules
 

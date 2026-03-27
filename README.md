@@ -15,7 +15,7 @@ Creator CFO 当前是一个 `Expo + React Native` 的移动端优先 monorepo，
 - Local persistence: Expo SQLite + Expo File System + AsyncStorage
 - Shared packages: `@creator-cfo/ui`, `@creator-cfo/storage`, `@creator-cfo/schemas`
 - Contract source: `packages/storage/src/contracts.ts`, `docs/contracts/local-storage.md`
-- Workflow source: `AGENTS.md`, `.cursor/context/main.md`, `.cursor/rules/work_flow.md`
+- Workflow source: `AGENTS.md`, `.cursor/context/main.md`（当前快照）, `.cursor/context/*_context.md`（按版本归档）, `.cursor/rules/work_flow.md`
 
 ## Quick Start
 
