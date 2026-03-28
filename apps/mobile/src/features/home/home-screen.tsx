@@ -233,7 +233,12 @@ export function HomeScreen() {
             ))}
           </SectionCard>
 
-          <DatabaseHooksDemo isBootstrapped={bootstrapStatus.status === "ready"} />
+          <DatabaseHooksDemo
+            form1099NecCopy={copy.discover.form1099Nec}
+            isBootstrapped={bootstrapStatus.status === "ready"}
+            manualBadge={copy.discover.manualBadge}
+            palette={palette}
+          />
         </View>
       </ScrollView>
     </SafeAreaView>

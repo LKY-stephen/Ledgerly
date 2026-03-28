@@ -1,14 +1,25 @@
-import { StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { getLocalStorageBootstrapPlan } from "@creator-cfo/storage";
-import { SectionCard } from "@creator-cfo/ui";
+import { SectionCard, type SurfaceTokens } from "@creator-cfo/ui";
+
+import type { AppCopy } from "../app-shell/copy";
+import { Form1099NecSection } from "../form-1099-nec/form-1099-nec-section";
 
 interface DatabaseHooksDemoProps {
+  form1099NecCopy: AppCopy["discover"]["form1099Nec"];
   isBootstrapped: boolean;
+  manualBadge: string;
+  palette: SurfaceTokens;
 }
 
 const storagePlan = getLocalStorageBootstrapPlan();
 
-export function DatabaseHooksDemo({ isBootstrapped }: DatabaseHooksDemoProps) {
+export function DatabaseHooksDemo({
+  form1099NecCopy,
+  isBootstrapped,
+  manualBadge,
+  palette,
+}: DatabaseHooksDemoProps) {
   return (
     <SectionCard
       eyebrow="Hooks demo"
@@ -53,6 +64,18 @@ export function DatabaseHooksDemo({ isBootstrapped }: DatabaseHooksDemoProps) {
           same accounting posting surface as the report tabs.
         </Text>
       </View>
+      <View style={styles.buttonRow}>
+        <Form1099NecSection
+          copy={form1099NecCopy}
+          manualBadge={manualBadge}
+          palette={palette}
+          renderLauncher={(openPreview) => (
+            <Pressable accessibilityRole="button" onPress={openPreview} style={styles.button}>
+              <Text style={styles.buttonLabel}>{form1099NecCopy.openPreview}</Text>
+            </Pressable>
+          )}
+        />
+      </View>
       <Text style={styles.summary}>
         Bootstrap state: {isBootstrapped ? "metadata ready" : "waiting for preview bootstrap"}.
       </Text>
@@ -61,6 +84,26 @@ export function DatabaseHooksDemo({ isBootstrapped }: DatabaseHooksDemoProps) {
 }
 
 const styles = StyleSheet.create({
+  button: {
+    backgroundColor: "#f8f2e7",
+    borderColor: "rgba(20, 33, 61, 0.12)",
+    borderRadius: 18,
+    borderWidth: 1,
+    minWidth: 200,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  buttonLabel: {
+    color: "#14213d",
+    fontSize: 14,
+    fontWeight: "700",
+    textAlign: "center",
+  },
+  buttonRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+  },
   footerText: {
     color: "#61717d",
     fontSize: 13,

@@ -18,6 +18,27 @@ export interface AppCopy {
   discover: {
     cards: Array<{ summary: string; title: string }>;
     eyebrow: string;
+    form1099Nec: {
+      acknowledge: string;
+      closePreview: string;
+      databaseBadge: string;
+      disclaimerTitle: string;
+      emptyRecipients: string;
+      footerNative: string;
+      footerWeb: string;
+      intro: string;
+      launcherHint: string;
+      noInstructionNote: string;
+      openPreview: string;
+      recipientPickerHint: string;
+      recipientPickerTitle: string;
+      sourceLabel: string;
+      slotGuideTitle: string;
+      title: string;
+      unlockNote: string;
+      webPreviewLabel: string;
+    };
+    manualBadge: string;
     summary: string;
     title: string;
   };
@@ -116,6 +137,34 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
         },
       ],
       eyebrow: "Discover",
+      form1099Nec: {
+        acknowledge: "I understand",
+        closePreview: "Close preview",
+        databaseBadge: "Database-backed",
+        disclaimerTitle: "1099-NEC disclaimer",
+        emptyRecipients:
+          "No counterparties are stored locally yet. The preview keeps the official form visible and marks every unsupported slot as manual.",
+        footerNative:
+          "Native preview reads partial payer, recipient, and amount data from local SQLite when those fields exist.",
+        footerWeb:
+          "Web preview keeps the exact form layout but does not mount live SQLite reads in the static export.",
+        intro:
+          "This preview keeps the official IRS layout visible, highlights every supported slot, and shows where current local records stop being sufficient.",
+        launcherHint:
+          "Open the popup to review the disclaimer first, then inspect the recommended 1099-NEC form and slot-by-slot instructions.",
+        noInstructionNote:
+          "No dedicated paragraph for this labeled line was found in the downloaded i1099mec page, so this slot stays tied to the official form label and current schema coverage.",
+        openPreview: "Open recommended 1099-NEC",
+        recipientPickerHint:
+          "Form 1099-NEC is issued per recipient. Pick a local counterparty to see which values the current schema can preview.",
+        recipientPickerTitle: "Recipient preview",
+        sourceLabel: "Instruction source",
+        slotGuideTitle: "Slot guidance",
+        title: "Form 1099-NEC exact-layout preview",
+        unlockNote: "Acknowledge the disclaimer to reveal the official-form preview.",
+        webPreviewLabel: "Static web preview",
+      },
+      manualBadge: "Manual input required",
       summary:
         "This tab stays intentionally lightweight in the local-first phase while still giving the product room to grow.",
       title: "A calm radar for creator finance decisions.",
@@ -236,6 +285,34 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
         },
       ],
       eyebrow: "发现",
+      form1099Nec: {
+        acknowledge: "我已了解",
+        closePreview: "关闭预览",
+        databaseBadge: "来自数据库",
+        disclaimerTitle: "1099-NEC 免责声明",
+        emptyRecipients:
+          "本地数据库里还没有对手方记录。预览仍会显示官方表单，并把当前模式无法支持的栏位标为手动填写。",
+        footerNative:
+          "原生端会在字段真实存在时，从本地 SQLite 读取付款方、收款方与金额的局部预览值。",
+        footerWeb:
+          "Web 预览会保留官方表单布局，但静态导出不会挂载实时 SQLite 读取。",
+        intro:
+          "这个预览直接保留 IRS 官方版式，并高亮每个需要关注的栏位，同时指出本地记录在哪些位置已经不够用。",
+        launcherHint:
+          "点击按钮后会先弹出免责声明，再显示推荐的 1099-NEC 表单与逐栏说明。",
+        noInstructionNote:
+          "在下载的 i1099mec 页面里没有找到这个标签栏位的专门段落，因此这里只能依赖官方表单标签与当前数据契约覆盖范围。",
+        openPreview: "打开推荐的 1099-NEC",
+        recipientPickerHint:
+          "1099-NEC 是按收款对象逐个出具的。先选择一个本地对手方，查看当前 schema 能预览哪些值。",
+        recipientPickerTitle: "收款对象预览",
+        sourceLabel: "说明来源",
+        slotGuideTitle: "栏位说明",
+        title: "Form 1099-NEC 官方版式预览",
+        unlockNote: "先确认免责声明，之后才会显示官方表单预览。",
+        webPreviewLabel: "静态 Web 预览",
+      },
+      manualBadge: "需要手动填写",
       summary: "本阶段先保持轻量，但会为后续的增长功能预留清晰的产品位置。",
       title: "给创作者财务决策一个更冷静的观察层。",
     },

@@ -2,9 +2,11 @@ import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { SQLiteProvider } from "expo-sqlite";
 import { getLocalStorageBootstrapPlan } from "@creator-cfo/storage";
-import { SectionCard, surfaceTokens } from "@creator-cfo/ui";
+import { SectionCard, surfaceTokens, type SurfaceTokens } from "@creator-cfo/ui";
 
+import type { AppCopy } from "../app-shell/copy";
 import { initializeLocalDatabase } from "../../storage/database";
+import { Form1099NecSection } from "../form-1099-nec/form-1099-nec-section";
 import { buildDatabaseDemoMetrics, databaseDemoReportTabs } from "./demo-data";
 import type {
   DatabaseDemoJournalEntryPreview,
@@ -16,12 +18,20 @@ import type {
 import { useDatabaseDemo } from "./use-database-demo.native";
 
 interface DatabaseHooksDemoProps {
+  form1099NecCopy: AppCopy["discover"]["form1099Nec"];
   isBootstrapped: boolean;
+  manualBadge: string;
+  palette: SurfaceTokens;
 }
 
 const storagePlan = getLocalStorageBootstrapPlan();
 
-export function DatabaseHooksDemo({ isBootstrapped }: DatabaseHooksDemoProps) {
+export function DatabaseHooksDemo({
+  form1099NecCopy,
+  isBootstrapped,
+  manualBadge,
+  palette,
+}: DatabaseHooksDemoProps) {
   if (!isBootstrapped) {
     return (
       <SectionCard
@@ -39,12 +49,20 @@ export function DatabaseHooksDemo({ isBootstrapped }: DatabaseHooksDemoProps) {
 
   return (
     <SQLiteProvider databaseName={storagePlan.databaseName} onInit={initializeLocalDatabase}>
-      <DatabaseHooksDemoCard />
+      <DatabaseHooksDemoCard
+        form1099NecCopy={form1099NecCopy}
+        manualBadge={manualBadge}
+        palette={palette}
+      />
     </SQLiteProvider>
   );
 }
 
-function DatabaseHooksDemoCard() {
+function DatabaseHooksDemoCard({
+  form1099NecCopy,
+  manualBadge,
+  palette,
+}: Pick<DatabaseHooksDemoProps, "form1099NecCopy" | "manualBadge" | "palette">) {
   const [selectedReportTab, setSelectedReportTab] = useState<DatabaseDemoReportTab>("postings");
   const {
     createRecord,
@@ -170,6 +188,19 @@ function DatabaseHooksDemoCard() {
             void refresh();
           }}
           tone="neutral"
+        />
+        <Form1099NecSection
+          copy={form1099NecCopy}
+          manualBadge={manualBadge}
+          palette={palette}
+          renderLauncher={(openPreview) => (
+            <DemoButton
+              disabled={false}
+              label={form1099NecCopy.openPreview}
+              onPress={openPreview}
+              tone="neutral"
+            />
+          )}
         />
       </View>
 
@@ -515,7 +546,7 @@ const styles = StyleSheet.create({
     borderColor: surfaceTokens.border,
   },
   buttonNeutralLabel: {
-    color: surfaceTokens.ink,
+    color: "#14213d",
     fontSize: 14,
     fontWeight: "700",
     textAlign: "center",
