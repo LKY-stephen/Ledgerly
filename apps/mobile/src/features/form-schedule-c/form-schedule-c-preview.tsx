@@ -14,6 +14,7 @@ import type { AppCopy } from "../app-shell/copy";
 import {
   buildFormScheduleCSlots,
   formScheduleCDisclaimerText,
+  getCurrentFormScheduleCTaxYear,
   type FormScheduleCDatabaseSnapshot,
   type FormScheduleCPage,
   type FormScheduleCSlotId,
@@ -49,12 +50,16 @@ export function FormScheduleCPreview(props: FormScheduleCPreviewProps) {
     snapshot,
   } = props;
   const { width: viewportWidth } = useWindowDimensions();
+  const currentTaxYear = getCurrentFormScheduleCTaxYear();
+  const taxYearOptions = [currentTaxYear - 1, currentTaxYear];
   const [isPreviewVisible, setIsPreviewVisible] = useState(false);
   const [isDisclaimerVisible, setIsDisclaimerVisible] = useState(true);
   const [formZoom, setFormZoom] = useState(1);
   const [selectedPage, setSelectedPage] = useState<FormScheduleCPage>(1);
+  const [selectedTaxYear, setSelectedTaxYear] = useState(currentTaxYear);
   const slots = buildFormScheduleCSlots(snapshot, {
     noInstructionNote: copy.noInstructionNote,
+    taxYear: selectedTaxYear,
   });
   const pageSlots = slots.filter((slot) => slot.page === selectedPage);
   const [selectedSlotId, setSelectedSlotId] = useState<FormScheduleCSlotId>(
@@ -201,6 +206,21 @@ export function FormScheduleCPreview(props: FormScheduleCPreviewProps) {
                     <Text style={[styles.errorText, { color: palette.destructive }]}>{error}</Text>
                   ) : null}
 
+                  <Text style={[styles.subheading, { color: palette.ink }]}>{copy.taxYearTitle}</Text>
+                  <View style={styles.pageButtonRow}>
+                    {taxYearOptions.map((taxYear) => (
+                      <PageButton
+                        key={taxYear}
+                        isSelected={selectedTaxYear === taxYear}
+                        label={String(taxYear)}
+                        onPress={() => {
+                          setSelectedTaxYear(taxYear);
+                        }}
+                        palette={palette}
+                      />
+                    ))}
+                  </View>
+
                   <Text style={[styles.subheading, { color: palette.ink }]}>{copy.pageSwitcherTitle}</Text>
                   <View style={styles.pageButtonRow}>
                     <PageButton
@@ -284,6 +304,7 @@ export function FormScheduleCPreview(props: FormScheduleCPreviewProps) {
                         palette={palette}
                         selectedSlotId={selectedSlotId}
                         slots={slots}
+                        taxYear={selectedTaxYear}
                         width={canvasWidth}
                       />
                     </ScrollView>

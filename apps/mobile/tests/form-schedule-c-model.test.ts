@@ -32,6 +32,9 @@ describe("form schedule c slot model", () => {
       currency: "USD",
       grossReceiptsCents: 1925000,
       incomeRecordCount: 3,
+      partVOtherExpenseAmountCents: null,
+      partVOtherExpenseCurrency: null,
+      partVOtherExpenseLabel: null,
       proprietorName: "North Coast Studio LLC",
     });
     const slots = buildFormScheduleCSlots(snapshot);
@@ -51,5 +54,54 @@ describe("form schedule c slot model", () => {
     });
     expect(line10?.source).toBe("manual");
     expect(line29?.source).toBe("calculated");
+  });
+
+  it("shows a single manual Part V item box when no database-backed other expense is available", () => {
+    const slots = buildFormScheduleCSlots(createEmptyFormScheduleCSnapshot());
+
+    const partVItem = slots.find((slot) => slot.id === "line47OtherExpenseRow1");
+    const partVAmount = slots.find((slot) => slot.id === "line47OtherExpenseAmount");
+
+    expect(partVItem?.source).toBe("manual");
+    expect(partVAmount).toBeUndefined();
+  });
+
+  it("shows database-backed Part V item and amount boxes when an unmapped expense preview is available", () => {
+    const snapshot = buildFormScheduleCSnapshot({
+      currency: "USD",
+      grossReceiptsCents: null,
+      incomeRecordCount: 0,
+      partVOtherExpenseAmountCents: 8450,
+      partVOtherExpenseCurrency: "USD",
+      partVOtherExpenseLabel: "Studio props",
+      proprietorName: null,
+    });
+    const slots = buildFormScheduleCSlots(snapshot);
+
+    const partVItem = slots.find((slot) => slot.id === "line47OtherExpenseRow1");
+    const partVAmount = slots.find((slot) => slot.id === "line47OtherExpenseAmount");
+
+    expect(partVItem).toMatchObject({
+      previewValue: "Studio props",
+      source: "database",
+    });
+    expect(partVAmount).toMatchObject({
+      previewValue: "$84.50",
+      source: "database",
+    });
+  });
+
+  it("replaces tax-year-specific guidance when a different fiscal year is selected", () => {
+    const slots = buildFormScheduleCSlots(createEmptyFormScheduleCSnapshot(), {
+      taxYear: 2026,
+    });
+
+    const lineH = slots.find((slot) => slot.id === "lineHStartedOrAcquiredCheckbox");
+    const line44a = slots.find((slot) => slot.id === "line44aBusinessMiles");
+
+    expect(lineH?.fieldLabel).toContain("2026");
+    expect(lineH?.fieldLabel).not.toContain("2025");
+    expect(line44a?.instruction).toContain("2026");
+    expect(line44a?.instruction).not.toContain("2025");
   });
 });

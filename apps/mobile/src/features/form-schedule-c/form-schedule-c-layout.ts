@@ -1,5 +1,7 @@
 import scheduleCLayoutJson from "./schedule-c-layout.2025.json";
 
+export const scheduleCTemplateTaxYear = 2025;
+
 export interface ScheduleCLayoutShapeElement {
   height: number;
   left: number;
@@ -88,14 +90,71 @@ export function getScheduleCLayoutPage(pageNumber: 1 | 2): ScheduleCLayoutPage {
   return page;
 }
 
+export function getScheduleCCanvasGroupId(slotId: string) {
+  return scheduleCCanvasGroupIds[slotId] ?? slotId;
+}
+
+const scheduleCCanvasGroupIds: Record<string, string> = {
+};
+
 export const parsedScheduleCHighlights: Record<string, ScheduleCSlotHighlight> = {
-  proprietorName: bboxToHighlight(1, [126.0, 684.25, 488.0, 707.5], { bottom: 2, left: 2, right: 2, top: 2 }),
-  proprietorSsn: bboxToHighlight(1, [492.0, 684.25, 575.75, 707.5], { bottom: 2, left: 2, right: 2, top: 2 }),
-  lineBBusinessCode: bboxToHighlight(1, [445.4, 658.999, 577.0, 685.0], { bottom: 2, left: 2, right: 2, top: 2 }),
-  lineDEin: bboxToHighlight(1, [446.15, 635.748, 576.25, 660.249], { bottom: 2, left: 2, right: 2, top: 2 }),
+  proprietorName: rectToHighlight(1, { height: 12.1, left: 123.0, top: 95.0, width: 322.55 }, {
+    bottom: 0.35,
+    left: 0.6,
+    right: 0.6,
+    top: 0.35,
+  }),
+  proprietorSsn: rectToHighlight(1, { height: 11.5, left: 492.0, top: 95.75, width: 83.75 }, {
+    bottom: 0.5,
+    left: 1,
+    right: 1,
+    top: 0.5,
+  }),
+  lineABusinessActivity: rectToHighlight(1, { height: 11.0, left: 212.0, top: 120.0, width: 234.15 }, {
+    bottom: 0.5,
+    left: 1,
+    right: 1,
+    top: 0.5,
+  }),
+  lineBBusinessCode: rectToHighlight(1, { height: 11.2, left: 446.15, top: 120.736, width: 130.85 }, {
+    bottom: 0.6,
+    left: 1,
+    right: 1,
+    top: 0.6,
+  }),
+  lineCBusinessName: rectToHighlight(1, { height: 10.5, left: 198.0, top: 144.0, width: 248.4 }, {
+    bottom: 0.5,
+    left: 1,
+    right: 1,
+    top: 0.5,
+  }),
+  lineDEin: rectToHighlight(1, { height: 11.7, left: 446.15, top: 144.0, width: 130.1 }, {
+    bottom: 0.6,
+    left: 1,
+    right: 1,
+    top: 0.6,
+  }),
+  lineEAddress: rectToHighlight(1, { height: 10.0, left: 230.15, top: 157.25, width: 216.5 }, {
+    bottom: 0.5,
+    left: 1,
+    right: 1,
+    top: 0.5,
+  }),
+  lineECityStateZip: rectToHighlight(1, { height: 10.0, left: 230.15, top: 169.25, width: 346.1 }, {
+    bottom: 0.5,
+    left: 1,
+    right: 1,
+    top: 0.5,
+  }),
   lineFCashMethod: checkboxHighlight(1, [168.55, 600.751, 177.05, 609.251]),
   lineFAccrualMethod: checkboxHighlight(1, [233.35, 600.751, 241.85, 609.251]),
   lineFOtherMethodCheckbox: checkboxHighlight(1, [305.35, 600.751, 313.85, 609.251]),
+  lineFOtherMethodText: rectToHighlight(1, { height: 10.0, left: 374.15, top: 181.8, width: 202.1 }, {
+    bottom: 0.5,
+    left: 1,
+    right: 1,
+    top: 0.5,
+  }),
   lineGMaterialParticipationYes: checkboxHighlight(1, [514.15, 589.752, 522.65, 598.252]),
   lineGMaterialParticipationNo: checkboxHighlight(1, [550.15, 589.752, 558.65, 598.252]),
   lineHStartedOrAcquiredCheckbox: checkboxHighlight(1, [514.15, 577.75, 522.65, 586.25]),
@@ -136,12 +195,29 @@ export const parsedScheduleCHighlights: Record<string, ScheduleCSlotHighlight> =
   line27aOtherExpenses: amountHighlight(1, [475.2, 252.0, 575.875, 276.001]),
   line27bTotalOtherExpenses: amountHighlight(1, [475.2, 240.001, 575.875, 252.0]),
   line28TotalExpenses: amountHighlight(1, [475.2, 228.001, 575.875, 240.001]),
-  line29TentativeProfitLoss: amountHighlight(1, [475.2, 216.0, 575.875, 228.001]),
-  line30ExpensesForBusinessUseOfHome: amountHighlight(1, [475.2, 156.001, 575.875, 216.0], {
+  line29TentativeProfitLoss: amountHighlight(1, [475.2, 216.0, 575.875, 228.001], {
     bottom: 2,
-    left: 3,
-    right: 3,
+    left: 5,
+    right: 5,
     top: 2,
+  }),
+  line30HomeOfficeAreaA: rectToHighlight(1, { height: 8.8, left: 356.0, top: 596.95, width: 86.8 }, {
+    bottom: 0.35,
+    left: 0.6,
+    right: 0.6,
+    top: 0.35,
+  }),
+  line30HomeOfficeAreaB: rectToHighlight(1, { height: 8.8, left: 241.0, top: 605.75, width: 122.4 }, {
+    bottom: 0.35,
+    left: 0.6,
+    right: 0.6,
+    top: 0.35,
+  }),
+  line30ExpensesForBusinessUseOfHome: rectToHighlight(1, { height: 59.999, left: 475.2, top: 576.0, width: 100.675 }, {
+    bottom: 1.2,
+    left: 3.2,
+    right: 3.2,
+    top: 1.2,
   }),
   line31NetProfitLoss: amountHighlight(1, [475.2, 120.0, 575.875, 156.001], { bottom: 2, left: 3, right: 3, top: 2 }),
   line32aAllInvestmentAtRisk: checkboxHighlight(1, [474.95, 73.749, 483.45, 82.249]),
@@ -159,29 +235,29 @@ export const parsedScheduleCHighlights: Record<string, ScheduleCSlotHighlight> =
   line40AddLines35To39: amountHighlight(2, [468.0, 528.0, 575.875, 552.001]),
   line41InventoryAtEndOfYear: amountHighlight(2, [468.0, 504.0, 575.875, 528.0]),
   line42CostOfGoodsSold: amountHighlight(2, [468.0, 479.999, 575.875, 504.0]),
-  line43VehiclePlacedInServiceDate: textFieldHighlight(2, [374.15, 419.751, 475.45, 432.251], {
-    bottom: 1.5,
-    left: 2,
-    right: 2,
-    top: 1.5,
+  line43VehiclePlacedInServiceDate: rectToHighlight(2, { height: 14.2, left: 379.15, top: 357.45, width: 93.0 }, {
+    bottom: 0.2,
+    left: 0.5,
+    right: 0.5,
+    top: 0.2,
   }),
-  line44aBusinessMiles: textFieldHighlight(2, [100.55, 371.752, 201.85, 384.252], {
-    bottom: 1,
-    left: 2,
-    right: 2,
-    top: 1,
+  line44aBusinessMiles: rectToHighlight(2, { height: 15.6, left: 107.0, top: 404.35, width: 88.0 }, {
+    bottom: 0.25,
+    left: 0.35,
+    right: 0.35,
+    top: 0.25,
   }),
-  line44bCommutingMiles: textFieldHighlight(2, [330.95, 371.752, 425.05, 384.252], {
-    bottom: 1,
-    left: 2,
-    right: 2,
-    top: 1,
+  line44bCommutingMiles: rectToHighlight(2, { height: 15.6, left: 338.2, top: 404.35, width: 81.0 }, {
+    bottom: 0.25,
+    left: 0.35,
+    right: 0.35,
+    top: 0.25,
   }),
-  line44cOtherMiles: textFieldHighlight(2, [438.95, 371.752, 475.45, 384.252], {
-    bottom: 1,
-    left: 1.5,
-    right: 1.5,
-    top: 1,
+  line44cOtherMiles: rectToHighlight(2, { height: 15.6, left: 476.0, top: 404.35, width: 94.0 }, {
+    bottom: 0.25,
+    left: 0.35,
+    right: 0.35,
+    top: 0.25,
   }),
   line45VehicleAvailableForPersonalUseYes: checkboxHighlight(2, [489.35, 349.529, 498.294, 358.473]),
   line45VehicleAvailableForPersonalUseNo: checkboxHighlight(2, [539.75, 349.529, 548.694, 358.473]),
@@ -191,13 +267,42 @@ export const parsedScheduleCHighlights: Record<string, ScheduleCSlotHighlight> =
   line47aEvidenceToSupportDeductionNo: checkboxHighlight(2, [539.75, 301.53, 548.694, 310.474]),
   line47bEvidenceIsWrittenYes: checkboxHighlight(2, [489.35, 277.528, 498.295, 286.473]),
   line47bEvidenceIsWrittenNo: checkboxHighlight(2, [539.75, 277.529, 548.694, 286.473]),
-  line47OtherExpenseRow1: textFieldHighlight(2, [36.25, 239.998, 446.4, 264.001], { bottom: 2, left: 2, right: 2, top: 2 }),
-  line47OtherExpenseRow2: textFieldHighlight(2, [36.25, 215.997, 446.4, 239.998], { bottom: 2, left: 2, right: 2, top: 2 }),
-  line47OtherExpenseRow3: textFieldHighlight(2, [36.25, 191.996, 446.4, 215.997], { bottom: 2, left: 2, right: 2, top: 2 }),
-  line47OtherExpenseRow4: textFieldHighlight(2, [36.25, 167.995, 446.4, 191.996], { bottom: 2, left: 2, right: 2, top: 2 }),
-  line47OtherExpenseRow5: textFieldHighlight(2, [36.25, 143.994, 446.4, 167.995], { bottom: 2, left: 2, right: 2, top: 2 }),
-  line47OtherExpenseRow6: textFieldHighlight(2, [36.25, 119.993, 446.4, 143.994], { bottom: 2, left: 2, right: 2, top: 2 }),
+  line47OtherExpenseRow1: rectToHighlight(2, { height: 24.003, left: 36.25, top: 527.999, width: 425.25 }, {
+    bottom: 1.5,
+    left: 1.5,
+    right: 1.5,
+    top: 1.5,
+  }),
+  line47OtherExpenseAmount: rectToHighlight(2, { height: 24.003, left: 468.0, top: 527.999, width: 107.75 }, {
+    bottom: 1.5,
+    left: 3,
+    right: 3,
+    top: 1.5,
+  }),
   line48TotalOtherExpenses: amountHighlight(2, [468.0, 36.0, 575.75, 47.995]),
+};
+
+export const parsedScheduleCOverlayHighlightOverrides: Record<string, ScheduleCSlotHighlight[]> = {
+  line43VehiclePlacedInServiceDate: [
+    rectToHighlight(2, { height: 14.2, left: 374.15, top: 357.45, width: 29.3 }, {
+      bottom: 0.25,
+      left: 0.45,
+      right: 0.45,
+      top: 0.25,
+    }),
+    rectToHighlight(2, { height: 14.2, left: 402.95, top: 357.45, width: 36.5 }, {
+      bottom: 0.25,
+      left: 0.45,
+      right: 0.45,
+      top: 0.25,
+    }),
+    rectToHighlight(2, { height: 14.2, left: 438.95, top: 357.45, width: 36.5 }, {
+      bottom: 0.25,
+      left: 0.45,
+      right: 0.45,
+      top: 0.25,
+    }),
+  ],
 };
 
 interface BboxInsets {
@@ -219,12 +324,23 @@ function checkboxHighlight(pageNumber: 1 | 2, bbox: [number, number, number, num
   return bboxToHighlight(pageNumber, bbox, { bottom: 0.35, left: 0.35, right: 0.35, top: 0.35 });
 }
 
-function textFieldHighlight(
+function rectToHighlight(
   pageNumber: 1 | 2,
-  bbox: [number, number, number, number],
+  rect: { height: number; left: number; top: number; width: number },
   insets: BboxInsets,
 ) {
-  return bboxToHighlight(pageNumber, bbox, insets);
+  const dimensions = pageDimensionsByNumber.get(pageNumber);
+
+  if (!dimensions) {
+    throw new Error(`Missing Schedule C page dimensions for page ${pageNumber}.`);
+  }
+
+  return {
+    heightPct: roundPct(((rect.height - insets.top - insets.bottom) / dimensions.height) * 100),
+    leftPct: roundPct(((rect.left + insets.left) / dimensions.width) * 100),
+    topPct: roundPct((((rect.top + insets.top) / dimensions.height) * 100)),
+    widthPct: roundPct(((rect.width - insets.left - insets.right) / dimensions.width) * 100),
+  };
 }
 
 function bboxToHighlight(

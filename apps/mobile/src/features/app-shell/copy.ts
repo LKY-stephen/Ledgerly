@@ -58,6 +58,7 @@ export interface AppCopy {
       pageTwoLabel: string;
       sourceLabel: string;
       slotGuideTitle: string;
+      taxYearTitle: string;
       title: string;
       unlockNote: string;
       webPreviewLabel: string;
@@ -242,6 +243,7 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
         pageTwoLabel: "Page 2",
         sourceLabel: "Instruction source",
         slotGuideTitle: "Field guidance",
+        taxYearTitle: "Tax year",
         title: "Schedule C exact-layout preview",
         unlockNote: "Acknowledge the disclaimer to reveal the frontend-drawn Schedule C preview.",
         webPreviewLabel: "Static web preview",
@@ -448,6 +450,7 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
         pageTwoLabel: "第 2 页",
         sourceLabel: "说明来源",
         slotGuideTitle: "栏位说明",
+        taxYearTitle: "税年",
         title: "Schedule C 官方版式预览",
         unlockNote: "先确认免责声明，之后才会显示由前端绘制的 Schedule C 预览。",
         webPreviewLabel: "静态 Web 预览",

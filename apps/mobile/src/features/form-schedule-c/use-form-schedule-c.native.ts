@@ -16,6 +16,16 @@ interface IncomeTotalsRow {
   incomeRecordCount: number;
 }
 
+interface PartVOtherExpenseRow {
+  amountCents: number;
+  businessUseBps: number;
+  category: string | null;
+  currency: string | null;
+  description: string;
+  memo: string | null;
+  subcategory: string | null;
+}
+
 export interface UseFormScheduleCResult {
   error: string | null;
   isLoaded: boolean;
@@ -31,6 +41,9 @@ export function useFormScheduleC(): UseFormScheduleCResult {
       currency: null,
       grossReceiptsCents: null,
       incomeRecordCount: 0,
+      partVOtherExpenseAmountCents: null,
+      partVOtherExpenseCurrency: null,
+      partVOtherExpenseLabel: null,
       proprietorName: null,
     }),
   );
@@ -104,12 +117,66 @@ async function loadFormScheduleCData(
       ) AS incomeRecordCount
     FROM records;`,
   );
+  const partVOtherExpenseRow = await database.getFirstAsync<PartVOtherExpenseRow>(
+    `SELECT
+      description,
+      memo,
+      category_code AS category,
+      subcategory_code AS subcategory,
+      currency,
+      primary_amount_cents AS amountCents,
+      business_use_bps AS businessUseBps
+    FROM records
+    WHERE record_status IN ('posted', 'reconciled')
+      AND record_kind IN ('expense', 'asset_purchase', 'reimbursable_expense')
+      AND COALESCE(tax_line_code, '') = ''
+      AND COALESCE(tax_category_code, '') = ''
+      AND ABS(primary_amount_cents) > 0
+    ORDER BY COALESCE(cash_on, recognition_on) DESC, created_at DESC, record_id DESC
+    LIMIT 1;`,
+  );
+  const partVOtherExpenseCandidateLabel = formatPartVOtherExpenseLabel(partVOtherExpenseRow);
+  const partVOtherExpenseAmountCentsRaw =
+    partVOtherExpenseRow && partVOtherExpenseCandidateLabel
+      ? Math.round(
+          (Math.abs(partVOtherExpenseRow.amountCents) *
+            Math.max(partVOtherExpenseRow.businessUseBps ?? 10000, 0)) /
+            10000,
+        )
+      : null;
+  const partVOtherExpenseAmountCents =
+    partVOtherExpenseAmountCentsRaw && partVOtherExpenseAmountCentsRaw > 0
+      ? partVOtherExpenseAmountCentsRaw
+      : null;
+  const partVOtherExpenseLabel =
+    partVOtherExpenseAmountCents !== null ? partVOtherExpenseCandidateLabel : null;
 
   return buildFormScheduleCSnapshot({
     currency: incomeTotalsRow?.currency ?? null,
     grossReceiptsCents:
       (incomeTotalsRow?.incomeRecordCount ?? 0) > 0 ? incomeTotalsRow?.grossReceiptsCents ?? 0 : null,
     incomeRecordCount: incomeTotalsRow?.incomeRecordCount ?? 0,
+    partVOtherExpenseAmountCents,
+    partVOtherExpenseCurrency: partVOtherExpenseRow?.currency ?? null,
+    partVOtherExpenseLabel,
     proprietorName: proprietorRow?.legalName ?? null,
   });
+}
+
+function formatPartVOtherExpenseLabel(row: PartVOtherExpenseRow | null) {
+  if (!row) {
+    return null;
+  }
+
+  const candidateValues = [row.description, row.memo, row.subcategory, row.category];
+
+  for (const candidate of candidateValues) {
+    const normalizedCandidate = candidate?.trim();
+
+    if (normalizedCandidate) {
+      return normalizedCandidate;
+    }
+  }
+
+  return null;
 }

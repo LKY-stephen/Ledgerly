@@ -9,11 +9,15 @@ export type FormScheduleCSlotSource = "database" | "calculated" | "manual";
 export type FormScheduleCPage = 1 | 2;
 export type FormScheduleCSlotId = string;
 export type FormScheduleCSlotKind = "amount" | "checkbox" | "text";
+export type FormScheduleCTaxYear = number;
 
 export interface FormScheduleCDatabaseSnapshot {
   currency: string | null;
   grossReceiptsCents: number | null;
   incomeRecordCount: number;
+  partVOtherExpenseAmountCents: number | null;
+  partVOtherExpenseCurrency: string | null;
+  partVOtherExpenseLabel: string | null;
   proprietorName: string | null;
 }
 
@@ -263,15 +267,6 @@ const page1ExpenseRightRows = [
     id: "line27bTotalOtherExpenses",
     instruction: "Carry the Part V total to line 27b.",
   },
-] as const;
-
-const page2PartVRows = [
-  { badge: "V1", canvasLabel: "Other expense row 1", fieldLabel: "Part V row 1", id: "line47OtherExpenseRow1" },
-  { badge: "V2", canvasLabel: "Other expense row 2", fieldLabel: "Part V row 2", id: "line47OtherExpenseRow2" },
-  { badge: "V3", canvasLabel: "Other expense row 3", fieldLabel: "Part V row 3", id: "line47OtherExpenseRow3" },
-  { badge: "V4", canvasLabel: "Other expense row 4", fieldLabel: "Part V row 4", id: "line47OtherExpenseRow4" },
-  { badge: "V5", canvasLabel: "Other expense row 5", fieldLabel: "Part V row 5", id: "line47OtherExpenseRow5" },
-  { badge: "V6", canvasLabel: "Other expense row 6", fieldLabel: "Part V row 6", id: "line47OtherExpenseRow6" },
 ] as const;
 
 const baseSlotDefinitions: BaseSlotDefinition[] = [
@@ -967,21 +962,30 @@ const baseSlotDefinitions: BaseSlotDefinition[] = [
     leftPct: 95.2,
     instruction: "Check No if the supporting evidence is not written.",
   }),
-  ...page2PartVRows.map((row, index) =>
-    textSlot({
-      badge: row.badge,
-      canvasLabel: row.canvasLabel,
-      citation: "Official form label only",
-      fieldLabel: row.fieldLabel,
-      id: row.id,
-      page: 2,
-      topPct: 87.1 + index * 3.3,
-      leftPct: 5.5,
-      widthPct: 91.5,
-      instruction:
-        "List one other ordinary and necessary business expense not already included on lines 8 through 27a, together with its amount.",
-    }),
-  ),
+  textSlot({
+    badge: "V item",
+    canvasLabel: "Part V other expense item",
+    citation: "Official form label only",
+    fieldLabel: "Part V. Other expense item",
+    id: "line47OtherExpenseRow1",
+    page: 2,
+    topPct: 87.1,
+    leftPct: 5.5,
+    widthPct: 69.5,
+    instruction:
+      "List one other ordinary and necessary business expense not already included on lines 8 through 27a or line 30.",
+  }),
+  amountSlot({
+    badge: "V amt",
+    canvasLabel: "Part V other expense amount",
+    citation: "Official form label only",
+    fieldLabel: "Part V. Other expense amount",
+    id: "line47OtherExpenseAmount",
+    page: 2,
+    topPct: 87.1,
+    leftPct: 89.0,
+    instruction: "Enter the amount for the Part V other expense item.",
+  }),
   amountSlot({
     badge: "48",
     canvasLabel: "Line 48 total other expenses",
@@ -1000,6 +1004,9 @@ export function createEmptyFormScheduleCSnapshot(): FormScheduleCDatabaseSnapsho
     currency: null,
     grossReceiptsCents: null,
     incomeRecordCount: 0,
+    partVOtherExpenseAmountCents: null,
+    partVOtherExpenseCurrency: null,
+    partVOtherExpenseLabel: null,
     proprietorName: null,
   };
 }
@@ -1008,12 +1015,18 @@ export function buildFormScheduleCSnapshot(input: {
   currency: string | null;
   grossReceiptsCents: number | null;
   incomeRecordCount: number;
+  partVOtherExpenseAmountCents: number | null;
+  partVOtherExpenseCurrency: string | null;
+  partVOtherExpenseLabel: string | null;
   proprietorName: string | null;
 }): FormScheduleCDatabaseSnapshot {
   return {
     currency: input.currency,
     grossReceiptsCents: input.grossReceiptsCents,
     incomeRecordCount: input.incomeRecordCount,
+    partVOtherExpenseAmountCents: input.partVOtherExpenseAmountCents,
+    partVOtherExpenseCurrency: input.partVOtherExpenseCurrency,
+    partVOtherExpenseLabel: input.partVOtherExpenseLabel,
     proprietorName: input.proprietorName,
   };
 }
@@ -1022,29 +1035,36 @@ export function buildFormScheduleCSlots(
   snapshot: FormScheduleCDatabaseSnapshot,
   options?: {
     noInstructionNote?: string;
+    taxYear?: FormScheduleCTaxYear;
   },
 ): FormScheduleCSlotState[] {
   const noInstructionNote = options?.noInstructionNote ?? defaultNoInstructionNote;
+  const taxYear = options?.taxYear ?? getCurrentFormScheduleCTaxYear();
   const currency = snapshot.currency ?? "USD";
   const hasIncomePreview =
     snapshot.grossReceiptsCents !== null && snapshot.incomeRecordCount > 0;
+  const hasPartVOtherExpensePreview =
+    snapshot.partVOtherExpenseLabel !== null && snapshot.partVOtherExpenseAmountCents !== null;
 
-  return baseSlotDefinitions.map((definition) => {
-    const normalizedDefinition = withInstructionFallback(withParsedHighlight(definition), noInstructionNote);
+  return baseSlotDefinitions.flatMap<FormScheduleCSlotState>((definition): FormScheduleCSlotState[] => {
+    const normalizedDefinition = withTaxYearText(
+      withInstructionFallback(withParsedHighlight(definition), noInstructionNote),
+      taxYear,
+    );
 
     if (definition.id === "proprietorName") {
-      return {
+      return [{
         ...normalizedDefinition,
         previewValue: snapshot.proprietorName,
         source: snapshot.proprietorName ? "database" : "manual",
         sourceNote: snapshot.proprietorName
           ? "Preview comes from entities.legal_name."
           : "No proprietor legal name exists in the local entity table.",
-      };
+      }];
     }
 
     if (definition.id === "line1GrossReceiptsOrSales") {
-      return {
+      return [{
         ...normalizedDefinition,
         previewValue: hasIncomePreview
           ? formatCurrencyLabel(snapshot.grossReceiptsCents ?? 0, currency)
@@ -1053,25 +1073,57 @@ export function buildFormScheduleCSlots(
         sourceNote: hasIncomePreview
           ? "Preview is derived from posted or reconciled income-like record gross totals."
           : "No posted or reconciled income-like record totals are available for line 1 yet.",
-      };
+      }];
+    }
+
+    if (definition.id === "line47OtherExpenseRow1") {
+      return [{
+        ...normalizedDefinition,
+        previewValue: snapshot.partVOtherExpenseLabel,
+        source: hasPartVOtherExpensePreview ? "database" : "manual",
+        sourceNote: hasPartVOtherExpensePreview
+          ? "Preview comes from the most recent posted expense-like record with no explicit Schedule C line mapping. Review whether it belongs in Part V."
+          : "No unmapped expense-like record is available locally, so this Part V item stays manual.",
+      }];
+    }
+
+    if (definition.id === "line47OtherExpenseAmount") {
+      if (!hasPartVOtherExpensePreview) {
+        return [];
+      }
+
+      return [{
+        ...normalizedDefinition,
+        previewValue: formatCurrencyLabel(
+          snapshot.partVOtherExpenseAmountCents ?? 0,
+          snapshot.partVOtherExpenseCurrency ?? currency,
+        ),
+        source: "database",
+        sourceNote:
+          "Preview amount comes from the same unmapped expense-like record shown for the Part V item. Review whether it belongs in Part V before filing.",
+      }];
     }
 
     if (calculatedSlotIds.has(definition.id)) {
-      return {
+      return [{
         ...normalizedDefinition,
         previewValue: null,
         source: "calculated",
         sourceNote: getCalculatedSourceNote(definition.id),
-      };
+      }];
     }
 
-    return {
+    return [{
       ...normalizedDefinition,
       previewValue: null,
       source: "manual",
       sourceNote: getManualSourceNote(definition),
-    };
+    }];
   });
+}
+
+export function getCurrentFormScheduleCTaxYear(): FormScheduleCTaxYear {
+  return new Date().getFullYear();
 }
 
 function withParsedHighlight(definition: BaseSlotDefinition): BaseSlotDefinition {
@@ -1181,6 +1233,21 @@ function withInstructionFallback(
   return definition;
 }
 
+function withTaxYearText(
+  definition: BaseSlotDefinition,
+  taxYear: FormScheduleCTaxYear,
+): BaseSlotDefinition {
+  return {
+    ...definition,
+    fieldLabel: replaceScheduleCTaxYear(definition.fieldLabel, taxYear),
+    instruction: replaceScheduleCTaxYear(definition.instruction, taxYear),
+  };
+}
+
+function replaceScheduleCTaxYear(value: string, taxYear: FormScheduleCTaxYear) {
+  return value.replaceAll(/\b2025\b/g, String(taxYear));
+}
+
 function getCalculatedSourceNote(slotId: FormScheduleCSlotId): string {
   switch (slotId) {
     case "line3Subtract2":
@@ -1213,8 +1280,8 @@ function getManualSourceNote(definition: BaseSlotDefinition): string {
     return "Current local schema does not store this filing-control checkbox answer.";
   }
 
-  if (definition.id.startsWith("line47OtherExpenseRow")) {
-    return "Current local schema does not itemize Part V other-expense rows automatically.";
+  if (definition.id === "line47OtherExpenseRow1") {
+    return "Current local schema does not identify a specific Part V item automatically, so use this box for an additional expense not already covered elsewhere.";
   }
 
   if (
@@ -1231,7 +1298,8 @@ function getManualSourceNote(definition: BaseSlotDefinition): string {
     definition.id === "line44bCommutingMiles" ||
     definition.id === "line44cOtherMiles" ||
     definition.id === "line30HomeOfficeAreaA" ||
-    definition.id === "line30HomeOfficeAreaB"
+    definition.id === "line30HomeOfficeAreaB" ||
+    definition.id === "line47OtherExpenseAmount"
   ) {
     return "Current local schema does not store this taxpayer, business-detail, or substantiation field.";
   }
