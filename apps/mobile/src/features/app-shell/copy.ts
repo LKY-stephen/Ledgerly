@@ -213,8 +213,8 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
       },
       manualBadge: "Manual input required",
       summary:
-        "This tab stays intentionally lightweight in the local-first phase while still giving the product room to grow.",
-      title: "A calm radar for creator finance decisions.",
+        "Scan the latest operating signals, then open a detail page when you want the full context.",
+      title: "Discover",
     },
     home: {
       cashTitle: "Cash confidence",

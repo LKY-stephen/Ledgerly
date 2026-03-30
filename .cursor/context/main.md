@@ -2,9 +2,9 @@
 
 ## Version
 
-- version: 0.3.2
+- version: 0.3.3
 - updated_at: 2026-03-27
-- scope: mobile shell now adds svg tab icons, subtle tab motion, and icon-led home metrics on top of the current login flow
+- scope: mobile shell now adds a local-first Discover news feed with refresh, load-more, and detail pages on top of the current login and tab shell
 
 ## Active Decisions
 
@@ -17,7 +17,7 @@
 
 ## Implemented Structure
 
-- `apps/mobile`: Expo Router app with login gate, animated svg tab icons, theme and locale switching, and icon-led home metrics backed by local bootstrap status.
+- `apps/mobile`: Expo Router app with login gate, animated svg tab icons, theme and locale switching, icon-led home metrics, and a local-first Discover news feed with detail routes.
 - `packages/storage`: storage contracts, path helpers, and contract tests.
 - `packages/ui`: React Native presentation primitives.
 - `packages/schemas`: creator product modules, platforms, and workflow principles.
@@ -34,7 +34,7 @@
 
 ## Pending Follow-Ups
 
-- Add real feature slices on top of the local SQLite and file-vault contracts inside Ledger and Discover.
+- Add deeper feature slices on top of the local SQLite and file-vault contracts inside Ledger beyond the current Discover news feed.
 - Decide whether Apple sign-in should later sync to a backend account once a future PRD introduces one.
 - Only reintroduce backend or sync infrastructure through a new PRD.
 

@@ -5,11 +5,11 @@
 ## 存储与契约影响
 
 - **结构化 DB / 文件仓**：初始化阶段多为 `需改契约`（首版 storage/contracts 与文档）
-- **须同步的工件**（本需求目标）：  
-  - [ ] `packages/storage/src/contracts.ts`  
-  - [ ] `docs/contracts/`  
-  - [ ] `packages/schemas`  
-  - [ ] 自动化测试  
+- **须同步的工件**（本需求目标）：
+  - [ ] `packages/storage/src/contracts.ts`
+  - [ ] `docs/contracts/`
+  - [ ] `packages/schemas`
+  - [ ] 自动化测试
 - **说明**：以仓库当前 `AGENTS.md` 与 `.cursor/context/main.md`（及已有 `*_context.md` 归档）为准建立基线。
 
 ## 需求描述

@@ -5,6 +5,9 @@ export type AppIconName =
   | "ledger"
   | "discover"
   | "profile"
+  | "news"
+  | "time"
+  | "back"
   | "modules"
   | "platforms"
   | "bootstrap"
@@ -60,6 +63,29 @@ export function AppIcon({ color, name, size = 22, strokeWidth = 1.8 }: AppIconPr
         <>
           <Circle {...commonStrokeProps} cx="12" cy="8.2" r="3.2" />
           <Path {...commonStrokeProps} d="M5.5 19c1.4-3 4-4.5 6.5-4.5s5.1 1.5 6.5 4.5" />
+        </>
+      ) : null}
+
+      {name === "news" ? (
+        <>
+          <Rect {...commonStrokeProps} height="14" rx="2" width="14.5" x="4.7" y="5" />
+          <Path {...commonStrokeProps} d="M8 9h8" />
+          <Path {...commonStrokeProps} d="M8 12.5h8" />
+          <Path {...commonStrokeProps} d="M8 16h5.5" />
+          <Circle {...commonStrokeProps} cx="17.2" cy="16.1" r="0.4" />
+        </>
+      ) : null}
+
+      {name === "time" ? (
+        <>
+          <Circle {...commonStrokeProps} cx="12" cy="12" r="7" />
+          <Path {...commonStrokeProps} d="M12 8.2v4.1l2.7 1.8" />
+        </>
+      ) : null}
+
+      {name === "back" ? (
+        <>
+          <Path {...commonStrokeProps} d="m14.8 6.5-5.6 5.5 5.6 5.5" />
         </>
       ) : null}
 
