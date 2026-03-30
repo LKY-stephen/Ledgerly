@@ -11,7 +11,7 @@
 
 1. Start the Expo app and confirm the dashboard renders product modules, supported platforms, and local storage architecture cards.
 2. Verify the local bootstrap reports SQLite and file-vault readiness without a backend.
-3. Confirm the storage contract package matches the sections shown by the mobile app.
+3. Confirm the storage contract package matches the sections shown by the mobile app, including version-2 table, view, and vault-collection counts.
 
 ## Coverage Expectations
 

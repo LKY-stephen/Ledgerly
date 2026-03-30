@@ -34,11 +34,15 @@ pnpm smoke
    - 发现
    - 我的
 4. 确认四个 Tab 均有清晰图标，切换时当前图标会出现轻微选中反馈。
-5. 在首页确认关键数据以图标化卡片呈现，且数值来自真实现有数据：
+5. 在首页确认 dashboard 壳层正常渲染，并能看到：
+   - product modules
+   - supported creator platforms
+   - local persistence architecture cards
+6. 确认本地 bootstrap 区域明确反映 SQLite 与 version-2 file-vault 的就绪状态；关键数据以图标化卡片呈现，且数值来自真实现有数据：
    - modules
    - supported platforms
    - bootstrap / storage related counts
-6. 在「我的」中切换主题与语言，确认 Tab 图标与首页数据块仍清晰可读。
-7. 在「我的」中执行退出登录，确认应用回到登录页。
-8. 若在支持的 iOS 设备上，验证 Apple 登录可进入主壳层；若当前环境不支持，确认会优雅提示并允许游客继续。
-9. 运行 `pnpm contract:check`，确认本地存储与设备状态契约测试通过。
+7. 在「我的」中切换主题与语言，确认 Tab 图标与首页数据块仍清晰可读。
+8. 在「我的」中执行退出登录，确认应用回到登录页。
+9. 若在支持的 iOS 设备上，验证 Apple 登录可进入主壳层；若当前环境不支持，确认会优雅提示并允许游客继续。
+10. 运行 `pnpm contract:check`，确认本地存储与设备状态契约测试通过。

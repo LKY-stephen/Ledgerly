@@ -52,6 +52,90 @@ pnpm smoke
 - `packages/schemas`: 创作者领域模块、平台与工作流常量
 - `docs/contracts`: 本地存储与设备偏好契约说明
 - `.cursor/harness`: 按 workflow 留存的 Harness / Testor / Dev 记录
+```
+
+## Run The Database Hooks Demo
+
+The interactive demo is part of the mobile app home screen.
+
+1. Install dependencies with `pnpm install`.
+2. Start a native build with one of:
+   `pnpm --filter @creator-cfo/mobile ios`
+   `pnpm --filter @creator-cfo/mobile android`
+   `pnpm --filter @creator-cfo/mobile start`
+3. Open the home screen and scroll to the `CRUD records through hooks` section.
+4. Use the buttons in this order if you want to see the full flow:
+   `Create record` adds another deterministic demo `records` row each time you press it.
+   Tap any demo record in the list to make it the selected record.
+   Use the `Description` or `Status` chips to choose which field the update action will mutate.
+   `Update selected field` changes only that field on the selected row using real `UPDATE` SQL.
+   `Delete selected record` removes the currently selected row.
+   `Refresh` rereads the current demo rows plus the selected record's `record_double_entry_lines_v` rows.
+
+Notes:
+The live CRUD flow is native-focused because it uses `SQLiteProvider` and `useSQLiteContext` against the local Expo SQLite database.
+`pnpm --filter @creator-cfo/mobile web` still shows the demo section, but as an explanatory fallback rather than a live SQLite interaction surface.
+
+## Directory Layout
+
+```text
+.
+|-- AGENTS.md
+|-- CLAUDE.md
+|-- README.md
+|-- apps
+|   `-- mobile
+|       |-- app
+|       |   |-- _layout.tsx
+|       |   `-- index.tsx
+|       |-- src
+|       |   |-- features/home
+|       |   |   |-- home-screen.tsx
+|       |   |   `-- sections.ts
+|       |   `-- storage
+|       |       |-- bootstrap.ts
+|       |       `-- status.ts
+|       `-- tests
+|           `-- sections.test.ts
+|-- docs
+|   |-- adr/0001-monorepo-foundation.md
+|   |-- architecture.md
+|   |-- contracts
+|   |   `-- README.md
+|   |-- development.md
+|   `-- testing.md
+|-- packages
+|   |-- schemas
+|   |   |-- package.json
+|   |   |-- README.md
+|   |   `-- src/index.ts
+|   |-- storage
+|   |   |-- package.json
+|   |   |-- README.md
+|   |   |-- src
+|   |   |   |-- contracts.ts
+|   |   |   `-- index.ts
+|   |   `-- tests
+|   |       `-- contracts.test.ts
+|   `-- ui
+|       |-- package.json
+|       |-- README.md
+|       `-- src
+|           |-- index.ts
+|           |-- section-card.tsx
+|           |-- stat-pill.tsx
+|           `-- tokens.ts
+|-- tests
+|   |-- README.md
+|   `-- smoke/README.md
+|-- .github/workflows/ci.yml
+|-- .pre-commit-config.yaml
+|-- eslint.config.mjs
+|-- package.json
+|-- pnpm-workspace.yaml
+|-- tsconfig.base.json
+`-- turbo.json
+```
 
 ## Working Agreements
 
@@ -73,3 +157,13 @@ pnpm smoke
 - 明暗主题 token 与中英双语文案体系
 - Apple 登录本地会话摘要与游客模式
 - 更新后的契约文档、测试与 smoke 指引
+- Structured database: `expo-sqlite` stores records-first creator finance data with supporting entities, accounts, counterparties, evidence metadata, and derived accounting views.
+- File vault: `expo-file-system` stores canonical evidence objects, manifests, derived previews, invoice exports, and tax-support bundles directly on device.
+- Contracts: storage tables, views, migration SQL, helper APIs, and vault directory rules are versioned inside the repo and covered by tests.
+
+## What Is Implemented In This Adjustment
+
+- An Expo Router mobile shell with a dashboard that reflects the product direction.
+- A local storage bootstrap path that provisions SQLite tables and document-vault directories on device.
+- Shared schema, UI, and storage packages aligned to a mobile-first monorepo.
+- Updated CI, pre-commit hooks, contract docs, and context tracking for the RN baseline.

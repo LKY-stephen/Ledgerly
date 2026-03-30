@@ -1,0 +1,5237 @@
+{
+  "sourcePdf": "f1040sc.pdf",
+  "title": "2025 Schedule C (Form 1040)",
+  "numberOfPages": 2,
+  "pages": [
+    {
+      "pageNumber": 1,
+      "width": 612.0,
+      "height": 792.0,
+      "elements": [
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 121.9,
+          "top": 35.75,
+          "width": 1.0,
+          "height": 48.749
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 489.1,
+          "top": 35.75,
+          "width": 1.0,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 489.1,
+          "top": 47.749,
+          "width": 1.0,
+          "height": 36.5
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 489.1,
+          "top": 47.749,
+          "width": 87.15,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 122.15,
+          "top": 83.499,
+          "width": 367.7,
+          "height": 1.0
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 446.15,
+          "top": 83.499,
+          "width": 0.5,
+          "height": 25.501
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 35.75,
+          "top": 83.502,
+          "width": 86.9,
+          "height": 1.0
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 489.1,
+          "top": 83.502,
+          "width": 87.15,
+          "height": 1.0
+        },
+        {
+          "type": "shape",
+          "orientation": "box",
+          "left": 445.4,
+          "top": 107.0,
+          "width": 131.6,
+          "height": 26.001
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 35.75,
+          "top": 107.75,
+          "width": 410.9,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 474.95,
+          "top": 120.736,
+          "width": 0.5,
+          "height": 11.2
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 489.35,
+          "top": 120.736,
+          "width": 0.5,
+          "height": 11.2
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 503.75,
+          "top": 120.736,
+          "width": 0.5,
+          "height": 11.2
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 518.15,
+          "top": 120.736,
+          "width": 0.5,
+          "height": 11.2
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 532.55,
+          "top": 120.736,
+          "width": 0.5,
+          "height": 11.2
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 35.75,
+          "top": 131.751,
+          "width": 411.15,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 446.15,
+          "top": 131.751,
+          "width": 0.5,
+          "height": 24.501
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 460.55,
+          "top": 144.0,
+          "width": 0.5,
+          "height": 11.7
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 489.35,
+          "top": 144.0,
+          "width": 0.5,
+          "height": 11.7
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 503.75,
+          "top": 144.0,
+          "width": 0.5,
+          "height": 11.7
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 518.15,
+          "top": 144.0,
+          "width": 0.5,
+          "height": 11.7
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 532.55,
+          "top": 144.0,
+          "width": 0.5,
+          "height": 11.7
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 546.55,
+          "top": 144.0,
+          "width": 0.5,
+          "height": 11.7
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 560.95,
+          "top": 144.0,
+          "width": 0.5,
+          "height": 11.7
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 575.35,
+          "top": 144.0,
+          "width": 0.5,
+          "height": 11.7
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 474.95,
+          "top": 145.199,
+          "width": 0.5,
+          "height": 9.0
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 35.75,
+          "top": 155.752,
+          "width": 410.9,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 446.15,
+          "top": 155.752,
+          "width": 130.1,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 230.15,
+          "top": 167.748,
+          "width": 346.1,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 35.75,
+          "top": 179.75,
+          "width": 540.5,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 374.15,
+          "top": 191.749,
+          "width": 202.1,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 35.75,
+          "top": 239.626,
+          "width": 540.5,
+          "height": 0.75
+        },
+        {
+          "type": "shape",
+          "orientation": "box",
+          "left": 36.0,
+          "top": 240.001,
+          "width": 36.0,
+          "height": 11.999
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 453.35,
+          "top": 251.75,
+          "width": 0.5,
+          "height": 24.501
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 474.95,
+          "top": 251.75,
+          "width": 0.5,
+          "height": 24.501
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 474.95,
+          "top": 275.748,
+          "width": 101.3,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 453.35,
+          "top": 275.751,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 453.35,
+          "top": 275.751,
+          "width": 22.1,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 474.95,
+          "top": 275.751,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 453.35,
+          "top": 287.75,
+          "width": 22.1,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 453.35,
+          "top": 287.75,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 474.95,
+          "top": 287.75,
+          "width": 101.3,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 474.95,
+          "top": 287.75,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 453.35,
+          "top": 299.749,
+          "width": 22.1,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 453.35,
+          "top": 299.749,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 474.95,
+          "top": 299.749,
+          "width": 101.3,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 474.95,
+          "top": 299.749,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 453.35,
+          "top": 311.748,
+          "width": 22.1,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 474.95,
+          "top": 311.748,
+          "width": 101.3,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 453.35,
+          "top": 311.751,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 474.95,
+          "top": 311.751,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 453.35,
+          "top": 323.75,
+          "width": 22.1,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 453.35,
+          "top": 323.75,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 474.95,
+          "top": 323.75,
+          "width": 101.3,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 474.95,
+          "top": 323.75,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 453.35,
+          "top": 335.749,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 453.35,
+          "top": 335.749,
+          "width": 22.1,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 474.95,
+          "top": 335.749,
+          "width": 101.3,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 474.95,
+          "top": 335.749,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "box",
+          "left": 36.0,
+          "top": 348.001,
+          "width": 36.0,
+          "height": 11.999
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 172.55,
+          "top": 359.75,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 194.15,
+          "top": 359.75,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 294.95,
+          "top": 359.75,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 453.35,
+          "top": 359.75,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 474.95,
+          "top": 359.75,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 172.55,
+          "top": 371.749,
+          "width": 0.5,
+          "height": 24.501
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 172.55,
+          "top": 371.749,
+          "width": 22.1,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 194.15,
+          "top": 371.749,
+          "width": 101.3,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 194.15,
+          "top": 371.749,
+          "width": 0.5,
+          "height": 24.501
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 294.95,
+          "top": 371.749,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 453.35,
+          "top": 371.749,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 453.35,
+          "top": 371.749,
+          "width": 22.1,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 474.95,
+          "top": 371.749,
+          "width": 101.3,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 474.95,
+          "top": 371.749,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 474.95,
+          "top": 383.748,
+          "width": 101.3,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 294.95,
+          "top": 383.751,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 453.35,
+          "top": 383.751,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 453.35,
+          "top": 383.751,
+          "width": 22.1,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 474.95,
+          "top": 383.751,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "box",
+          "left": 453.6,
+          "top": 384.001,
+          "width": 21.6,
+          "height": 11.999
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 172.55,
+          "top": 395.75,
+          "width": 22.1,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 172.55,
+          "top": 395.75,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 194.15,
+          "top": 395.75,
+          "width": 101.3,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 194.15,
+          "top": 395.75,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 294.95,
+          "top": 395.75,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 453.35,
+          "top": 395.75,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 474.95,
+          "top": 395.75,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 172.55,
+          "top": 407.749,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 172.55,
+          "top": 407.749,
+          "width": 22.1,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 194.15,
+          "top": 407.749,
+          "width": 101.3,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 194.15,
+          "top": 407.749,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 294.95,
+          "top": 407.749,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 453.35,
+          "top": 407.749,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 453.35,
+          "top": 407.749,
+          "width": 22.1,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 474.95,
+          "top": 407.749,
+          "width": 101.3,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 474.95,
+          "top": 407.749,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 172.55,
+          "top": 419.748,
+          "width": 22.1,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 194.15,
+          "top": 419.748,
+          "width": 101.3,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 453.35,
+          "top": 419.748,
+          "width": 22.1,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 474.95,
+          "top": 419.748,
+          "width": 101.3,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 172.55,
+          "top": 419.751,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 194.15,
+          "top": 419.751,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 294.95,
+          "top": 419.751,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 453.35,
+          "top": 419.751,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 474.95,
+          "top": 419.751,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 172.55,
+          "top": 431.75,
+          "width": 0.5,
+          "height": 36.5
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 172.55,
+          "top": 431.75,
+          "width": 22.1,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 194.15,
+          "top": 431.75,
+          "width": 101.3,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 194.15,
+          "top": 431.75,
+          "width": 0.5,
+          "height": 36.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 294.95,
+          "top": 431.75,
+          "width": 0.5,
+          "height": 24.501
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 453.35,
+          "top": 431.75,
+          "width": 22.1,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 453.35,
+          "top": 431.75,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 474.95,
+          "top": 431.75,
+          "width": 101.3,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 474.95,
+          "top": 431.75,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 453.35,
+          "top": 443.749,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 453.35,
+          "top": 443.749,
+          "width": 22.1,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 474.95,
+          "top": 443.749,
+          "width": 101.3,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 474.95,
+          "top": 443.749,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 474.95,
+          "top": 455.748,
+          "width": 101.3,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 294.95,
+          "top": 455.751,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 453.35,
+          "top": 455.751,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 453.35,
+          "top": 455.751,
+          "width": 22.1,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 474.95,
+          "top": 455.751,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "box",
+          "left": 453.6,
+          "top": 456.001,
+          "width": 21.6,
+          "height": 11.999
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 172.55,
+          "top": 467.75,
+          "width": 0.5,
+          "height": 24.501
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 172.55,
+          "top": 467.75,
+          "width": 22.1,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 194.15,
+          "top": 467.75,
+          "width": 101.3,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 194.15,
+          "top": 467.75,
+          "width": 0.5,
+          "height": 24.501
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 294.95,
+          "top": 467.75,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 453.35,
+          "top": 467.75,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 474.95,
+          "top": 467.75,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 194.15,
+          "top": 479.749,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 294.95,
+          "top": 479.749,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 453.35,
+          "top": 479.749,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 453.35,
+          "top": 479.749,
+          "width": 22.1,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 474.95,
+          "top": 479.749,
+          "width": 101.3,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 474.95,
+          "top": 479.749,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 194.15,
+          "top": 491.748,
+          "width": 101.3,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 453.35,
+          "top": 491.748,
+          "width": 22.1,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 474.95,
+          "top": 491.748,
+          "width": 101.3,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 172.55,
+          "top": 491.751,
+          "width": 22.1,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 172.55,
+          "top": 491.751,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 194.15,
+          "top": 491.751,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 294.95,
+          "top": 491.751,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 453.35,
+          "top": 491.751,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 474.95,
+          "top": 491.751,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 172.55,
+          "top": 503.75,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 172.55,
+          "top": 503.75,
+          "width": 22.1,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 194.15,
+          "top": 503.75,
+          "width": 101.3,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 194.15,
+          "top": 503.75,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 294.95,
+          "top": 503.75,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 453.35,
+          "top": 503.75,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 453.35,
+          "top": 503.75,
+          "width": 22.1,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 474.95,
+          "top": 503.75,
+          "width": 101.3,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 474.95,
+          "top": 503.75,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "box",
+          "left": 172.8,
+          "top": 504.0,
+          "width": 21.6,
+          "height": 11.999
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 172.55,
+          "top": 515.749,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 194.15,
+          "top": 515.749,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 294.95,
+          "top": 515.749,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 453.35,
+          "top": 515.749,
+          "width": 0.5,
+          "height": 24.501
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 453.35,
+          "top": 515.749,
+          "width": 22.1,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 474.95,
+          "top": 515.749,
+          "width": 101.3,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 474.95,
+          "top": 515.749,
+          "width": 0.5,
+          "height": 24.501
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 172.55,
+          "top": 527.748,
+          "width": 22.1,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 194.15,
+          "top": 527.748,
+          "width": 101.3,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 172.55,
+          "top": 527.751,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 194.15,
+          "top": 527.751,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 294.95,
+          "top": 527.751,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 172.55,
+          "top": 539.75,
+          "width": 22.1,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 172.55,
+          "top": 539.75,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 194.15,
+          "top": 539.75,
+          "width": 101.3,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 194.15,
+          "top": 539.75,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 294.95,
+          "top": 539.75,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 453.35,
+          "top": 539.75,
+          "width": 22.1,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 453.35,
+          "top": 539.75,
+          "width": 0.5,
+          "height": 12.624
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 474.95,
+          "top": 539.75,
+          "width": 101.3,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 474.95,
+          "top": 539.75,
+          "width": 0.5,
+          "height": 12.624
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 36.0,
+          "top": 551.624,
+          "width": 417.6,
+          "height": 0.75
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 453.35,
+          "top": 551.624,
+          "width": 22.1,
+          "height": 0.75
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 474.95,
+          "top": 551.624,
+          "width": 101.3,
+          "height": 0.75
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 453.35,
+          "top": 551.749,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 474.95,
+          "top": 551.749,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 453.35,
+          "top": 563.748,
+          "width": 22.1,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 474.95,
+          "top": 563.748,
+          "width": 101.3,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 453.35,
+          "top": 563.751,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 474.95,
+          "top": 563.751,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 453.35,
+          "top": 575.75,
+          "width": 0.5,
+          "height": 60.501
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 453.35,
+          "top": 575.75,
+          "width": 22.1,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 474.95,
+          "top": 575.75,
+          "width": 101.3,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 474.95,
+          "top": 575.75,
+          "width": 0.5,
+          "height": 60.501
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 352.55,
+          "top": 611.75,
+          "width": 94.1,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 237.35,
+          "top": 623.749,
+          "width": 130.1,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 474.95,
+          "top": 635.748,
+          "width": 101.3,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 453.35,
+          "top": 635.751,
+          "width": 0.5,
+          "height": 36.5
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 453.35,
+          "top": 635.751,
+          "width": 22.1,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 474.95,
+          "top": 635.751,
+          "width": 0.5,
+          "height": 36.5
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 35.75,
+          "top": 743.501,
+          "width": 259.7,
+          "height": 1.0
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 294.95,
+          "top": 743.501,
+          "width": 130.1,
+          "height": 1.0
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 424.55,
+          "top": 743.501,
+          "width": 151.7,
+          "height": 1.0
+        },
+        {
+          "type": "cell",
+          "left": 168.8,
+          "top": 182.999,
+          "width": 8.0,
+          "height": 8.0,
+          "rowNumber": 1,
+          "columnNumber": 1
+        },
+        {
+          "type": "cell",
+          "left": 233.6,
+          "top": 182.999,
+          "width": 8.0,
+          "height": 8.0,
+          "rowNumber": 1,
+          "columnNumber": 1
+        },
+        {
+          "type": "cell",
+          "left": 305.6,
+          "top": 182.999,
+          "width": 8.0,
+          "height": 8.0,
+          "rowNumber": 1,
+          "columnNumber": 1
+        },
+        {
+          "type": "cell",
+          "left": 514.4,
+          "top": 193.998,
+          "width": 8.0,
+          "height": 8.0,
+          "rowNumber": 1,
+          "columnNumber": 1
+        },
+        {
+          "type": "cell",
+          "left": 550.4,
+          "top": 193.998,
+          "width": 8.0,
+          "height": 8.0,
+          "rowNumber": 1,
+          "columnNumber": 1
+        },
+        {
+          "type": "cell",
+          "left": 514.4,
+          "top": 206.0,
+          "width": 8.0,
+          "height": 8.0,
+          "rowNumber": 1,
+          "columnNumber": 1
+        },
+        {
+          "type": "cell",
+          "left": 514.4,
+          "top": 217.999,
+          "width": 8.0,
+          "height": 8.0,
+          "rowNumber": 1,
+          "columnNumber": 1
+        },
+        {
+          "type": "cell",
+          "left": 550.4,
+          "top": 217.999,
+          "width": 8.0,
+          "height": 8.0,
+          "rowNumber": 1,
+          "columnNumber": 1
+        },
+        {
+          "type": "cell",
+          "left": 514.4,
+          "top": 229.998,
+          "width": 8.0,
+          "height": 8.0,
+          "rowNumber": 1,
+          "columnNumber": 1
+        },
+        {
+          "type": "cell",
+          "left": 550.4,
+          "top": 229.998,
+          "width": 8.0,
+          "height": 8.0,
+          "rowNumber": 1,
+          "columnNumber": 1
+        },
+        {
+          "type": "cell",
+          "left": 36.125,
+          "top": 252.0,
+          "width": 417.475,
+          "height": 96.001,
+          "rowNumber": 1,
+          "columnNumber": 1
+        },
+        {
+          "type": "cell",
+          "left": 453.6,
+          "top": 252.0,
+          "width": 21.6,
+          "height": 23.999,
+          "rowNumber": 1,
+          "columnNumber": 2
+        },
+        {
+          "type": "cell",
+          "left": 475.2,
+          "top": 252.0,
+          "width": 100.675,
+          "height": 23.999,
+          "rowNumber": 1,
+          "columnNumber": 3
+        },
+        {
+          "type": "cell",
+          "left": 433.999,
+          "top": 265.998,
+          "width": 8.0,
+          "height": 8.0,
+          "rowNumber": 1,
+          "columnNumber": 1
+        },
+        {
+          "type": "cell",
+          "left": 453.6,
+          "top": 275.999,
+          "width": 21.6,
+          "height": 12.001,
+          "rowNumber": 2,
+          "columnNumber": 2
+        },
+        {
+          "type": "cell",
+          "left": 475.2,
+          "top": 275.999,
+          "width": 100.675,
+          "height": 12.001,
+          "rowNumber": 2,
+          "columnNumber": 3
+        },
+        {
+          "type": "cell",
+          "left": 453.6,
+          "top": 288.0,
+          "width": 21.6,
+          "height": 11.999,
+          "rowNumber": 3,
+          "columnNumber": 2
+        },
+        {
+          "type": "cell",
+          "left": 475.2,
+          "top": 288.0,
+          "width": 100.675,
+          "height": 11.999,
+          "rowNumber": 3,
+          "columnNumber": 3
+        },
+        {
+          "type": "cell",
+          "left": 453.6,
+          "top": 299.999,
+          "width": 21.6,
+          "height": 12.0,
+          "rowNumber": 4,
+          "columnNumber": 2
+        },
+        {
+          "type": "cell",
+          "left": 475.2,
+          "top": 299.999,
+          "width": 100.675,
+          "height": 12.0,
+          "rowNumber": 4,
+          "columnNumber": 3
+        },
+        {
+          "type": "cell",
+          "left": 453.6,
+          "top": 311.999,
+          "width": 21.6,
+          "height": 12.001,
+          "rowNumber": 5,
+          "columnNumber": 2
+        },
+        {
+          "type": "cell",
+          "left": 475.2,
+          "top": 311.999,
+          "width": 100.675,
+          "height": 12.001,
+          "rowNumber": 5,
+          "columnNumber": 3
+        },
+        {
+          "type": "cell",
+          "left": 453.6,
+          "top": 324.0,
+          "width": 21.6,
+          "height": 11.999,
+          "rowNumber": 6,
+          "columnNumber": 2
+        },
+        {
+          "type": "cell",
+          "left": 475.2,
+          "top": 324.0,
+          "width": 100.675,
+          "height": 11.999,
+          "rowNumber": 6,
+          "columnNumber": 3
+        },
+        {
+          "type": "cell",
+          "left": 453.6,
+          "top": 335.999,
+          "width": 21.6,
+          "height": 12.002,
+          "rowNumber": 7,
+          "columnNumber": 2
+        },
+        {
+          "type": "cell",
+          "left": 475.2,
+          "top": 335.999,
+          "width": 100.675,
+          "height": 12.002,
+          "rowNumber": 7,
+          "columnNumber": 3
+        },
+        {
+          "type": "cell",
+          "left": 36.25,
+          "top": 360.0,
+          "width": 136.55,
+          "height": 191.999,
+          "rowNumber": 1,
+          "columnNumber": 1
+        },
+        {
+          "type": "cell",
+          "left": 172.8,
+          "top": 360.0,
+          "width": 21.6,
+          "height": 11.999,
+          "rowNumber": 1,
+          "columnNumber": 2
+        },
+        {
+          "type": "cell",
+          "left": 194.4,
+          "top": 360.0,
+          "width": 100.8,
+          "height": 11.999,
+          "rowNumber": 1,
+          "columnNumber": 3
+        },
+        {
+          "type": "cell",
+          "left": 295.2,
+          "top": 360.0,
+          "width": 158.275,
+          "height": 191.999,
+          "rowNumber": 1,
+          "columnNumber": 4
+        },
+        {
+          "type": "cell",
+          "left": 453.475,
+          "top": 360.0,
+          "width": 21.725,
+          "height": 11.999,
+          "rowNumber": 1,
+          "columnNumber": 5
+        },
+        {
+          "type": "cell",
+          "left": 475.2,
+          "top": 360.0,
+          "width": 100.675,
+          "height": 11.999,
+          "rowNumber": 1,
+          "columnNumber": 6
+        },
+        {
+          "type": "cell",
+          "left": 172.8,
+          "top": 371.999,
+          "width": 21.6,
+          "height": 24.001,
+          "rowNumber": 2,
+          "columnNumber": 2
+        },
+        {
+          "type": "cell",
+          "left": 194.4,
+          "top": 371.999,
+          "width": 100.8,
+          "height": 24.001,
+          "rowNumber": 2,
+          "columnNumber": 3
+        },
+        {
+          "type": "cell",
+          "left": 453.475,
+          "top": 371.999,
+          "width": 21.725,
+          "height": 12.0,
+          "rowNumber": 2,
+          "columnNumber": 5
+        },
+        {
+          "type": "cell",
+          "left": 475.2,
+          "top": 371.999,
+          "width": 100.675,
+          "height": 12.0,
+          "rowNumber": 2,
+          "columnNumber": 6
+        },
+        {
+          "type": "cell",
+          "left": 453.475,
+          "top": 383.999,
+          "width": 21.725,
+          "height": 24.0,
+          "rowNumber": 3,
+          "columnNumber": 5
+        },
+        {
+          "type": "cell",
+          "left": 475.2,
+          "top": 383.999,
+          "width": 100.675,
+          "height": 24.0,
+          "rowNumber": 3,
+          "columnNumber": 6
+        },
+        {
+          "type": "cell",
+          "left": 172.8,
+          "top": 396.0,
+          "width": 21.6,
+          "height": 11.999,
+          "rowNumber": 4,
+          "columnNumber": 2
+        },
+        {
+          "type": "cell",
+          "left": 194.4,
+          "top": 396.0,
+          "width": 100.8,
+          "height": 11.999,
+          "rowNumber": 4,
+          "columnNumber": 3
+        },
+        {
+          "type": "cell",
+          "left": 172.8,
+          "top": 407.999,
+          "width": 21.6,
+          "height": 12.0,
+          "rowNumber": 5,
+          "columnNumber": 2
+        },
+        {
+          "type": "cell",
+          "left": 194.4,
+          "top": 407.999,
+          "width": 100.8,
+          "height": 12.0,
+          "rowNumber": 5,
+          "columnNumber": 3
+        },
+        {
+          "type": "cell",
+          "left": 453.475,
+          "top": 407.999,
+          "width": 21.725,
+          "height": 12.0,
+          "rowNumber": 5,
+          "columnNumber": 5
+        },
+        {
+          "type": "cell",
+          "left": 475.2,
+          "top": 407.999,
+          "width": 100.675,
+          "height": 12.0,
+          "rowNumber": 5,
+          "columnNumber": 6
+        },
+        {
+          "type": "cell",
+          "left": 172.8,
+          "top": 419.999,
+          "width": 21.6,
+          "height": 12.001,
+          "rowNumber": 6,
+          "columnNumber": 2
+        },
+        {
+          "type": "cell",
+          "left": 194.4,
+          "top": 419.999,
+          "width": 100.8,
+          "height": 12.001,
+          "rowNumber": 6,
+          "columnNumber": 3
+        },
+        {
+          "type": "cell",
+          "left": 453.475,
+          "top": 419.999,
+          "width": 21.725,
+          "height": 12.001,
+          "rowNumber": 6,
+          "columnNumber": 5
+        },
+        {
+          "type": "cell",
+          "left": 475.2,
+          "top": 419.999,
+          "width": 100.675,
+          "height": 12.001,
+          "rowNumber": 6,
+          "columnNumber": 6
+        },
+        {
+          "type": "cell",
+          "left": 172.8,
+          "top": 432.0,
+          "width": 21.6,
+          "height": 36.0,
+          "rowNumber": 7,
+          "columnNumber": 2
+        },
+        {
+          "type": "cell",
+          "left": 194.4,
+          "top": 432.0,
+          "width": 100.8,
+          "height": 36.0,
+          "rowNumber": 7,
+          "columnNumber": 3
+        },
+        {
+          "type": "cell",
+          "left": 453.475,
+          "top": 432.0,
+          "width": 21.725,
+          "height": 11.999,
+          "rowNumber": 7,
+          "columnNumber": 5
+        },
+        {
+          "type": "cell",
+          "left": 475.2,
+          "top": 432.0,
+          "width": 100.675,
+          "height": 11.999,
+          "rowNumber": 7,
+          "columnNumber": 6
+        },
+        {
+          "type": "cell",
+          "left": 453.475,
+          "top": 443.999,
+          "width": 21.725,
+          "height": 12.0,
+          "rowNumber": 8,
+          "columnNumber": 5
+        },
+        {
+          "type": "cell",
+          "left": 475.2,
+          "top": 443.999,
+          "width": 100.675,
+          "height": 12.0,
+          "rowNumber": 8,
+          "columnNumber": 6
+        },
+        {
+          "type": "cell",
+          "left": 453.475,
+          "top": 455.999,
+          "width": 21.725,
+          "height": 24.0,
+          "rowNumber": 9,
+          "columnNumber": 5
+        },
+        {
+          "type": "cell",
+          "left": 475.2,
+          "top": 455.999,
+          "width": 100.675,
+          "height": 24.0,
+          "rowNumber": 9,
+          "columnNumber": 6
+        },
+        {
+          "type": "cell",
+          "left": 172.8,
+          "top": 468.0,
+          "width": 21.6,
+          "height": 23.999,
+          "rowNumber": 10,
+          "columnNumber": 2
+        },
+        {
+          "type": "cell",
+          "left": 194.4,
+          "top": 468.0,
+          "width": 100.8,
+          "height": 23.999,
+          "rowNumber": 10,
+          "columnNumber": 3
+        },
+        {
+          "type": "cell",
+          "left": 453.475,
+          "top": 479.999,
+          "width": 21.725,
+          "height": 12.0,
+          "rowNumber": 11,
+          "columnNumber": 5
+        },
+        {
+          "type": "cell",
+          "left": 475.2,
+          "top": 479.999,
+          "width": 100.675,
+          "height": 12.0,
+          "rowNumber": 11,
+          "columnNumber": 6
+        },
+        {
+          "type": "cell",
+          "left": 172.8,
+          "top": 491.999,
+          "width": 21.6,
+          "height": 12.001,
+          "rowNumber": 12,
+          "columnNumber": 2
+        },
+        {
+          "type": "cell",
+          "left": 194.4,
+          "top": 491.999,
+          "width": 100.8,
+          "height": 12.001,
+          "rowNumber": 12,
+          "columnNumber": 3
+        },
+        {
+          "type": "cell",
+          "left": 453.475,
+          "top": 491.999,
+          "width": 21.725,
+          "height": 12.001,
+          "rowNumber": 12,
+          "columnNumber": 5
+        },
+        {
+          "type": "cell",
+          "left": 475.2,
+          "top": 491.999,
+          "width": 100.675,
+          "height": 12.001,
+          "rowNumber": 12,
+          "columnNumber": 6
+        },
+        {
+          "type": "cell",
+          "left": 172.8,
+          "top": 504.0,
+          "width": 21.6,
+          "height": 23.999,
+          "rowNumber": 13,
+          "columnNumber": 2
+        },
+        {
+          "type": "cell",
+          "left": 194.4,
+          "top": 504.0,
+          "width": 100.8,
+          "height": 23.999,
+          "rowNumber": 13,
+          "columnNumber": 3
+        },
+        {
+          "type": "cell",
+          "left": 453.475,
+          "top": 504.0,
+          "width": 21.725,
+          "height": 11.999,
+          "rowNumber": 13,
+          "columnNumber": 5
+        },
+        {
+          "type": "cell",
+          "left": 475.2,
+          "top": 504.0,
+          "width": 100.675,
+          "height": 11.999,
+          "rowNumber": 13,
+          "columnNumber": 6
+        },
+        {
+          "type": "cell",
+          "left": 453.475,
+          "top": 515.999,
+          "width": 21.725,
+          "height": 24.001,
+          "rowNumber": 14,
+          "columnNumber": 5
+        },
+        {
+          "type": "cell",
+          "left": 475.2,
+          "top": 515.999,
+          "width": 100.675,
+          "height": 24.001,
+          "rowNumber": 14,
+          "columnNumber": 6
+        },
+        {
+          "type": "cell",
+          "left": 172.8,
+          "top": 527.999,
+          "width": 21.6,
+          "height": 12.001,
+          "rowNumber": 15,
+          "columnNumber": 2
+        },
+        {
+          "type": "cell",
+          "left": 194.4,
+          "top": 527.999,
+          "width": 100.8,
+          "height": 12.001,
+          "rowNumber": 15,
+          "columnNumber": 3
+        },
+        {
+          "type": "cell",
+          "left": 172.8,
+          "top": 540.0,
+          "width": 21.6,
+          "height": 11.999,
+          "rowNumber": 16,
+          "columnNumber": 2
+        },
+        {
+          "type": "cell",
+          "left": 194.4,
+          "top": 540.0,
+          "width": 100.8,
+          "height": 11.999,
+          "rowNumber": 16,
+          "columnNumber": 3
+        },
+        {
+          "type": "cell",
+          "left": 453.475,
+          "top": 540.0,
+          "width": 21.725,
+          "height": 11.999,
+          "rowNumber": 16,
+          "columnNumber": 5
+        },
+        {
+          "type": "cell",
+          "left": 475.2,
+          "top": 540.0,
+          "width": 100.675,
+          "height": 11.999,
+          "rowNumber": 16,
+          "columnNumber": 6
+        },
+        {
+          "type": "cell",
+          "left": 36.25,
+          "top": 551.999,
+          "width": 417.225,
+          "height": 120.001,
+          "rowNumber": 17,
+          "columnNumber": 1
+        },
+        {
+          "type": "cell",
+          "left": 453.475,
+          "top": 551.999,
+          "width": 21.725,
+          "height": 12.0,
+          "rowNumber": 17,
+          "columnNumber": 5
+        },
+        {
+          "type": "cell",
+          "left": 475.2,
+          "top": 551.999,
+          "width": 100.675,
+          "height": 12.0,
+          "rowNumber": 17,
+          "columnNumber": 6
+        },
+        {
+          "type": "cell",
+          "left": 453.475,
+          "top": 563.999,
+          "width": 21.725,
+          "height": 12.001,
+          "rowNumber": 18,
+          "columnNumber": 5
+        },
+        {
+          "type": "cell",
+          "left": 475.2,
+          "top": 563.999,
+          "width": 100.675,
+          "height": 12.001,
+          "rowNumber": 18,
+          "columnNumber": 6
+        },
+        {
+          "type": "cell",
+          "left": 453.475,
+          "top": 576.0,
+          "width": 21.725,
+          "height": 59.999,
+          "rowNumber": 19,
+          "columnNumber": 5
+        },
+        {
+          "type": "cell",
+          "left": 475.2,
+          "top": 576.0,
+          "width": 100.675,
+          "height": 59.999,
+          "rowNumber": 19,
+          "columnNumber": 6
+        },
+        {
+          "type": "cell",
+          "left": 453.475,
+          "top": 635.999,
+          "width": 21.725,
+          "height": 36.001,
+          "rowNumber": 20,
+          "columnNumber": 5
+        },
+        {
+          "type": "cell",
+          "left": 475.2,
+          "top": 635.999,
+          "width": 100.675,
+          "height": 36.001,
+          "rowNumber": 20,
+          "columnNumber": 6
+        },
+        {
+          "type": "cell",
+          "left": 475.2,
+          "top": 710.001,
+          "width": 8.0,
+          "height": 8.0,
+          "rowNumber": 1,
+          "columnNumber": 1
+        },
+        {
+          "type": "cell",
+          "left": 475.2,
+          "top": 722.5,
+          "width": 8.0,
+          "height": 8.0,
+          "rowNumber": 1,
+          "columnNumber": 1
+        },
+        {
+          "type": "table",
+          "left": 168.55,
+          "top": 182.749,
+          "width": 8.5,
+          "height": 8.5,
+          "rows": 1,
+          "columns": 1
+        },
+        {
+          "type": "table",
+          "left": 233.35,
+          "top": 182.749,
+          "width": 8.5,
+          "height": 8.5,
+          "rows": 1,
+          "columns": 1
+        },
+        {
+          "type": "table",
+          "left": 305.35,
+          "top": 182.749,
+          "width": 8.5,
+          "height": 8.5,
+          "rows": 1,
+          "columns": 1
+        },
+        {
+          "type": "table",
+          "left": 514.15,
+          "top": 193.748,
+          "width": 8.5,
+          "height": 8.5,
+          "rows": 1,
+          "columns": 1
+        },
+        {
+          "type": "table",
+          "left": 550.15,
+          "top": 193.748,
+          "width": 8.5,
+          "height": 8.5,
+          "rows": 1,
+          "columns": 1
+        },
+        {
+          "type": "table",
+          "left": 514.15,
+          "top": 205.75,
+          "width": 8.5,
+          "height": 8.5,
+          "rows": 1,
+          "columns": 1
+        },
+        {
+          "type": "table",
+          "left": 514.15,
+          "top": 217.749,
+          "width": 8.5,
+          "height": 8.5,
+          "rows": 1,
+          "columns": 1
+        },
+        {
+          "type": "table",
+          "left": 550.15,
+          "top": 217.749,
+          "width": 8.5,
+          "height": 8.5,
+          "rows": 1,
+          "columns": 1
+        },
+        {
+          "type": "table",
+          "left": 514.15,
+          "top": 229.748,
+          "width": 8.5,
+          "height": 8.5,
+          "rows": 1,
+          "columns": 1
+        },
+        {
+          "type": "table",
+          "left": 550.15,
+          "top": 229.748,
+          "width": 8.5,
+          "height": 8.5,
+          "rows": 1,
+          "columns": 1
+        },
+        {
+          "type": "table",
+          "left": 35.75,
+          "top": 251.75,
+          "width": 540.5,
+          "height": 96.626,
+          "rows": 7,
+          "columns": 3
+        },
+        {
+          "type": "table",
+          "left": 433.749,
+          "top": 265.748,
+          "width": 8.5,
+          "height": 8.5,
+          "rows": 1,
+          "columns": 1
+        },
+        {
+          "type": "table",
+          "left": 35.75,
+          "top": 359.75,
+          "width": 540.5,
+          "height": 312.501,
+          "rows": 20,
+          "columns": 6
+        },
+        {
+          "type": "table",
+          "left": 474.95,
+          "top": 709.751,
+          "width": 8.5,
+          "height": 8.5,
+          "rows": 1,
+          "columns": 1
+        },
+        {
+          "type": "table",
+          "left": 474.95,
+          "top": 722.25,
+          "width": 8.5,
+          "height": 8.5,
+          "rows": 1,
+          "columns": 1
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "SCHEDULE C",
+          "left": 36.0,
+          "top": 34.39,
+          "width": 65.21,
+          "height": 11.93,
+          "fontSize": 10.0
+        },
+        {
+          "type": "text",
+          "sourceType": "heading",
+          "text": "Profit or Loss From Business",
+          "left": 216.121,
+          "top": 34.528,
+          "width": 179.76,
+          "height": 16.576,
+          "fontSize": 14.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "OMB No. 1545-0074",
+          "left": 500.31,
+          "top": 36.893,
+          "width": 64.981,
+          "height": 8.162,
+          "fontSize": 7.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "(Form 1040) 2025",
+          "left": 36.0,
+          "top": 44.39,
+          "width": 522.8,
+          "height": 25.289,
+          "fontSize": 10.0
+        },
+        {
+          "type": "text",
+          "sourceType": "heading",
+          "text": "(Sole Proprietorship)",
+          "left": 266.753,
+          "top": 48.312,
+          "width": 78.496,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "Attach to Form 1040, 1040-SR, 1040-SS, 1040-NR, or 1041; partnerships must generally file Form 1065. Go to www.irs.gov/ScheduleC for instructions and the latest information.",
+          "left": 125.482,
+          "top": 59.98,
+          "width": 361.041,
+          "height": 21.543,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "Department of the Treasury Internal Revenue Service",
+          "left": 36.0,
+          "top": 64.936,
+          "width": 84.117,
+          "height": 16.562,
+          "fontSize": 7.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "Attachment Sequence No. 09",
+          "left": 501.6,
+          "top": 66.336,
+          "width": 57.536,
+          "height": 16.986,
+          "fontSize": 7.0
+        },
+        {
+          "type": "text",
+          "sourceType": "heading",
+          "text": "Name of proprietor Social security number (SSN)",
+          "left": 36.0,
+          "top": 84.511,
+          "width": 525.208,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "A Principal business or profession, including product or service (see instructions) B Enter code from instructions",
+          "left": 36.0,
+          "top": 108.512,
+          "width": 520.002,
+          "height": 9.944,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "C Business name. If no separate business name, leave blank. D Employer ID number (EIN) (see instr.)",
+          "left": 36.0,
+          "top": 132.513,
+          "width": 539.023,
+          "height": 10.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "list item",
+          "text": "E Business address (including suite or room no.) City, town or post office, state, and ZIP code",
+          "left": 36.0,
+          "top": 157.694,
+          "width": 192.364,
+          "height": 21.73,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "Cash (2)",
+          "left": 180.0,
+          "top": 181.911,
+          "width": 45.184,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "Accrual (3)",
+          "left": 244.8,
+          "top": 181.911,
+          "width": 52.384,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "list item",
+          "text": "F Accounting method: (1)",
+          "left": 36.0,
+          "top": 181.912,
+          "width": 124.384,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "Other (specify)",
+          "left": 316.8,
+          "top": 182.095,
+          "width": 51.856,
+          "height": 9.328,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "Yes",
+          "left": 525.6,
+          "top": 193.41,
+          "width": 14.224,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "No",
+          "left": 561.6,
+          "top": 193.41,
+          "width": 10.816,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "list item",
+          "text": "G Did you \u201cmaterially participate\u201d in the operation of this business during 2025? If \u201cNo,\u201d see instructions for limit on losses .",
+          "left": 36.0,
+          "top": 193.91,
+          "width": 470.224,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "list item",
+          "text": "H If you started or acquired this business during 2025, check here . . . . . . . . . . . . . . . . . .",
+          "left": 36.0,
+          "top": 205.914,
+          "width": 470.224,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "Yes",
+          "left": 525.6,
+          "top": 217.411,
+          "width": 14.224,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "No",
+          "left": 561.6,
+          "top": 217.411,
+          "width": 10.816,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "list item",
+          "text": "I Did you make any payments in 2025 that would require you to file Form(s) 1099? See instructions . . . . . . . .",
+          "left": 36.0,
+          "top": 217.911,
+          "width": 470.224,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "Yes",
+          "left": 525.6,
+          "top": 229.41,
+          "width": 14.224,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "No",
+          "left": 561.6,
+          "top": 229.41,
+          "width": 10.816,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "list item",
+          "text": "J If \u201cYes,\u201d did you or will you file required Form(s) 1099? . . . . . . . . . . . . . . . . . . . . .",
+          "left": 36.0,
+          "top": 229.907,
+          "width": 470.224,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "heading",
+          "text": "Part I",
+          "left": 41.225,
+          "top": 239.39,
+          "width": 25.55,
+          "height": 11.93,
+          "fontSize": 10.0
+        },
+        {
+          "type": "text",
+          "sourceType": "caption",
+          "text": "Income",
+          "left": 86.0,
+          "top": 239.39,
+          "width": 35.53,
+          "height": 11.93,
+          "fontSize": 10.0
+        },
+        {
+          "type": "text",
+          "sourceType": "list item",
+          "text": "1 Gross receipts or sales. See instructions for line 1 and check the box if this income was reported to you on Form W-2 and the \u201cStatutory employee\u201d box on that form was checked . . . . . . . . .",
+          "left": 45.952,
+          "top": 255.913,
+          "width": 400.44,
+          "height": 19.512,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "1",
+          "left": 462.176,
+          "top": 265.913,
+          "width": 4.448,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "list item",
+          "text": "2 Returns and allowances . . . . . . . . . . . . . . . . . . . . . . . . .",
+          "left": 45.952,
+          "top": 277.912,
+          "width": 400.272,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "2",
+          "left": 462.176,
+          "top": 277.912,
+          "width": 4.448,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "list item",
+          "text": "3 Subtract line 2 from line 1 . . . . . . . . . . . . . . . . . . . . . . . .",
+          "left": 45.952,
+          "top": 289.911,
+          "width": 400.272,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "3",
+          "left": 462.176,
+          "top": 289.911,
+          "width": 4.448,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "list item",
+          "text": "4 Cost of goods sold (from line 42) . . . . . . . . . . . . . . . . . . . . . .",
+          "left": 45.952,
+          "top": 301.91,
+          "width": 400.272,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "4",
+          "left": 462.176,
+          "top": 301.91,
+          "width": 4.448,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "list item",
+          "text": "5 Gross profit. Subtract line 4 from line 3 . . . . . . . . . . . . . . . . . . . .",
+          "left": 45.952,
+          "top": 313.912,
+          "width": 400.272,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "5",
+          "left": 462.176,
+          "top": 313.912,
+          "width": 4.448,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "list item",
+          "text": "6 Other income, including federal and state gasoline or fuel tax credit or refund (see instructions) . . . .",
+          "left": 45.952,
+          "top": 325.911,
+          "width": 400.272,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "6",
+          "left": 462.176,
+          "top": 325.911,
+          "width": 4.448,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "list item",
+          "text": "7 Gross income. Add lines 5 and 6 . . . . . . . . . . . . . . . . . . . . . .",
+          "left": 45.952,
+          "top": 337.91,
+          "width": 400.272,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "7",
+          "left": 462.176,
+          "top": 337.91,
+          "width": 4.448,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "heading",
+          "text": "Part II",
+          "left": 39.75,
+          "top": 347.39,
+          "width": 28.5,
+          "height": 11.93,
+          "fontSize": 10.0
+        },
+        {
+          "type": "text",
+          "sourceType": "caption",
+          "text": "Expenses. Enter expenses for business use of your home only on line 30.",
+          "left": 86.0,
+          "top": 347.39,
+          "width": 313.557,
+          "height": 11.93,
+          "fontSize": 10.0
+        },
+        {
+          "type": "text",
+          "sourceType": "list item",
+          "text": "8 Advertising . . . . .",
+          "left": 45.952,
+          "top": 361.911,
+          "width": 112.272,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "8",
+          "left": 181.376,
+          "top": 361.911,
+          "width": 4.448,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "list item",
+          "text": "18 Office expense (see instructions) .",
+          "left": 300.704,
+          "top": 361.911,
+          "width": 145.52,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "18",
+          "left": 459.952,
+          "top": 361.911,
+          "width": 8.896,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "list item",
+          "text": "19 Pension and profit-sharing plans .",
+          "left": 300.704,
+          "top": 373.91,
+          "width": 145.52,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "19",
+          "left": 459.952,
+          "top": 373.91,
+          "width": 8.896,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "list item",
+          "text": "9 Car and truck expenses (see instructions) . . .",
+          "left": 45.952,
+          "top": 375.912,
+          "width": 119.648,
+          "height": 19.512,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "9",
+          "left": 181.376,
+          "top": 385.912,
+          "width": 4.448,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "list item",
+          "text": "20 Rent or lease (see instructions):",
+          "left": 300.704,
+          "top": 385.912,
+          "width": 135.304,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "list item",
+          "text": "10 Commissions and fees .",
+          "left": 41.504,
+          "top": 397.911,
+          "width": 116.72,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "10",
+          "left": 179.152,
+          "top": 397.911,
+          "width": 8.896,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "list item",
+          "text": "a Vehicles, machinery, and equipment",
+          "left": 309.6,
+          "top": 397.911,
+          "width": 136.156,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "20a",
+          "left": 457.656,
+          "top": 397.911,
+          "width": 13.488,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "list item",
+          "text": "11 Contract labor (see instructions)",
+          "left": 41.504,
+          "top": 409.91,
+          "width": 123.686,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "11",
+          "left": 179.152,
+          "top": 409.91,
+          "width": 8.896,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "list item",
+          "text": "b Other business property . . .",
+          "left": 309.6,
+          "top": 409.91,
+          "width": 136.624,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "20b",
+          "left": 457.508,
+          "top": 409.91,
+          "width": 13.784,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "list item",
+          "text": "12 Depletion . . . . .",
+          "left": 41.504,
+          "top": 421.912,
+          "width": 116.72,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "12",
+          "left": 179.152,
+          "top": 421.912,
+          "width": 8.896,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "list item",
+          "text": "21 Repairs and maintenance . . .",
+          "left": 300.704,
+          "top": 421.912,
+          "width": 145.52,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "21",
+          "left": 459.952,
+          "top": 421.912,
+          "width": 8.896,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "list item",
+          "text": "13 Depreciation and section 179 expense deduction (not included in Part III) (see instructions) . . . .",
+          "left": 41.504,
+          "top": 431.512,
+          "width": 124.104,
+          "height": 36.512,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "list item",
+          "text": "22 Supplies (not included in Part III) .",
+          "left": 300.704,
+          "top": 433.911,
+          "width": 145.52,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "22",
+          "left": 459.952,
+          "top": 433.911,
+          "width": 8.896,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "list item",
+          "text": "23 Taxes and licenses . . . . .",
+          "left": 300.704,
+          "top": 445.91,
+          "width": 145.52,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "23",
+          "left": 459.952,
+          "top": 445.91,
+          "width": 8.896,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "13",
+          "left": 179.152,
+          "top": 457.912,
+          "width": 8.896,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "list item",
+          "text": "24 Travel and meals:",
+          "left": 300.704,
+          "top": 457.912,
+          "width": 86.272,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "list item",
+          "text": "a Travel . . . . . . . . .",
+          "left": 309.6,
+          "top": 469.911,
+          "width": 136.624,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "24a",
+          "left": 457.656,
+          "top": 469.911,
+          "width": 13.488,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "list item",
+          "text": "14 Employee benefit programs (other than on line 19) .",
+          "left": 41.504,
+          "top": 471.913,
+          "width": 124.096,
+          "height": 19.512,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "list item",
+          "text": "b Deductible meals (see instructions)",
+          "left": 309.6,
+          "top": 481.91,
+          "width": 136.524,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "24b",
+          "left": 457.508,
+          "top": 481.91,
+          "width": 13.784,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "14",
+          "left": 179.152,
+          "top": 481.913,
+          "width": 8.896,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "list item",
+          "text": "15 Insurance (other than health)",
+          "left": 41.504,
+          "top": 493.912,
+          "width": 124.078,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "15",
+          "left": 179.152,
+          "top": 493.912,
+          "width": 8.896,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "list item",
+          "text": "25 Utilities . . . . . . . .",
+          "left": 300.704,
+          "top": 493.912,
+          "width": 145.52,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "25",
+          "left": 459.952,
+          "top": 493.912,
+          "width": 8.896,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "list item",
+          "text": "16 Interest (see instructions):",
+          "left": 41.504,
+          "top": 505.911,
+          "width": 115.008,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "list item",
+          "text": "26 Wages (less employment credits)",
+          "left": 300.704,
+          "top": 505.911,
+          "width": 141.392,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "26",
+          "left": 459.952,
+          "top": 505.911,
+          "width": 8.896,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "list item",
+          "text": "a Mortgage (paid to banks, etc.)",
+          "left": 50.4,
+          "top": 517.91,
+          "width": 115.386,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "16a",
+          "left": 176.856,
+          "top": 517.91,
+          "width": 13.488,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "list item",
+          "text": "27a Energy efficient commercial bldgs deduction (attach Form 7205) . .",
+          "left": 300.704,
+          "top": 519.912,
+          "width": 145.696,
+          "height": 19.512,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "list item",
+          "text": "b Other . . . . . .",
+          "left": 50.4,
+          "top": 529.912,
+          "width": 107.824,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "16b",
+          "left": 176.708,
+          "top": 529.912,
+          "width": 13.784,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "27a",
+          "left": 457.656,
+          "top": 529.912,
+          "width": 13.488,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "list item",
+          "text": "17 Legal and professional services",
+          "left": 41.504,
+          "top": 541.911,
+          "width": 124.499,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "17",
+          "left": 179.152,
+          "top": 541.911,
+          "width": 8.896,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "b Other expenses (from line 48) . .",
+          "left": 309.6,
+          "top": 541.911,
+          "width": 136.624,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "27b",
+          "left": 457.508,
+          "top": 541.911,
+          "width": 13.784,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "list item",
+          "text": "28 Total expenses before expenses for business use of home. Add lines 8 through 27b . . . . . . .",
+          "left": 41.504,
+          "top": 553.91,
+          "width": 404.72,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "28",
+          "left": 459.952,
+          "top": 553.91,
+          "width": 8.896,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "list item",
+          "text": "29 Tentative profit or (loss). Subtract line 28 from line 7 . . . . . . . . . . . . . . . . .",
+          "left": 41.504,
+          "top": 565.912,
+          "width": 404.72,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "29",
+          "left": 459.952,
+          "top": 565.912,
+          "width": 8.896,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "list item",
+          "text": "30 Expenses for business use of your home. Do not report these expenses elsewhere. Attach Form 8829 unless using the simplified method. See instructions. Simplified method filers only: Enter the total square footage of (a) your home: and (b) the part of your home used for business: . Use the Simplified Method Worksheet in the instructions to figure the amount to enter on line 30 . . . . . . . . .",
+          "left": 41.504,
+          "top": 579.913,
+          "width": 404.936,
+          "height": 55.51,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "30",
+          "left": 459.952,
+          "top": 625.913,
+          "width": 8.896,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "checked the box on line 1, see instructions.) Estates and trusts, enter on Form 1041, line 3. }",
+          "left": 64.8,
+          "top": 637.327,
+          "width": 370.56,
+          "height": 50.22,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "list item",
+          "text": "31 Net profit or (loss). Subtract line 30 from line 29.",
+          "left": 41.504,
+          "top": 637.912,
+          "width": 199.312,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "\u2022 If a profit, enter on both Schedule 1 (Form 1040), line 3, and on Schedule SE, line 2. (If you",
+          "left": 64.8,
+          "top": 651.912,
+          "width": 336.632,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "31",
+          "left": 459.952,
+          "top": 661.913,
+          "width": 8.896,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "\u2022 If a loss, you must go to line 32.",
+          "left": 64.8,
+          "top": 673.912,
+          "width": 123.424,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "heading",
+          "text": "} 32a",
+          "left": 428.64,
+          "top": 683.252,
+          "width": 42.504,
+          "height": 55.8,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "32 If you have a loss, check the box that describes your investment in this activity. See instructions.",
+          "left": 41.504,
+          "top": 685.911,
+          "width": 367.816,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "list item",
+          "text": "\u2022 If you checked 32a, enter the loss on both Schedule 1 (Form 1040), line 3, and on Schedule SE, line 2. (If you checked the box on line 1, see the line 31 instructions.) Estates and trusts, enter on Form 1041, line 3.",
+          "left": 64.8,
+          "top": 701.911,
+          "width": 351.793,
+          "height": 29.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "All investment is at risk. 32b",
+          "left": 457.508,
+          "top": 710.096,
+          "width": 114.16,
+          "height": 21.36,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "Some investment is not at risk.",
+          "left": 487.5,
+          "top": 722.096,
+          "width": 84.032,
+          "height": 18.928,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "list item",
+          "text": "\u2022 If you checked 32b, you must attach Form 6198. Your loss may be limited.",
+          "left": 64.801,
+          "top": 733.911,
+          "width": 274.888,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "heading",
+          "text": "For Paperwork Reduction Act Notice, see the separate instructions. Cat. No. 11334P Schedule C (Form 1040) 2025 Created 4/3/25",
+          "left": 36.0,
+          "top": 745.912,
+          "width": 540.002,
+          "height": 9.612,
+          "fontSize": 8.0
+        }
+      ]
+    },
+    {
+      "pageNumber": 2,
+      "width": 612.0,
+      "height": 792.0,
+      "elements": [
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 35.75,
+          "top": 47.499,
+          "width": 504.5,
+          "height": 1.0
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 539.75,
+          "top": 47.499,
+          "width": 36.5,
+          "height": 1.0
+        },
+        {
+          "type": "shape",
+          "orientation": "box",
+          "left": 36.0,
+          "top": 47.999,
+          "width": 36.0,
+          "height": 11.999
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 35.75,
+          "top": 59.748,
+          "width": 540.5,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 446.15,
+          "top": 131.751,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 467.75,
+          "top": 131.751,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 446.15,
+          "top": 143.75,
+          "width": 22.1,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 446.15,
+          "top": 143.75,
+          "width": 0.5,
+          "height": 24.501
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 467.75,
+          "top": 143.75,
+          "width": 108.5,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 467.75,
+          "top": 143.75,
+          "width": 0.5,
+          "height": 24.501
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 467.75,
+          "top": 167.748,
+          "width": 108.5,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 446.15,
+          "top": 167.751,
+          "width": 0.5,
+          "height": 24.501
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 446.15,
+          "top": 167.751,
+          "width": 22.1,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 467.75,
+          "top": 167.751,
+          "width": 0.5,
+          "height": 24.501
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 446.15,
+          "top": 191.749,
+          "width": 0.5,
+          "height": 24.501
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 467.75,
+          "top": 191.749,
+          "width": 108.5,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 467.75,
+          "top": 191.749,
+          "width": 0.5,
+          "height": 24.501
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 446.15,
+          "top": 191.752,
+          "width": 22.1,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 446.15,
+          "top": 215.75,
+          "width": 0.5,
+          "height": 24.501
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 446.15,
+          "top": 215.75,
+          "width": 22.1,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 467.75,
+          "top": 215.75,
+          "width": 108.5,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 467.75,
+          "top": 215.75,
+          "width": 0.5,
+          "height": 24.501
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 467.75,
+          "top": 239.748,
+          "width": 108.5,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 446.15,
+          "top": 239.751,
+          "width": 0.5,
+          "height": 24.501
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 446.15,
+          "top": 239.751,
+          "width": 22.1,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 467.75,
+          "top": 239.751,
+          "width": 0.5,
+          "height": 24.501
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 446.15,
+          "top": 263.749,
+          "width": 0.5,
+          "height": 24.501
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 467.75,
+          "top": 263.749,
+          "width": 108.5,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 467.75,
+          "top": 263.749,
+          "width": 0.5,
+          "height": 24.501
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 446.15,
+          "top": 263.752,
+          "width": 22.1,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 446.15,
+          "top": 287.75,
+          "width": 0.5,
+          "height": 24.501
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 446.15,
+          "top": 287.75,
+          "width": 22.1,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 467.75,
+          "top": 287.75,
+          "width": 108.5,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 467.75,
+          "top": 287.75,
+          "width": 0.5,
+          "height": 24.501
+        },
+        {
+          "type": "shape",
+          "orientation": "box",
+          "left": 36.0,
+          "top": 312.001,
+          "width": 36.0,
+          "height": 11.999
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 35.75,
+          "top": 347.751,
+          "width": 540.5,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 374.15,
+          "top": 371.749,
+          "width": 29.3,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 402.95,
+          "top": 371.749,
+          "width": 36.5,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 438.95,
+          "top": 371.749,
+          "width": 36.5,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 100.55,
+          "top": 419.748,
+          "width": 101.3,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 330.95,
+          "top": 419.748,
+          "width": 94.1,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 467.75,
+          "top": 419.748,
+          "width": 108.5,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 35.75,
+          "top": 515.624,
+          "width": 540.5,
+          "height": 0.75
+        },
+        {
+          "type": "shape",
+          "orientation": "box",
+          "left": 36.0,
+          "top": 515.999,
+          "width": 36.0,
+          "height": 11.999
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 467.75,
+          "top": 527.751,
+          "width": 0.5,
+          "height": 24.501
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 35.75,
+          "top": 551.752,
+          "width": 425.3,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 467.75,
+          "top": 551.752,
+          "width": 0.5,
+          "height": 24.501
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 467.75,
+          "top": 551.752,
+          "width": 108.5,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 35.75,
+          "top": 575.753,
+          "width": 425.3,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 467.75,
+          "top": 575.753,
+          "width": 0.5,
+          "height": 24.501
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 467.75,
+          "top": 575.753,
+          "width": 108.5,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 35.75,
+          "top": 599.754,
+          "width": 425.3,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 467.75,
+          "top": 599.754,
+          "width": 0.5,
+          "height": 24.501
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 467.75,
+          "top": 599.754,
+          "width": 108.5,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 35.75,
+          "top": 623.755,
+          "width": 425.3,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 467.75,
+          "top": 623.755,
+          "width": 0.5,
+          "height": 24.501
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 467.75,
+          "top": 623.755,
+          "width": 108.5,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 35.75,
+          "top": 647.756,
+          "width": 425.3,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 467.75,
+          "top": 647.756,
+          "width": 108.5,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 467.75,
+          "top": 647.756,
+          "width": 0.5,
+          "height": 24.501
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 35.75,
+          "top": 671.757,
+          "width": 425.3,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 467.75,
+          "top": 671.757,
+          "width": 0.5,
+          "height": 24.501
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 467.75,
+          "top": 671.757,
+          "width": 108.5,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 35.75,
+          "top": 695.758,
+          "width": 425.3,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 467.75,
+          "top": 695.758,
+          "width": 0.5,
+          "height": 24.501
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 467.75,
+          "top": 695.758,
+          "width": 108.5,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 35.75,
+          "top": 719.759,
+          "width": 425.3,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 467.75,
+          "top": 719.759,
+          "width": 0.5,
+          "height": 24.501
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 467.75,
+          "top": 719.759,
+          "width": 108.5,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 446.15,
+          "top": 743.751,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "vertical-rule",
+          "left": 467.75,
+          "top": 743.751,
+          "width": 0.5,
+          "height": 12.499
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 35.75,
+          "top": 743.76,
+          "width": 432.5,
+          "height": 0.5
+        },
+        {
+          "type": "shape",
+          "orientation": "horizontal-rule",
+          "left": 467.75,
+          "top": 743.76,
+          "width": 108.5,
+          "height": 0.5
+        },
+        {
+          "type": "cell",
+          "left": 187.2,
+          "top": 86.498,
+          "width": 8.0,
+          "height": 8.0,
+          "rowNumber": 1,
+          "columnNumber": 1
+        },
+        {
+          "type": "cell",
+          "left": 259.2,
+          "top": 86.498,
+          "width": 8.0,
+          "height": 8.0,
+          "rowNumber": 1,
+          "columnNumber": 1
+        },
+        {
+          "type": "cell",
+          "left": 396.0,
+          "top": 86.498,
+          "width": 8.0,
+          "height": 8.0,
+          "rowNumber": 1,
+          "columnNumber": 1
+        },
+        {
+          "type": "cell",
+          "left": 482.4,
+          "top": 109.499,
+          "width": 8.0,
+          "height": 8.0,
+          "rowNumber": 1,
+          "columnNumber": 1
+        },
+        {
+          "type": "cell",
+          "left": 540.0,
+          "top": 109.499,
+          "width": 8.0,
+          "height": 8.0,
+          "rowNumber": 1,
+          "columnNumber": 1
+        },
+        {
+          "type": "cell",
+          "left": 36.125,
+          "top": 132.001,
+          "width": 410.275,
+          "height": 180.0,
+          "rowNumber": 1,
+          "columnNumber": 1
+        },
+        {
+          "type": "cell",
+          "left": 446.4,
+          "top": 132.001,
+          "width": 21.6,
+          "height": 11.999,
+          "rowNumber": 1,
+          "columnNumber": 2
+        },
+        {
+          "type": "cell",
+          "left": 468.0,
+          "top": 132.001,
+          "width": 107.875,
+          "height": 11.999,
+          "rowNumber": 1,
+          "columnNumber": 3
+        },
+        {
+          "type": "cell",
+          "left": 446.4,
+          "top": 144.0,
+          "width": 21.6,
+          "height": 23.999,
+          "rowNumber": 2,
+          "columnNumber": 2
+        },
+        {
+          "type": "cell",
+          "left": 468.0,
+          "top": 144.0,
+          "width": 107.875,
+          "height": 23.999,
+          "rowNumber": 2,
+          "columnNumber": 3
+        },
+        {
+          "type": "cell",
+          "left": 446.4,
+          "top": 167.999,
+          "width": 21.6,
+          "height": 24.001,
+          "rowNumber": 3,
+          "columnNumber": 2
+        },
+        {
+          "type": "cell",
+          "left": 468.0,
+          "top": 167.999,
+          "width": 107.875,
+          "height": 24.001,
+          "rowNumber": 3,
+          "columnNumber": 3
+        },
+        {
+          "type": "cell",
+          "left": 446.4,
+          "top": 192.0,
+          "width": 21.6,
+          "height": 24.0,
+          "rowNumber": 4,
+          "columnNumber": 2
+        },
+        {
+          "type": "cell",
+          "left": 468.0,
+          "top": 192.0,
+          "width": 107.875,
+          "height": 24.0,
+          "rowNumber": 4,
+          "columnNumber": 3
+        },
+        {
+          "type": "cell",
+          "left": 446.4,
+          "top": 216.0,
+          "width": 21.6,
+          "height": 23.999,
+          "rowNumber": 5,
+          "columnNumber": 2
+        },
+        {
+          "type": "cell",
+          "left": 468.0,
+          "top": 216.0,
+          "width": 107.875,
+          "height": 23.999,
+          "rowNumber": 5,
+          "columnNumber": 3
+        },
+        {
+          "type": "cell",
+          "left": 446.4,
+          "top": 239.999,
+          "width": 21.6,
+          "height": 24.001,
+          "rowNumber": 6,
+          "columnNumber": 2
+        },
+        {
+          "type": "cell",
+          "left": 468.0,
+          "top": 239.999,
+          "width": 107.875,
+          "height": 24.001,
+          "rowNumber": 6,
+          "columnNumber": 3
+        },
+        {
+          "type": "cell",
+          "left": 446.4,
+          "top": 264.0,
+          "width": 21.6,
+          "height": 24.0,
+          "rowNumber": 7,
+          "columnNumber": 2
+        },
+        {
+          "type": "cell",
+          "left": 468.0,
+          "top": 264.0,
+          "width": 107.875,
+          "height": 24.0,
+          "rowNumber": 7,
+          "columnNumber": 3
+        },
+        {
+          "type": "cell",
+          "left": 446.4,
+          "top": 288.0,
+          "width": 21.6,
+          "height": 24.001,
+          "rowNumber": 8,
+          "columnNumber": 2
+        },
+        {
+          "type": "cell",
+          "left": 468.0,
+          "top": 288.0,
+          "width": 107.875,
+          "height": 24.001,
+          "rowNumber": 8,
+          "columnNumber": 3
+        },
+        {
+          "type": "cell",
+          "left": 489.6,
+          "top": 433.777,
+          "width": 8.444,
+          "height": 8.444,
+          "rowNumber": 1,
+          "columnNumber": 1
+        },
+        {
+          "type": "cell",
+          "left": 540.0,
+          "top": 433.777,
+          "width": 8.444,
+          "height": 8.444,
+          "rowNumber": 1,
+          "columnNumber": 1
+        },
+        {
+          "type": "cell",
+          "left": 489.6,
+          "top": 457.778,
+          "width": 8.444,
+          "height": 8.444,
+          "rowNumber": 1,
+          "columnNumber": 1
+        },
+        {
+          "type": "cell",
+          "left": 540.0,
+          "top": 457.778,
+          "width": 8.444,
+          "height": 8.444,
+          "rowNumber": 1,
+          "columnNumber": 1
+        },
+        {
+          "type": "cell",
+          "left": 489.6,
+          "top": 481.776,
+          "width": 8.445,
+          "height": 8.445,
+          "rowNumber": 1,
+          "columnNumber": 1
+        },
+        {
+          "type": "cell",
+          "left": 540.0,
+          "top": 481.776,
+          "width": 8.444,
+          "height": 8.444,
+          "rowNumber": 1,
+          "columnNumber": 1
+        },
+        {
+          "type": "cell",
+          "left": 489.6,
+          "top": 505.777,
+          "width": 8.445,
+          "height": 8.445,
+          "rowNumber": 1,
+          "columnNumber": 1
+        },
+        {
+          "type": "cell",
+          "left": 540.0,
+          "top": 505.777,
+          "width": 8.444,
+          "height": 8.444,
+          "rowNumber": 1,
+          "columnNumber": 1
+        },
+        {
+          "type": "cell",
+          "left": 36.25,
+          "top": 527.999,
+          "width": 431.75,
+          "height": 216.006,
+          "rowNumber": 1,
+          "columnNumber": 1
+        },
+        {
+          "type": "cell",
+          "left": 468.0,
+          "top": 527.999,
+          "width": 107.75,
+          "height": 24.003,
+          "rowNumber": 1,
+          "columnNumber": 3
+        },
+        {
+          "type": "cell",
+          "left": 468.0,
+          "top": 552.002,
+          "width": 107.75,
+          "height": 24.001,
+          "rowNumber": 2,
+          "columnNumber": 3
+        },
+        {
+          "type": "cell",
+          "left": 468.0,
+          "top": 576.003,
+          "width": 107.75,
+          "height": 24.001,
+          "rowNumber": 3,
+          "columnNumber": 3
+        },
+        {
+          "type": "cell",
+          "left": 468.0,
+          "top": 600.004,
+          "width": 107.75,
+          "height": 24.001,
+          "rowNumber": 4,
+          "columnNumber": 3
+        },
+        {
+          "type": "cell",
+          "left": 468.0,
+          "top": 624.005,
+          "width": 107.75,
+          "height": 24.001,
+          "rowNumber": 5,
+          "columnNumber": 3
+        },
+        {
+          "type": "cell",
+          "left": 468.0,
+          "top": 648.006,
+          "width": 107.75,
+          "height": 24.001,
+          "rowNumber": 6,
+          "columnNumber": 3
+        },
+        {
+          "type": "cell",
+          "left": 468.0,
+          "top": 672.007,
+          "width": 107.75,
+          "height": 24.001,
+          "rowNumber": 7,
+          "columnNumber": 3
+        },
+        {
+          "type": "cell",
+          "left": 468.0,
+          "top": 696.008,
+          "width": 107.75,
+          "height": 24.001,
+          "rowNumber": 8,
+          "columnNumber": 3
+        },
+        {
+          "type": "cell",
+          "left": 468.0,
+          "top": 720.009,
+          "width": 107.75,
+          "height": 23.996,
+          "rowNumber": 9,
+          "columnNumber": 3
+        },
+        {
+          "type": "cell",
+          "left": 36.25,
+          "top": 744.005,
+          "width": 410.15,
+          "height": 11.995,
+          "rowNumber": 10,
+          "columnNumber": 1
+        },
+        {
+          "type": "cell",
+          "left": 446.4,
+          "top": 744.005,
+          "width": 21.6,
+          "height": 11.995,
+          "rowNumber": 10,
+          "columnNumber": 2
+        },
+        {
+          "type": "cell",
+          "left": 468.0,
+          "top": 744.005,
+          "width": 107.75,
+          "height": 11.995,
+          "rowNumber": 10,
+          "columnNumber": 3
+        },
+        {
+          "type": "table",
+          "left": 186.95,
+          "top": 86.248,
+          "width": 8.5,
+          "height": 8.5,
+          "rows": 1,
+          "columns": 1
+        },
+        {
+          "type": "table",
+          "left": 258.95,
+          "top": 86.248,
+          "width": 8.5,
+          "height": 8.5,
+          "rows": 1,
+          "columns": 1
+        },
+        {
+          "type": "table",
+          "left": 395.75,
+          "top": 86.248,
+          "width": 8.5,
+          "height": 8.5,
+          "rows": 1,
+          "columns": 1
+        },
+        {
+          "type": "table",
+          "left": 482.15,
+          "top": 109.249,
+          "width": 8.5,
+          "height": 8.5,
+          "rows": 1,
+          "columns": 1
+        },
+        {
+          "type": "table",
+          "left": 539.75,
+          "top": 109.249,
+          "width": 8.5,
+          "height": 8.5,
+          "rows": 1,
+          "columns": 1
+        },
+        {
+          "type": "table",
+          "left": 35.75,
+          "top": 131.751,
+          "width": 540.5,
+          "height": 180.625,
+          "rows": 8,
+          "columns": 3
+        },
+        {
+          "type": "table",
+          "left": 489.35,
+          "top": 433.527,
+          "width": 8.944,
+          "height": 8.944,
+          "rows": 1,
+          "columns": 1
+        },
+        {
+          "type": "table",
+          "left": 539.75,
+          "top": 433.527,
+          "width": 8.944,
+          "height": 8.944,
+          "rows": 1,
+          "columns": 1
+        },
+        {
+          "type": "table",
+          "left": 489.35,
+          "top": 457.528,
+          "width": 8.944,
+          "height": 8.944,
+          "rows": 1,
+          "columns": 1
+        },
+        {
+          "type": "table",
+          "left": 539.75,
+          "top": 457.528,
+          "width": 8.944,
+          "height": 8.944,
+          "rows": 1,
+          "columns": 1
+        },
+        {
+          "type": "table",
+          "left": 489.35,
+          "top": 481.526,
+          "width": 8.945,
+          "height": 8.945,
+          "rows": 1,
+          "columns": 1
+        },
+        {
+          "type": "table",
+          "left": 539.75,
+          "top": 481.526,
+          "width": 8.944,
+          "height": 8.944,
+          "rows": 1,
+          "columns": 1
+        },
+        {
+          "type": "table",
+          "left": 489.35,
+          "top": 505.527,
+          "width": 8.945,
+          "height": 8.945,
+          "rows": 1,
+          "columns": 1
+        },
+        {
+          "type": "table",
+          "left": 539.75,
+          "top": 505.527,
+          "width": 8.944,
+          "height": 8.944,
+          "rows": 1,
+          "columns": 1
+        },
+        {
+          "type": "table",
+          "left": 35.75,
+          "top": 527.748,
+          "width": 540.5,
+          "height": 228.752,
+          "rows": 10,
+          "columns": 3
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "Schedule C (Form 1040) 2025 Page 2",
+          "left": 36.0,
+          "top": 34.389,
+          "width": 540.0,
+          "height": 11.93,
+          "fontSize": 7.0
+        },
+        {
+          "type": "text",
+          "sourceType": "heading",
+          "text": "Part III Cost of Goods Sold (see instructions)",
+          "left": 38.275,
+          "top": 47.388,
+          "width": 219.235,
+          "height": 11.93,
+          "fontSize": 10.0
+        },
+        {
+          "type": "text",
+          "sourceType": "list item",
+          "text": "33 Method(s) used to value closing inventory: a",
+          "left": 41.504,
+          "top": 75.913,
+          "width": 135.888,
+          "height": 19.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "Cost b",
+          "left": 200.0,
+          "top": 85.91,
+          "width": 49.688,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "Lower of cost or market c",
+          "left": 272.0,
+          "top": 85.91,
+          "width": 114.192,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "Other (attach explanation)",
+          "left": 408.8,
+          "top": 86.094,
+          "width": 92.312,
+          "height": 9.328,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "list item",
+          "text": "34 Was there any change in determining quantities, costs, or valuations between opening and closing inventory?",
+          "left": 41.504,
+          "top": 99.91,
+          "width": 413.896,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "Yes",
+          "left": 496.4,
+          "top": 108.911,
+          "width": 14.224,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "caption",
+          "text": "No",
+          "left": 554.0,
+          "top": 108.911,
+          "width": 10.816,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "If \u201cYes,\u201d attach explanation . . . . . . . . . . . . . . . . . . . . . . . . . .",
+          "left": 64.8,
+          "top": 110.094,
+          "width": 405.424,
+          "height": 9.328,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "list item",
+          "text": "35 Inventory at beginning of year. If different from last year\u2019s closing inventory, attach explanation . . .",
+          "left": 41.504,
+          "top": 133.911,
+          "width": 392.72,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "35",
+          "left": 452.752,
+          "top": 133.912,
+          "width": 8.896,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "list item",
+          "text": "36 Purchases less cost of items withdrawn for personal use . . . . . . . . . . . . . .",
+          "left": 41.504,
+          "top": 157.913,
+          "width": 392.72,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "36",
+          "left": 452.752,
+          "top": 157.913,
+          "width": 8.896,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "list item",
+          "text": "37 Cost of labor. Do not include any amounts paid to yourself . . . . . . . . . . . . . .",
+          "left": 41.504,
+          "top": 181.914,
+          "width": 392.72,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "37",
+          "left": 452.752,
+          "top": 181.914,
+          "width": 8.896,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "list item",
+          "text": "38 Materials and supplies . . . . . . . . . . . . . . . . . . . . . . . .",
+          "left": 41.504,
+          "top": 205.912,
+          "width": 392.72,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "38",
+          "left": 452.752,
+          "top": 205.912,
+          "width": 8.896,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "list item",
+          "text": "39 Other costs . . . . . . . . . . . . . . . . . . . . . . . . . . . .",
+          "left": 41.504,
+          "top": 229.913,
+          "width": 392.72,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "39",
+          "left": 452.752,
+          "top": 229.913,
+          "width": 8.896,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "list item",
+          "text": "40 Add lines 35 through 39 . . . . . . . . . . . . . . . . . . . . . . . .",
+          "left": 41.504,
+          "top": 253.914,
+          "width": 392.72,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "40",
+          "left": 452.752,
+          "top": 253.914,
+          "width": 8.896,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "list item",
+          "text": "41 Inventory at end of year . . . . . . . . . . . . . . . . . . . . . . . .",
+          "left": 41.504,
+          "top": 277.912,
+          "width": 392.72,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "41",
+          "left": 452.752,
+          "top": 277.912,
+          "width": 8.896,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "list item",
+          "text": "42 Cost of goods sold. Subtract line 41 from line 40. Enter the result here and on line 4 . . . . . .",
+          "left": 41.504,
+          "top": 301.913,
+          "width": 392.72,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "42",
+          "left": 452.752,
+          "top": 301.913,
+          "width": 8.896,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "heading",
+          "text": "Part IV Information on Your Vehicle. Complete this part only if you are claiming car or truck expenses on line 9 andare not required to file Form 4562 for this business. See the instructions for line 13 to find out if you must fileForm 4562.",
+          "left": 38.075,
+          "top": 311.39,
+          "width": 535.765,
+          "height": 34.891,
+          "fontSize": 10.0
+        },
+        {
+          "type": "text",
+          "sourceType": "list item",
+          "text": "43 When did you place your vehicle in service for business purposes? (month/day/year) / /",
+          "left": 41.504,
+          "top": 360.857,
+          "width": 402.795,
+          "height": 10.598,
+          "fontSize": 9.0
+        },
+        {
+          "type": "text",
+          "sourceType": "list item",
+          "text": "44 Of the total number of miles you drove your vehicle during 2025, enter the number of miles you used your vehicle for:",
+          "left": 41.504,
+          "top": 385.912,
+          "width": 440.6,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "a Business b Commuting (see instructions) c Other",
+          "left": 50.4,
+          "top": 409.912,
+          "width": 410.648,
+          "height": 9.642,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "Yes",
+          "left": 503.6,
+          "top": 433.911,
+          "width": 14.224,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "No",
+          "left": 554.0,
+          "top": 433.911,
+          "width": 10.816,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "list item",
+          "text": "45 Was your vehicle available for personal use during off-duty hours? . . . . . . . . . . . . . . .",
+          "left": 41.504,
+          "top": 433.914,
+          "width": 440.72,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "list item",
+          "text": "46 Do you (or your spouse) have another vehicle available for personal use?. . . . . . . . . . . . . .",
+          "left": 41.504,
+          "top": 457.911,
+          "width": 440.72,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "Yes",
+          "left": 503.6,
+          "top": 457.912,
+          "width": 14.224,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "No",
+          "left": 554.0,
+          "top": 457.912,
+          "width": 10.816,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "Yes",
+          "left": 503.6,
+          "top": 481.91,
+          "width": 14.224,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "No",
+          "left": 554.0,
+          "top": 481.91,
+          "width": 10.816,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "list item",
+          "text": "47a Do you have evidence to support your deduction? . . . . . . . . . . . . . . . . . . . .",
+          "left": 41.504,
+          "top": 481.912,
+          "width": 440.72,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "b If \u201cYes,\u201d is the evidence written? . . . . . . . . . . . . . . . . . . . . . . . . .",
+          "left": 50.4,
+          "top": 505.91,
+          "width": 431.824,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "Yes",
+          "left": 503.6,
+          "top": 505.911,
+          "width": 14.224,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "No",
+          "left": 554.0,
+          "top": 505.911,
+          "width": 10.816,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "heading",
+          "text": "Part V",
+          "left": 39.55,
+          "top": 515.388,
+          "width": 28.9,
+          "height": 11.93,
+          "fontSize": 10.0
+        },
+        {
+          "type": "text",
+          "sourceType": "caption",
+          "text": "Other Expenses. List below business expenses not included on lines 8-27a, or line 30.",
+          "left": 86.4,
+          "top": 515.388,
+          "width": 388.42,
+          "height": 11.93,
+          "fontSize": 10.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "48 Total other expenses. Enter here and on line 27b . . . . . . . . . . . . . . . .",
+          "left": 41.504,
+          "top": 745.912,
+          "width": 392.72,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "48",
+          "left": 452.752,
+          "top": 745.912,
+          "width": 8.896,
+          "height": 9.544,
+          "fontSize": 8.0
+        },
+        {
+          "type": "text",
+          "sourceType": "paragraph",
+          "text": "Schedule C (Form 1040) 2025",
+          "left": 479.275,
+          "top": 759.172,
+          "width": 96.726,
+          "height": 8.351,
+          "fontSize": 7.0
+        }
+      ]
+    }
+  ]
+}

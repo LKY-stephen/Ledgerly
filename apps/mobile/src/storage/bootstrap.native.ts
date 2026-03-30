@@ -2,31 +2,32 @@ import * as FileSystem from "expo-file-system/legacy";
 import { openDatabaseAsync } from "expo-sqlite";
 import { supportedPlatforms } from "@creator-cfo/schemas";
 import {
-  buildVaultRelativePath,
-  fileVaultContract,
-  structuredStoreContract,
+  createLocalStorageBootstrapManifest,
+  getLocalStorageBootstrapPlan,
 } from "@creator-cfo/storage";
 
 import type { BootstrapStatus } from "./status";
+import { countStructuredTables, initializeLocalDatabase } from "./database";
 
 export async function bootstrapLocalStorage(): Promise<BootstrapStatus> {
-  const database = await openDatabaseAsync(structuredStoreContract.databaseName);
+  const storagePlan = getLocalStorageBootstrapPlan();
+  const database = await openDatabaseAsync(storagePlan.databaseName);
+  const documentDirectory = FileSystem.documentDirectory;
 
-  await database.execAsync("PRAGMA journal_mode = WAL;");
-  await database.execAsync(`PRAGMA user_version = ${structuredStoreContract.version};`);
-
-  for (const table of structuredStoreContract.tables) {
-    await database.execAsync(table.createStatement);
+  if (!documentDirectory) {
+    throw new Error("Expo document directory is unavailable for local vault bootstrap.");
   }
 
-  const rootDirectory = `${FileSystem.documentDirectory}${fileVaultContract.rootDirectory}`;
+  await initializeLocalDatabase(database);
+
+  const rootDirectory = `${documentDirectory}${storagePlan.fileVaultRoot}`;
   const rootInfo = await FileSystem.getInfoAsync(rootDirectory);
 
   if (!rootInfo.exists) {
     await FileSystem.makeDirectoryAsync(rootDirectory, { intermediates: true });
   }
 
-  for (const collection of fileVaultContract.collections) {
+  for (const collection of storagePlan.fileCollections) {
     const collectionDirectory = `${rootDirectory}/${collection.slug}`;
     const collectionInfo = await FileSystem.getInfoAsync(collectionDirectory);
 
@@ -36,42 +37,18 @@ export async function bootstrapLocalStorage(): Promise<BootstrapStatus> {
   }
 
   const bootstrapManifest = `${rootDirectory}/bootstrap-manifest.json`;
-  const manifestInfo = await FileSystem.getInfoAsync(bootstrapManifest);
-
-  if (!manifestInfo.exists) {
-    await FileSystem.writeAsStringAsync(
-      bootstrapManifest,
-      JSON.stringify(
-        {
-          databaseName: structuredStoreContract.databaseName,
-          fileCollections: fileVaultContract.collections.map((collection) => ({
-            ...collection,
-            samplePath: buildVaultRelativePath(
-              collection.slug,
-              `sample.${collection.defaultExtension}`,
-            ),
-          })),
-          version: structuredStoreContract.version,
-        },
-        null,
-        2,
-      ),
-    );
-  }
-
-  const tables = await database.getAllAsync<{ name: string }>(
-    "SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name;",
+  await FileSystem.writeAsStringAsync(
+    bootstrapManifest,
+    JSON.stringify(createLocalStorageBootstrapManifest(), null, 2),
   );
 
   return {
-    databaseName: structuredStoreContract.databaseName,
-    fileCollectionCount: fileVaultContract.collections.length,
-    fileVaultRoot: fileVaultContract.rootDirectory,
+    databaseName: storagePlan.databaseName,
+    fileCollectionCount: storagePlan.overview.collectionCount,
+    fileVaultRoot: storagePlan.fileVaultRoot,
     platformCount: supportedPlatforms.length,
     status: "ready",
-    structuredTableCount: tables.filter((table) =>
-      structuredStoreContract.tables.some((contract) => contract.name === table.name),
-    ).length,
-    summary: "SQLite tables and document vault directories are provisioned locally.",
+    structuredTableCount: await countStructuredTables(database),
+    summary: "SQLite tables, derived views, and evidence-vault directories are provisioned locally.",
   };
 }

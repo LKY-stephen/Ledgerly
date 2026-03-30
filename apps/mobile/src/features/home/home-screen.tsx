@@ -3,6 +3,7 @@ import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { SectionCard } from "@creator-cfo/ui";
 
+import { DatabaseHooksDemo } from "../database-demo/database-hooks-demo";
 import { buildHomeSections } from "./sections";
 import { AppIcon } from "../../components/app-icon";
 import { IconMetricCard } from "../../components/icon-metric-card";
@@ -22,6 +23,7 @@ export function HomeScreen() {
     summary: "Preparing local SQLite and file-vault contracts...",
   });
   const sections = buildHomeSections(copy, session);
+  const storageCardRows = chunkItems(sections.storageCards, 2);
 
   useEffect(() => {
     let isMounted = true;
@@ -183,29 +185,21 @@ export function HomeScreen() {
             title={copy.home.storageTitle}
           >
             <View style={styles.storageGrid}>
-              <View style={styles.metricRow}>
-                {sections.storageCards.slice(0, 2).map((card) => (
-                  <IconMetricCard
-                    key={card.title}
-                    icon={card.icon}
-                    label={card.title}
-                    palette={palette}
-                    style={styles.metricCard}
-                    summary={card.label}
-                    value={card.value}
-                  />
-                ))}
-              </View>
-              <View style={styles.metricRow}>
-                <IconMetricCard
-                  icon={sections.storageCards[2]?.icon ?? "device"}
-                  label={sections.storageCards[2]?.title ?? ""}
-                  palette={palette}
-                  style={styles.metricCardWide}
-                  summary={sections.storageCards[2]?.label ?? ""}
-                  value={sections.storageCards[2]?.value ?? ""}
-                />
-              </View>
+              {storageCardRows.map((row) => (
+                <View key={row.map((card) => card.label).join("-")} style={styles.metricRow}>
+                  {row.map((card) => (
+                    <IconMetricCard
+                      key={card.label}
+                      icon={card.icon}
+                      label={card.label}
+                      palette={palette}
+                      style={row.length === 1 ? styles.metricCardWide : styles.metricCard}
+                      summary={card.summary}
+                      value={card.value}
+                    />
+                  ))}
+                </View>
+              ))}
             </View>
 
             <Text style={[styles.subheading, { color: palette.ink }]}>{copy.home.collectionsTitle}</Text>
@@ -238,10 +232,29 @@ export function HomeScreen() {
               </View>
             ))}
           </SectionCard>
+
+          <DatabaseHooksDemo
+            calculatedBadge={copy.discover.calculatedBadge}
+            form1099NecCopy={copy.discover.form1099Nec}
+            formScheduleCCopy={copy.discover.formScheduleC}
+            isBootstrapped={bootstrapStatus.status === "ready"}
+            manualBadge={copy.discover.manualBadge}
+            palette={palette}
+          />
         </View>
       </ScrollView>
     </SafeAreaView>
   );
+}
+
+function chunkItems<T>(items: readonly T[], size: number): T[][] {
+  const rows: T[][] = [];
+
+  for (let index = 0; index < items.length; index += size) {
+    rows.push(items.slice(index, index + size));
+  }
+
+  return rows;
 }
 
 const styles = StyleSheet.create({

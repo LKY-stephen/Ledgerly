@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "expo-router/entry",
   "scripts": {
-    "build": "expo export --platform web",
+    "build": "__UNSAFE_EXPO_HOME_DIRECTORY=.expo-home expo export --platform web",
     "dev": "expo start --clear",
     "format": "prettier --check '**/*.{ts,tsx,json}'",
     "lint": "eslint app src tests --ext .ts,.tsx",

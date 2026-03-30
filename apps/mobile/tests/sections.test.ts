@@ -15,13 +15,25 @@ describe("home sections", () => {
       label: "Modules",
       value: "5",
     });
-    expect(sections.storageCards[0]?.title).toBe("Storage contract pulse");
-    expect(sections.storageCards).toHaveLength(3);
-    expect(sections.storageCards[2]).toMatchObject({
-      icon: "device",
-      title: "Device state",
+    expect(sections.storageCards).toHaveLength(4);
+    expect(sections.storageCards[0]).toMatchObject({
+      icon: "bootstrap",
+      label: "Storage contract pulse",
+      value: "8",
     });
-    expect(sections.storageCollections.map((collection) => collection.slug)).toContain("receipts");
+    expect(sections.storageCards[1]).toMatchObject({
+      icon: "workflow",
+      label: "Derived views",
+      value: "5",
+    });
+    expect(sections.storageCards[3]).toMatchObject({
+      icon: "device",
+      label: "Device state",
+      value: "3",
+    });
+    expect(sections.storageCollections.map((collection) => collection.slug)).toContain(
+      "evidence-objects",
+    );
     expect(sections.sessionTitle).toBe("Exploring in guest mode");
   });
 });

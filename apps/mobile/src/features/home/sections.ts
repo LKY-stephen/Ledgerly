@@ -1,5 +1,9 @@
 import { productModules, supportedPlatforms, workflowPrinciples } from "@creator-cfo/schemas";
-import { deviceStateContract, fileVaultContract, structuredStoreContract } from "@creator-cfo/storage";
+import {
+  deviceStateContract,
+  fileVaultContract,
+  getLocalStorageOverview,
+} from "@creator-cfo/storage";
 
 import type { AppCopy } from "../app-shell/copy";
 import type { AppSession } from "../app-shell/types";
@@ -13,11 +17,12 @@ interface MetricDefinition {
 }
 
 export function buildHomeSections(copy: AppCopy, session: AppSession | null) {
+  const overview = getLocalStorageOverview();
   const sessionTitle =
     session?.kind === "apple"
       ? copy.home.sessionApple
       : session?.kind === "guest"
-      ? copy.home.sessionGuest
+        ? copy.home.sessionGuest
         : copy.home.sessionSignedOut;
 
   const heroMetrics: MetricDefinition[] = [
@@ -41,32 +46,40 @@ export function buildHomeSections(copy: AppCopy, session: AppSession | null) {
     },
   ];
 
+  const storageCards: MetricDefinition[] = [
+    {
+      icon: "bootstrap",
+      label: copy.home.storageTitle,
+      summary: copy.home.storageLabel,
+      value: overview.tableCount.toString(),
+    },
+    {
+      icon: "workflow",
+      label: copy.home.storageViewsTitle,
+      summary: copy.home.storageViewsLabel,
+      value: overview.viewCount.toString(),
+    },
+    {
+      icon: "vault",
+      label: copy.home.collectionsTitle,
+      summary: copy.home.collectionsLabel,
+      value: overview.collectionCount.toString(),
+    },
+    {
+      icon: "device",
+      label: copy.home.storageDeviceTitle,
+      summary: copy.home.storageDeviceLabel,
+      value: deviceStateContract.records.length.toString(),
+    },
+  ];
+
   return {
     focusCards: copy.home.focusCards,
     heroMetrics,
     modules: productModules,
     platforms: supportedPlatforms,
     sessionTitle,
-    storageCards: [
-      {
-        icon: "bootstrap" as const,
-        title: copy.home.storageTitle,
-        value: structuredStoreContract.tables.length.toString(),
-        label: copy.home.storageLabel,
-      },
-      {
-        icon: "vault" as const,
-        title: copy.home.collectionsTitle,
-        value: fileVaultContract.collections.length.toString(),
-        label: copy.home.collectionsLabel,
-      },
-      {
-        icon: "device" as const,
-        title: copy.home.storageDeviceTitle,
-        value: deviceStateContract.records.length.toString(),
-        label: copy.home.storageDeviceLabel,
-      },
-    ],
+    storageCards,
     storageCollections: fileVaultContract.collections,
     workflowPrinciples,
   };

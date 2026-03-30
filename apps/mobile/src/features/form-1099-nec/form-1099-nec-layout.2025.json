@@ -1,0 +1,973 @@
+{
+  "sourcePdf": "f1099nec.pdf",
+  "title": "Form 1099-NEC (Rev. April 2025)",
+  "page": {
+    "pageNumber": 2,
+    "width": 612.0,
+    "height": 792.008,
+    "elements": [
+      {
+        "type": "shape",
+        "orientation": "vertical-rule",
+        "left": 294.825,
+        "top": 35.5,
+        "width": 0.75,
+        "height": 72.875
+      },
+      {
+        "type": "shape",
+        "orientation": "vertical-rule",
+        "left": 395.625,
+        "top": 35.5,
+        "width": 0.75,
+        "height": 72.875
+      },
+      {
+        "type": "shape",
+        "orientation": "vertical-rule",
+        "left": 467.625,
+        "top": 35.75,
+        "width": 0.75,
+        "height": 72.625
+      },
+      {
+        "type": "shape",
+        "orientation": "horizontal-rule",
+        "left": 395.625,
+        "top": 83.624,
+        "width": 72.625,
+        "height": 0.75
+      },
+      {
+        "type": "shape",
+        "orientation": "horizontal-rule",
+        "left": 417.35,
+        "top": 104.75,
+        "width": 29.3,
+        "height": 0.5
+      },
+      {
+        "type": "shape",
+        "orientation": "vertical-rule",
+        "left": 172.425,
+        "top": 107.5,
+        "width": 0.75,
+        "height": 24.876
+      },
+      {
+        "type": "shape",
+        "orientation": "horizontal-rule",
+        "left": 49.9,
+        "top": 107.625,
+        "width": 245.675,
+        "height": 0.75
+      },
+      {
+        "type": "shape",
+        "orientation": "horizontal-rule",
+        "left": 294.825,
+        "top": 107.625,
+        "width": 101.55,
+        "height": 0.75
+      },
+      {
+        "type": "shape",
+        "orientation": "horizontal-rule",
+        "left": 395.625,
+        "top": 107.625,
+        "width": 72.625,
+        "height": 0.75
+      },
+      {
+        "type": "shape",
+        "orientation": "horizontal-rule",
+        "left": 467.625,
+        "top": 107.625,
+        "width": 108.625,
+        "height": 0.75
+      },
+      {
+        "type": "shape",
+        "orientation": "vertical-rule",
+        "left": 294.825,
+        "top": 107.75,
+        "width": 0.75,
+        "height": 12.499
+      },
+      {
+        "type": "shape",
+        "orientation": "vertical-rule",
+        "left": 496.425,
+        "top": 107.75,
+        "width": 0.75,
+        "height": 12.499
+      },
+      {
+        "type": "shape",
+        "orientation": "vertical-rule",
+        "left": 294.825,
+        "top": 119.749,
+        "width": 0.75,
+        "height": 12.624
+      },
+      {
+        "type": "shape",
+        "orientation": "vertical-rule",
+        "left": 496.425,
+        "top": 119.749,
+        "width": 0.75,
+        "height": 12.624
+      },
+      {
+        "type": "shape",
+        "orientation": "horizontal-rule",
+        "left": 49.9,
+        "top": 131.626,
+        "width": 123.275,
+        "height": 0.75
+      },
+      {
+        "type": "shape",
+        "orientation": "horizontal-rule",
+        "left": 172.425,
+        "top": 131.626,
+        "width": 123.15,
+        "height": 0.75
+      },
+      {
+        "type": "shape",
+        "orientation": "horizontal-rule",
+        "left": 294.825,
+        "top": 131.626,
+        "width": 187.825,
+        "height": 0.75
+      },
+      {
+        "type": "shape",
+        "orientation": "vertical-rule",
+        "left": 294.825,
+        "top": 131.626,
+        "width": 0.75,
+        "height": 24.626
+      },
+      {
+        "type": "shape",
+        "orientation": "horizontal-rule",
+        "left": 482.15,
+        "top": 131.626,
+        "width": 15.025,
+        "height": 0.75
+      },
+      {
+        "type": "shape",
+        "orientation": "vertical-rule",
+        "left": 496.425,
+        "top": 131.626,
+        "width": 0.75,
+        "height": 24.626
+      },
+      {
+        "type": "shape",
+        "orientation": "vertical-rule",
+        "left": 294.825,
+        "top": 155.624,
+        "width": 0.75,
+        "height": 12.624
+      },
+      {
+        "type": "shape",
+        "orientation": "horizontal-rule",
+        "left": 294.825,
+        "top": 155.624,
+        "width": 202.35,
+        "height": 0.75
+      },
+      {
+        "type": "shape",
+        "orientation": "vertical-rule",
+        "left": 496.425,
+        "top": 155.624,
+        "width": 0.75,
+        "height": 12.624
+      },
+      {
+        "type": "shape",
+        "orientation": "horizontal-rule",
+        "left": 49.9,
+        "top": 167.626,
+        "width": 245.675,
+        "height": 0.75
+      },
+      {
+        "type": "shape",
+        "orientation": "vertical-rule",
+        "left": 294.825,
+        "top": 167.751,
+        "width": 0.75,
+        "height": 12.624
+      },
+      {
+        "type": "shape",
+        "orientation": "vertical-rule",
+        "left": 496.425,
+        "top": 167.751,
+        "width": 0.75,
+        "height": 12.624
+      },
+      {
+        "type": "shape",
+        "orientation": "horizontal-rule",
+        "left": 294.825,
+        "top": 179.625,
+        "width": 202.35,
+        "height": 0.75
+      },
+      {
+        "type": "shape",
+        "orientation": "vertical-rule",
+        "left": 294.825,
+        "top": 179.75,
+        "width": 0.75,
+        "height": 12.499
+      },
+      {
+        "type": "shape",
+        "orientation": "vertical-rule",
+        "left": 496.425,
+        "top": 179.75,
+        "width": 0.75,
+        "height": 12.499
+      },
+      {
+        "type": "shape",
+        "orientation": "horizontal-rule",
+        "left": 49.9,
+        "top": 191.627,
+        "width": 245.675,
+        "height": 0.75
+      },
+      {
+        "type": "shape",
+        "orientation": "vertical-rule",
+        "left": 294.825,
+        "top": 191.749,
+        "width": 0.75,
+        "height": 12.624
+      },
+      {
+        "type": "shape",
+        "orientation": "vertical-rule",
+        "left": 496.425,
+        "top": 191.749,
+        "width": 0.75,
+        "height": 12.624
+      },
+      {
+        "type": "shape",
+        "orientation": "box",
+        "left": 496.8,
+        "top": 191.999,
+        "width": 79.2,
+        "height": 11.999
+      },
+      {
+        "type": "shape",
+        "orientation": "horizontal-rule",
+        "left": 294.825,
+        "top": 203.623,
+        "width": 202.35,
+        "height": 0.75
+      },
+      {
+        "type": "shape",
+        "orientation": "horizontal-rule",
+        "left": 496.425,
+        "top": 203.623,
+        "width": 79.825,
+        "height": 0.75
+      },
+      {
+        "type": "shape",
+        "orientation": "vertical-rule",
+        "left": 294.825,
+        "top": 203.626,
+        "width": 0.75,
+        "height": 36.875
+      },
+      {
+        "type": "shape",
+        "orientation": "vertical-rule",
+        "left": 374.025,
+        "top": 203.626,
+        "width": 0.75,
+        "height": 36.875
+      },
+      {
+        "type": "shape",
+        "orientation": "vertical-rule",
+        "left": 496.425,
+        "top": 203.626,
+        "width": 0.75,
+        "height": 36.875
+      },
+      {
+        "type": "shape",
+        "orientation": "horizontal-rule",
+        "left": 49.9,
+        "top": 215.625,
+        "width": 245.675,
+        "height": 0.75
+      },
+      {
+        "type": "shape",
+        "orientation": "vertical-rule",
+        "left": 251.625,
+        "top": 215.75,
+        "width": 0.75,
+        "height": 24.751
+      },
+      {
+        "type": "shape",
+        "orientation": "horizontal-rule",
+        "left": 294.825,
+        "top": 227.749,
+        "width": 79.95,
+        "height": 0.5
+      },
+      {
+        "type": "shape",
+        "orientation": "horizontal-rule",
+        "left": 374.025,
+        "top": 227.749,
+        "width": 123.15,
+        "height": 0.5
+      },
+      {
+        "type": "shape",
+        "orientation": "horizontal-rule",
+        "left": 496.425,
+        "top": 227.749,
+        "width": 79.95,
+        "height": 0.5
+      },
+      {
+        "type": "cell",
+        "left": 187.2,
+        "top": 24.5,
+        "width": 10.0,
+        "height": 10.0,
+        "rowNumber": 1,
+        "columnNumber": 1
+      },
+      {
+        "type": "cell",
+        "left": 244.8,
+        "top": 24.5,
+        "width": 10.0,
+        "height": 10.0,
+        "rowNumber": 1,
+        "columnNumber": 1
+      },
+      {
+        "type": "cell",
+        "left": 50.4,
+        "top": 36.0,
+        "width": 244.738,
+        "height": 71.937,
+        "rowNumber": 1,
+        "columnNumber": 1
+      },
+      {
+        "type": "cell",
+        "left": 295.138,
+        "top": 36.0,
+        "width": 100.862,
+        "height": 71.937,
+        "rowNumber": 1,
+        "columnNumber": 4
+      },
+      {
+        "type": "cell",
+        "left": 396.0,
+        "top": 36.0,
+        "width": 71.875,
+        "height": 47.999,
+        "rowNumber": 1,
+        "columnNumber": 6
+      },
+      {
+        "type": "cell",
+        "left": 467.875,
+        "top": 36.0,
+        "width": 107.938,
+        "height": 71.937,
+        "rowNumber": 1,
+        "columnNumber": 7
+      },
+      {
+        "type": "cell",
+        "left": 396.0,
+        "top": 83.999,
+        "width": 71.875,
+        "height": 23.938,
+        "rowNumber": 2,
+        "columnNumber": 6
+      },
+      {
+        "type": "cell",
+        "left": 50.4,
+        "top": 107.937,
+        "width": 122.4,
+        "height": 24.001,
+        "rowNumber": 3,
+        "columnNumber": 1
+      },
+      {
+        "type": "cell",
+        "left": 172.8,
+        "top": 107.937,
+        "width": 122.338,
+        "height": 24.001,
+        "rowNumber": 3,
+        "columnNumber": 2
+      },
+      {
+        "type": "cell",
+        "left": 295.138,
+        "top": 107.937,
+        "width": 201.599,
+        "height": 24.001,
+        "rowNumber": 3,
+        "columnNumber": 4
+      },
+      {
+        "type": "cell",
+        "left": 496.737,
+        "top": 107.937,
+        "width": 79.076,
+        "height": 96.063,
+        "rowNumber": 3,
+        "columnNumber": 8
+      },
+      {
+        "type": "cell",
+        "left": 50.4,
+        "top": 131.938,
+        "width": 244.738,
+        "height": 36.0,
+        "rowNumber": 4,
+        "columnNumber": 1
+      },
+      {
+        "type": "cell",
+        "left": 295.138,
+        "top": 131.938,
+        "width": 201.599,
+        "height": 24.0,
+        "rowNumber": 4,
+        "columnNumber": 4
+      },
+      {
+        "type": "cell",
+        "left": 485.8,
+        "top": 140.001,
+        "width": 8.0,
+        "height": 8.0,
+        "rowNumber": 1,
+        "columnNumber": 1
+      },
+      {
+        "type": "cell",
+        "left": 295.138,
+        "top": 155.938,
+        "width": 201.599,
+        "height": 24.124,
+        "rowNumber": 5,
+        "columnNumber": 4
+      },
+      {
+        "type": "cell",
+        "left": 50.4,
+        "top": 167.938,
+        "width": 244.738,
+        "height": 24.001,
+        "rowNumber": 6,
+        "columnNumber": 1
+      },
+      {
+        "type": "cell",
+        "left": 295.138,
+        "top": 180.062,
+        "width": 201.599,
+        "height": 23.938,
+        "rowNumber": 7,
+        "columnNumber": 4
+      },
+      {
+        "type": "cell",
+        "left": 50.4,
+        "top": 191.939,
+        "width": 244.738,
+        "height": 23.998,
+        "rowNumber": 8,
+        "columnNumber": 1
+      },
+      {
+        "type": "cell",
+        "left": 295.138,
+        "top": 204.0,
+        "width": 79.2,
+        "height": 23.999,
+        "rowNumber": 9,
+        "columnNumber": 4
+      },
+      {
+        "type": "cell",
+        "left": 374.338,
+        "top": 204.0,
+        "width": 122.399,
+        "height": 23.999,
+        "rowNumber": 9,
+        "columnNumber": 5
+      },
+      {
+        "type": "cell",
+        "left": 496.737,
+        "top": 204.0,
+        "width": 79.076,
+        "height": 23.999,
+        "rowNumber": 9,
+        "columnNumber": 8
+      },
+      {
+        "type": "cell",
+        "left": 50.4,
+        "top": 215.937,
+        "width": 201.6,
+        "height": 24.064,
+        "rowNumber": 10,
+        "columnNumber": 1
+      },
+      {
+        "type": "cell",
+        "left": 252.0,
+        "top": 215.937,
+        "width": 43.138,
+        "height": 24.064,
+        "rowNumber": 10,
+        "columnNumber": 3
+      },
+      {
+        "type": "cell",
+        "left": 295.138,
+        "top": 227.999,
+        "width": 79.2,
+        "height": 12.002,
+        "rowNumber": 11,
+        "columnNumber": 4
+      },
+      {
+        "type": "cell",
+        "left": 374.338,
+        "top": 227.999,
+        "width": 122.399,
+        "height": 12.002,
+        "rowNumber": 11,
+        "columnNumber": 5
+      },
+      {
+        "type": "cell",
+        "left": 496.737,
+        "top": 227.999,
+        "width": 79.076,
+        "height": 12.002,
+        "rowNumber": 11,
+        "columnNumber": 8
+      },
+      {
+        "type": "cell",
+        "left": 268.399,
+        "top": 229.998,
+        "width": 8.0,
+        "height": 8.0,
+        "rowNumber": 1,
+        "columnNumber": 1
+      },
+      {
+        "type": "table",
+        "left": 186.95,
+        "top": 24.25,
+        "width": 10.5,
+        "height": 10.5,
+        "rows": 1,
+        "columns": 1
+      },
+      {
+        "type": "table",
+        "left": 244.55,
+        "top": 24.25,
+        "width": 10.5,
+        "height": 10.5,
+        "rows": 1,
+        "columns": 1
+      },
+      {
+        "type": "table",
+        "left": 49.9,
+        "top": 35.5,
+        "width": 526.475,
+        "height": 205.001,
+        "rows": 11,
+        "columns": 8
+      },
+      {
+        "type": "table",
+        "left": 485.55,
+        "top": 139.751,
+        "width": 8.5,
+        "height": 8.5,
+        "rows": 1,
+        "columns": 1
+      },
+      {
+        "type": "table",
+        "left": 268.149,
+        "top": 229.748,
+        "width": 8.5,
+        "height": 8.5,
+        "rows": 1,
+        "columns": 1
+      },
+      {
+        "type": "text",
+        "sourceType": "paragraph",
+        "text": "VOID",
+        "left": 201.6,
+        "top": 23.62,
+        "width": 23.34,
+        "height": 11.66,
+        "fontSize": 10.0
+      },
+      {
+        "type": "text",
+        "sourceType": "paragraph",
+        "text": "CORRECTED",
+        "left": 259.2,
+        "top": 23.62,
+        "width": 60.74,
+        "height": 11.66,
+        "fontSize": 10.0
+      },
+      {
+        "type": "text",
+        "sourceType": "paragraph",
+        "text": "7171",
+        "left": 115.2,
+        "top": 24.55,
+        "width": 28.8,
+        "height": 10.62,
+        "fontSize": 10.0
+      },
+      {
+        "type": "text",
+        "sourceType": "paragraph",
+        "text": "PAYER\u2019S name, street address, city or town, state or province, country, ZIP or foreign postal code, and telephone no.",
+        "left": 54.4,
+        "top": 37.334,
+        "width": 236.302,
+        "height": 16.562,
+        "fontSize": 7.0
+      },
+      {
+        "type": "text",
+        "sourceType": "paragraph",
+        "text": "OMB No. 1545-0116",
+        "left": 399.51,
+        "top": 38.333,
+        "width": 64.981,
+        "height": 8.162,
+        "fontSize": 7.0
+      },
+      {
+        "type": "text",
+        "sourceType": "heading",
+        "text": "Form 1099-NEC",
+        "left": 398.636,
+        "top": 52.474,
+        "width": 66.728,
+        "height": 11.93,
+        "fontSize": 10.0
+      },
+      {
+        "type": "text",
+        "sourceType": "paragraph",
+        "text": "Nonemployee Compensation",
+        "left": 499.43,
+        "top": 57.029,
+        "width": 76.571,
+        "height": 26.323,
+        "fontSize": 11.0
+      },
+      {
+        "type": "text",
+        "sourceType": "paragraph",
+        "text": "(Rev. April 2025)",
+        "left": 406.394,
+        "top": 72.893,
+        "width": 51.212,
+        "height": 8.162,
+        "fontSize": 7.0
+      },
+      {
+        "type": "text",
+        "sourceType": "paragraph",
+        "text": "For calendar year",
+        "left": 404.715,
+        "top": 85.333,
+        "width": 54.572,
+        "height": 8.162,
+        "fontSize": 7.0
+      },
+      {
+        "type": "text",
+        "sourceType": "paragraph",
+        "text": "Copy A For Internal Revenue",
+        "left": 498.174,
+        "top": 107.389,
+        "width": 77.828,
+        "height": 24.866,
+        "fontSize": 8.0
+      },
+      {
+        "type": "text",
+        "sourceType": "paragraph",
+        "text": "1 Nonemployee compensation $",
+        "left": 296.84,
+        "top": 109.173,
+        "width": 95.564,
+        "height": 22.105,
+        "fontSize": 7.0
+      },
+      {
+        "type": "text",
+        "sourceType": "paragraph",
+        "text": "PAYER\u2019S TIN",
+        "left": 54.4,
+        "top": 109.334,
+        "width": 41.954,
+        "height": 8.162,
+        "fontSize": 7.0
+      },
+      {
+        "type": "text",
+        "sourceType": "paragraph",
+        "text": "RECIPIENT\u2019S TIN",
+        "left": 176.8,
+        "top": 109.334,
+        "width": 54.91,
+        "height": 8.162,
+        "fontSize": 7.0
+      },
+      {
+        "type": "text",
+        "sourceType": "paragraph",
+        "text": "Service Center For filing information,",
+        "left": 511.775,
+        "top": 130.711,
+        "width": 64.227,
+        "height": 21.141,
+        "fontSize": 8.0
+      },
+      {
+        "type": "text",
+        "sourceType": "paragraph",
+        "text": "2 Payer made direct sales totaling $5,000 or more of",
+        "left": 301.2,
+        "top": 133.174,
+        "width": 163.891,
+        "height": 8.351,
+        "fontSize": 7.0
+      },
+      {
+        "type": "text",
+        "sourceType": "paragraph",
+        "text": "RECIPIENT\u2019S name",
+        "left": 54.4,
+        "top": 133.335,
+        "width": 61.406,
+        "height": 8.162,
+        "fontSize": 7.0
+      },
+      {
+        "type": "text",
+        "sourceType": "paragraph",
+        "text": "consumer products to recipient for resale",
+        "left": 307.199,
+        "top": 141.735,
+        "width": 129.129,
+        "height": 8.162,
+        "fontSize": 7.0
+      },
+      {
+        "type": "text",
+        "sourceType": "paragraph",
+        "text": "Privacy Act, and Paperwork Reduction Act",
+        "left": 498.053,
+        "top": 150.524,
+        "width": 77.948,
+        "height": 17.328,
+        "fontSize": 8.0
+      },
+      {
+        "type": "text",
+        "sourceType": "paragraph",
+        "text": "3 Excess golden parachute payments $",
+        "left": 296.84,
+        "top": 157.172,
+        "width": 122.093,
+        "height": 22.108,
+        "fontSize": 7.0
+      },
+      {
+        "type": "text",
+        "sourceType": "paragraph",
+        "text": "Notice, see the General Instructions for Certain",
+        "left": 500.834,
+        "top": 166.34,
+        "width": 75.167,
+        "height": 17.544,
+        "fontSize": 8.0
+      },
+      {
+        "type": "text",
+        "sourceType": "paragraph",
+        "text": "Street address (including apt. no.)",
+        "left": 54.4,
+        "top": 169.335,
+        "width": 105.539,
+        "height": 8.162,
+        "fontSize": 7.0
+      },
+      {
+        "type": "text",
+        "sourceType": "paragraph",
+        "text": "4 Federal income tax withheld $",
+        "left": 296.84,
+        "top": 181.173,
+        "width": 98.223,
+        "height": 22.105,
+        "fontSize": 7.0
+      },
+      {
+        "type": "text",
+        "sourceType": "paragraph",
+        "text": "Information Returns. www.irs.gov/Form1099",
+        "left": 499.649,
+        "top": 182.34,
+        "width": 76.352,
+        "height": 20.618,
+        "fontSize": 7.5
+      },
+      {
+        "type": "text",
+        "sourceType": "paragraph",
+        "text": "City or town, state or province, country, and ZIP or foreign postal code",
+        "left": 54.4,
+        "top": 193.333,
+        "width": 220.906,
+        "height": 8.162,
+        "fontSize": 7.0
+      },
+      {
+        "type": "text",
+        "sourceType": "paragraph",
+        "text": "5 State tax withheld $",
+        "left": 296.84,
+        "top": 205.174,
+        "width": 66.457,
+        "height": 22.105,
+        "fontSize": 7.0
+      },
+      {
+        "type": "text",
+        "sourceType": "paragraph",
+        "text": "6 State/Payer\u2019s state no.",
+        "left": 380.4,
+        "top": 205.174,
+        "width": 77.1,
+        "height": 8.351,
+        "fontSize": 7.0
+      },
+      {
+        "type": "text",
+        "sourceType": "paragraph",
+        "text": "7 State income $",
+        "left": 498.44,
+        "top": 205.174,
+        "width": 51.561,
+        "height": 22.105,
+        "fontSize": 7.0
+      },
+      {
+        "type": "text",
+        "sourceType": "caption",
+        "text": "2nd TIN not.",
+        "left": 254.214,
+        "top": 216.334,
+        "width": 38.773,
+        "height": 8.162,
+        "fontSize": 7.0
+      },
+      {
+        "type": "text",
+        "sourceType": "paragraph",
+        "text": "Account number (see instructions)",
+        "left": 54.4,
+        "top": 217.334,
+        "width": 106.841,
+        "height": 8.162,
+        "fontSize": 7.0
+      },
+      {
+        "type": "text",
+        "sourceType": "paragraph",
+        "text": "$",
+        "left": 296.84,
+        "top": 227.618,
+        "width": 5.56,
+        "height": 11.66,
+        "fontSize": 10.0
+      },
+      {
+        "type": "text",
+        "sourceType": "paragraph",
+        "text": "$",
+        "left": 498.44,
+        "top": 227.618,
+        "width": 5.56,
+        "height": 11.66,
+        "fontSize": 10.0
+      },
+      {
+        "type": "text",
+        "sourceType": "heading",
+        "text": "Form 1099-NEC (Rev. 4-2025) www.irs.gov/Form1099NEC Do Not Cut or Separate Forms on This Page \u2014 Do Not Cut or Separate Forms on This Page",
+        "left": 50.4,
+        "top": 239.39,
+        "width": 523.732,
+        "height": 23.861,
+        "fontSize": 11.0
+      },
+      {
+        "type": "text",
+        "sourceType": "caption",
+        "text": "Cat. No. 72590N Department of the Treasury - Internal Revenue Service",
+        "left": 186.209,
+        "top": 243.334,
+        "width": 389.794,
+        "height": 8.164,
+        "fontSize": 7.0
+      }
+    ]
+  }
+}

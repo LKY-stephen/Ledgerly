@@ -55,7 +55,8 @@ export const workflowPrinciples: WorkflowPrinciple[] = [
   },
   {
     title: "Structured plus file-based storage",
-    summary: "Operational records live in SQLite while receipts and exports live in a dedicated vault.",
+    summary:
+      "Operational records and evidence metadata live in SQLite while evidence objects and exports live in a dedicated vault.",
   },
   {
     title: "Contract-driven changes",
