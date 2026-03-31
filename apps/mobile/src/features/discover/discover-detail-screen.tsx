@@ -1,7 +1,8 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { BackHeaderBar } from "../../components/back-header-bar";
 import { AppIcon } from "../../components/app-icon";
 import { useAppShell } from "../app-shell/provider";
 import { getNewsArticleBySlug } from "./news-feed";
@@ -22,26 +23,27 @@ export function DiscoverDetailScreen() {
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: palette.shell }]}>
+      <View
+        style={[
+          styles.appBar,
+          {
+            backgroundColor: palette.shell,
+            borderBottomColor: palette.divider,
+          },
+        ]}
+      >
+        <BackHeaderBar
+          onBack={() => {
+            router.back();
+          }}
+          palette={palette}
+          title={copy.common.appName}
+        />
+      </View>
       <ScrollView
         contentContainerStyle={styles.container}
         showsVerticalScrollIndicator={false}
       >
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => {
-            router.back();
-          }}
-          style={[
-            styles.backButton,
-            { backgroundColor: palette.paper, borderColor: palette.border },
-          ]}
-        >
-          <AppIcon color={palette.ink} name="back" size={18} />
-          <Text style={[styles.backLabel, { color: palette.ink }]}>
-            {copy.discover.backToFeed}
-          </Text>
-        </Pressable>
-
         {article ? (
           <>
             <View
@@ -149,19 +151,10 @@ export function DiscoverDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  backButton: {
-    alignItems: "center",
-    alignSelf: "flex-start",
-    borderRadius: 999,
-    borderWidth: 1,
-    flexDirection: "row",
-    gap: 8,
-    minHeight: 42,
-    paddingHorizontal: 14,
-  },
-  backLabel: {
-    fontSize: 14,
-    fontWeight: "700",
+  appBar: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    paddingBottom: 12,
+    paddingHorizontal: 20,
   },
   bodyCard: {
     borderRadius: 28,

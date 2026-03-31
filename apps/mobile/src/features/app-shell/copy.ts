@@ -112,9 +112,27 @@ export interface AppCopy {
   };
   ledger: {
     cards: Array<{ summary: string; title: string }>;
+    parse: {
+      backToLedger: string;
+      detectedDocsTitle: string;
+      progressTitle: string;
+      retry: string;
+      summary: string;
+      title: string;
+      totalsTitle: string;
+    };
+    primaryAction: string;
+    secondaryAction: string;
     eyebrow: string;
     summary: string;
     title: string;
+    upload: {
+      continue: string;
+      hint: string;
+      sourceTitle: string;
+      summary: string;
+      title: string;
+    };
   };
   login: {
     appleButton: string;
@@ -301,10 +319,28 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
           summary: "Keep due dates, currency, and collection status visible even before full CRUD lands.",
         },
       ],
+      parse: {
+        backToLedger: "Back to Ledger",
+        detectedDocsTitle: "Detected documents",
+        progressTitle: "Parser timeline",
+        retry: "Re-run parser mock",
+        summary: "Review parser checkpoints and mock totals before wiring any OCR or tax logic.",
+        title: "Parsing review",
+        totalsTitle: "Structured output preview",
+      },
+      primaryAction: "Upload records",
+      secondaryAction: "Open parser demo",
       eyebrow: "Ledger",
       summary:
         "Use this skeleton to prove navigation, visual rhythm, and future module boundaries before wiring deeper forms.",
       title: "The accounting shell is ready for the first local-first workflows.",
+      upload: {
+        continue: "Continue to parser",
+        hint: "No real files are uploaded in this phase. Source cards are UI-only placeholders.",
+        sourceTitle: "Upload source",
+        summary: "Pick a source card, preview expected metadata, then continue to parser UI.",
+        title: "Upload workspace",
+      },
     },
     login: {
       appleButton: "Continue with Apple",
@@ -488,9 +524,27 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
           summary: "在完整 CRUD 上线前，也能先看到到期日、币种和回款状态。",
         },
       ],
+      parse: {
+        backToLedger: "返回记账页",
+        detectedDocsTitle: "识别到的文档",
+        progressTitle: "解析流程",
+        retry: "重新演示解析",
+        summary: "先预览解析阶段和 mock 汇总结果，后续再接 OCR 与真实规则。",
+        title: "解析结果预览",
+        totalsTitle: "结构化结果预览",
+      },
+      primaryAction: "上传凭证",
+      secondaryAction: "打开解析演示",
       eyebrow: "记账",
       summary: "这个页面先验证导航、视觉节奏和模块边界，后续再接入更深的表单与数据流。",
       title: "记账壳层已经为首批本地流程预留好位置。",
+      upload: {
+        continue: "继续到解析页",
+        hint: "本阶段不会上传真实文件，来源卡片仅用于 UI 与导航验证。",
+        sourceTitle: "上传来源",
+        summary: "先选择来源卡片并查看元信息，再进入解析结果展示。",
+        title: "上传工作台",
+      },
     },
     login: {
       appleButton: "使用 Apple 登录",

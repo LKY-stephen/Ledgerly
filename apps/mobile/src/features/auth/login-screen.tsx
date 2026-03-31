@@ -1,6 +1,5 @@
 import * as AppleAuthentication from "expo-apple-authentication";
 import { Redirect, useRouter } from "expo-router";
-import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -86,289 +85,310 @@ export function LoginScreen() {
   };
 
   return (
-    <LinearGradient
-      colors={[palette.heroStart, palette.heroEnd, palette.shell]}
-      style={styles.gradient}
-    >
-      <View
-        pointerEvents="none"
-        style={[styles.backgroundOrbLarge, { backgroundColor: palette.accentSoft }]}
-      />
-      <View
-        pointerEvents="none"
-        style={[styles.backgroundOrbSmall, { backgroundColor: palette.paperMuted }]}
-      />
-      <SafeAreaView style={styles.safeArea}>
-        <ScrollView contentContainerStyle={styles.container}>
-          <View style={styles.topBar}>
-            <View style={styles.brandRow}>
-              <View style={[styles.brandMark, { backgroundColor: palette.accent }]} />
-              <Text style={[styles.topBarTitle, { color: palette.inkOnAccent }]}>
-                {copy.common.appName}
-              </Text>
-            </View>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: palette.paper }]}>
+      <ScrollView contentContainerStyle={styles.container}>
+        <View style={styles.topBlock}>
+          <Text style={[styles.brandTitle, { color: palette.ink }]}>{copy.common.appName}</Text>
+          <Text style={[styles.brandSubtitle, { color: palette.inkMuted }]}>
+            Your local-first financial workbench.
+          </Text>
+        </View>
+
+        <View
+          style={[
+            styles.heroArt,
+            {
+              backgroundColor: palette.heroEnd,
+              shadowColor: palette.shadow,
+            },
+          ]}
+        >
+          <View style={[styles.heroGlow, { backgroundColor: palette.shellElevated }]} />
+          <View style={styles.heroDesk} />
+          <View style={styles.heroLaptop}>
+            <View style={[styles.heroLaptopScreen, { backgroundColor: palette.paper }]} />
+          </View>
+          <View style={[styles.heroPill, styles.heroPillTop, { backgroundColor: palette.paper }]}>
+            <View style={[styles.pillDot, { backgroundColor: palette.accent }]} />
+            <Text style={[styles.heroPillLabel, { color: palette.ink }]}>LOCAL-FIRST</Text>
+          </View>
+          <View style={[styles.heroPill, styles.heroPillMiddle, { backgroundColor: palette.paper }]}>
+            <View style={[styles.pillDot, { backgroundColor: palette.accent }]} />
+            <Text style={[styles.heroPillLabel, { color: palette.ink }]}>BOOKKEEPING READY</Text>
+          </View>
+          <View style={[styles.heroPill, styles.heroPillBottom, { backgroundColor: palette.paper }]}>
+            <View style={[styles.pillDot, { backgroundColor: palette.accent }]} />
+            <Text style={[styles.heroPillLabel, { color: palette.ink }]}>UPLOAD AND PARSE</Text>
+          </View>
+        </View>
+
+        <Text style={[styles.summary, { color: palette.inkMuted }]}>
+          Streamlined bookkeeping, uploads, and data parsing for creators and self-employed professionals.
+        </Text>
+
+        <View style={styles.actions}>
+          {appleAvailable ? (
+            <AppleAuthentication.AppleAuthenticationButton
+              buttonStyle={
+                palette.appleButtonStyle === "black"
+                  ? AppleAuthentication.AppleAuthenticationButtonStyle.BLACK
+                  : AppleAuthentication.AppleAuthenticationButtonStyle.WHITE
+              }
+              buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
+              cornerRadius={999}
+              onPress={handleAppleSignIn}
+              style={styles.appleButton}
+            />
+          ) : (
             <Pressable
               accessibilityRole="button"
-              onPress={handleGuestMode}
-              style={[
-                styles.skipButton,
-                { backgroundColor: palette.accentSoft, borderColor: palette.border },
+              onPress={handleAppleSignIn}
+              style={({ pressed }) => [
+                styles.fallbackAppleButton,
+                {
+                  backgroundColor: pressed ? palette.heroEnd : palette.ink,
+                },
               ]}
             >
-              <Text style={[styles.skipLabel, { color: palette.ink }]}>
-                {copy.login.skip}
+              <Text style={[styles.fallbackAppleLabel, { color: palette.inkOnAccent }]}>
+                {copy.login.appleButton}
               </Text>
             </Pressable>
-          </View>
+          )}
 
-          <View
-            style={[
-              styles.heroCard,
+          <Pressable
+            accessibilityRole="button"
+            onPress={handleGuestMode}
+            style={({ pressed }) => [
+              styles.guestButton,
               {
-                backgroundColor: palette.paper,
+                backgroundColor: pressed ? palette.paperMuted : palette.shellElevated,
                 borderColor: palette.border,
-                shadowColor: palette.shadow,
               },
             ]}
           >
-            <View style={styles.heroHeader}>
-              <Text style={[styles.eyebrow, { color: palette.accent }]}>{copy.login.eyebrow}</Text>
-              <View style={styles.signalRow}>
-                {copy.login.signals.map((signal) => (
-                  <View
-                    key={signal}
-                    style={[
-                      styles.signalPill,
-                      { backgroundColor: palette.accentSoft, borderColor: palette.border },
-                    ]}
-                  >
-                    <Text style={[styles.signalLabel, { color: palette.ink }]}>{signal}</Text>
-                  </View>
-                ))}
-              </View>
-            </View>
+            <Text style={[styles.guestLabel, { color: palette.inkMuted }]}>{copy.login.skip}</Text>
+          </Pressable>
+        </View>
 
-            <Text style={[styles.title, { color: palette.ink }]}>{copy.login.title}</Text>
-            <Text style={[styles.summary, { color: palette.inkMuted }]}>{copy.login.body}</Text>
+        <Text style={[styles.caption, { color: palette.inkMuted }]}>
+          Start exploring now. No sign-up required for local mode.
+        </Text>
 
-            <View style={styles.actions}>
-              {appleAvailable ? (
-                <AppleAuthentication.AppleAuthenticationButton
-                  buttonStyle={
-                    palette.appleButtonStyle === "black"
-                      ? AppleAuthentication.AppleAuthenticationButtonStyle.BLACK
-                      : AppleAuthentication.AppleAuthenticationButtonStyle.WHITE
-                  }
-                  buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
-                  cornerRadius={18}
-                  onPress={handleAppleSignIn}
-                  style={styles.appleButton}
-                />
-              ) : (
-                <Pressable
-                  accessibilityRole="button"
-                  onPress={handleAppleSignIn}
-                  style={[
-                    styles.fallbackAppleButton,
-                    {
-                      backgroundColor: palette.paperMuted,
-                      borderColor: palette.border,
-                    },
-                  ]}
-                >
-                  <Text style={[styles.fallbackAppleLabel, { color: palette.ink }]}>
-                    {copy.login.appleButton}
-                  </Text>
-                </Pressable>
-              )}
-
-              <Pressable
-                accessibilityRole="button"
-                onPress={handleGuestMode}
-                style={[
-                  styles.guestButton,
-                  { backgroundColor: palette.shellElevated, borderColor: palette.border },
-                ]}
-              >
-                <Text style={[styles.guestLabel, { color: palette.ink }]}>
-                  {copy.login.skip}
-                </Text>
-              </Pressable>
-            </View>
-
-            <View
-              style={[
-                styles.statusPanel,
-                { backgroundColor: palette.paperMuted, borderColor: palette.border },
-              ]}
-            >
-              <View style={[styles.statusDot, { backgroundColor: palette.accent }]} />
-              <Text style={[styles.statusText, { color: palette.inkMuted }]}>{appleMessage}</Text>
-            </View>
-            <Text style={[styles.caption, { color: palette.inkMuted }]}>{copy.login.caption}</Text>
+        <View style={[styles.privacyCard, { borderTopColor: palette.divider }]}>
+          <Text style={[styles.privacyEyebrow, { color: palette.accent }]}>Privacy first</Text>
+          <Text style={[styles.privacySummary, { color: palette.inkMuted }]}>
+            Your records stay organized on-device first.
+          </Text>
+          <View style={styles.privacyMetrics}>
+            <Text style={[styles.privacyMetric, { color: palette.inkMuted }]}>AES-256 local encryption</Text>
+            <Text style={[styles.privacyMetric, { color: palette.inkMuted }]}>Zero cloud sync default</Text>
           </View>
-        </ScrollView>
-      </SafeAreaView>
-    </LinearGradient>
+          <View
+            style={[
+              styles.statusPanel,
+              { backgroundColor: palette.paperMuted, borderColor: palette.border },
+            ]}
+          >
+            <View style={[styles.statusDot, { backgroundColor: palette.accent }]} />
+            <Text style={[styles.statusText, { color: palette.inkMuted }]}>{appleMessage}</Text>
+          </View>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   actions: {
     gap: 12,
+    width: "100%",
   },
   appleButton: {
     height: 52,
     width: "100%",
   },
-  backgroundOrbLarge: {
-    position: "absolute",
-    top: 100,
-    right: -40,
-    height: 220,
-    width: 220,
-    borderRadius: 999,
-    opacity: 0.32,
+  brandSubtitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    lineHeight: 26,
   },
-  backgroundOrbSmall: {
-    position: "absolute",
-    bottom: 120,
-    left: -30,
-    height: 160,
-    width: 160,
-    borderRadius: 999,
-    opacity: 0.28,
-  },
-  brandMark: {
-    height: 10,
-    width: 10,
-    borderRadius: 999,
-  },
-  brandRow: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: 10,
+  brandTitle: {
+    fontSize: 36,
+    fontWeight: "800",
+    lineHeight: 40,
   },
   caption: {
-    fontSize: 13,
-    lineHeight: 19,
+    fontSize: 16,
+    lineHeight: 22,
+    textAlign: "center",
   },
   container: {
+    alignItems: "center",
     flexGrow: 1,
-    justifyContent: "space-between",
-    padding: 20,
-  },
-  eyebrow: {
-    fontSize: 12,
-    fontWeight: "700",
-    letterSpacing: 1.3,
-    textTransform: "uppercase",
+    gap: 22,
+    padding: 24,
+    paddingBottom: 36,
   },
   fallbackAppleButton: {
     alignItems: "center",
-    borderRadius: 18,
-    borderWidth: 1,
+    borderRadius: 999,
+    height: 52,
     justifyContent: "center",
-    minHeight: 52,
-    paddingHorizontal: 20,
   },
   fallbackAppleLabel: {
     fontSize: 16,
     fontWeight: "700",
   },
-  gradient: {
-    flex: 1,
-  },
   guestButton: {
     alignItems: "center",
-    borderRadius: 18,
+    borderRadius: 999,
     borderWidth: 1,
+    height: 52,
     justifyContent: "center",
-    minHeight: 52,
-    paddingHorizontal: 20,
   },
   guestLabel: {
     fontSize: 16,
     fontWeight: "700",
   },
-  heroCard: {
-    borderRadius: 32,
-    borderWidth: 1,
-    gap: 20,
-    marginTop: 32,
-    padding: 24,
-    shadowOffset: { width: 0, height: 16 },
-    shadowOpacity: 1,
-    shadowRadius: 30,
+  heroArt: {
+    borderRadius: 34,
+    height: 344,
+    overflow: "hidden",
+    position: "relative",
+    width: "100%",
+    shadowOffset: { height: 16, width: 0 },
+    shadowOpacity: 0.16,
+    shadowRadius: 28,
   },
-  heroHeader: {
-    gap: 12,
+  heroDesk: {
+    backgroundColor: "rgba(255, 245, 230, 0.48)",
+    bottom: 30,
+    height: 18,
+    left: 0,
+    position: "absolute",
+    right: 0,
+  },
+  heroGlow: {
+    alignSelf: "center",
+    borderRadius: 999,
+    height: 120,
+    marginTop: 18,
+    opacity: 0.22,
+    width: 120,
+  },
+  heroLaptop: {
+    backgroundColor: "#d8d4cd",
+    borderRadius: 10,
+    borderWidth: 3,
+    borderColor: "#8a939e",
+    bottom: 58,
+    height: 88,
+    position: "absolute",
+    right: 38,
+    transform: [{ rotate: "-5deg" }],
+    width: 118,
+  },
+  heroLaptopScreen: {
+    borderRadius: 4,
+    flex: 1,
+    margin: 7,
+  },
+  heroPill: {
+    alignItems: "center",
+    borderRadius: 999,
+    flexDirection: "row",
+    gap: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    position: "absolute",
+    shadowOffset: { height: 10, width: 0 },
+    shadowOpacity: 0.08,
+    shadowRadius: 18,
+  },
+  heroPillBottom: {
+    bottom: 22,
+    left: 22,
+  },
+  heroPillLabel: {
+    fontSize: 13,
+    fontWeight: "800",
+    letterSpacing: 0.7,
+  },
+  heroPillMiddle: {
+    bottom: 90,
+    right: 18,
+  },
+  heroPillTop: {
+    bottom: 116,
+    left: 22,
+  },
+  pillDot: {
+    borderRadius: 999,
+    height: 10,
+    width: 10,
+  },
+  privacyCard: {
+    borderTopWidth: 1,
+    gap: 14,
+    marginTop: 16,
+    paddingTop: 26,
+    width: "100%",
+  },
+  privacyEyebrow: {
+    fontSize: 18,
+    fontWeight: "800",
+    letterSpacing: 1.2,
+    textAlign: "center",
+    textTransform: "uppercase",
+  },
+  privacyMetric: {
+    flex: 1,
+    fontSize: 12,
+    fontWeight: "700",
+    letterSpacing: 1,
+    textAlign: "center",
+    textTransform: "uppercase",
+  },
+  privacyMetrics: {
+    flexDirection: "row",
+    gap: 14,
+  },
+  privacySummary: {
+    fontSize: 16,
+    lineHeight: 24,
+    textAlign: "center",
   },
   safeArea: {
     flex: 1,
   },
-  signalLabel: {
-    fontSize: 12,
-    fontWeight: "700",
-  },
-  signalPill: {
-    borderRadius: 999,
-    borderWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  signalRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-  },
-  skipButton: {
-    borderRadius: 999,
-    borderWidth: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-  },
-  skipLabel: {
-    fontSize: 14,
-    fontWeight: "700",
-  },
-  summary: {
-    fontSize: 16,
-    lineHeight: 23,
-    maxWidth: 460,
-  },
   statusDot: {
-    height: 8,
-    width: 8,
     borderRadius: 999,
-    marginTop: 6,
+    height: 10,
+    width: 10,
   },
   statusPanel: {
-    flexDirection: "row",
-    gap: 10,
+    alignItems: "center",
     borderRadius: 18,
     borderWidth: 1,
+    flexDirection: "row",
+    gap: 10,
     paddingHorizontal: 14,
     paddingVertical: 12,
   },
   statusText: {
     flex: 1,
     fontSize: 13,
-    lineHeight: 19,
+    lineHeight: 18,
   },
-  title: {
-    fontSize: 38,
-    fontWeight: "800",
-    lineHeight: 42,
-  },
-  topBar: {
-    alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingTop: 12,
-  },
-  topBarTitle: {
+  summary: {
     fontSize: 18,
-    fontWeight: "700",
+    lineHeight: 28,
+    textAlign: "center",
+  },
+  topBlock: {
+    alignItems: "center",
+    gap: 10,
+    marginTop: 8,
   },
 });

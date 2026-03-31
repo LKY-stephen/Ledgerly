@@ -1,375 +1,515 @@
-import { useEffect, useState } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { Feather, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Dimensions, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { SectionCard } from "@creator-cfo/ui";
+import { LineChart } from "react-native-chart-kit";
 
-import { DatabaseHooksDemo } from "../database-demo/database-hooks-demo";
-import { buildHomeSections } from "./sections";
-import { AppIcon } from "../../components/app-icon";
-import { IconMetricCard } from "../../components/icon-metric-card";
-import { bootstrapLocalStorage } from "../../storage/bootstrap";
-import type { BootstrapStatus } from "../../storage/status";
 import { useAppShell } from "../app-shell/provider";
 
 export function HomeScreen() {
-  const { copy, palette, session, sessionDisplayName } = useAppShell();
-  const [bootstrapStatus, setBootstrapStatus] = useState<BootstrapStatus>({
-    databaseName: "booting",
-    fileCollectionCount: 0,
-    fileVaultRoot: "booting",
-    platformCount: 0,
-    status: "idle",
-    structuredTableCount: 0,
-    summary: "Preparing local SQLite and file-vault contracts...",
-  });
-  const sections = buildHomeSections(copy, session);
-  const storageCardRows = chunkItems(sections.storageCards, 2);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    bootstrapLocalStorage()
-      .then((status) => {
-        if (isMounted) {
-          setBootstrapStatus(status);
-        }
-      })
-      .catch((error: unknown) => {
-        if (isMounted) {
-          setBootstrapStatus({
-            databaseName: "unavailable",
-            fileCollectionCount: 0,
-            fileVaultRoot: "unavailable",
-            platformCount: sections.platforms.length,
-            status: "error",
-            structuredTableCount: 0,
-            summary:
-              error instanceof Error
-                ? error.message
-                : "Local bootstrap failed with an unknown error.",
-          });
-        }
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [sections.platforms.length]);
+  const { copy, palette } = useAppShell();
+  const chartWidth = Dimensions.get("window").width - 88;
 
   return (
     <SafeAreaView edges={["top", "left", "right"]} style={[styles.safeArea, { backgroundColor: palette.shell }]}>
       <ScrollView contentContainerStyle={styles.container}>
-        <View
-          style={[
-            styles.hero,
-            {
-              backgroundColor: palette.heroEnd,
-              borderColor: palette.border,
-              shadowColor: palette.shadow,
-            },
-          ]}
-        >
-          <Text style={[styles.eyebrow, { color: palette.accent }]}>{sections.sessionTitle}</Text>
-          <Text style={[styles.title, { color: palette.inkOnAccent }]}>{copy.home.focusTitle}</Text>
-          <Text style={[styles.summary, { color: palette.inkOnAccent }]}>
-            {sessionDisplayName}. {copy.home.heroSummary}
-          </Text>
-
-          <View style={styles.heroMetricGrid}>
-            <View style={styles.metricRow}>
-              {sections.heroMetrics.slice(0, 2).map((metric) => (
-                <IconMetricCard
-                  key={metric.label}
-                  icon={metric.icon}
-                  label={metric.label}
-                  palette={palette}
-                  style={styles.metricCard}
-                  summary={metric.summary}
-                  value={metric.value}
-                />
-              ))}
+        <View style={styles.topRow}>
+          <View style={styles.brandRow}>
+            <View style={[styles.avatar, { backgroundColor: palette.heroEnd, borderColor: palette.border }]}>
+              <Text style={[styles.avatarLabel, { color: palette.inkOnAccent }]}>YC</Text>
             </View>
-            <View style={styles.metricRow}>
-              <IconMetricCard
-                icon="bootstrap"
-                label={copy.home.metricBootstrapLabel}
-                palette={palette}
-                style={styles.metricCardWide}
-                summary={copy.home.metricBootstrapSummary}
-                value={
-                  bootstrapStatus.status === "ready"
-                    ? `${bootstrapStatus.structuredTableCount}`
-                    : copy.home.metricBootstrapIdle
-                }
-              />
-            </View>
+            <Text style={[styles.brand, { color: palette.ink }]}>{copy.common.appName}</Text>
           </View>
-
-          <Text style={[styles.heroSignalTitle, { color: palette.inkOnAccent }]}>{copy.home.signalTitle}</Text>
+          <Pressable
+            accessibilityLabel="Notifications"
+            accessibilityRole="button"
+            style={({ pressed }) => [
+              styles.notificationButton,
+              {
+                backgroundColor: pressed ? palette.paperMuted : palette.paper,
+                borderColor: palette.border,
+              },
+            ]}
+          >
+            <Ionicons color={palette.ink} name="notifications-outline" size={18} />
+            <View style={[styles.notificationDot, { backgroundColor: palette.accent }]} />
+          </Pressable>
         </View>
 
-        <View style={styles.sectionStack}>
-          <SectionCard
-            footer={
-              <Text style={[styles.footerText, { color: palette.inkMuted }]}>{copy.home.moduleFooter}</Text>
-            }
-            palette={palette}
-          >
-            <View style={styles.focusGrid}>
-              <View style={styles.focusRow}>
-                {sections.focusCards.slice(0, 2).map((card, index) => (
-                  <View
-                    key={card.title}
-                    style={[
-                      styles.focusCard,
-                      styles.focusCardHalf,
-                      {
-                        backgroundColor: palette.accentSoft,
-                        borderColor: palette.border,
-                      },
-                    ]}
-                  >
-                    <View style={styles.focusHeader}>
-                      <View style={[styles.focusIconWrap, { backgroundColor: palette.paperMuted }]}>
-                        <AppIcon
-                          color={palette.accent}
-                          name={index === 0 ? "modules" : "workflow"}
-                          size={18}
-                        />
-                      </View>
-                      <Text style={[styles.focusTitle, { color: palette.ink }]}>{card.title}</Text>
-                    </View>
-                    <Text style={[styles.rowSummary, { color: palette.inkMuted }]}>{card.summary}</Text>
-                  </View>
-                ))}
-              </View>
-              <View style={styles.focusRow}>
-                {sections.focusCards.slice(2).map((card) => (
-                  <View
-                    key={card.title}
-                    style={[
-                      styles.focusCard,
-                      styles.focusCardWide,
-                      {
-                        backgroundColor: palette.accentSoft,
-                        borderColor: palette.border,
-                      },
-                    ]}
-                  >
-                    <View style={styles.focusHeader}>
-                      <View style={[styles.focusIconWrap, { backgroundColor: palette.paperMuted }]}>
-                        <AppIcon color={palette.accent} name="profile" size={18} />
-                      </View>
-                      <Text style={[styles.focusTitle, { color: palette.ink }]}>{card.title}</Text>
-                    </View>
-                    <Text style={[styles.rowSummary, { color: palette.inkMuted }]}>{card.summary}</Text>
-                  </View>
-                ))}
-              </View>
-            </View>
+        <View style={styles.hero}>
+          <Text style={[styles.eyebrow, { color: palette.inkMuted }]}>Available capital</Text>
+          <Text style={[styles.heroValue, { color: palette.ink }]}>$142,850.42</Text>
+          <View style={styles.heroActions}>
+            <Pressable
+              accessibilityRole="button"
+              style={({ pressed }) => [
+                styles.primaryAction,
+                { backgroundColor: pressed ? palette.heroEnd : palette.ink },
+              ]}
+            >
+              <Text style={[styles.primaryActionLabel, { color: palette.inkOnAccent }]}>Transfer Funds</Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              style={({ pressed }) => [
+                styles.secondaryAction,
+                {
+                  backgroundColor: pressed ? palette.paperMuted : palette.paper,
+                  borderColor: palette.border,
+                },
+              ]}
+            >
+              <Text style={[styles.secondaryActionLabel, { color: palette.inkMuted }]}>Download Report</Text>
+            </Pressable>
+          </View>
+        </View>
 
-            {sections.modules.map((module) => (
-              <View key={module.slug} style={[styles.listRow, { borderTopColor: palette.divider }]}>
-                <Text style={[styles.rowTitle, { color: palette.ink }]}>{module.title}</Text>
-                <Text style={[styles.rowSummary, { color: palette.inkMuted }]}>{module.summary}</Text>
-              </View>
-            ))}
-          </SectionCard>
-
-          <SectionCard
-            eyebrow={copy.home.persistenceEyebrow}
-            footer={
-              <Text style={[styles.footerText, { color: palette.inkMuted }]}>{bootstrapStatus.summary}</Text>
-            }
-            palette={palette}
-            title={copy.home.storageTitle}
-          >
-            <View style={styles.storageGrid}>
-              {storageCardRows.map((row) => (
-                <View key={row.map((card) => card.label).join("-")} style={styles.metricRow}>
-                  {row.map((card) => (
-                    <IconMetricCard
-                      key={card.label}
-                      icon={card.icon}
-                      label={card.label}
-                      palette={palette}
-                      style={row.length === 1 ? styles.metricCardWide : styles.metricCard}
-                      summary={card.summary}
-                      value={card.value}
-                    />
-                  ))}
+        <View style={styles.cardStack}>
+          {[
+            {
+              id: "income",
+              label: "Income",
+              amount: "$54,200.00",
+              note: "+12%",
+            },
+            {
+              id: "expenses",
+              label: "Expenses",
+              amount: "$12,840.15",
+              note: "-4%",
+            },
+            {
+              id: "invoices",
+              label: "Invoices",
+              amount: "$8,900.00",
+              note: "3 Pending",
+            },
+          ].map((card) => (
+            <View
+              key={card.id}
+              style={[
+                styles.metricCard,
+                {
+                  backgroundColor: palette.shellElevated,
+                  borderColor: palette.border,
+                  shadowColor: palette.shadow,
+                },
+              ]}
+            >
+              <View style={[styles.metricAccent, { backgroundColor: palette.accent }]} />
+              <View style={styles.metricHeader}>
+                <View style={[styles.metricBadge, { backgroundColor: palette.accentSoft }]}>
+                  {card.id === "income" ? (
+                    <MaterialCommunityIcons color={palette.accent} name="arrow-down" size={18} />
+                  ) : card.id === "expenses" ? (
+                    <MaterialCommunityIcons color={palette.ink} name="arrow-up" size={18} />
+                  ) : (
+                    <Ionicons color={palette.ink} name="document-text-outline" size={16} />
+                  )}
                 </View>
-              ))}
+                <Text style={[styles.metricNote, { color: palette.accent }]}>{card.note}</Text>
+              </View>
+              <Text style={[styles.metricLabel, { color: palette.inkMuted }]}>{card.label}</Text>
+              <Text style={[styles.metricValue, { color: palette.ink }]}>{card.amount}</Text>
+              <LineChart
+                bezier
+                chartConfig={{
+                  backgroundGradientFrom: palette.shellElevated,
+                  backgroundGradientTo: palette.shellElevated,
+                  color: (opacity = 1) =>
+                    card.id === "expenses"
+                      ? `rgba(148, 163, 184, ${opacity})`
+                      : `rgba(15, 118, 110, ${opacity})`,
+                  fillShadowGradientFrom: "transparent",
+                  fillShadowGradientTo: "transparent",
+                  labelColor: () => "transparent",
+                  propsForBackgroundLines: { stroke: "transparent" },
+                  propsForDots: { r: "0" },
+                  propsForLabels: { fontSize: 0 },
+                  propsForVerticalLabels: { fontSize: 0 },
+                  propsForHorizontalLabels: { fontSize: 0 },
+                  strokeWidth: 2,
+                }}
+                data={{
+                  labels: ["", "", "", "", "", ""],
+                  datasets: [
+                    {
+                      data:
+                        card.id === "income"
+                          ? [2.2, 2.4, 2.8, 2.6, 2.1, 2.7]
+                          : card.id === "expenses"
+                            ? [2.8, 2.7, 2.6, 2.4, 2.2, 1.9]
+                            : [1.6, 1.6, 1.7, 1.7, 1.7, 1.7],
+                    },
+                  ],
+                }}
+                fromZero
+                height={56}
+                segments={2}
+                style={styles.chart}
+                transparent
+                width={chartWidth}
+                withDots={false}
+                withHorizontalLabels={false}
+                withInnerLines={false}
+                withOuterLines={false}
+                withShadow={false}
+                withVerticalLabels={false}
+              />
+            </View>
+          ))}
+
+          <View
+            style={[
+              styles.queueCard,
+              {
+                backgroundColor: palette.paper,
+                borderColor: palette.border,
+              },
+            ]}
+          >
+            <View style={styles.queueHeader}>
+              <Text style={[styles.queueTitle, { color: palette.ink }]}>Action Queue</Text>
+              <View style={[styles.queuePill, { backgroundColor: palette.ink }]}>
+                <Text style={[styles.queuePillLabel, { color: palette.inkOnAccent }]}>4 pending</Text>
+              </View>
             </View>
 
-            <Text style={[styles.subheading, { color: palette.ink }]}>{copy.home.collectionsTitle}</Text>
-            {sections.storageCollections.map((collection) => (
+            {[
+              {
+                id: "verify",
+                title: "Verify Record",
+                summary: "Stripe payout mismatch for #2041",
+                action: "Resolve",
+              },
+              {
+                id: "review",
+                title: "Review Receipt",
+                summary: "Adobe Creative Cloud subscription",
+                action: "Review",
+              },
+            ].map((item) => (
               <View
-                key={collection.slug}
-                style={[styles.listRow, { borderTopColor: palette.divider }]}
+                key={item.id}
+                style={[
+                  styles.queueItem,
+                  {
+                    backgroundColor: palette.shellElevated,
+                    borderColor: palette.border,
+                  },
+                ]}
               >
-                <Text style={[styles.rowTitle, { color: palette.ink }]}>{collection.title}</Text>
-                <Text style={[styles.rowSummary, { color: palette.inkMuted }]}>{collection.summary}</Text>
+                <View style={[styles.queueItemIcon, { backgroundColor: palette.paperMuted }]}>
+                  {item.id === "verify" ? (
+                    <Feather color={palette.inkMuted} name="check-circle" size={16} />
+                  ) : (
+                    <Feather color={palette.inkMuted} name="file-text" size={16} />
+                  )}
+                </View>
+                <View style={styles.queueCopy}>
+                  <Text style={[styles.queueItemTitle, { color: palette.ink }]}>{item.title}</Text>
+                  <Text style={[styles.queueItemSummary, { color: palette.inkMuted }]}>{item.summary}</Text>
+                </View>
+                <Text style={[styles.queueAction, { color: palette.accent }]}>{item.action}</Text>
               </View>
             ))}
-          </SectionCard>
+          </View>
 
-          <SectionCard
-            eyebrow={copy.home.workflowEyebrow}
-            footer={
-              <Text style={[styles.footerText, { color: palette.inkMuted }]}>{copy.home.workflowFooter}</Text>
-            }
-            palette={palette}
-            title={copy.home.workflowTitle}
+          <View
+            style={[
+              styles.recentCard,
+              {
+                backgroundColor: palette.shellElevated,
+                borderColor: palette.border,
+              },
+            ]}
           >
-            {sections.workflowPrinciples.map((principle) => (
-              <View
-                key={principle.title}
-                style={[styles.listRow, { borderTopColor: palette.divider }]}
-              >
-                <Text style={[styles.rowTitle, { color: palette.ink }]}>{principle.title}</Text>
-                <Text style={[styles.rowSummary, { color: palette.inkMuted }]}>{principle.summary}</Text>
+            <View style={styles.recentHeader}>
+              <Text style={[styles.recentTitle, { color: palette.ink }]}>Recent Activity</Text>
+              <Text style={[styles.recentLink, { color: palette.inkMuted }]}>See All</Text>
+            </View>
+            {[
+              { id: "apple", title: "Apple Store", date: "Aug 24", category: "Hardware", amount: "-$2,499.00" },
+              { id: "brand", title: "Brand Sponsorship", date: "Aug 22", category: "Income", amount: "+$12,000.00" },
+              { id: "starlink", title: "Starlink", date: "Aug 21", category: "Utility", amount: "-$120.00" },
+            ].map((item) => (
+              <View key={item.id} style={[styles.recentRow, { borderTopColor: palette.divider }]}>
+                <View style={[styles.recentBadge, { backgroundColor: palette.paperMuted }]}>
+                  {item.id === "brand" ? (
+                    <MaterialCommunityIcons color={palette.inkMuted} name="briefcase-outline" size={16} />
+                  ) : item.id === "starlink" ? (
+                    <Ionicons color={palette.inkMuted} name="wifi-outline" size={16} />
+                  ) : (
+                    <Ionicons color={palette.inkMuted} name="bag-outline" size={16} />
+                  )}
+                </View>
+                <View style={styles.recentCopy}>
+                  <Text style={[styles.recentItemTitle, { color: palette.ink }]}>{item.title}</Text>
+                  <Text style={[styles.recentItemMeta, { color: palette.inkMuted }]}>
+                    {item.date} • {item.category}
+                  </Text>
+                </View>
+                <Text style={[styles.recentAmount, { color: palette.ink }]}>{item.amount}</Text>
               </View>
             ))}
-          </SectionCard>
-
-          <DatabaseHooksDemo
-            calculatedBadge={copy.discover.calculatedBadge}
-            form1099NecCopy={copy.discover.form1099Nec}
-            formScheduleCCopy={copy.discover.formScheduleC}
-            isBootstrapped={bootstrapStatus.status === "ready"}
-            manualBadge={copy.discover.manualBadge}
-            palette={palette}
-          />
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-function chunkItems<T>(items: readonly T[], size: number): T[][] {
-  const rows: T[][] = [];
-
-  for (let index = 0; index < items.length; index += size) {
-    rows.push(items.slice(index, index + size));
-  }
-
-  return rows;
-}
-
 const styles = StyleSheet.create({
-  container: {
-    gap: 0,
-    padding: 20,
-  },
-  eyebrow: {
-    fontSize: 12,
-    fontWeight: "700",
-    letterSpacing: 1.2,
-    textTransform: "uppercase",
-  },
-  footerText: {
-    fontSize: 13,
-  },
-  focusCard: {
-    borderRadius: 20,
+  avatar: {
+    alignItems: "center",
+    borderRadius: 999,
     borderWidth: 1,
-    gap: 8,
-    padding: 14,
-  },
-  focusCardHalf: {
-    flex: 1,
-  },
-  focusCardWide: {
-    flex: 1,
-  },
-  focusHeader: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: 10,
-  },
-  focusIconWrap: {
-    alignItems: "center",
-    borderRadius: 12,
     height: 30,
     justifyContent: "center",
     width: 30,
   },
-  focusGrid: {
-    gap: 10,
+  avatarLabel: {
+    fontSize: 12,
+    fontWeight: "800",
   },
-  focusRow: {
+  brand: {
+    fontSize: 22,
+    fontWeight: "800",
+  },
+  brandRow: {
+    alignItems: "center",
     flexDirection: "row",
     gap: 10,
   },
-  focusTitle: {
-    flex: 1,
-    fontSize: 16,
+  cardStack: {
+    gap: 16,
+  },
+  container: {
+    gap: 20,
+    padding: 18,
+    paddingBottom: 28,
+  },
+  eyebrow: {
+    fontSize: 11,
     fontWeight: "700",
+    letterSpacing: 1.1,
+    textTransform: "uppercase",
   },
   hero: {
-    borderRadius: 30,
-    borderWidth: 1,
     gap: 14,
-    marginBottom: 10,
-    padding: 22,
-    shadowOffset: { width: 0, height: 16 },
-    shadowOpacity: 1,
-    shadowRadius: 30,
   },
-  heroSignalTitle: {
-    fontSize: 20,
-    fontWeight: "700",
-    marginTop: 6,
+  heroActions: {
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 4,
   },
-  heroMetricGrid: {
-    gap: 12,
-    paddingTop: 10,
+  heroValue: {
+    fontSize: 50,
+    fontWeight: "800",
+    letterSpacing: -1.2,
+    lineHeight: 52,
   },
-  listRow: {
-    gap: 6,
-    paddingTop: 10,
-    borderTopWidth: 1,
+  metricAccent: {
+    borderRadius: 999,
+    height: 44,
+    left: 0,
+    position: "absolute",
+    top: 28,
+    width: 3,
+  },
+  metricBadge: {
+    alignItems: "center",
+    borderRadius: 999,
+    height: 38,
+    justifyContent: "center",
+    width: 38,
+  },
+  chart: {
+    marginLeft: -28,
+    marginTop: 2,
   },
   metricCard: {
-    flex: 1,
+    borderRadius: 28,
+    borderWidth: 1,
+    gap: 10,
+    minHeight: 158,
+    overflow: "hidden",
+    padding: 18,
+    position: "relative",
+    shadowOffset: { height: 14, width: 0 },
+    shadowOpacity: 0.08,
+    shadowRadius: 22,
   },
-  metricCardWide: {
-    flex: 1,
+  metricHeader: {
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
-  metricRow: {
+  metricLabel: {
+    fontSize: 12,
+    fontWeight: "700",
+    letterSpacing: 1.1,
+    textTransform: "uppercase",
+  },
+  metricNote: {
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  metricValue: {
+    fontSize: 34,
+    fontWeight: "800",
+    lineHeight: 38,
+  },
+  notificationButton: {
+    alignItems: "center",
+    borderRadius: 999,
+    borderWidth: 1,
+    height: 36,
+    justifyContent: "center",
+    position: "relative",
+    width: 36,
+  },
+  notificationDot: {
+    borderRadius: 999,
+    height: 8,
+    position: "absolute",
+    right: 8,
+    top: 7,
+    width: 8,
+  },
+  primaryAction: {
+    alignItems: "center",
+    borderRadius: 999,
+    flex: 1,
+    height: 48,
+    justifyContent: "center",
+  },
+  primaryActionLabel: {
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  queueAction: {
+    fontSize: 12,
+    fontWeight: "800",
+    letterSpacing: 0.8,
+    textTransform: "uppercase",
+  },
+  queueCard: {
+    borderRadius: 28,
+    borderWidth: 1,
+    gap: 12,
+    padding: 18,
+  },
+  queueCopy: {
+    flex: 1,
+    gap: 3,
+  },
+  queueHeader: {
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  queueItem: {
+    alignItems: "center",
+    borderRadius: 20,
+    borderWidth: 1,
     flexDirection: "row",
     gap: 12,
+    padding: 14,
   },
-  rowSummary: {
-    fontSize: 14,
-    lineHeight: 20,
+  queueItemIcon: {
+    alignItems: "center",
+    borderRadius: 999,
+    height: 34,
+    justifyContent: "center",
+    width: 34,
   },
-  rowTitle: {
+  queueItemSummary: {
+    fontSize: 13,
+  },
+  queueItemTitle: {
     fontSize: 16,
+    fontWeight: "700",
+  },
+  queuePill: {
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  queuePillLabel: {
+    fontSize: 10,
+    fontWeight: "800",
+    textTransform: "uppercase",
+  },
+  queueTitle: {
+    fontSize: 22,
+    fontWeight: "700",
+  },
+  recentAmount: {
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  recentBadge: {
+    alignItems: "center",
+    borderRadius: 999,
+    height: 36,
+    justifyContent: "center",
+    width: 36,
+  },
+  recentCard: {
+    borderRadius: 28,
+    borderWidth: 1,
+    gap: 8,
+    padding: 18,
+  },
+  recentCopy: {
+    flex: 1,
+    gap: 2,
+  },
+  recentHeader: {
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  recentItemMeta: {
+    fontSize: 13,
+  },
+  recentItemTitle: {
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  recentLink: {
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  recentRow: {
+    alignItems: "center",
+    borderTopWidth: 1,
+    flexDirection: "row",
+    gap: 12,
+    paddingTop: 12,
+  },
+  recentTitle: {
+    fontSize: 22,
     fontWeight: "700",
   },
   safeArea: {
     flex: 1,
   },
-  sectionStack: {
-    gap: 16,
+  secondaryAction: {
+    alignItems: "center",
+    borderRadius: 999,
+    borderWidth: 1,
+    flex: 1,
+    height: 48,
+    justifyContent: "center",
   },
-  storageGrid: {
-    gap: 12,
-  },
-  subheading: {
-    paddingTop: 8,
-    fontSize: 15,
+  secondaryActionLabel: {
+    fontSize: 14,
     fontWeight: "700",
   },
-  summary: {
-    fontSize: 16,
-    lineHeight: 24,
-  },
-  title: {
-    fontSize: 34,
-    fontWeight: "800",
-    lineHeight: 38,
+  topRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
 });

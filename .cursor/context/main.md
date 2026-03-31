@@ -2,9 +2,9 @@
 
 ## Version
 
-- version: 0.3.4
-- updated_at: 2026-03-30
-- scope: mobile shell now tightens light-theme button and tab contrast while preserving the current login, tab, and local-first Discover flows
+- version: 0.3.5
+- updated_at: 2026-03-31
+- scope: see `0.3.5_context.md` for the documentation-only 2025 tax parsing blueprint covering Form 1040, Schedule C, and Schedule SE
 
 ## Active Decisions
 
@@ -21,9 +21,11 @@
 - `packages/storage`: storage contracts, path helpers, and contract tests.
 - `packages/ui`: React Native presentation primitives.
 - `packages/schemas`: creator product modules, platforms, and workflow principles.
+- `docs/tax-parsing-logic.md`: tax parsing blueprint for 2025 `Form 1040`, `Schedule C`, `Schedule SE`, and `1099-NEC` handoff flows.
 
 ## Verification Snapshot
 
+- Latest automated code verification remains the `0.3.4` snapshot because `0.3.5` only adds documentation.
 - `pnpm install`
 - `pnpm lint`
 - `pnpm typecheck`
@@ -37,6 +39,7 @@
 - Add deeper feature slices on top of the local SQLite and file-vault contracts inside Ledger beyond the current Discover news feed.
 - Decide whether Apple sign-in should later sync to a backend account once a future PRD introduces one.
 - Only reintroduce backend or sync infrastructure through a new PRD.
+- Implement the next tax parsing slice by adding versioned template assets and validation rules for `Form 1040`, `Schedule 1`, `Schedule 2`, and `Schedule SE`.
 
 ## Maintenance
 

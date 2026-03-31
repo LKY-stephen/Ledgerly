@@ -43,6 +43,7 @@ export default function TabLayout() {
         tabBarStyle: {
           backgroundColor: palette.tabBar,
           borderTopColor: palette.border,
+          borderTopWidth: 1,
           height: 78,
           paddingTop: 6,
         },

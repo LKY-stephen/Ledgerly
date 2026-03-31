@@ -29,7 +29,7 @@ export interface SurfaceTokens {
 export const surfaceThemes = {
   light: {
     name: "light",
-    paper: "#fffaf2",
+    paper: "#ffffff",
     paperMuted: "#e7f0ea",
     ink: "#14213d",
     inkMuted: "#475569",
@@ -40,8 +40,8 @@ export const surfaceThemes = {
     divider: "rgba(20, 33, 61, 0.12)",
     shell: "#f2f7f4",
     shellMuted: "#dbe9e3",
-    shellElevated: "#fcfffd",
-    tabBar: "#f8f2e7",
+    shellElevated: "#ffffff",
+    tabBar: "#ffffff",
     tabActive: "#0f766e",
     tabInactive: "#425466",
     heroStart: "#0f766e",
