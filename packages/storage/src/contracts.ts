@@ -70,10 +70,6 @@ const structuredStorePragmas = ["PRAGMA journal_mode = WAL;", "PRAGMA foreign_ke
 export const accountingPostableRecordStatuses = ["posted", "reconciled"] as const;
 export type AccountingPostableRecordStatus = (typeof accountingPostableRecordStatuses)[number];
 
-const accountingPostableRecordStatusSqlList = accountingPostableRecordStatuses
-  .map((status) => `'${status}'`)
-  .join(", ");
-
 const structuredTables = [
   {
     name: "entities",
