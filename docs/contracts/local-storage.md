@@ -1,380 +1,78 @@
 # Local Storage Contract
 
-- Canonical status: implemented source of truth for monorepo local storage
-- Current implemented contract version: `4`
+This document is the canonical local-storage contract for the current Expo, local-first runtime.
 
-This is the single canonical local-storage document for `creator_cfo_monorepo`.
+- Current implemented contract version: `1`
+- Database file: `creator-cfo-local.db`
+- Architecture phase: mobile-first, local-first, no standalone backend
 
-Runtime code lives in:
+## Runtime Baseline
 
-- `packages/storage/src/contracts.ts`
-- `apps/mobile/src/storage/bootstrap.native.ts`
-- `apps/mobile/src/storage/bootstrap.web.ts`
+The active runtime baseline is a hybrid `v1` contract:
 
-## Contract Invariants
+- intake is optimized for sparse evidence capture
+- the canonical persisted transaction surface is `records`
+- Schedule C and Schedule SE previews remain supported
+- extra information that cannot be derived from evidence must be supplied manually by the caller or user flow
 
-- The product remains mobile-first and local-first.
-- There is no backend in this phase.
-- The mobile app must bootstrap both SQLite and the file vault without any backend dependency.
-- Storage-contract changes must update this document and at least one automated test.
-- Shared helper APIs for storage setup should live in `@creator-cfo/storage`, not be rebuilt inside app screens.
+Direct evidence capture is intentionally limited to:
 
-## Structured Database
+- `date`
+- `amount`
+- `source`
+- `target`
+- `description`
 
-- Database name: `creator-cfo-local.db`
-- Runtime contract version: `4`
-- Bootstrap pragmas:
-  - `PRAGMA journal_mode = WAL;`
-  - `PRAGMA foreign_keys = ON;`
+Everything else must come from one of:
 
-SQLite conventions:
+- durable manual user input
+- deterministic derivation from stored records and scoped settings
+- hook-level requirements surfaced to the caller when an explicit selection or review step is still needed
 
-- identifiers are `TEXT`
-- money is stored as `INTEGER` minor units
-- dates and timestamps are ISO-8601 `TEXT`
-- booleans are `INTEGER` with `0` or `1`
+## SQLite Tables
 
-Implemented tables:
+The current contract creates these structured tables:
 
 - `entities`
-- `accounts`
 - `counterparties`
-- `platform_accounts`
 - `records`
 - `record_entry_classifications`
 - `tax_year_profiles`
-- `tax_line_definitions`
-- `tax_line_inputs`
 - `evidences`
 - `evidence_files`
 - `record_evidence_links`
 
-Implemented views:
+The `records` table is the canonical local-first finance record. It stores:
 
-- `record_double_entry_lines_v`
-- `accounting_posting_lines_v`
-- `income_snapshots_v`
-- `invoice_records_v`
-- `expense_records_v`
-- `tax_line_scopes_v`
-- `tax_line_record_contributions_v`
-- `tax_line_record_rollups_v`
-- `tax_lines_v`
+- identity and ownership: `record_id`, `entity_id`
+- lifecycle: `record_status`, `source_system`
+- sparse captured facts: `occurred_on`, `amount_cents`, `currency`, `description`, `source_label`, `target_label`
+- resolved links and user-owned classification: `source_counterparty_id`, `target_counterparty_id`, `record_kind`, `category_code`, `subcategory_code`, `tax_category_code`, `tax_line_code`, `business_use_bps`
+- timestamps: `created_at`, `updated_at`
 
-Implemented indexes:
+## Runtime Scope
 
-- `accounts_entity_code_idx`
-- `records_entity_recognition_idx`
-- `records_status_due_idx`
-- `records_platform_idx`
-- `records_entity_cash_status_idx`
-- `records_entity_tax_line_cash_status_idx`
-- `evidence_files_sha_idx`
-- `record_evidence_primary_idx`
+This runtime baseline intentionally does not expose the older ledger-first or tax-registry surfaces as part of the active contract:
 
-## Core Data Model
+- no `accounts` table
+- no `platform_accounts` table
+- no `tax_line_definitions` or `tax_line_inputs`
+- no dedicated posting-line SQL views
+- no accounting reporting SQL views
+- no registry-driven tax rollup views
 
-### `entities`
-
-Legal owners or reporting units for local books.
-
-### `accounts`
-
-Chart-of-accounts rows used by derived accounting views and future reporting.
-
-Reporting semantics:
-
-- `account_type` is expected to use the reporting-safe set:
-  - `asset`
-  - `liability`
-  - `equity`
-  - `income`
-  - `expense`
-- `normal_balance` is expected to use:
-  - `debit`
-  - `credit`
-- These semantics are what let the contract derive balance-sheet and profit/loss outputs from one posting surface without parsing account names.
-
-### `counterparties`
-
-Platforms, clients, vendors, banks, owners, and tax agencies tied to records.
-
-### `platform_accounts`
-
-Creator platform identities used for revenue and payout grouping.
-
-### `records`
-
-`records` is the operational source of truth.
-
-It replaces the version-1 split across feature tables and stores:
-
-- classification such as `record_kind`, `posting_pattern`, and `record_status`
-- dimensions such as `counterparty_id` and `platform_account_id`
-- dates such as `recognition_on`, `cash_on`, and `due_on`
-- amount components such as gross, fees, withholding, adjustments, and net cash
-- posting-account references for the derived double-entry view
-- invoice and reversal linkage through `related_record_id` and `related_record_role`
-
-Postable accounting statuses:
-
-- `posted`
-- `reconciled`
-
-Records with other statuses can still exist operationally, but they are not part of the canonical accounting-reporting surface until they reach a postable status.
-
-Simplified-entry note:
-
-- version 4 keeps `records` as the canonical ledger row
-- user-facing receipt choices such as `income`, `expense`, and `personal_spending` are stored beside the ledger row in `record_entry_classifications`
-- multi-year tax read settings such as `accounting_method` live in `tax_year_profiles`
-
-### `record_entry_classifications`
-
-Durable simplified-entry metadata for the canonical `records` rows.
-
-This table stores:
-
-- `entry_mode` such as `standard_receipt`, `advanced`, or `legacy`
-- `user_classification` such as `income`, `expense`, `personal_spending`, or `other`
-- resolver status and notes for the simplified-entry pipeline
-
-The version-3 bootstrap runs an idempotent backfill so legacy `records` rows gain a best-effort simplified classification without destructive migration.
-
-### `tax_year_profiles`
-
-Entity- and tax-year-scoped tax settings that are not themselves bookkeeping rows.
-
-Current version-3 scope:
-
-- `entity_id`
-- `tax_year`
-- `accounting_method` with current local tax helpers limited to `cash`
-
-### `evidences`
-
-Logical evidence documents such as receipts, bank statements, invoices, payout statements, or note bundles.
-
-### `evidence_files`
-
-Physical file metadata for canonical evidence objects stored in the local vault.
-
-### `record_evidence_links`
-
-Many-to-many record-to-evidence linkage is required.
-
-Requirement:
-
-- one evidence item may support many records
-- one record may link to many evidence items
-
-This supersedes the older monorepo assumption that one evidence belongs to exactly one record.
-
-## Derived Views And Compatibility Projections
-
-### `record_double_entry_lines_v`
-
-This is the raw per-record posting expansion layer. It stays records-first and derives debit and credit lines from each record.
-
-Supported posting patterns:
-
-- `gross_to_net_income`
-- `simple_expense`
-- `asset_purchase`
-- `transfer`
-- `owner_contribution`
-- `owner_draw`
-
-Output columns include:
-
-- `record_id`
-- `line_no`
-- `posting_on`
-- `account_id`
-- `account_role`
-- `debit_amount_cents`
-- `credit_amount_cents`
-- `currency`
-- `description`
-
-### `accounting_posting_lines_v`
-
-This is the canonical accounting-reporting surface for journal book, general ledger, balance sheet, and profit/loss derivation.
-
-It extends `record_double_entry_lines_v` by:
-
-- joining each posting line back to `records`
-- joining account metadata from `accounts`
-- filtering to postable accounting statuses:
-  - `posted`
-  - `reconciled`
-- exposing deterministic reporting fields such as:
-  - `entity_id`
-  - `record_id`
-  - `record_kind`
-  - `posting_pattern`
-  - `record_status`
-  - `posting_on`
-  - `line_no`
-  - `account_id`
-  - `account_code`
-  - `account_name`
-  - `account_type`
-  - `normal_balance`
-  - `statement_section`
-  - `debit_amount_cents`
-  - `credit_amount_cents`
-  - `normalized_balance_delta_cents`
-
-Derivation rules:
-
-- Journal book:
-  - filter `accounting_posting_lines_v` by period
-  - order by `posting_on`, `record_id`, `line_no`
-  - group lines by `record_id`
-- General ledger:
-  - filter the same view by account and period
-  - order by `posting_on`, `record_id`, `line_no`
-  - sum `normalized_balance_delta_cents` for account balances
-- Balance sheet:
-  - sum `normalized_balance_delta_cents` for `statement_section = 'balance_sheet'` as of the selected date
-  - if books are unclosed, add current earnings derived from income and expense accounts into equity
-- Profit and loss:
-  - sum `normalized_balance_delta_cents` for `statement_section = 'profit_and_loss'` over the selected date range
-
-### Compatibility views
-
-The old version-1 feature tables are replaced by compatibility views rather than staying primary storage:
-
-- `income_snapshots_v`
-- `invoice_records_v`
-- `expense_records_v`
-
-## Tax Query Scope
-
-Version 4 adds a normalized tax-line projection surface in storage:
-
-- `tax_line_definitions` seeds the cross-form line registry.
-- `tax_line_inputs` stores non-ledger dependency values per `{ entity_id, tax_year, line_key }`.
-- `tax_line_scopes_v` defines available entity-year scopes.
-- `tax_line_record_contributions_v` and `tax_line_record_rollups_v` expose direct and review-required record traceability.
-- `tax_lines_v` is the unified filtered query surface for Form 1040, Schedule C, Schedule SE, Schedule 1, and Schedule 2 line rows.
-
-Current local tax invariants:
-
-- records remain the canonical source for direct ledger-backed lines
-- non-ledger tax dependencies are stored outside `records`
-- line rows expose status as `direct`, `derived`, `review_required`, or `manual_required`
-- year membership is derived from `COALESCE(cash_on, recognition_on)` and explicit tax input/profile scopes
-- `records_entity_tax_line_cash_status_idx` exists to support tax-line filtered reads
+The supported tax-query path reads directly from `records` plus `tax_year_profiles`.
 
 ## File Vault
 
-- Root directory: `creator-cfo-vault`
+The contract still uses the local file vault for evidence and exports. The structured collections remain defined in `packages/storage/src/contracts.ts`.
 
-## Device State Store
+## Contract Source Of Truth
 
-- Storage engine: `AsyncStorage`
-- Namespace: `@creator-cfo/mobile`
-- Current contract version: `1`
-- Records:
-  - `theme_preference`: `"system" | "light" | "dark"`
-  - `locale_preference`: `"system" | "en" | "zh-CN"`
-  - `auth_session`: `{ kind: "guest" | "apple"; appleUserId?: string; email?: string | null; displayName?: string | null }`
+The implementation source of truth for this contract is:
 
-## Invariants
+- `docs/contracts/README.md`
+- `packages/storage/src/contracts.ts`
+- `packages/schemas/src/index.ts`
 
-- The mobile app must be able to bootstrap both the database and the vault without any backend dependency.
-- Theme, locale, and login session state remain device-local and must be represented in the storage contract before UI flows persist them.
-- Contract updates require a matching test update in `packages/storage/tests/`.
-- Any migration that changes table shape or vault conventions must update this document in the same change.
-Implemented collections:
-
-- `evidence-objects`
-- `evidence-manifests`
-- `evidence-derived`
-- `invoice-exports`
-- `tax-support`
-
-Canonical layout:
-
-```text
-creator-cfo-vault/
-  evidence-objects/
-    ab/
-      cd/
-        <sha256>.<ext>
-  evidence-manifests/
-    <evidence-id>.json
-  evidence-derived/
-    <evidence-id>/
-      preview-1.jpg
-  invoice-exports/
-    2026/
-      <record-id>.pdf
-  tax-support/
-    2026-q1/
-      evidence-package.zip
-```
-
-Why the vault changed:
-
-- canonical evidence binaries should be stored once by content hash
-- document kind belongs in SQLite metadata, not folder naming
-- shared evidence should not be duplicated across record folders
-- generated exports should remain separate from canonical evidence objects
-
-## Helper APIs
-
-`@creator-cfo/storage` exports helper functions for components and services to consume directly.
-
-Primary helpers:
-
-- `getLocalStorageBootstrapPlan()`
-  - exposes database name, version, pragmas, schema statements, table/view metadata, and vault metadata
-- `getLocalStorageOverview()`
-  - exposes counts for tables, views, indexes, and vault collections
-- `createLocalStorageBootstrapManifest()`
-  - generates a JSON-friendly manifest of schema objects and collection sample paths
-- `accountingPostableRecordStatuses`
-- `accountingReportAccountTypes`
-- `accountingStatementSectionsByAccountType`
-- `LocalStorageBootstrapPlan`
-- `LocalStorageBootstrapManifest`
-- `buildEvidenceObjectPath()`
-- `buildEvidenceManifestPath()`
-- `buildEvidenceDerivedPath()`
-- `buildInvoiceExportPath()`
-- `buildTaxSupportPath()`
-
-Supporting helpers:
-
-- `buildVaultRelativePath()`
-- `sanitizeVaultFileName()`
-- `sanitizeVaultPathSegment()`
-- `buildDeviceStateStorageKey()`
-
-These helpers are the preferred way for app code to consume storage setup metadata.
-
-## Migration Notes From Version 1
-
-Version `1` previously used:
-
-- `income_snapshots`
-- `invoice_records`
-- `expense_records`
-- `tax_forecasts`
-- `cash_flow_snapshots`
-- `receipts`
-- `statements`
-
-Version `2` replaces those primary shapes with:
-
-- one canonical `records` table
-- shared evidence metadata and file linkage
-- derived compatibility views and exports
-- evidence-centric vault storage
-
-The runtime contract is now version `2`. Future data-migration work can decide whether any legacy version-1 tables need explicit cleanup for upgraded local databases.
-
-This reporting-contract hardening keeps version `2` because it adds an accounting-reporting view and explicit semantics on top of the existing records-first schema without changing table or vault shapes.
+Any future contract change must update this document and automated coverage together.

@@ -46,22 +46,26 @@ pnpm smoke
    - 登录页右上角「暂不登录」
    - 登录页游客入口与 Apple 按钮/降级按钮
    - 底部四个 Tab 的 icon 与 label（含 active / inactive）
-   - 首页 database demo 的 CRUD 按钮、字段选择 chip、记录选中态与报告卡片文字
+   - Discover 列表卡片、分类 Pill 与「Load more」按钮
    - 「我的」页主题/语言 Pill 与退出登录按钮
 8. 切到 dark 主题，抽样复查：
    - 底部四个 Tab 的 active / inactive 对比度
    - 登录页主按钮与游客入口
-   - 首页 database demo 的按钮、chip 与列表卡片可读性
+   - Discover 列表卡片、分类 Pill 与「Load more」按钮可读性
    - 「我的」页主题/语言 Pill 与退出登录按钮
-9. 进入 Discover 里的数据库 Hooks demo，确认简化录入路径可用：
-   - 先选择 `Income`、`Expense`、`Personal spending` 三种分类之一
-   - 点击 `Create record` 后，列表中新增记录，且描述、分类、`recordKind`、现金影响金额会同步变化
-   - 选中记录后执行 `Update selected field` 与 `Delete selected record`，确认仍然正常
-10. 在同一 demo 中打开 Schedule C 与 Schedule SE 预览，确认税年切换会触发真实数据重载：
+9. 确认数据库 demo 已完全从产品入口移除：
+   - 登录页不再出现「Open database demo」之类的 CTA
+   - 首页不再出现数据库 CRUD、字段选择 chip、记录选中态或报告卡片等 demo 区块
+   - 主壳层四个 Tab 内不存在通往 database demo / database hooks demo 的入口
+10. 打开 Discover，确认当前保留的信息流路径正常：
+   - 列表首屏能渲染 hero、文章卡片与「Load more」按钮
+   - 下拉刷新后列表会重置并继续可用
+   - 打开任意文章详情后可返回列表继续浏览
+11. 若当前构建仍暴露 Schedule C / Schedule SE 预览入口，从其现有入口打开并确认税年切换会触发真实数据重载：
    - 切换当前年与上一年时，预览内税年按钮会变化
    - Schedule C / Schedule SE 结果会根据所选税年刷新，而不是只改标题文字
    - 本地数据库中 `tax_lines_v` 可按 `entity_id`、`tax_year`、`schedule_code`、`line_key`、`line_status` 过滤查询，并与预览主数据一致
-11. 在「我的」中切换主题与语言，确认 Tab 图标、首页数据块与设置控件仍清晰可读。
-12. 在「我的」中执行退出登录，确认应用回到登录页。
-13. 若在支持的 iOS 设备上，验证 Apple 登录可进入主壳层；若当前环境不支持，确认会优雅提示并允许游客继续。
-14. 运行 `pnpm contract:check`，确认本地存储与设备状态契约测试通过。
+12. 在「我的」中切换主题与语言，确认 Tab 图标、首页数据块与设置控件仍清晰可读。
+13. 在「我的」中执行退出登录，确认应用回到登录页。
+14. 若在支持的 iOS 设备上，验证 Apple 登录可进入主壳层；若当前环境不支持，确认会优雅提示并允许游客继续。
+15. 运行 `pnpm contract:check`，确认本地存储与设备状态契约测试通过。

@@ -7,7 +7,7 @@ Creator CFO 当前是一个 `Expo + React Native` 的移动端优先 monorepo，
 - 登录入口：Apple ID 一键登录展示、右上角「暂不登录」、游客模式
 - 主壳层：四个底部 Tab，分别是首页、记账、发现、我的
 - 设置能力：明暗主题切换、多语言切换、退出登录
-- 本地契约：SQLite 表、文件仓集合、设备偏好与会话 key 已文档化并带自动化测试
+- 本地契约：已落地 hybrid `v1` 本地存储契约，围绕 sparse-input `records`、证据文件仓、设备偏好与会话 key，并带自动化测试
 
 ## Stack
 
@@ -15,6 +15,7 @@ Creator CFO 当前是一个 `Expo + React Native` 的移动端优先 monorepo，
 - Local persistence: Expo SQLite + Expo File System + AsyncStorage
 - Shared packages: `@creator-cfo/ui`, `@creator-cfo/storage`, `@creator-cfo/schemas`
 - Contract source: `packages/storage/src/contracts.ts`, `docs/contracts/local-storage.md`
+- Active storage baseline: contract version `1`, local-first, sparse-input `records` + retained Schedule C / Schedule SE preview support
 - Workflow source: `AGENTS.md`, `.cursor/context/main.md`（当前快照）, `.cursor/context/*_context.md`（按版本归档）, `.cursor/rules/work_flow.md`
 
 ## Quick Start
@@ -70,7 +71,7 @@ The interactive demo is part of the mobile app home screen.
    Use the `Description` or `Status` chips to choose which field the update action will mutate.
    `Update selected field` changes only that field on the selected row using real `UPDATE` SQL.
    `Delete selected record` removes the currently selected row.
-   `Refresh` rereads the current demo rows plus the selected record's `record_double_entry_lines_v` rows.
+   `Refresh` rereads the current demo rows and rebuilds the selected record's posting preview from the simplified runtime contract.
 
 Notes:
 The live CRUD flow is native-focused because it uses `SQLiteProvider` and `useSQLiteContext` against the local Expo SQLite database.
@@ -146,7 +147,7 @@ The live CRUD flow is native-focused because it uses `SQLiteProvider` and `useSQ
 
 ## Local Data Direction
 
-- SQLite：收入快照、发票、支出、税务预测、现金流快照
+- SQLite：以 `records` 为核心，配套 `entities`、`counterparties`、`record_entry_classifications`、`tax_year_profiles`、`evidences`、`evidence_files`、`record_evidence_links`
 - File vault：票据、发票导出、平台对账单、税务辅助材料
 - AsyncStorage：主题偏好、语言偏好、本地会话摘要
 
@@ -157,9 +158,9 @@ The live CRUD flow is native-focused because it uses `SQLiteProvider` and `useSQ
 - 明暗主题 token 与中英双语文案体系
 - Apple 登录本地会话摘要与游客模式
 - 更新后的契约文档、测试与 smoke 指引
-- Structured database: `expo-sqlite` stores records-first creator finance data with supporting entities, accounts, counterparties, evidence metadata, and derived accounting views.
+- Structured database: `expo-sqlite` stores records-first creator finance data with sparse-input `records`, supporting entities/counterparties/evidence metadata, and local tax-query support.
 - File vault: `expo-file-system` stores canonical evidence objects, manifests, derived previews, invoice exports, and tax-support bundles directly on device.
-- Contracts: storage tables, views, migration SQL, helper APIs, and vault directory rules are versioned inside the repo and covered by tests.
+- Contracts: storage tables, maintenance SQL, helper APIs, hook-facing requirement exposure, and vault directory rules are versioned inside the repo and covered by tests.
 
 ## What Is Implemented In This Adjustment
 

@@ -31,7 +31,7 @@ const scheduleCCandidateRecordsSql = `SELECT
   r.record_id AS recordId,
   r.record_kind AS recordKind,
   r.record_status AS recordStatus,
-  r.cash_on AS cashOn,
+  r.occurred_on AS occurredOn,
   r.currency,
   r.description,
   r.memo,
@@ -42,22 +42,15 @@ const scheduleCCandidateRecordsSql = `SELECT
     WHEN LOWER(TRIM(COALESCE(r.tax_line_code, ''))) = 'line27b' THEN 'line27a'
     ELSE r.tax_line_code
   END AS taxLineCode,
-  r.primary_amount_cents AS primaryAmountCents,
-  r.gross_amount_cents AS grossAmountCents,
+  r.amount_cents AS amountCents,
   r.business_use_bps AS businessUseBps
 FROM records AS r
 WHERE r.entity_id = ?
   AND r.record_status IN ('posted', 'reconciled')
   AND COALESCE(r.tax_line_code, '') <> ''
-  AND (
-    (r.cash_on >= ? AND r.cash_on < ?)
-    OR (
-      r.cash_on IS NULL
-      AND r.recognition_on >= ?
-      AND r.recognition_on < ?
-    )
-  )
-ORDER BY COALESCE(r.cash_on, r.recognition_on) ASC, r.record_id ASC;`;
+  AND r.occurred_on >= ?
+  AND r.occurred_on < ?
+ORDER BY r.occurred_on ASC, r.record_id ASC;`;
 
 export function buildTaxYearDateRange(taxYear: number): TaxYearDateRange {
   const normalizedTaxYear = normalizeTaxYear(taxYear);
@@ -95,8 +88,6 @@ export async function loadScheduleCCandidateRecords(
   return database.getAllAsync<ScheduleCCandidateRecord>(
     scheduleCCandidateRecordsSql,
     normalizedScope.entityId,
-    dateRange.startOn,
-    dateRange.endExclusiveOn,
     dateRange.startOn,
     dateRange.endExclusiveOn,
   );

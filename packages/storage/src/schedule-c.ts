@@ -5,7 +5,7 @@ const incomeLikeRecordKinds = ["income", "invoice_payment", "platform_payout"] a
 
 export const scheduleCSupportedLineDefinitions = [
   {
-    amountField: "grossAmountCents",
+    amountField: "amountCents",
     applyBusinessUse: false,
     category: "income",
     description: "Gross receipts or sales",
@@ -13,7 +13,7 @@ export const scheduleCSupportedLineDefinitions = [
     recordKinds: incomeLikeRecordKinds,
   },
   {
-    amountField: "primaryAmountCents",
+    amountField: "amountCents",
     applyBusinessUse: true,
     category: "expense",
     description: "Advertising",
@@ -21,7 +21,7 @@ export const scheduleCSupportedLineDefinitions = [
     recordKinds: expenseLikeRecordKinds,
   },
   {
-    amountField: "primaryAmountCents",
+    amountField: "amountCents",
     applyBusinessUse: true,
     category: "expense",
     description: "Commissions and fees",
@@ -29,7 +29,7 @@ export const scheduleCSupportedLineDefinitions = [
     recordKinds: expenseLikeRecordKinds,
   },
   {
-    amountField: "primaryAmountCents",
+    amountField: "amountCents",
     applyBusinessUse: true,
     category: "expense",
     description: "Contract labor",
@@ -37,7 +37,7 @@ export const scheduleCSupportedLineDefinitions = [
     recordKinds: expenseLikeRecordKinds,
   },
   {
-    amountField: "primaryAmountCents",
+    amountField: "amountCents",
     applyBusinessUse: true,
     category: "expense",
     description: "Insurance (other than health)",
@@ -45,7 +45,7 @@ export const scheduleCSupportedLineDefinitions = [
     recordKinds: expenseLikeRecordKinds,
   },
   {
-    amountField: "primaryAmountCents",
+    amountField: "amountCents",
     applyBusinessUse: true,
     category: "expense",
     description: "Other interest",
@@ -53,7 +53,7 @@ export const scheduleCSupportedLineDefinitions = [
     recordKinds: expenseLikeRecordKinds,
   },
   {
-    amountField: "primaryAmountCents",
+    amountField: "amountCents",
     applyBusinessUse: true,
     category: "expense",
     description: "Legal and professional services",
@@ -61,7 +61,7 @@ export const scheduleCSupportedLineDefinitions = [
     recordKinds: expenseLikeRecordKinds,
   },
   {
-    amountField: "primaryAmountCents",
+    amountField: "amountCents",
     applyBusinessUse: true,
     category: "expense",
     description: "Office expense",
@@ -69,7 +69,7 @@ export const scheduleCSupportedLineDefinitions = [
     recordKinds: expenseLikeRecordKinds,
   },
   {
-    amountField: "primaryAmountCents",
+    amountField: "amountCents",
     applyBusinessUse: true,
     category: "expense",
     description: "Rent or lease - vehicles, machinery, and equipment",
@@ -77,7 +77,7 @@ export const scheduleCSupportedLineDefinitions = [
     recordKinds: expenseLikeRecordKinds,
   },
   {
-    amountField: "primaryAmountCents",
+    amountField: "amountCents",
     applyBusinessUse: true,
     category: "expense",
     description: "Rent or lease - other business property",
@@ -85,7 +85,7 @@ export const scheduleCSupportedLineDefinitions = [
     recordKinds: expenseLikeRecordKinds,
   },
   {
-    amountField: "primaryAmountCents",
+    amountField: "amountCents",
     applyBusinessUse: true,
     category: "expense",
     description: "Repairs and maintenance",
@@ -93,7 +93,7 @@ export const scheduleCSupportedLineDefinitions = [
     recordKinds: expenseLikeRecordKinds,
   },
   {
-    amountField: "primaryAmountCents",
+    amountField: "amountCents",
     applyBusinessUse: true,
     category: "expense",
     description: "Supplies",
@@ -101,7 +101,7 @@ export const scheduleCSupportedLineDefinitions = [
     recordKinds: expenseLikeRecordKinds,
   },
   {
-    amountField: "primaryAmountCents",
+    amountField: "amountCents",
     applyBusinessUse: true,
     category: "expense",
     description: "Taxes and licenses",
@@ -109,7 +109,7 @@ export const scheduleCSupportedLineDefinitions = [
     recordKinds: expenseLikeRecordKinds,
   },
   {
-    amountField: "primaryAmountCents",
+    amountField: "amountCents",
     applyBusinessUse: true,
     category: "expense",
     description: "Travel",
@@ -117,7 +117,7 @@ export const scheduleCSupportedLineDefinitions = [
     recordKinds: expenseLikeRecordKinds,
   },
   {
-    amountField: "primaryAmountCents",
+    amountField: "amountCents",
     applyBusinessUse: true,
     category: "expense",
     description: "Utilities",
@@ -125,7 +125,7 @@ export const scheduleCSupportedLineDefinitions = [
     recordKinds: expenseLikeRecordKinds,
   },
   {
-    amountField: "primaryAmountCents",
+    amountField: "amountCents",
     applyBusinessUse: true,
     category: "part_v",
     description: "Other expenses",
@@ -139,7 +139,7 @@ export type ScheduleCLineCategory = (typeof scheduleCSupportedLineDefinitions)[n
 export type ScheduleCAmountField = (typeof scheduleCSupportedLineDefinitions)[number]["amountField"];
 
 export interface ScheduleCLineDefinition {
-  amountField: "grossAmountCents" | "primaryAmountCents";
+  amountField: "amountCents";
   applyBusinessUse: boolean;
   category: "expense" | "income" | "part_v";
   description: string;
@@ -148,14 +148,13 @@ export interface ScheduleCLineDefinition {
 }
 
 export interface ScheduleCCandidateRecord {
+  amountCents: number;
   businessUseBps: number | null;
-  cashOn: string | null;
   categoryCode: string | null;
   currency: string | null;
   description: string;
-  grossAmountCents: number;
   memo: string | null;
-  primaryAmountCents: number;
+  occurredOn: string;
   recordId: string;
   recordKind: string;
   recordStatus: string;
@@ -201,7 +200,6 @@ interface ScheduleCPartVAccumulator {
 }
 
 interface ScheduleCReviewCounts {
-  missingCashOn: number;
   nonUsdCurrency: number;
   unsupportedRecordKind: number;
 }
@@ -241,11 +239,6 @@ export function buildScheduleCAggregation(
 
     if (!definition.recordKinds.includes(record.recordKind)) {
       incrementReviewCount(lineReviewCounts, lineCode, "unsupportedRecordKind");
-      continue;
-    }
-
-    if (!record.cashOn?.trim()) {
-      incrementReviewCount(lineReviewCounts, lineCode, "missingCashOn");
       continue;
     }
 
@@ -405,9 +398,7 @@ function normalizeAmount(
   record: ScheduleCCandidateRecord,
   definition: ScheduleCLineDefinition,
 ): number {
-  const rawAmount =
-    definition.amountField === "grossAmountCents" ? record.grossAmountCents : record.primaryAmountCents;
-  const absoluteAmount = Math.abs(rawAmount);
+  const absoluteAmount = Math.abs(record.amountCents);
 
   if (!definition.applyBusinessUse) {
     return absoluteAmount;
@@ -433,7 +424,6 @@ function incrementReviewCount(
   key: keyof ScheduleCReviewCounts,
 ) {
   const nextCounts = reviewCountsByLine.get(lineCode) ?? {
-    missingCashOn: 0,
     nonUsdCurrency: 0,
     unsupportedRecordKind: 0,
   };
@@ -445,7 +435,7 @@ function incrementReviewCount(
 function hasReviewCounts(counts: ScheduleCReviewCounts | undefined): counts is ScheduleCReviewCounts {
   return Boolean(
     counts &&
-      (counts.missingCashOn > 0 || counts.nonUsdCurrency > 0 || counts.unsupportedRecordKind > 0),
+      (counts.nonUsdCurrency > 0 || counts.unsupportedRecordKind > 0),
   );
 }
 
@@ -454,10 +444,6 @@ function buildScheduleCReviewNote(
   counts: ScheduleCReviewCounts,
 ): string {
   const fragments: string[] = [];
-
-  if (counts.missingCashOn > 0) {
-    fragments.push(`${formatCount(counts.missingCashOn, "mapped record")} missing cash-basis dates`);
-  }
 
   if (counts.nonUsdCurrency > 0) {
     fragments.push(

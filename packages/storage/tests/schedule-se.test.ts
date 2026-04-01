@@ -8,14 +8,13 @@ function createCandidateRecord(
   overrides: Partial<ScheduleCCandidateRecord> = {},
 ): ScheduleCCandidateRecord {
   return {
+    amountCents: 0,
     businessUseBps: 10_000,
-    cashOn: "2026-03-15",
     categoryCode: null,
     currency: "USD",
     description: "Default record",
-    grossAmountCents: 0,
     memo: null,
-    primaryAmountCents: 0,
+    occurredOn: "2026-03-15",
     recordId: "record-1",
     recordKind: "expense",
     recordStatus: "posted",
@@ -31,21 +30,20 @@ describe("schedule se support preview contract", () => {
     const aggregation = buildScheduleCAggregation([
       createCandidateRecord({
         description: "Platform payout",
-        grossAmountCents: 500_000,
-        primaryAmountCents: 0,
+        amountCents: 500_000,
         recordId: "income-1",
         recordKind: "platform_payout",
         taxLineCode: "line1",
       }),
       createCandidateRecord({
         description: "Office tools",
-        primaryAmountCents: 40_000,
+        amountCents: 40_000,
         recordId: "expense-1",
         taxLineCode: "line18",
       }),
       createCandidateRecord({
         description: "Studio props",
-        primaryAmountCents: 10_000,
+        amountCents: 10_000,
         recordId: "expense-2",
         taxLineCode: "line27a",
       }),
@@ -66,9 +64,9 @@ describe("schedule se support preview contract", () => {
   it("blocks the downstream preview when a mapped Schedule C line is review-required", () => {
     const aggregation = buildScheduleCAggregation([
       createCandidateRecord({
-        cashOn: null,
-        primaryAmountCents: 12_000,
+        amountCents: 12_000,
         recordId: "expense-review",
+        recordKind: "transfer",
         taxLineCode: "line18",
       }),
     ]);

@@ -17,6 +17,11 @@ interface EntityIdRow {
   entityId: string;
 }
 
+export interface FormScheduleSERequirement {
+  code: "entity_selection_required" | "manual_input_required" | "review_required";
+  message: string;
+}
+
 export interface FormScheduleSEDataScope {
   entityId?: string | null;
   taxYear: number;
@@ -25,6 +30,7 @@ export interface FormScheduleSEDataScope {
 export interface UseFormScheduleSEResult {
   error: string | null;
   isLoaded: boolean;
+  requirements: FormScheduleSERequirement[];
   snapshot: FormScheduleSEDatabaseSnapshot;
 }
 
@@ -32,12 +38,14 @@ export function useFormScheduleSE(scope: FormScheduleSEDataScope): UseFormSchedu
   const database = useSQLiteContext();
   const [error, setError] = useState<string | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [requirements, setRequirements] = useState<FormScheduleSERequirement[]>([]);
   const [snapshot, setSnapshot] = useState<FormScheduleSEDatabaseSnapshot>(createEmptyFormScheduleSESnapshot());
 
   useEffect(() => {
     let isMounted = true;
     setError(null);
     setIsLoaded(false);
+    setRequirements([]);
     setSnapshot(createEmptyFormScheduleSESnapshot());
 
     loadFormScheduleSEData(database, scope)
@@ -47,7 +55,8 @@ export function useFormScheduleSE(scope: FormScheduleSEDataScope): UseFormSchedu
         }
 
         setError(null);
-        setSnapshot(nextSnapshot);
+        setRequirements(nextSnapshot.requirements);
+        setSnapshot(nextSnapshot.snapshot);
         setIsLoaded(true);
       })
       .catch((nextError: unknown) => {
@@ -67,6 +76,7 @@ export function useFormScheduleSE(scope: FormScheduleSEDataScope): UseFormSchedu
   return {
     error,
     isLoaded,
+    requirements,
     snapshot,
   };
 }
@@ -74,45 +84,86 @@ export function useFormScheduleSE(scope: FormScheduleSEDataScope): UseFormSchedu
 async function loadFormScheduleSEData(
   database: ReturnType<typeof useSQLiteContext>,
   scope: FormScheduleSEDataScope,
-): Promise<FormScheduleSEDatabaseSnapshot> {
+) : Promise<{ requirements: FormScheduleSERequirement[]; snapshot: FormScheduleSEDatabaseSnapshot }> {
   const storageDatabase = createReadableStorageDatabase(database);
-  const resolvedScope = await resolveTaxQueryScope(database, scope);
+  const { requirements: scopeRequirements, scope: resolvedScope } = await resolveTaxQueryScope(
+    database,
+    scope,
+  );
 
   if (!resolvedScope) {
-    return createEmptyFormScheduleSESnapshot();
+    return {
+      requirements: scopeRequirements,
+      snapshot: createEmptyFormScheduleSESnapshot(),
+    };
   }
 
   const preview = await loadScheduleSEPreview(storageDatabase, resolvedScope);
+  const requirements = [...scopeRequirements];
 
-  return buildFormScheduleSESnapshot({
-    supportedScheduleCNetProfitPreview: preview.netProfitCents !== null ? preview : null,
-  });
+  if (preview.netProfitCents === null && preview.sourceNote.trim()) {
+    requirements.push({
+      code: preview.sourceNote.includes("review") ? "review_required" : "manual_input_required",
+      message: preview.sourceNote,
+    });
+  }
+
+  return {
+    requirements,
+    snapshot: buildFormScheduleSESnapshot({
+      supportedScheduleCNetProfitPreview: preview.netProfitCents !== null ? preview : null,
+    }),
+  };
 }
 
 async function resolveTaxQueryScope(
   database: ReturnType<typeof useSQLiteContext>,
   scope: FormScheduleSEDataScope,
-): Promise<TaxQueryScope | null> {
+): Promise<{ requirements: FormScheduleSERequirement[]; scope: TaxQueryScope | null }> {
   const normalizedEntityId = scope.entityId?.trim();
 
   if (normalizedEntityId) {
     return {
-      entityId: normalizedEntityId,
-      taxYear: scope.taxYear,
+      requirements: [],
+      scope: {
+        entityId: normalizedEntityId,
+        taxYear: scope.taxYear,
+      },
     };
   }
 
-  const entityRow = await database.getFirstAsync<EntityIdRow>(
+  const entityRows = await database.getAllAsync<EntityIdRow>(
     `SELECT entity_id AS entityId
     FROM entities
     ORDER BY created_at ASC
-    LIMIT 1;`,
+    LIMIT 2;`,
   );
 
-  return entityRow
-    ? {
-        entityId: entityRow.entityId,
+  if (entityRows.length === 1) {
+    return {
+      requirements: [],
+      scope: {
+        entityId: entityRows[0].entityId,
         taxYear: scope.taxYear,
-      }
-    : null;
+      },
+    };
+  }
+
+  if (entityRows.length > 1) {
+    return {
+      requirements: [
+        {
+          code: "entity_selection_required",
+          message:
+            "Multiple entities exist locally. Provide an explicit entityId before loading the Schedule SE preview.",
+        },
+      ],
+      scope: null,
+    };
+  }
+
+  return {
+    requirements: [],
+    scope: null,
+  };
 }

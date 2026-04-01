@@ -2,24 +2,13 @@ import { DatabaseSync } from "node:sqlite";
 import { describe, expect, it } from "vitest";
 
 import {
-  loadTaxLines,
+  loadScheduleCAggregation,
+  loadScheduleSEPreview,
+  persistResolvedStandardReceiptEntry,
+  resolveStandardReceiptEntry,
   structuredStoreContract,
   type StorageSqlValue,
 } from "@creator-cfo/storage";
-
-import {
-  createDatabaseDemoRecord,
-  ensureDatabaseDemoFixture,
-  listDatabaseDemoRecordIds,
-  loadDatabaseDemoEditableRecord,
-  loadDatabaseDemoSnapshot,
-  updateDatabaseDemoRecordField,
-} from "../src/features/database-demo/database-demo-data-access";
-import {
-  buildDatabaseDemoFieldUpdate,
-  databaseDemoIds,
-  createDatabaseDemoRecordId,
-} from "../src/features/database-demo/demo-data";
 
 function createStorageDatabase(): DatabaseSync {
   const database = new DatabaseSync(":memory:");
@@ -39,12 +28,6 @@ function createStorageDatabase(): DatabaseSync {
   return database;
 }
 
-function runMaintenance(database: DatabaseSync): void {
-  for (const statement of structuredStoreContract.maintenanceStatements) {
-    database.exec(statement);
-  }
-}
-
 function createWritableDatabase(database: DatabaseSync) {
   return {
     async getAllAsync<Row>(source: string, ...params: StorageSqlValue[]) {
@@ -59,162 +42,129 @@ function createWritableDatabase(database: DatabaseSync) {
   };
 }
 
-async function createPopulatedDemoDatabase() {
+async function createPopulatedV1Database() {
   const database = createStorageDatabase();
   const writableDatabase = createWritableDatabase(database);
 
-  await ensureDatabaseDemoFixture(writableDatabase);
-  const incomeRecordId = await createDatabaseDemoRecord(writableDatabase, "income");
-  const expenseRecordId = await createDatabaseDemoRecord(writableDatabase, "expense");
   await writableDatabase.runAsync(
-    `INSERT INTO tax_line_inputs (
+    `INSERT INTO entities (
       entity_id,
-      tax_year,
-      line_key,
-      input_status,
-      amount_cents,
-      note,
-      created_at,
-      updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`,
-    databaseDemoIds.entityId,
-    2026,
-    "schedule_c.line30",
-    "provided",
-    0,
-    "No home office deduction for the demo test database.",
-    "2026-03-30T00:00:00.000Z",
-    "2026-03-30T00:00:00.000Z",
+      legal_name,
+      entity_type,
+      base_currency,
+      default_timezone,
+      created_at
+    ) VALUES (?, ?, ?, ?, ?, ?);`,
+    "entity-main",
+    "Creator CFO Demo Books",
+    "sole_proprietorship",
+    "USD",
+    "America/Los_Angeles",
+    "2026-03-01T08:00:00.000Z",
   );
-  runMaintenance(database);
 
-  return { database, expenseRecordId, incomeRecordId, writableDatabase };
+  const incomeEntry = resolveStandardReceiptEntry(
+    {
+      amountCents: 12_500,
+      currency: "USD",
+      description: "YouTube payout 1",
+      entityId: "entity-main",
+      occurredOn: "2026-03-29",
+      source: "YouTube",
+      target: "Business checking",
+      userClassification: "income",
+    },
+    {
+      createdAt: "2026-03-29T09:00:00.000Z",
+      recordId: "record-income",
+      sourceSystem: "mobile-test",
+      updatedAt: "2026-03-29T09:05:00.000Z",
+    },
+  );
+  const expenseEntry = resolveStandardReceiptEntry(
+    {
+      amountCents: 4_850,
+      currency: "USD",
+      description: "Office receipt 2 reviewed",
+      entityId: "entity-main",
+      occurredOn: "2026-03-30",
+      source: "Business checking",
+      target: "Office supplier",
+      userClassification: "expense",
+    },
+    {
+      createdAt: "2026-03-30T09:00:00.000Z",
+      recordId: "record-expense",
+      recordStatus: "reconciled",
+      sourceSystem: "mobile-test",
+      updatedAt: "2026-03-30T09:05:00.000Z",
+    },
+  );
+
+  await persistResolvedStandardReceiptEntry(writableDatabase, incomeEntry);
+  await persistResolvedStandardReceiptEntry(writableDatabase, expenseEntry);
+
+  return { database, writableDatabase };
 }
 
-describe("database demo storage coverage", () => {
-  it("boots a test database and produces balanced ledger outputs", async () => {
-    const { incomeRecordId, expenseRecordId, writableDatabase } =
-      await createPopulatedDemoDatabase();
+describe("hybrid v1 mobile storage coverage", () => {
+  it("boots a test database and persists sparse-input records", async () => {
+    const { database } = await createPopulatedV1Database();
+    const rows = database
+      .prepare(
+        `SELECT
+          record_id AS recordId,
+          amount_cents AS amountCents,
+          record_kind AS recordKind,
+          source_label AS sourceLabel,
+          target_label AS targetLabel
+        FROM records
+        ORDER BY record_id ASC;`,
+      )
+      .all() as Array<{
+      amountCents: number;
+      recordId: string;
+      recordKind: string;
+      sourceLabel: string;
+      targetLabel: string;
+    }>;
 
-    expect((await listDatabaseDemoRecordIds(writableDatabase)).sort()).toEqual(
-      [incomeRecordId, expenseRecordId].sort(),
-    );
-
-    const result = await loadDatabaseDemoSnapshot(writableDatabase, incomeRecordId);
-
-    expect(result.selectedRecordId).toBe(incomeRecordId);
-    expect(result.snapshot.counts).toEqual({
-      journalEntryCount: 2,
-      ledgerAccountCount: 3,
-      recordCount: 2,
-      selectedLineCount: 2,
-    });
-    expect(result.snapshot.ledgerHealth.isBalanced).toBe(true);
-    expect(result.snapshot.ledgerHealth.warningText).toBeNull();
-    expect(result.snapshot.summary).toContain("2 demo records are present");
-    expect(result.snapshot.summary).toContain(incomeRecordId);
-    expect(result.snapshot.selectedPostingLines).toEqual([
+    expect(rows).toEqual([
       {
-        accountName: "Business Checking",
-        accountRole: "cash",
-        amountLabel: "USD 125.00",
-        direction: "debit",
-        lineNo: 10,
+        amountCents: 4_850,
+        recordId: "record-expense",
+        recordKind: "expense",
+        sourceLabel: "Business checking",
+        targetLabel: "Office supplier",
       },
       {
-        accountName: "Platform Revenue",
-        accountRole: "primary",
-        amountLabel: "USD 125.00",
-        direction: "credit",
-        lineNo: 90,
-      },
-    ]);
-    expect(result.snapshot.balanceSheetSections).toEqual([
-      {
-        lines: [{ amountLabel: "USD 76.50", label: "1010 · Business Checking" }],
-        title: "Assets",
-        totalLabel: "USD 76.50",
-      },
-      {
-        lines: [{ amountLabel: "USD 76.50", label: "Current earnings" }],
-        title: "Equity",
-        totalLabel: "USD 76.50",
-      },
-    ]);
-    expect(result.snapshot.profitAndLossSections).toEqual([
-      {
-        lines: [{ amountLabel: "USD 125.00", label: "4010 · Platform Revenue" }],
-        title: "Income",
-        totalLabel: "USD 125.00",
-      },
-      {
-        lines: [{ amountLabel: "USD 48.50", label: "6100 · Office Expense" }],
-        title: "Expenses",
-        totalLabel: "USD 48.50",
-      },
-      {
-        lines: [{ amountLabel: "USD 76.50", label: "Current period result" }],
-        title: "Net income",
-        totalLabel: "USD 76.50",
+        amountCents: 12_500,
+        recordId: "record-income",
+        recordKind: "income",
+        sourceLabel: "YouTube",
+        targetLabel: "Business checking",
       },
     ]);
   });
 
-  it("updates demo records and exposes tax form-filling lines from the test database", async () => {
-    const { database, expenseRecordId, writableDatabase } = await createPopulatedDemoDatabase();
-    const editableRecord = await loadDatabaseDemoEditableRecord(writableDatabase, expenseRecordId);
-
-    expect(editableRecord).not.toBeNull();
-
-    const descriptionUpdate = buildDatabaseDemoFieldUpdate(editableRecord!, "description");
-    await updateDatabaseDemoRecordField(writableDatabase, expenseRecordId, descriptionUpdate);
-
-    const reviewedRecord = await loadDatabaseDemoEditableRecord(writableDatabase, expenseRecordId);
-
-    expect(reviewedRecord?.description).toBe("Office receipt 2 reviewed");
-
-    const statusUpdate = buildDatabaseDemoFieldUpdate(reviewedRecord!, "recordStatus");
-    await updateDatabaseDemoRecordField(writableDatabase, expenseRecordId, statusUpdate);
-    runMaintenance(database);
-
-    const snapshot = await loadDatabaseDemoSnapshot(writableDatabase, expenseRecordId);
-    const selectedRecord = snapshot.snapshot.recentRecords.find(
-      (record) => record.recordId === createDatabaseDemoRecordId(2),
-    );
-    const taxLines = await loadTaxLines(writableDatabase, {
-      entityId: databaseDemoIds.entityId,
-      scheduleCodes: ["schedule_c", "schedule_se"],
-      statuses: ["direct", "derived"],
+  it("keeps Schedule C and Schedule SE previews working on top of the simplified runtime contract", async () => {
+    const { writableDatabase } = await createPopulatedV1Database();
+    const aggregation = await loadScheduleCAggregation(writableDatabase, {
+      entityId: "entity-main",
+      taxYear: 2026,
+    });
+    const preview = await loadScheduleSEPreview(writableDatabase, {
+      entityId: "entity-main",
       taxYear: 2026,
     });
 
-    expect(selectedRecord).toMatchObject({
-      description: "Office receipt 2 reviewed",
-      status: "reconciled",
+    expect(aggregation.lineAmounts.line1?.amountCents).toBe(12_500);
+    expect(aggregation.lineAmounts.line27a?.amountCents).toBe(4_850);
+    expect(preview).toMatchObject({
+      currency: "USD",
+      deductibleExpensesCents: 4_850,
+      grossReceiptsCents: 12_500,
+      netProfitCents: 7_650,
     });
-    expect(taxLines).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          amountCents: 12_500,
-          lineKey: "schedule_c.line1",
-          lineStatus: "direct",
-        }),
-        expect.objectContaining({
-          amountCents: 4_850,
-          lineKey: "schedule_c.line27b",
-          lineStatus: "direct",
-        }),
-        expect.objectContaining({
-          amountCents: 7_650,
-          lineKey: "schedule_c.line31",
-          lineStatus: "derived",
-        }),
-        expect.objectContaining({
-          amountCents: 7_650,
-          lineKey: "schedule_se.line2",
-          lineStatus: "derived",
-        }),
-      ]),
-    );
   });
 });

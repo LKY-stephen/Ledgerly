@@ -10,14 +10,13 @@ function createCandidateRecord(
   overrides: Partial<ScheduleCCandidateRecord> = {},
 ): ScheduleCCandidateRecord {
   return {
+    amountCents: 0,
     businessUseBps: 10_000,
-    cashOn: "2026-03-15",
     categoryCode: null,
     currency: "USD",
     description: "Default record",
-    grossAmountCents: 0,
     memo: null,
-    primaryAmountCents: 0,
+    occurredOn: "2026-03-15",
     recordId: "record-1",
     recordKind: "expense",
     recordStatus: "posted",
@@ -33,16 +32,14 @@ describe("schedule c aggregation contract", () => {
     const result = buildScheduleCAggregation([
       createCandidateRecord({
         description: "Platform payout A",
-        grossAmountCents: 120_000,
-        primaryAmountCents: 0,
+        amountCents: 120_000,
         recordId: "income-1",
         recordKind: "platform_payout",
         taxLineCode: "line1",
       }),
       createCandidateRecord({
         description: "Platform payout B",
-        grossAmountCents: 85_000,
-        primaryAmountCents: 0,
+        amountCents: 85_000,
         recordId: "income-2",
         recordKind: "income",
         recordStatus: "reconciled",
@@ -50,8 +47,7 @@ describe("schedule c aggregation contract", () => {
       }),
       createCandidateRecord({
         description: "Ignored draft payout",
-        grossAmountCents: 999_999,
-        primaryAmountCents: 0,
+        amountCents: 999_999,
         recordId: "income-draft",
         recordKind: "platform_payout",
         recordStatus: "draft",
@@ -73,7 +69,7 @@ describe("schedule c aggregation contract", () => {
         businessUseBps: 7_500,
         categoryCode: "office",
         description: "Desk subscription",
-        primaryAmountCents: 20_000,
+        amountCents: 20_000,
         recordId: "expense-1",
         subcategoryCode: "software",
         taxCategoryCode: "schedule-c-office",
@@ -93,20 +89,20 @@ describe("schedule c aggregation contract", () => {
     const result = buildScheduleCAggregation([
       createCandidateRecord({
         description: "Studio props",
-        primaryAmountCents: 8_450,
+        amountCents: 8_450,
         recordId: "partv-1",
         taxLineCode: "line27a",
       }),
       createCandidateRecord({
         description: "Studio props",
-        primaryAmountCents: 3_550,
+        amountCents: 3_550,
         recordId: "partv-2",
         taxLineCode: "line27a",
       }),
       createCandidateRecord({
         categoryCode: "admin-tools",
         description: "",
-        primaryAmountCents: 2_500,
+        amountCents: 2_500,
         recordId: "partv-3",
         taxLineCode: "line27a",
       }),
@@ -130,18 +126,18 @@ describe("schedule c aggregation contract", () => {
     ]);
   });
 
-  it("marks a line review-required when mapped records are missing cash_on", () => {
+  it("marks a line review-required when mapped records use unsupported record kinds", () => {
     const result = buildScheduleCAggregation([
       createCandidateRecord({
-        cashOn: null,
-        primaryAmountCents: 12_000,
-        recordId: "expense-missing-cash",
+        amountCents: 12_000,
+        recordId: "expense-unsupported-kind",
+        recordKind: "transfer",
         taxLineCode: "line18",
       }),
     ]);
 
     expect(result.lineAmounts.line18).toBeUndefined();
-    expect(result.lineReviewNotes.line18).toContain("missing cash-basis dates");
+    expect(result.lineReviewNotes.line18).toContain("outside the current Schedule C contract");
   });
 
   it("marks part v review-required when mapped records use non-USD currency", () => {
@@ -149,7 +145,7 @@ describe("schedule c aggregation contract", () => {
       createCandidateRecord({
         currency: "EUR",
         description: "Foreign contractor fee",
-        primaryAmountCents: 42_000,
+        amountCents: 42_000,
         recordId: "partv-eur",
         taxLineCode: "line27a",
       }),

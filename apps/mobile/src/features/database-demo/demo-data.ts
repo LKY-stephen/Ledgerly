@@ -398,23 +398,21 @@ export function createDatabaseDemoStandardReceiptDraft(
   return {
     input: {
       amountCents,
-      counterpartyId: classification === "income" ? databaseDemoIds.counterpartyId : null,
       currency: "USD",
       description,
       entityId: databaseDemoIds.entityId,
       occurredOn: formatDateOnly(baseDate),
+      source: classification === "income" ? "YouTube" : "Business checking",
+      target: classification === "income" ? "Business checking" : "Office supplier",
       userClassification: classification,
     },
     persistenceContext: {
-      cashAccountId: databaseDemoIds.cashAccountId,
       createdAt: createIsoTimestamp(baseDate, 9, normalizedSequence),
-      expenseAccountId: databaseDemoIds.expenseAccountId,
-      incomeAccountId: databaseDemoIds.incomeAccountId,
-      ownerEquityAccountId: databaseDemoIds.ownerEquityAccountId,
-      platformAccountId: classification === "income" ? databaseDemoIds.platformAccountId : null,
       recordId: createDatabaseDemoRecordId(normalizedSequence),
       recordStatus: "posted",
+      sourceCounterpartyId: classification === "income" ? databaseDemoIds.counterpartyId : null,
       sourceSystem: databaseDemoSourceSystem,
+      targetCounterpartyId: null,
       updatedAt: createIsoTimestamp(baseDate, 10, normalizedSequence),
     },
   };

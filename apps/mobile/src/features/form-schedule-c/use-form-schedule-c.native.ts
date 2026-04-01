@@ -18,6 +18,11 @@ interface EntityIdRow {
   entityId: string;
 }
 
+export interface FormScheduleCRequirement {
+  code: "entity_selection_required" | "review_required";
+  message: string;
+}
+
 export interface FormScheduleCDataScope {
   entityId?: string | null;
   taxYear: number;
@@ -26,6 +31,7 @@ export interface FormScheduleCDataScope {
 export interface UseFormScheduleCResult {
   error: string | null;
   isLoaded: boolean;
+  requirements: FormScheduleCRequirement[];
   snapshot: FormScheduleCDatabaseSnapshot;
 }
 
@@ -33,12 +39,14 @@ export function useFormScheduleC(scope: FormScheduleCDataScope): UseFormSchedule
   const database = useSQLiteContext();
   const [error, setError] = useState<string | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [requirements, setRequirements] = useState<FormScheduleCRequirement[]>([]);
   const [snapshot, setSnapshot] = useState<FormScheduleCDatabaseSnapshot>(createEmptyFormScheduleCSnapshot());
 
   useEffect(() => {
     let isMounted = true;
     setError(null);
     setIsLoaded(false);
+    setRequirements([]);
     setSnapshot(createEmptyFormScheduleCSnapshot());
 
     loadFormScheduleCData(database, scope)
@@ -48,7 +56,8 @@ export function useFormScheduleC(scope: FormScheduleCDataScope): UseFormSchedule
         }
 
         setError(null);
-        setSnapshot(nextSnapshot);
+        setRequirements(nextSnapshot.requirements);
+        setSnapshot(nextSnapshot.snapshot);
         setIsLoaded(true);
       })
       .catch((nextError: unknown) => {
@@ -68,6 +77,7 @@ export function useFormScheduleC(scope: FormScheduleCDataScope): UseFormSchedule
   return {
     error,
     isLoaded,
+    requirements,
     snapshot,
   };
 }
@@ -75,12 +85,18 @@ export function useFormScheduleC(scope: FormScheduleCDataScope): UseFormSchedule
 async function loadFormScheduleCData(
   database: ReturnType<typeof useSQLiteContext>,
   scope: FormScheduleCDataScope,
-): Promise<FormScheduleCDatabaseSnapshot> {
+) : Promise<{ requirements: FormScheduleCRequirement[]; snapshot: FormScheduleCDatabaseSnapshot }> {
   const storageDatabase = createReadableStorageDatabase(database);
-  const resolvedScope = await resolveTaxQueryScope(database, scope);
+  const { requirements: scopeRequirements, scope: resolvedScope } = await resolveTaxQueryScope(
+    database,
+    scope,
+  );
 
   if (!resolvedScope) {
-    return createEmptyFormScheduleCSnapshot();
+    return {
+      requirements: scopeRequirements,
+      snapshot: createEmptyFormScheduleCSnapshot(),
+    };
   }
 
   const proprietorName = await loadEntityLegalName(storageDatabase, resolvedScope.entityId);
@@ -91,7 +107,7 @@ async function loadFormScheduleCData(
     aggregation.partVRows.length > 0 ||
     aggregation.partVReviewNote !== null;
 
-  return buildFormScheduleCSnapshot({
+  const snapshot = buildFormScheduleCSnapshot({
     currency: hasScheduleCData ? "USD" : null,
     lineAmounts: aggregation.lineAmounts,
     lineReviewNotes: aggregation.lineReviewNotes,
@@ -99,32 +115,77 @@ async function loadFormScheduleCData(
     partVRows: aggregation.partVRows,
     proprietorName,
   });
+
+  const requirements = [...scopeRequirements];
+  for (const note of Object.values(aggregation.lineReviewNotes)) {
+    if (note) {
+      requirements.push({
+        code: "review_required",
+        message: note,
+      });
+    }
+  }
+  if (aggregation.partVReviewNote) {
+    requirements.push({
+      code: "review_required",
+      message: aggregation.partVReviewNote,
+    });
+  }
+
+  return {
+    requirements,
+    snapshot,
+  };
 }
 
 async function resolveTaxQueryScope(
   database: ReturnType<typeof useSQLiteContext>,
   scope: FormScheduleCDataScope,
-): Promise<TaxQueryScope | null> {
+): Promise<{ requirements: FormScheduleCRequirement[]; scope: TaxQueryScope | null }> {
   const normalizedEntityId = scope.entityId?.trim();
 
   if (normalizedEntityId) {
     return {
-      entityId: normalizedEntityId,
-      taxYear: scope.taxYear,
+      requirements: [],
+      scope: {
+        entityId: normalizedEntityId,
+        taxYear: scope.taxYear,
+      },
     };
   }
 
-  const entityRow = await database.getFirstAsync<EntityIdRow>(
+  const entityRows = await database.getAllAsync<EntityIdRow>(
     `SELECT entity_id AS entityId
     FROM entities
     ORDER BY created_at ASC
-    LIMIT 1;`,
+    LIMIT 2;`,
   );
 
-  return entityRow
-    ? {
-        entityId: entityRow.entityId,
+  if (entityRows.length === 1) {
+    return {
+      requirements: [],
+      scope: {
+        entityId: entityRows[0].entityId,
         taxYear: scope.taxYear,
-      }
-    : null;
+      },
+    };
+  }
+
+  if (entityRows.length > 1) {
+    return {
+      requirements: [
+        {
+          code: "entity_selection_required",
+          message:
+            "Multiple entities exist locally. Provide an explicit entityId before loading the Schedule C preview.",
+        },
+      ],
+      scope: null,
+    };
+  }
+
+  return {
+    requirements: [],
+    scope: null,
+  };
 }

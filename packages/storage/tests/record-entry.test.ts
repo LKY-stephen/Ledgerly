@@ -18,6 +18,10 @@ function createStorageDatabase(): DatabaseSync {
     database.exec(statement);
   }
 
+  for (const statement of structuredStoreContract.maintenanceStatements) {
+    database.exec(statement);
+  }
+
   return database;
 }
 
@@ -55,41 +59,10 @@ function seedResolverFixture(database: DatabaseSync): void {
       "America/Los_Angeles",
       "2026-03-01T08:00:00.000Z",
     );
-
-  const insertAccount = database.prepare(
-    `INSERT INTO accounts (
-      account_id,
-      entity_id,
-      account_code,
-      account_name,
-      account_type,
-      normal_balance,
-      created_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?);`,
-  );
-
-  const accounts = [
-    ["account-cash", "1010", "Business Checking", "asset", "debit"],
-    ["account-income", "4010", "Platform Revenue", "income", "credit"],
-    ["account-expense", "6100", "Office Expense", "expense", "debit"],
-    ["account-equity", "3010", "Owner Equity", "equity", "credit"],
-  ] as const;
-
-  for (const [accountId, accountCode, accountName, accountType, normalBalance] of accounts) {
-    insertAccount.run(
-      accountId,
-      "entity-main",
-      accountCode,
-      accountName,
-      accountType,
-      normalBalance,
-      "2026-03-01T08:00:00.000Z",
-    );
-  }
 }
 
 describe("standard receipt entry resolver", () => {
-  it("resolves and persists income receipts into canonical line1-backed records", async () => {
+  it("resolves and persists income receipts into canonical v1 records", async () => {
     const database = createStorageDatabase();
     seedResolverFixture(database);
     const writableDatabase = createWritableDatabase(database);
@@ -100,14 +73,12 @@ describe("standard receipt entry resolver", () => {
         description: "YouTube payout 1",
         entityId: "entity-main",
         occurredOn: "2026-03-29",
+        source: "YouTube",
+        target: "Business checking",
         userClassification: "income",
       },
       {
-        cashAccountId: "account-cash",
         createdAt: "2026-03-29T09:00:00.000Z",
-        expenseAccountId: "account-expense",
-        incomeAccountId: "account-income",
-        ownerEquityAccountId: "account-equity",
         recordId: "record-income",
         sourceSystem: "resolver-test",
         updatedAt: "2026-03-29T09:05:00.000Z",
@@ -117,31 +88,30 @@ describe("standard receipt entry resolver", () => {
     await persistResolvedStandardReceiptEntry(writableDatabase, resolvedEntry);
 
     expect(resolvedEntry.record).toMatchObject({
+      amountCents: 12_500,
       businessUseBps: 10_000,
-      grossAmountCents: 12_500,
-      netCashAmountCents: 12_500,
-      postingPattern: "gross_to_net_income",
-      primaryAmountCents: 0,
       recordKind: "income",
+      sourceLabel: "YouTube",
+      targetLabel: "Business checking",
       taxLineCode: "line1",
     });
 
     const storedRecord = database
       .prepare(
         `SELECT
+          amount_cents AS amountCents,
           record_kind AS recordKind,
-          posting_pattern AS postingPattern,
-          gross_amount_cents AS grossAmountCents,
-          net_cash_amount_cents AS netCashAmountCents,
+          source_label AS sourceLabel,
+          target_label AS targetLabel,
           tax_line_code AS taxLineCode
         FROM records
         WHERE record_id = ?;`,
       )
       .get("record-income") as {
-      grossAmountCents: number;
-      netCashAmountCents: number;
-      postingPattern: string;
+      amountCents: number;
       recordKind: string;
+      sourceLabel: string;
+      targetLabel: string;
       taxLineCode: string | null;
     };
     const storedClassification = database
@@ -158,37 +128,18 @@ describe("standard receipt entry resolver", () => {
       resolverCode: string;
       userClassification: string;
     };
-    const storedTaxYearProfile = database
-      .prepare(
-        `SELECT
-          entity_id AS entityId,
-          tax_year AS taxYear,
-          accounting_method AS accountingMethod
-        FROM tax_year_profiles
-        WHERE entity_id = ? AND tax_year = ?;`,
-      )
-      .get("entity-main", 2026) as {
-      accountingMethod: string;
-      entityId: string;
-      taxYear: number;
-    };
 
     expect(storedRecord).toEqual({
-      grossAmountCents: 12_500,
-      netCashAmountCents: 12_500,
-      postingPattern: "gross_to_net_income",
+      amountCents: 12_500,
       recordKind: "income",
+      sourceLabel: "YouTube",
+      targetLabel: "Business checking",
       taxLineCode: "line1",
     });
     expect(storedClassification).toEqual({
       classificationStatus: "resolved",
       resolverCode: "income_line1_default",
       userClassification: "income",
-    });
-    expect(storedTaxYearProfile).toEqual({
-      accountingMethod: "cash",
-      entityId: "entity-main",
-      taxYear: 2026,
     });
   });
 
@@ -204,14 +155,12 @@ describe("standard receipt entry resolver", () => {
         description: "Office receipt 1",
         entityId: "entity-main",
         occurredOn: "2026-03-28",
+        source: "Business checking",
+        target: "Office Depot",
         userClassification: "expense",
       },
       {
-        cashAccountId: "account-cash",
         createdAt: "2026-03-28T09:00:00.000Z",
-        expenseAccountId: "account-expense",
-        incomeAccountId: "account-income",
-        ownerEquityAccountId: "account-equity",
         recordId: "record-expense",
         sourceSystem: "resolver-test",
         updatedAt: "2026-03-28T09:05:00.000Z",
@@ -223,35 +172,32 @@ describe("standard receipt entry resolver", () => {
     const storedRecord = database
       .prepare(
         `SELECT
-          record_kind AS recordKind,
-          posting_pattern AS postingPattern,
-          primary_amount_cents AS primaryAmountCents,
+          amount_cents AS amountCents,
           business_use_bps AS businessUseBps,
+          record_kind AS recordKind,
           tax_category_code AS taxCategoryCode,
           tax_line_code AS taxLineCode
         FROM records
         WHERE record_id = ?;`,
       )
       .get("record-expense") as {
+      amountCents: number;
       businessUseBps: number;
-      postingPattern: string;
-      primaryAmountCents: number;
       recordKind: string;
       taxCategoryCode: string | null;
       taxLineCode: string | null;
     };
 
     expect(storedRecord).toEqual({
+      amountCents: 4_200,
       businessUseBps: 7_500,
-      postingPattern: "simple_expense",
-      primaryAmountCents: 4_200,
       recordKind: "expense",
       taxCategoryCode: "schedule-c-other-expense",
-      taxLineCode: "line27b",
+      taxLineCode: "line27a",
     });
   });
 
-  it("resolves personal spending to owner draw without a tax line", async () => {
+  it("resolves personal spending without a tax line", async () => {
     const database = createStorageDatabase();
     seedResolverFixture(database);
     const writableDatabase = createWritableDatabase(database);
@@ -259,17 +205,15 @@ describe("standard receipt entry resolver", () => {
       {
         amountCents: 2_100,
         currency: "USD",
-        description: "Owner card spend 1",
+        description: "Personal lunch",
         entityId: "entity-main",
         occurredOn: "2026-03-27",
+        source: "Business checking",
+        target: "Personal card",
         userClassification: "personal_spending",
       },
       {
-        cashAccountId: "account-cash",
         createdAt: "2026-03-27T09:00:00.000Z",
-        expenseAccountId: "account-expense",
-        incomeAccountId: "account-income",
-        ownerEquityAccountId: "account-equity",
         recordId: "record-personal",
         sourceSystem: "resolver-test",
         updatedAt: "2026-03-27T09:05:00.000Z",
@@ -281,24 +225,24 @@ describe("standard receipt entry resolver", () => {
     const storedRecord = database
       .prepare(
         `SELECT
-          record_kind AS recordKind,
-          posting_pattern AS postingPattern,
+          amount_cents AS amountCents,
           business_use_bps AS businessUseBps,
+          record_kind AS recordKind,
           tax_line_code AS taxLineCode
         FROM records
         WHERE record_id = ?;`,
       )
       .get("record-personal") as {
+      amountCents: number;
       businessUseBps: number;
-      postingPattern: string;
       recordKind: string;
       taxLineCode: string | null;
     };
 
     expect(storedRecord).toEqual({
+      amountCents: 2_100,
       businessUseBps: 0,
-      postingPattern: "owner_draw",
-      recordKind: "owner_draw",
+      recordKind: "personal_spending",
       taxLineCode: null,
     });
   });

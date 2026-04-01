@@ -11,7 +11,7 @@ export const standardReceiptUserClassifications = [
 export type StandardReceiptUserClassification =
   (typeof standardReceiptUserClassifications)[number];
 
-export const recordEntryModes = ["standard_receipt", "advanced", "legacy"] as const;
+export const recordEntryModes = ["standard_receipt", "manual", "legacy"] as const;
 export type RecordEntryMode = (typeof recordEntryModes)[number];
 
 export const recordEntryClassificationStatuses = ["resolved", "review_required", "legacy"] as const;
@@ -21,51 +21,46 @@ export type RecordEntryClassificationStatus =
 export interface StandardReceiptEntryInput {
   amountCents: number;
   businessUseBps?: number | null;
-  counterpartyId?: string | null;
   currency: string;
   description: string;
   entityId: string;
   evidenceIds?: string[];
   memo?: string | null;
   occurredOn: string;
+  source: string;
+  target: string;
   userClassification: StandardReceiptUserClassification;
 }
 
 export interface StandardReceiptPersistenceContext {
-  cashAccountId: string;
   createdAt: string;
-  expenseAccountId: string;
-  incomeAccountId: string;
-  ownerEquityAccountId: string;
-  platformAccountId?: string | null;
   recordId: string;
   recordStatus?: string;
+  sourceCounterpartyId?: string | null;
   sourceSystem: string;
+  targetCounterpartyId?: string | null;
   updatedAt: string;
 }
 
 export interface StandardReceiptRecordDraft {
+  amountCents: number;
   businessUseBps: number;
-  cashAccountId: string;
-  cashOn: string;
-  counterpartyId: string | null;
+  categoryCode: string | null;
   createdAt: string;
   currency: string;
   description: string;
   entityId: string;
-  evidenceStatus: "attached" | "pending";
-  grossAmountCents: number;
   memo: string | null;
-  netCashAmountCents: number;
-  platformAccountId: string | null;
-  postingPattern: string;
-  primaryAccountId: string;
-  primaryAmountCents: number;
-  recognitionOn: string;
+  occurredOn: string;
   recordId: string;
-  recordKind: string;
+  recordKind: "expense" | "income" | "personal_spending";
   recordStatus: string;
+  sourceCounterpartyId: string | null;
+  sourceLabel: string;
   sourceSystem: string;
+  subcategoryCode: string | null;
+  targetCounterpartyId: string | null;
+  targetLabel: string;
   taxCategoryCode: string | null;
   taxLineCode: string | null;
   updatedAt: string;
@@ -117,13 +112,14 @@ export function resolveStandardReceiptEntry(
   const currency = requireNonEmpty(input.currency, "currency").toUpperCase();
   const description = requireNonEmpty(input.description, "description");
   const entityId = requireNonEmpty(input.entityId, "entityId");
+  const sourceLabel = requireNonEmpty(input.source, "source");
+  const targetLabel = requireNonEmpty(input.target, "target");
   const recordId = requireNonEmpty(context.recordId, "recordId");
   const sourceSystem = requireNonEmpty(context.sourceSystem, "sourceSystem");
   const createdAt = requireNonEmpty(context.createdAt, "createdAt");
   const updatedAt = requireNonEmpty(context.updatedAt, "updatedAt");
   const evidenceIds = normalizeEvidenceIds(input.evidenceIds);
   const memo = normalizeNullableText(input.memo);
-  const counterpartyId = normalizeNullableText(input.counterpartyId);
   const recordStatus = normalizeRecordStatus(context.recordStatus);
   const taxYear = extractTaxYearFromDate(occurredOn);
 
@@ -142,27 +138,24 @@ export function resolveStandardReceiptEntry(
       evidenceIds,
       input,
       record: {
+        amountCents,
         businessUseBps: businessUseFullBps,
-        cashAccountId: requireNonEmpty(context.cashAccountId, "cashAccountId"),
-        cashOn: occurredOn,
-        counterpartyId,
+        categoryCode: null,
         createdAt,
         currency,
         description,
         entityId,
-        evidenceStatus: evidenceIds.length > 0 ? "attached" : "pending",
-        grossAmountCents: amountCents,
         memo,
-        netCashAmountCents: amountCents,
-        platformAccountId: normalizeNullableText(context.platformAccountId),
-        postingPattern: "gross_to_net_income",
-        primaryAccountId: requireNonEmpty(context.incomeAccountId, "incomeAccountId"),
-        primaryAmountCents: 0,
-        recognitionOn: occurredOn,
+        occurredOn,
         recordId,
         recordKind: "income",
         recordStatus,
+        sourceCounterpartyId: normalizeNullableText(context.sourceCounterpartyId),
+        sourceLabel,
         sourceSystem,
+        subcategoryCode: null,
+        targetCounterpartyId: normalizeNullableText(context.targetCounterpartyId),
+        targetLabel,
         taxCategoryCode: null,
         taxLineCode: "line1",
         updatedAt,
@@ -184,38 +177,35 @@ export function resolveStandardReceiptEntry(
         createdAt,
         entryMode: "standard_receipt",
         recordId,
-        resolverCode: "expense_line27b_default",
+        resolverCode: "expense_line27a_default",
         resolverNote:
-          "Resolved from the simplified expense receipt path with the safe Schedule C Part V line27b fallback.",
+          "Resolved from the simplified expense receipt path with the safe Schedule C Part V line27a fallback.",
         updatedAt,
         userClassification: input.userClassification,
       },
       evidenceIds,
       input,
       record: {
+        amountCents,
         businessUseBps: normalizeBusinessUseBps(input.businessUseBps),
-        cashAccountId: requireNonEmpty(context.cashAccountId, "cashAccountId"),
-        cashOn: occurredOn,
-        counterpartyId,
+        categoryCode: null,
         createdAt,
         currency,
         description,
         entityId,
-        evidenceStatus: evidenceIds.length > 0 ? "attached" : "pending",
-        grossAmountCents: 0,
         memo,
-        netCashAmountCents: 0,
-        platformAccountId: null,
-        postingPattern: "simple_expense",
-        primaryAccountId: requireNonEmpty(context.expenseAccountId, "expenseAccountId"),
-        primaryAmountCents: amountCents,
-        recognitionOn: occurredOn,
+        occurredOn,
         recordId,
         recordKind: "expense",
         recordStatus,
+        sourceCounterpartyId: normalizeNullableText(context.sourceCounterpartyId),
+        sourceLabel,
         sourceSystem,
+        subcategoryCode: null,
+        targetCounterpartyId: normalizeNullableText(context.targetCounterpartyId),
+        targetLabel,
         taxCategoryCode: expenseFallbackTaxCategoryCode,
-        taxLineCode: "line27b",
+        taxLineCode: "line27a",
         updatedAt,
       },
       taxYearProfile: {
@@ -234,7 +224,7 @@ export function resolveStandardReceiptEntry(
       createdAt,
       entryMode: "standard_receipt",
       recordId,
-      resolverCode: "owner_draw_excluded",
+      resolverCode: "personal_spending_default",
       resolverNote: "Resolved from the simplified personal-spending path and excluded from tax totals.",
       updatedAt,
       userClassification: input.userClassification,
@@ -242,27 +232,24 @@ export function resolveStandardReceiptEntry(
     evidenceIds,
     input,
     record: {
+      amountCents,
       businessUseBps: 0,
-      cashAccountId: requireNonEmpty(context.cashAccountId, "cashAccountId"),
-      cashOn: occurredOn,
-      counterpartyId,
+      categoryCode: null,
       createdAt,
       currency,
       description,
       entityId,
-      evidenceStatus: evidenceIds.length > 0 ? "attached" : "pending",
-      grossAmountCents: 0,
       memo,
-      netCashAmountCents: 0,
-      platformAccountId: null,
-      postingPattern: "owner_draw",
-      primaryAccountId: requireNonEmpty(context.ownerEquityAccountId, "ownerEquityAccountId"),
-      primaryAmountCents: amountCents,
-      recognitionOn: occurredOn,
+      occurredOn,
       recordId,
-      recordKind: "owner_draw",
+      recordKind: "personal_spending",
       recordStatus,
+      sourceCounterpartyId: normalizeNullableText(context.sourceCounterpartyId),
+      sourceLabel,
       sourceSystem,
+      subcategoryCode: null,
+      targetCounterpartyId: normalizeNullableText(context.targetCounterpartyId),
+      targetLabel,
       taxCategoryCode: null,
       taxLineCode: null,
       updatedAt,
@@ -287,51 +274,45 @@ export async function persistResolvedStandardReceiptEntry(
     `INSERT INTO records (
       record_id,
       entity_id,
-      record_kind,
-      posting_pattern,
       record_status,
       source_system,
-      counterparty_id,
-      platform_account_id,
       description,
       memo,
-      evidence_status,
-      recognition_on,
-      cash_on,
+      occurred_on,
       currency,
-      primary_amount_cents,
-      gross_amount_cents,
-      net_cash_amount_cents,
-      business_use_bps,
+      amount_cents,
+      source_label,
+      target_label,
+      source_counterparty_id,
+      target_counterparty_id,
+      record_kind,
+      category_code,
+      subcategory_code,
       tax_category_code,
       tax_line_code,
-      primary_account_id,
-      cash_account_id,
+      business_use_bps,
       created_at,
       updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
     record.recordId,
     record.entityId,
-    record.recordKind,
-    record.postingPattern,
     record.recordStatus,
     record.sourceSystem,
-    record.counterpartyId,
-    record.platformAccountId,
     record.description,
     record.memo,
-    record.evidenceStatus,
-    record.recognitionOn,
-    record.cashOn,
+    record.occurredOn,
     record.currency,
-    record.primaryAmountCents,
-    record.grossAmountCents,
-    record.netCashAmountCents,
-    record.businessUseBps,
+    record.amountCents,
+    record.sourceLabel,
+    record.targetLabel,
+    record.sourceCounterpartyId,
+    record.targetCounterpartyId,
+    record.recordKind,
+    record.categoryCode,
+    record.subcategoryCode,
     record.taxCategoryCode,
     record.taxLineCode,
-    record.primaryAccountId,
-    record.cashAccountId,
+    record.businessUseBps,
     record.createdAt,
     record.updatedAt,
   );

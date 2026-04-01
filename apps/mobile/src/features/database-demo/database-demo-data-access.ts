@@ -28,13 +28,10 @@ interface DemoRecordIdRow {
 }
 
 interface DemoRecordRow {
-  cashOn: string | null;
+  amountCents: number;
   currency: string;
   description: string;
-  grossAmountCents: number;
-  netCashAmountCents: number;
-  primaryAmountCents: number;
-  recognitionOn: string;
+  occurredOn: string;
   recordId: string;
   recordKind: string;
   recordStatus: string;
@@ -49,7 +46,7 @@ export interface DemoEditableRecordRow {
 }
 
 interface DemoDoubleEntryRow {
-  accountName: string | null;
+  accountName: string;
   accountRole: string;
   creditAmountCents: number;
   currency: string;
@@ -72,61 +69,26 @@ export async function loadDatabaseDemoSnapshot(
       r.record_kind AS recordKind,
       classification.user_classification AS userClassification,
       r.description,
-      r.primary_amount_cents AS primaryAmountCents,
-      r.gross_amount_cents AS grossAmountCents,
-      r.net_cash_amount_cents AS netCashAmountCents,
+      r.amount_cents AS amountCents,
       r.currency,
       r.record_status AS recordStatus,
-      r.recognition_on AS recognitionOn,
-      r.cash_on AS cashOn
+      r.occurred_on AS occurredOn
     FROM records AS r
     LEFT JOIN record_entry_classifications AS classification
       ON classification.record_id = r.record_id
     WHERE r.source_system = ? AND r.record_id LIKE ?
-    ORDER BY r.recognition_on DESC, r.created_at DESC, r.record_id DESC;`,
+    ORDER BY r.occurred_on DESC, r.created_at DESC, r.record_id DESC;`,
     databaseDemoSourceSystem,
     createDatabaseDemoRecordLikePattern(),
   );
 
   const resolvedSelectedRecordId = resolveSelectedRecordId(recentRecords, preferredSelectedRecordId);
   const doubleEntryRows = resolvedSelectedRecordId
-    ? await database.getAllAsync<DemoDoubleEntryRow>(
-        `SELECT
-          lines.line_no AS lineNo,
-          lines.account_role AS accountRole,
-          accounts.account_name AS accountName,
-          lines.debit_amount_cents AS debitAmountCents,
-          lines.credit_amount_cents AS creditAmountCents,
-          lines.currency AS currency
-        FROM record_double_entry_lines_v AS lines
-        LEFT JOIN accounts ON accounts.account_id = lines.account_id
-        WHERE lines.record_id = ?
-        ORDER BY lines.line_no ASC;`,
-        resolvedSelectedRecordId,
+    ? buildDatabaseDemoPostingRows(
+        recentRecords.find((record) => record.recordId === resolvedSelectedRecordId) ?? null,
       )
     : [];
-  const accountingRows = await database.getAllAsync<DatabaseDemoAccountingRow>(
-    `SELECT
-      record_id AS recordId,
-      description,
-      posting_on AS postingOn,
-      line_no AS lineNo,
-      account_role AS accountRole,
-      account_code AS accountCode,
-      account_name AS accountName,
-      account_type AS accountType,
-      normal_balance AS normalBalance,
-      statement_section AS statementSection,
-      debit_amount_cents AS debitAmountCents,
-      credit_amount_cents AS creditAmountCents,
-      normalized_balance_delta_cents AS normalizedBalanceDeltaCents,
-      currency
-    FROM accounting_posting_lines_v
-    WHERE source_system = ? AND record_id LIKE ?
-    ORDER BY posting_on ASC, record_id ASC, line_no ASC;`,
-    databaseDemoSourceSystem,
-    createDatabaseDemoRecordLikePattern(),
-  );
+  const accountingRows = recentRecords.flatMap((record) => buildDatabaseDemoAccountingRows(record));
   const reportState = buildDatabaseDemoReportState(accountingRows);
 
   const snapshot: DatabaseDemoSnapshot = {
@@ -186,63 +148,23 @@ export async function ensureDatabaseDemoFixture(database: WritableStorageDatabas
     fixture.entity.createdAt,
   );
 
-  for (const account of fixture.accounts) {
-    await database.runAsync(
-      `INSERT OR IGNORE INTO accounts (
-        account_id,
-        entity_id,
-        account_code,
-        account_name,
-        account_type,
-        normal_balance,
-        created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?);`,
-      account.accountId,
-      account.entityId,
-      account.accountCode,
-      account.accountName,
-      account.accountType,
-      account.normalBalance,
-      account.createdAt,
-    );
-  }
-
   await database.runAsync(
     `INSERT OR IGNORE INTO counterparties (
       counterparty_id,
       entity_id,
       counterparty_type,
-      legal_name,
       display_name,
+      raw_reference,
       notes,
       created_at
     ) VALUES (?, ?, ?, ?, ?, ?, ?);`,
     fixture.counterparty.counterpartyId,
     fixture.counterparty.entityId,
     fixture.counterparty.counterpartyType,
-    fixture.counterparty.legalName,
     fixture.counterparty.displayName,
+    fixture.counterparty.legalName,
     fixture.counterparty.notes,
     fixture.counterparty.createdAt,
-  );
-
-  await database.runAsync(
-    `INSERT OR IGNORE INTO platform_accounts (
-      platform_account_id,
-      entity_id,
-      platform_code,
-      account_label,
-      external_account_ref,
-      active_from,
-      created_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?);`,
-    fixture.platformAccount.platformAccountId,
-    fixture.platformAccount.entityId,
-    fixture.platformAccount.platformCode,
-    fixture.platformAccount.accountLabel,
-    fixture.platformAccount.externalAccountRef,
-    fixture.platformAccount.activeFrom,
-    fixture.platformAccount.createdAt,
   );
 }
 
@@ -330,17 +252,11 @@ function resolveSelectedRecordId(
 
 function buildRecentRecordPreview(rows: DemoRecordRow[]): DatabaseDemoRecordPreview[] {
   return rows.map((row) => ({
-    amountLabel: formatAmountLabel(
-      row.grossAmountCents > 0 ? row.grossAmountCents : row.primaryAmountCents,
-      row.currency,
-    ),
-    cashMovementLabel: formatAmountLabel(
-      row.netCashAmountCents > 0 ? row.netCashAmountCents : row.primaryAmountCents,
-      row.currency,
-    ),
+    amountLabel: formatAmountLabel(row.amountCents, row.currency),
+    cashMovementLabel: formatAmountLabel(row.amountCents, row.currency),
     classificationLabel: formatDatabaseDemoClassificationLabel(row.userClassification),
     description: row.description,
-    occurredOn: row.cashOn ?? row.recognitionOn,
+    occurredOn: row.occurredOn,
     recordId: row.recordId,
     recordKind: row.recordKind,
     status: row.recordStatus,
@@ -349,7 +265,7 @@ function buildRecentRecordPreview(rows: DemoRecordRow[]): DatabaseDemoRecordPrev
 
 function buildDoubleEntryPreview(rows: DemoDoubleEntryRow[]): DatabaseDemoDoubleEntryPreview[] {
   return rows.map((row) => ({
-    accountName: row.accountName ?? "Unassigned account",
+    accountName: row.accountName,
     accountRole: row.accountRole,
     amountLabel: formatAmountLabel(
       row.debitAmountCents > 0 ? row.debitAmountCents : row.creditAmountCents,
@@ -358,4 +274,177 @@ function buildDoubleEntryPreview(rows: DemoDoubleEntryRow[]): DatabaseDemoDouble
     direction: row.debitAmountCents > 0 ? "debit" : "credit",
     lineNo: row.lineNo,
   }));
+}
+
+function buildDatabaseDemoPostingRows(record: DemoRecordRow | null): DemoDoubleEntryRow[] {
+  if (!record) {
+    return [];
+  }
+
+  const amountCents = record.amountCents;
+  const baseLine = {
+    currency: record.currency,
+  };
+
+  if (record.recordKind === "income") {
+    return [
+      {
+        ...baseLine,
+        accountName: "Business Checking",
+        accountRole: "cash",
+        creditAmountCents: 0,
+        debitAmountCents: amountCents,
+        lineNo: 1,
+      },
+      {
+        ...baseLine,
+        accountName: "Platform Revenue",
+        accountRole: "income",
+        creditAmountCents: amountCents,
+        debitAmountCents: 0,
+        lineNo: 2,
+      },
+    ];
+  }
+
+  if (record.recordKind === "expense") {
+    return [
+      {
+        ...baseLine,
+        accountName: "Office Expense",
+        accountRole: "expense",
+        creditAmountCents: 0,
+        debitAmountCents: amountCents,
+        lineNo: 1,
+      },
+      {
+        ...baseLine,
+        accountName: "Business Checking",
+        accountRole: "cash",
+        creditAmountCents: amountCents,
+        debitAmountCents: 0,
+        lineNo: 2,
+      },
+    ];
+  }
+
+  return [
+    {
+      ...baseLine,
+      accountName: "Owner Equity",
+      accountRole: "equity",
+      creditAmountCents: 0,
+      debitAmountCents: amountCents,
+      lineNo: 1,
+    },
+    {
+      ...baseLine,
+      accountName: "Business Checking",
+      accountRole: "cash",
+      creditAmountCents: amountCents,
+      debitAmountCents: 0,
+      lineNo: 2,
+    },
+  ];
+}
+
+function buildDatabaseDemoAccountingRows(record: DemoRecordRow): DatabaseDemoAccountingRow[] {
+  const amountCents = record.amountCents;
+  const baseRow = {
+    currency: record.currency,
+    description: record.description,
+    postingOn: record.occurredOn,
+    recordId: record.recordId,
+  };
+
+  if (record.recordKind === "income") {
+    return [
+      {
+        ...baseRow,
+        accountCode: "1010",
+        accountName: "Business Checking",
+        accountRole: "cash",
+        accountType: "asset",
+        creditAmountCents: 0,
+        debitAmountCents: amountCents,
+        lineNo: 1,
+        normalBalance: "debit",
+        normalizedBalanceDeltaCents: amountCents,
+        statementSection: "balance_sheet",
+      },
+      {
+        ...baseRow,
+        accountCode: "4010",
+        accountName: "Platform Revenue",
+        accountRole: "income",
+        accountType: "income",
+        creditAmountCents: amountCents,
+        debitAmountCents: 0,
+        lineNo: 2,
+        normalBalance: "credit",
+        normalizedBalanceDeltaCents: amountCents,
+        statementSection: "profit_and_loss",
+      },
+    ];
+  }
+
+  if (record.recordKind === "expense") {
+    return [
+      {
+        ...baseRow,
+        accountCode: "6100",
+        accountName: "Office Expense",
+        accountRole: "expense",
+        accountType: "expense",
+        creditAmountCents: 0,
+        debitAmountCents: amountCents,
+        lineNo: 1,
+        normalBalance: "debit",
+        normalizedBalanceDeltaCents: amountCents,
+        statementSection: "profit_and_loss",
+      },
+      {
+        ...baseRow,
+        accountCode: "1010",
+        accountName: "Business Checking",
+        accountRole: "cash",
+        accountType: "asset",
+        creditAmountCents: amountCents,
+        debitAmountCents: 0,
+        lineNo: 2,
+        normalBalance: "debit",
+        normalizedBalanceDeltaCents: -amountCents,
+        statementSection: "balance_sheet",
+      },
+    ];
+  }
+
+  return [
+    {
+      ...baseRow,
+      accountCode: "3010",
+      accountName: "Owner Equity",
+      accountRole: "equity",
+      accountType: "equity",
+      creditAmountCents: 0,
+      debitAmountCents: amountCents,
+      lineNo: 1,
+      normalBalance: "credit",
+      normalizedBalanceDeltaCents: -amountCents,
+      statementSection: "balance_sheet",
+    },
+    {
+      ...baseRow,
+      accountCode: "1010",
+      accountName: "Business Checking",
+      accountRole: "cash",
+      accountType: "asset",
+      creditAmountCents: amountCents,
+      debitAmountCents: 0,
+      lineNo: 2,
+      normalBalance: "debit",
+      normalizedBalanceDeltaCents: -amountCents,
+      statementSection: "balance_sheet",
+    },
+  ];
 }

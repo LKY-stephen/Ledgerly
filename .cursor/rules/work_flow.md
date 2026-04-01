@@ -121,4 +121,5 @@ PRD 输入
 
 1. **声明当前扮演的角色**（Harness / Testor / Dev），或按阶段切换并说明 handoff。
 2. 引用本工作流与对应 `agent/*.md`，保持**三角制约**：实现（Dev）、实证（Testor）、守门（Harness）不得合并为同一自述的「已完成」。
-3. 涉及《Ai Agent 友好型 开发指南》时：优先阅读 **`.cursor/prd/agent-dev-guide-summary.md`**（供 Agent 拉取）；PDF 若存在可作为人工补充，勿假设模型已完整读取 PDF。
+3. 涉及《Ai Agent 友好型 开发指南》时：优先阅读 **`.cursor/prd/agent-dev-guide-summary.md`**（供 Agent 拉取），并显式对齐 **`.cursor/prd/Ai Agent 友好型 开发指南.pdf`** 这份 PDF 原文路径；不要把 PDF 路径写成别名或省略空格的变体。
+4. 需要使用技能库时，优先检查并使用项目内 **`.cursor/skills/`** 下的技能，再决定是否补充其他外部或全局技能来源。
