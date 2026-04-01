@@ -58,6 +58,48 @@ export interface AppCopy {
       pageTwoLabel: string;
       sourceLabel: string;
       slotGuideTitle: string;
+      taxYearTitle: string;
+      title: string;
+      unlockNote: string;
+      webPreviewLabel: string;
+    };
+    formScheduleSE: {
+      acknowledge: string;
+      closePreview: string;
+      databaseBadge: string;
+      disclaimerTitle: string;
+      footerNative: string;
+      footerWeb: string;
+      intro: string;
+      launcherHint: string;
+      noInstructionNote: string;
+      openPreview: string;
+      pageOneLabel: string;
+      pageSwitcherTitle: string;
+      pageTwoLabel: string;
+      sourceLabel: string;
+      slotGuideTitle: string;
+      taxYearTitle: string;
+      title: string;
+      unlockNote: string;
+      webPreviewLabel: string;
+    };
+    form1040: {
+      acknowledge: string;
+      closePreview: string;
+      databaseBadge: string;
+      disclaimerTitle: string;
+      footerNative: string;
+      footerWeb: string;
+      intro: string;
+      launcherHint: string;
+      noInstructionNote: string;
+      openPreview: string;
+      pageOneLabel: string;
+      pageSwitcherTitle: string;
+      pageTwoLabel: string;
+      sourceLabel: string;
+      slotGuideTitle: string;
       title: string;
       unlockNote: string;
       webPreviewLabel: string;
@@ -179,7 +221,7 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
       zhCN: "Chinese",
     },
     discover: {
-      backToFeed: "Back to Discover",
+      backToFeed: "Back to feed",
       calculatedBadge: "Calculated from the form",
       cards: [
         {
@@ -191,8 +233,9 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
           summary: "Keep future invoice drafts, receipts, and filing kits in one device-local command center.",
         },
       ],
-      emptySummary: "Pull to refresh or come back later. This local-first feed will grow from here.",
-      emptyTitle: "No stories loaded yet",
+      emptySummary:
+        "Pull to refresh or come back later to reload the current curated creator-finance feed.",
+      emptyTitle: "No articles loaded yet",
       eyebrow: "Discover",
       form1099Nec: {
         acknowledge: "I understand",
@@ -242,21 +285,74 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
         pageTwoLabel: "Page 2",
         sourceLabel: "Instruction source",
         slotGuideTitle: "Field guidance",
+        taxYearTitle: "Tax year",
         title: "Schedule C exact-layout preview",
         unlockNote: "Acknowledge the disclaimer to reveal the frontend-drawn Schedule C preview.",
         webPreviewLabel: "Static web preview",
       },
-      latestLabel: "Latest signal",
-      latestTitle: "Operator news for creator finance teams.",
-      loadMore: "Load more",
+      formScheduleSE: {
+        acknowledge: "I understand",
+        closePreview: "Close preview",
+        databaseBadge: "Database-backed",
+        disclaimerTitle: "Schedule SE disclaimer",
+        footerNative:
+          "Native preview uses only the narrow Schedule C-backed support that can be traced from the current SQLite mappings and leaves the rest manual.",
+        footerWeb:
+          "Web preview keeps the exact two-page Schedule SE layout, but static export does not mount live SQLite reads.",
+        intro:
+          "This preview keeps the official IRS Schedule SE layout visible, renders the form directly in the frontend, and shows where the current Schedule C-backed data stops being sufficient.",
+        launcherHint:
+          "Open the popup to review the disclaimer first, then inspect the rendered Schedule SE pages and grouped field guidance.",
+        noInstructionNote:
+          "No dedicated paragraph for this labeled area was found in the current i1040sse material, so this slot stays tied to the official form label and current schema coverage.",
+        openPreview: "Open recommended Schedule SE",
+        pageOneLabel: "Page 1",
+        pageSwitcherTitle: "Rendered form pages",
+        pageTwoLabel: "Page 2",
+        sourceLabel: "Instruction source",
+        slotGuideTitle: "Field guidance",
+        taxYearTitle: "Tax year",
+        title: "Schedule SE exact-layout preview",
+        unlockNote: "Acknowledge the disclaimer to reveal the frontend-drawn Schedule SE preview.",
+        webPreviewLabel: "Static web preview",
+      },
+      form1040: {
+        acknowledge: "I understand",
+        closePreview: "Close preview",
+        databaseBadge: "Database-backed",
+        disclaimerTitle: "Form 1040 disclaimer",
+        footerNative:
+          "Native preview keeps Form 1040 honest: most fields remain manual because the current local schema does not model a full individual return.",
+        footerWeb:
+          "Web preview keeps the exact two-page Form 1040 layout, but static export does not mount live SQLite reads.",
+        intro:
+          "This preview keeps the official IRS Form 1040 main pages visible, renders them directly in the frontend, and distinguishes manual field groups from the few arithmetic totals that are form-derived.",
+        launcherHint:
+          "Open the popup to review the disclaimer first, then inspect the rendered Form 1040 pages and grouped field guidance.",
+        noInstructionNote:
+          "No dedicated paragraph for this labeled area was found in the current i1040gi material, so this slot stays tied to the official form label and current schema coverage.",
+        openPreview: "Open recommended Form 1040",
+        pageOneLabel: "Page 1",
+        pageSwitcherTitle: "Rendered form pages",
+        pageTwoLabel: "Page 2",
+        sourceLabel: "Instruction source",
+        slotGuideTitle: "Field guidance",
+        title: "Form 1040 exact-layout preview",
+        unlockNote: "Acknowledge the disclaimer to reveal the frontend-drawn Form 1040 preview.",
+        webPreviewLabel: "Static web preview",
+      },
+      latestLabel: "Latest briefings",
+      latestTitle: "Creator finance signals",
+      loadMore: "Load more articles",
       loadingMore: "Loading more...",
       manualBadge: "Manual input required",
-      missingArticleSummary: "The article may have moved out of the local feed. Return to Discover to keep browsing.",
-      missingArticleTitle: "This story is unavailable",
+      missingArticleSummary:
+        "This article is no longer in the local feed snapshot. Return to the discover list and choose another briefing.",
+      missingArticleTitle: "Article unavailable",
       openArticle: "Open article",
       publishedLabel: "Published",
       readTimeLabel: "min read",
-      refreshHint: "Pull to refresh the local news feed.",
+      refreshHint: "Pull to refresh or load more to extend the local article feed.",
       sourceLabel: "Source",
       summary:
         "Scan the latest operating signals, then open a detail page when you want the full context.",
@@ -385,7 +481,7 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
       zhCN: "中文",
     },
     discover: {
-      backToFeed: "返回发现页",
+      backToFeed: "返回列表",
       calculatedBadge: "由表内公式计算",
       cards: [
         {
@@ -397,8 +493,8 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
           summary: "把后续发票草稿、报销凭证和报税材料收拢到同一个本地工作台。",
         },
       ],
-      emptySummary: "下拉刷新或稍后再看。这个本地优先新闻流会从这里继续扩展。",
-      emptyTitle: "暂时还没有可展示的内容",
+      emptySummary: "下拉刷新，或稍后再回来加载当前整理过的创作者财务资讯列表。",
+      emptyTitle: "暂时没有文章",
       eyebrow: "发现",
       form1099Nec: {
         acknowledge: "我已了解",
@@ -448,21 +544,73 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
         pageTwoLabel: "第 2 页",
         sourceLabel: "说明来源",
         slotGuideTitle: "栏位说明",
+        taxYearTitle: "税年",
         title: "Schedule C 官方版式预览",
         unlockNote: "先确认免责声明，之后才会显示由前端绘制的 Schedule C 预览。",
         webPreviewLabel: "静态 Web 预览",
       },
-      latestLabel: "最新信号",
-      latestTitle: "给创作者财务团队看的运营新闻流。",
-      loadMore: "加载更多",
+      formScheduleSE: {
+        acknowledge: "我已了解",
+        closePreview: "关闭预览",
+        databaseBadge: "来自数据库",
+        disclaimerTitle: "Schedule SE 免责声明",
+        footerNative:
+          "原生端只会使用当前 SQLite 映射里能真实追溯到 Schedule C 的少量下游支持，其余栏位保持为手动填写。",
+        footerWeb:
+          "Web 预览会保留这份双页官方 Schedule SE 版式，但静态导出不会挂载实时 SQLite 读取。",
+        intro:
+          "这个预览直接保留 IRS 官方 Schedule SE 版式，由前端直接绘制表单，并明确指出当前 Schedule C 支撑数据在哪些位置已经不够用。",
+        launcherHint:
+          "点击按钮后会先弹出免责声明，再显示渲染后的 Schedule SE 页面与分组栏位说明。",
+        noInstructionNote:
+          "在当前 i1040sse 材料里没有找到这个标签区域的专门段落，因此这里只能依赖官方表单标签与当前数据契约覆盖范围。",
+        openPreview: "打开推荐的 Schedule SE",
+        pageOneLabel: "第 1 页",
+        pageSwitcherTitle: "渲染后的表单页",
+        pageTwoLabel: "第 2 页",
+        sourceLabel: "说明来源",
+        slotGuideTitle: "栏位说明",
+        taxYearTitle: "税年",
+        title: "Schedule SE 官方版式预览",
+        unlockNote: "先确认免责声明，之后才会显示由前端绘制的 Schedule SE 预览。",
+        webPreviewLabel: "静态 Web 预览",
+      },
+      form1040: {
+        acknowledge: "我已了解",
+        closePreview: "关闭预览",
+        databaseBadge: "来自数据库",
+        disclaimerTitle: "Form 1040 免责声明",
+        footerNative:
+          "原生端会保持 Form 1040 的诚实边界：由于当前本地 schema 并不覆盖完整个人报税资料，大部分栏位仍然需要手动填写。",
+        footerWeb:
+          "Web 预览会保留这份双页官方 Form 1040 版式，但静态导出不会挂载实时 SQLite 读取。",
+        intro:
+          "这个预览直接保留 IRS 官方 Form 1040 首页与第 2 页版式，由前端直接绘制，并区分需要手动填写的字段组与表内可计算的小部分合计行。",
+        launcherHint:
+          "点击按钮后会先弹出免责声明，再显示渲染后的 Form 1040 页面与分组栏位说明。",
+        noInstructionNote:
+          "在当前 i1040gi 材料里没有找到这个标签区域的专门段落，因此这里只能依赖官方表单标签与当前数据契约覆盖范围。",
+        openPreview: "打开推荐的 Form 1040",
+        pageOneLabel: "第 1 页",
+        pageSwitcherTitle: "渲染后的表单页",
+        pageTwoLabel: "第 2 页",
+        sourceLabel: "说明来源",
+        slotGuideTitle: "栏位说明",
+        title: "Form 1040 官方版式预览",
+        unlockNote: "先确认免责声明，之后才会显示由前端绘制的 Form 1040 预览。",
+        webPreviewLabel: "静态 Web 预览",
+      },
+      latestLabel: "最新简报",
+      latestTitle: "创作者财务信号",
+      loadMore: "加载更多文章",
       loadingMore: "正在加载...",
       manualBadge: "需要手动填写",
-      missingArticleSummary: "这篇文章可能已经不在当前本地新闻流中，请返回发现页继续浏览。",
-      missingArticleTitle: "这篇内容暂时不可用",
-      openArticle: "查看全文",
+      missingArticleSummary: "这篇文章已经不在当前本地资讯快照里，请返回发现列表并选择另一篇简报。",
+      missingArticleTitle: "文章不可用",
+      openArticle: "阅读全文",
       publishedLabel: "发布时间",
       readTimeLabel: "分钟阅读",
-      refreshHint: "下拉即可刷新本地新闻流。",
+      refreshHint: "下拉刷新或继续加载更多，扩展当前本地文章列表。",
       sourceLabel: "来源",
       summary: "本阶段先保持轻量，但会为后续的增长功能预留清晰的产品位置。",
       title: "给创作者财务决策一个更冷静的观察层。",

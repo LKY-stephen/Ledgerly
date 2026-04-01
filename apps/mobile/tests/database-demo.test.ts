@@ -1,267 +1,170 @@
+import { DatabaseSync } from "node:sqlite";
 import { describe, expect, it } from "vitest";
 
 import {
-  buildDatabaseDemoFieldUpdate,
-  buildDatabaseDemoMetrics,
-  buildDatabaseDemoReportState,
-  buildDatabaseDemoSummary,
-  createDatabaseDemoFixture,
-  createDatabaseDemoRecordDraft,
-  createDatabaseDemoRecordId,
-  createEmptyDatabaseDemoSnapshot,
-  databaseDemoIds,
-  databaseDemoSourceSystem,
-  formatAmountLabel,
-  getDatabaseDemoRecordSequence,
-  getNextDatabaseDemoRecordSequence,
-} from "../src/features/database-demo/demo-data";
+  loadScheduleCAggregation,
+  loadScheduleSEPreview,
+  persistResolvedStandardReceiptEntry,
+  resolveStandardReceiptEntry,
+  structuredStoreContract,
+  type StorageSqlValue,
+} from "@creator-cfo/storage";
 
-describe("database hook demo helpers", () => {
-  it("creates deterministic fixtures and sequenced record drafts for the demo", () => {
-    const fixture = createDatabaseDemoFixture();
-    const firstRecord = createDatabaseDemoRecordDraft(1);
-    const thirdRecord = createDatabaseDemoRecordDraft(3);
+function createStorageDatabase(): DatabaseSync {
+  const database = new DatabaseSync(":memory:");
 
-    expect(fixture.entity.entityId).toBe(databaseDemoIds.entityId);
-    expect(firstRecord.recordId).toBe(databaseDemoIds.recordIdPrefix);
-    expect(firstRecord.sourceSystem).toBe(databaseDemoSourceSystem);
-    expect(thirdRecord.recordId).toBe(`${databaseDemoIds.recordIdPrefix}-3`);
-    expect(getDatabaseDemoRecordSequence(thirdRecord.recordId)).toBe(3);
-    expect(getNextDatabaseDemoRecordSequence([firstRecord.recordId, thirdRecord.recordId])).toBe(4);
-  });
+  for (const pragma of structuredStoreContract.pragmas) {
+    database.exec(pragma);
+  }
 
-  it("builds field-scoped updates for the selected record", () => {
-    const descriptionUpdate = buildDatabaseDemoFieldUpdate(
+  for (const statement of structuredStoreContract.schemaStatements) {
+    database.exec(statement);
+  }
+
+  for (const statement of structuredStoreContract.maintenanceStatements) {
+    database.exec(statement);
+  }
+
+  return database;
+}
+
+function createWritableDatabase(database: DatabaseSync) {
+  return {
+    async getAllAsync<Row>(source: string, ...params: StorageSqlValue[]) {
+      return database.prepare(source).all({}, ...params) as Row[];
+    },
+    async getFirstAsync<Row>(source: string, ...params: StorageSqlValue[]) {
+      return (database.prepare(source).get({}, ...params) as Row | undefined) ?? null;
+    },
+    async runAsync(source: string, ...params: StorageSqlValue[]) {
+      return database.prepare(source).run(...params);
+    },
+  };
+}
+
+async function createPopulatedV1Database() {
+  const database = createStorageDatabase();
+  const writableDatabase = createWritableDatabase(database);
+
+  await writableDatabase.runAsync(
+    `INSERT INTO entities (
+      entity_id,
+      legal_name,
+      entity_type,
+      base_currency,
+      default_timezone,
+      created_at
+    ) VALUES (?, ?, ?, ?, ?, ?);`,
+    "entity-main",
+    "Creator CFO Demo Books",
+    "sole_proprietorship",
+    "USD",
+    "America/Los_Angeles",
+    "2026-03-01T08:00:00.000Z",
+  );
+
+  const incomeEntry = resolveStandardReceiptEntry(
+    {
+      amountCents: 12_500,
+      currency: "USD",
+      description: "YouTube payout 1",
+      entityId: "entity-main",
+      occurredOn: "2026-03-29",
+      source: "YouTube",
+      target: "Business checking",
+      userClassification: "income",
+    },
+    {
+      createdAt: "2026-03-29T09:00:00.000Z",
+      recordId: "record-income",
+      sourceSystem: "mobile-test",
+      updatedAt: "2026-03-29T09:05:00.000Z",
+    },
+  );
+  const expenseEntry = resolveStandardReceiptEntry(
+    {
+      amountCents: 4_850,
+      currency: "USD",
+      description: "Office receipt 2 reviewed",
+      entityId: "entity-main",
+      occurredOn: "2026-03-30",
+      source: "Business checking",
+      target: "Office supplier",
+      userClassification: "expense",
+    },
+    {
+      createdAt: "2026-03-30T09:00:00.000Z",
+      recordId: "record-expense",
+      recordStatus: "reconciled",
+      sourceSystem: "mobile-test",
+      updatedAt: "2026-03-30T09:05:00.000Z",
+    },
+  );
+
+  await persistResolvedStandardReceiptEntry(writableDatabase, incomeEntry);
+  await persistResolvedStandardReceiptEntry(writableDatabase, expenseEntry);
+
+  return { database, writableDatabase };
+}
+
+describe("hybrid v1 mobile storage coverage", () => {
+  it("boots a test database and persists sparse-input records", async () => {
+    const { database } = await createPopulatedV1Database();
+    const rows = database
+      .prepare(
+        `SELECT
+          record_id AS recordId,
+          amount_cents AS amountCents,
+          record_kind AS recordKind,
+          source_label AS sourceLabel,
+          target_label AS targetLabel
+        FROM records
+        ORDER BY record_id ASC;`,
+      )
+      .all() as Array<{
+      amountCents: number;
+      recordId: string;
+      recordKind: string;
+      sourceLabel: string;
+      targetLabel: string;
+    }>;
+
+    expect(rows).toEqual([
       {
-        description: "YouTube payout 2",
-        recordId: createDatabaseDemoRecordId(2),
-        recordStatus: "posted",
-      },
-      "description",
-    );
-    const statusUpdate = buildDatabaseDemoFieldUpdate(
-      {
-        description: "YouTube payout 2 reviewed",
-        recordId: createDatabaseDemoRecordId(2),
-        recordStatus: "posted",
-      },
-      "recordStatus",
-    );
-
-    expect(descriptionUpdate.nextValue).toBe("YouTube payout 2 reviewed");
-    expect(statusUpdate.nextValue).toBe("reconciled");
-  });
-
-  it("summarizes empty and populated snapshots", () => {
-    const emptySnapshot = createEmptyDatabaseDemoSnapshot();
-
-    expect(buildDatabaseDemoSummary(emptySnapshot, null)).toContain("No demo records exist yet");
-    expect(buildDatabaseDemoMetrics(emptySnapshot)[0]?.value).toBe("0");
-
-    const populatedSnapshot = {
-      ...emptySnapshot,
-      counts: {
-        journalEntryCount: 2,
-        ledgerAccountCount: 4,
-        recordCount: 2,
-        selectedLineCount: 4,
-      },
-      selectedPostingLines: [
-        {
-          accountName: "Business Checking",
-          accountRole: "cash",
-          amountLabel: "USD 108.00",
-          direction: "debit" as const,
-          lineNo: 10,
-        },
-      ],
-    };
-
-    expect(buildDatabaseDemoSummary(populatedSnapshot, createDatabaseDemoRecordId(2))).toContain(
-      "2 demo records are present",
-    );
-    expect(buildDatabaseDemoSummary(populatedSnapshot, createDatabaseDemoRecordId(2))).toContain(
-      createDatabaseDemoRecordId(2),
-    );
-    expect(buildDatabaseDemoSummary(populatedSnapshot, createDatabaseDemoRecordId(2))).toContain(
-      "Ledger is balanced.",
-    );
-    expect(buildDatabaseDemoMetrics(populatedSnapshot)[1]?.label).toBe("Selected lines");
-  });
-
-  it("formats money labels in minor units", () => {
-    expect(formatAmountLabel(10800, "USD")).toBe("USD 108.00");
-    expect(formatAmountLabel(-1250, "USD")).toBe("-USD 12.50");
-  });
-
-  it("builds report previews from accounting posting rows", () => {
-    const reportState = buildDatabaseDemoReportState([
-      {
-        accountCode: "1010",
-        accountName: "Business Checking",
-        accountRole: "cash",
-        accountType: "asset",
-        creditAmountCents: 0,
-        currency: "USD",
-        debitAmountCents: 85000,
-        description: "YouTube March payout",
-        lineNo: 10,
-        normalBalance: "debit",
-        normalizedBalanceDeltaCents: 85000,
-        postingOn: "2026-03-01",
-        recordId: "record-income",
-        statementSection: "balance_sheet",
-      },
-      {
-        accountCode: "1200",
-        accountName: "Withholding Tax Receivable",
-        accountRole: "withholding",
-        accountType: "asset",
-        creditAmountCents: 0,
-        currency: "USD",
-        debitAmountCents: 10000,
-        description: "YouTube March payout",
-        lineNo: 30,
-        normalBalance: "debit",
-        normalizedBalanceDeltaCents: 10000,
-        postingOn: "2026-03-01",
-        recordId: "record-income",
-        statementSection: "balance_sheet",
-      },
-      {
-        accountCode: "4010",
-        accountName: "Platform Revenue",
-        accountRole: "primary",
-        accountType: "income",
-        creditAmountCents: 100000,
-        currency: "USD",
-        debitAmountCents: 0,
-        description: "YouTube March payout",
-        lineNo: 90,
-        normalBalance: "credit",
-        normalizedBalanceDeltaCents: 100000,
-        postingOn: "2026-03-01",
-        recordId: "record-income",
-        statementSection: "profit_and_loss",
-      },
-      {
-        accountCode: "6050",
-        accountName: "Platform Fees",
-        accountRole: "fee",
-        accountType: "expense",
-        creditAmountCents: 0,
-        currency: "USD",
-        debitAmountCents: 5000,
-        description: "YouTube March payout",
-        lineNo: 20,
-        normalBalance: "debit",
-        normalizedBalanceDeltaCents: 5000,
-        postingOn: "2026-03-01",
-        recordId: "record-income",
-        statementSection: "profit_and_loss",
-      },
-      {
-        accountCode: "6100",
-        accountName: "Office Expense",
-        accountRole: "primary",
-        accountType: "expense",
-        creditAmountCents: 0,
-        currency: "USD",
-        debitAmountCents: 20000,
-        description: "Studio rent accrual",
-        lineNo: 10,
-        normalBalance: "debit",
-        normalizedBalanceDeltaCents: 20000,
-        postingOn: "2026-03-02",
+        amountCents: 4_850,
         recordId: "record-expense",
-        statementSection: "profit_and_loss",
+        recordKind: "expense",
+        sourceLabel: "Business checking",
+        targetLabel: "Office supplier",
       },
       {
-        accountCode: "2100",
-        accountName: "Accounts Payable",
-        accountRole: "offset",
-        accountType: "liability",
-        creditAmountCents: 20000,
-        currency: "USD",
-        debitAmountCents: 0,
-        description: "Studio rent accrual",
-        lineNo: 90,
-        normalBalance: "credit",
-        normalizedBalanceDeltaCents: 20000,
-        postingOn: "2026-03-02",
-        recordId: "record-expense",
-        statementSection: "balance_sheet",
-      },
-    ]);
-
-    expect(reportState.ledgerHealth.isBalanced).toBe(true);
-    expect(reportState.ledgerHealth.warningText).toBeNull();
-    expect(reportState.journalEntries).toHaveLength(2);
-    expect(reportState.ledgerAccounts).toHaveLength(6);
-    expect(reportState.balanceSheetSections).toEqual([
-      {
-        lines: [
-          { amountLabel: "USD 850.00", label: "1010 · Business Checking" },
-          { amountLabel: "USD 100.00", label: "1200 · Withholding Tax Receivable" },
-        ],
-        title: "Assets",
-        totalLabel: "USD 950.00",
-      },
-      {
-        lines: [{ amountLabel: "USD 200.00", label: "2100 · Accounts Payable" }],
-        title: "Liabilities",
-        totalLabel: "USD 200.00",
-      },
-      {
-        lines: [{ amountLabel: "USD 750.00", label: "Current earnings" }],
-        title: "Equity",
-        totalLabel: "USD 750.00",
-      },
-    ]);
-    expect(reportState.profitAndLossSections).toEqual([
-      {
-        lines: [{ amountLabel: "USD 1000.00", label: "4010 · Platform Revenue" }],
-        title: "Income",
-        totalLabel: "USD 1000.00",
-      },
-      {
-        lines: [
-          { amountLabel: "USD 50.00", label: "6050 · Platform Fees" },
-          { amountLabel: "USD 200.00", label: "6100 · Office Expense" },
-        ],
-        title: "Expenses",
-        totalLabel: "USD 250.00",
-      },
-      {
-        lines: [{ amountLabel: "USD 750.00", label: "Current period result" }],
-        title: "Net income",
-        totalLabel: "USD 750.00",
+        amountCents: 12_500,
+        recordId: "record-income",
+        recordKind: "income",
+        sourceLabel: "YouTube",
+        targetLabel: "Business checking",
       },
     ]);
   });
 
-  it("flags an unbalanced demo ledger", () => {
-    const reportState = buildDatabaseDemoReportState([
-      {
-        accountCode: "1010",
-        accountName: "Business Checking",
-        accountRole: "cash",
-        accountType: "asset",
-        creditAmountCents: 0,
-        currency: "USD",
-        debitAmountCents: 85000,
-        description: "Broken payout",
-        lineNo: 10,
-        normalBalance: "debit",
-        normalizedBalanceDeltaCents: 85000,
-        postingOn: "2026-03-01",
-        recordId: "record-broken",
-        statementSection: "balance_sheet",
-      },
-    ]);
+  it("keeps Schedule C and Schedule SE previews working on top of the simplified runtime contract", async () => {
+    const { writableDatabase } = await createPopulatedV1Database();
+    const aggregation = await loadScheduleCAggregation(writableDatabase, {
+      entityId: "entity-main",
+      taxYear: 2026,
+    });
+    const preview = await loadScheduleSEPreview(writableDatabase, {
+      entityId: "entity-main",
+      taxYear: 2026,
+    });
 
-    expect(reportState.ledgerHealth.isBalanced).toBe(false);
-    expect(reportState.ledgerHealth.warningText).toContain("unbalanced");
-    expect(reportState.ledgerHealth.imbalanceLabel).toBe("USD 850.00");
+    expect(aggregation.lineAmounts.line1?.amountCents).toBe(12_500);
+    expect(aggregation.lineAmounts.line27a?.amountCents).toBe(4_850);
+    expect(preview).toMatchObject({
+      currency: "USD",
+      deductibleExpensesCents: 4_850,
+      grossReceiptsCents: 12_500,
+      netProfitCents: 7_650,
+    });
   });
 });

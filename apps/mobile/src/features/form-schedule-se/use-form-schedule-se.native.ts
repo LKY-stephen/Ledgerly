@@ -2,54 +2,53 @@ import { useEffect, useState } from "react";
 import { useSQLiteContext } from "expo-sqlite";
 
 import {
-  loadEntityLegalName,
-  loadScheduleCAggregation,
+  loadScheduleSEPreview,
   type TaxQueryScope,
 } from "@creator-cfo/storage";
 
 import {
-  buildFormScheduleCSnapshot,
-  createEmptyFormScheduleCSnapshot,
-  type FormScheduleCDatabaseSnapshot,
-} from "./form-schedule-c-model";
+  buildFormScheduleSESnapshot,
+  createEmptyFormScheduleSESnapshot,
+  type FormScheduleSEDatabaseSnapshot,
+} from "./form-schedule-se-model";
 import { createReadableStorageDatabase } from "../../storage/storage-adapter";
 
 interface EntityIdRow {
   entityId: string;
 }
 
-export interface FormScheduleCRequirement {
-  code: "entity_selection_required" | "review_required";
+export interface FormScheduleSERequirement {
+  code: "entity_selection_required" | "manual_input_required" | "review_required";
   message: string;
 }
 
-export interface FormScheduleCDataScope {
+export interface FormScheduleSEDataScope {
   entityId?: string | null;
   taxYear: number;
 }
 
-export interface UseFormScheduleCResult {
+export interface UseFormScheduleSEResult {
   error: string | null;
   isLoaded: boolean;
-  requirements: FormScheduleCRequirement[];
-  snapshot: FormScheduleCDatabaseSnapshot;
+  requirements: FormScheduleSERequirement[];
+  snapshot: FormScheduleSEDatabaseSnapshot;
 }
 
-export function useFormScheduleC(scope: FormScheduleCDataScope): UseFormScheduleCResult {
+export function useFormScheduleSE(scope: FormScheduleSEDataScope): UseFormScheduleSEResult {
   const database = useSQLiteContext();
   const [error, setError] = useState<string | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
-  const [requirements, setRequirements] = useState<FormScheduleCRequirement[]>([]);
-  const [snapshot, setSnapshot] = useState<FormScheduleCDatabaseSnapshot>(createEmptyFormScheduleCSnapshot());
+  const [requirements, setRequirements] = useState<FormScheduleSERequirement[]>([]);
+  const [snapshot, setSnapshot] = useState<FormScheduleSEDatabaseSnapshot>(createEmptyFormScheduleSESnapshot());
 
   useEffect(() => {
     let isMounted = true;
     setError(null);
     setIsLoaded(false);
     setRequirements([]);
-    setSnapshot(createEmptyFormScheduleCSnapshot());
+    setSnapshot(createEmptyFormScheduleSESnapshot());
 
-    loadFormScheduleCData(database, scope)
+    loadFormScheduleSEData(database, scope)
       .then((nextSnapshot) => {
         if (!isMounted) {
           return;
@@ -65,7 +64,7 @@ export function useFormScheduleC(scope: FormScheduleCDataScope): UseFormSchedule
           return;
         }
 
-        setError(nextError instanceof Error ? nextError.message : "Unable to load Schedule C preview.");
+        setError(nextError instanceof Error ? nextError.message : "Unable to load Schedule SE preview.");
         setIsLoaded(true);
       });
 
@@ -82,10 +81,10 @@ export function useFormScheduleC(scope: FormScheduleCDataScope): UseFormSchedule
   };
 }
 
-async function loadFormScheduleCData(
+async function loadFormScheduleSEData(
   database: ReturnType<typeof useSQLiteContext>,
-  scope: FormScheduleCDataScope,
-) : Promise<{ requirements: FormScheduleCRequirement[]; snapshot: FormScheduleCDatabaseSnapshot }> {
+  scope: FormScheduleSEDataScope,
+) : Promise<{ requirements: FormScheduleSERequirement[]; snapshot: FormScheduleSEDatabaseSnapshot }> {
   const storageDatabase = createReadableStorageDatabase(database);
   const { requirements: scopeRequirements, scope: resolvedScope } = await resolveTaxQueryScope(
     database,
@@ -95,53 +94,32 @@ async function loadFormScheduleCData(
   if (!resolvedScope) {
     return {
       requirements: scopeRequirements,
-      snapshot: createEmptyFormScheduleCSnapshot(),
+      snapshot: createEmptyFormScheduleSESnapshot(),
     };
   }
 
-  const proprietorName = await loadEntityLegalName(storageDatabase, resolvedScope.entityId);
-  const aggregation = await loadScheduleCAggregation(storageDatabase, resolvedScope);
-  const hasScheduleCData =
-    Object.keys(aggregation.lineAmounts).length > 0 ||
-    Object.keys(aggregation.lineReviewNotes).length > 0 ||
-    aggregation.partVRows.length > 0 ||
-    aggregation.partVReviewNote !== null;
-
-  const snapshot = buildFormScheduleCSnapshot({
-    currency: hasScheduleCData ? "USD" : null,
-    lineAmounts: aggregation.lineAmounts,
-    lineReviewNotes: aggregation.lineReviewNotes,
-    partVReviewNote: aggregation.partVReviewNote,
-    partVRows: aggregation.partVRows,
-    proprietorName,
-  });
-
+  const preview = await loadScheduleSEPreview(storageDatabase, resolvedScope);
   const requirements = [...scopeRequirements];
-  for (const note of Object.values(aggregation.lineReviewNotes)) {
-    if (note) {
-      requirements.push({
-        code: "review_required",
-        message: note,
-      });
-    }
-  }
-  if (aggregation.partVReviewNote) {
+
+  if (preview.netProfitCents === null && preview.sourceNote.trim()) {
     requirements.push({
-      code: "review_required",
-      message: aggregation.partVReviewNote,
+      code: preview.sourceNote.includes("review") ? "review_required" : "manual_input_required",
+      message: preview.sourceNote,
     });
   }
 
   return {
     requirements,
-    snapshot,
+    snapshot: buildFormScheduleSESnapshot({
+      supportedScheduleCNetProfitPreview: preview.netProfitCents !== null ? preview : null,
+    }),
   };
 }
 
 async function resolveTaxQueryScope(
   database: ReturnType<typeof useSQLiteContext>,
-  scope: FormScheduleCDataScope,
-): Promise<{ requirements: FormScheduleCRequirement[]; scope: TaxQueryScope | null }> {
+  scope: FormScheduleSEDataScope,
+): Promise<{ requirements: FormScheduleSERequirement[]; scope: TaxQueryScope | null }> {
   const normalizedEntityId = scope.entityId?.trim();
 
   if (normalizedEntityId) {
@@ -177,7 +155,7 @@ async function resolveTaxQueryScope(
         {
           code: "entity_selection_required",
           message:
-            "Multiple entities exist locally. Provide an explicit entityId before loading the Schedule C preview.",
+            "Multiple entities exist locally. Provide an explicit entityId before loading the Schedule SE preview.",
         },
       ],
       scope: null,

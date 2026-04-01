@@ -12,6 +12,10 @@ export async function initializeLocalDatabase(database: SQLiteDatabase): Promise
     await database.execAsync(statement);
   }
 
+  for (const statement of storagePlan.maintenanceStatements) {
+    await database.execAsync(statement);
+  }
+
   await database.execAsync(`PRAGMA user_version = ${storagePlan.version};`);
 }
 

@@ -55,6 +55,7 @@ export interface LocalStorageBootstrapPlan {
   databaseName: string;
   fileCollections: readonly FileVaultCollectionContract[];
   fileVaultRoot: string;
+  maintenanceStatements: readonly string[];
   overview: LocalStorageOverview;
   pragmas: readonly string[];
   schemaStatements: readonly string[];
@@ -68,30 +69,6 @@ const structuredStorePragmas = ["PRAGMA journal_mode = WAL;", "PRAGMA foreign_ke
 
 export const accountingPostableRecordStatuses = ["posted", "reconciled"] as const;
 export type AccountingPostableRecordStatus = (typeof accountingPostableRecordStatuses)[number];
-
-export const accountingReportAccountTypes = [
-  "asset",
-  "liability",
-  "equity",
-  "income",
-  "expense",
-] as const;
-export type AccountingReportAccountType = (typeof accountingReportAccountTypes)[number];
-
-export const accountingStatementSections = ["balance_sheet", "profit_and_loss"] as const;
-export type AccountingStatementSection = (typeof accountingStatementSections)[number];
-
-export const accountingStatementSectionsByAccountType = {
-  asset: "balance_sheet",
-  liability: "balance_sheet",
-  equity: "balance_sheet",
-  income: "profit_and_loss",
-  expense: "profit_and_loss",
-} as const satisfies Record<AccountingReportAccountType, AccountingStatementSection>;
-
-const accountingPostableRecordStatusSqlList = accountingPostableRecordStatuses
-  .map((status) => `'${status}'`)
-  .join(", ");
 
 const structuredTables = [
   {
@@ -107,126 +84,91 @@ const structuredTables = [
     );`,
   },
   {
-    name: "accounts",
-    summary: "Chart of accounts used by derived double-entry and finance reporting views.",
-    createStatement: `CREATE TABLE IF NOT EXISTS accounts (
-      account_id TEXT PRIMARY KEY NOT NULL,
-      entity_id TEXT NOT NULL,
-      account_code TEXT NOT NULL,
-      account_name TEXT NOT NULL,
-      account_type TEXT NOT NULL,
-      normal_balance TEXT NOT NULL,
-      is_active INTEGER NOT NULL DEFAULT 1,
-      created_at TEXT NOT NULL,
-      FOREIGN KEY (entity_id) REFERENCES entities(entity_id)
-    );`,
-  },
-  {
     name: "counterparties",
-    summary: "Platforms, clients, vendors, banks, owners, and tax agencies tied to records.",
+    summary: "Normalized source and target parties linked to sparse evidence-backed records.",
     createStatement: `CREATE TABLE IF NOT EXISTS counterparties (
       counterparty_id TEXT PRIMARY KEY NOT NULL,
       entity_id TEXT NOT NULL,
       counterparty_type TEXT NOT NULL,
-      legal_name TEXT NOT NULL,
-      display_name TEXT,
-      tax_id_masked TEXT,
+      display_name TEXT NOT NULL,
+      raw_reference TEXT,
       notes TEXT,
-      created_at TEXT NOT NULL,
-      FOREIGN KEY (entity_id) REFERENCES entities(entity_id)
-    );`,
-  },
-  {
-    name: "platform_accounts",
-    summary: "Creator platform identities used for payout and revenue aggregation.",
-    createStatement: `CREATE TABLE IF NOT EXISTS platform_accounts (
-      platform_account_id TEXT PRIMARY KEY NOT NULL,
-      entity_id TEXT NOT NULL,
-      platform_code TEXT NOT NULL,
-      account_label TEXT NOT NULL,
-      external_account_ref TEXT,
-      active_from TEXT,
-      active_to TEXT,
       created_at TEXT NOT NULL,
       FOREIGN KEY (entity_id) REFERENCES entities(entity_id)
     );`,
   },
   {
     name: "records",
-    summary: "Operational finance events used as the canonical local-first source of truth.",
+    summary: "Canonical local-first finance records created first from sparse evidence and then completed manually.",
     createStatement: `CREATE TABLE IF NOT EXISTS records (
       record_id TEXT PRIMARY KEY NOT NULL,
       entity_id TEXT NOT NULL,
-      record_kind TEXT NOT NULL,
-      posting_pattern TEXT NOT NULL,
       record_status TEXT NOT NULL,
       source_system TEXT NOT NULL,
-      counterparty_id TEXT,
-      platform_account_id TEXT,
-      related_record_id TEXT,
-      related_record_role TEXT,
-      external_reference TEXT,
-      invoice_number TEXT,
       description TEXT NOT NULL,
       memo TEXT,
+      occurred_on TEXT NOT NULL,
+      currency TEXT NOT NULL,
+      amount_cents INTEGER NOT NULL,
+      source_label TEXT NOT NULL,
+      target_label TEXT NOT NULL,
+      source_counterparty_id TEXT,
+      target_counterparty_id TEXT,
+      record_kind TEXT NOT NULL,
       category_code TEXT,
       subcategory_code TEXT,
-      payment_method_code TEXT,
-      evidence_status TEXT NOT NULL DEFAULT 'pending',
-      recognition_on TEXT NOT NULL,
-      cash_on TEXT,
-      due_on TEXT,
-      service_period_start_on TEXT,
-      service_period_end_on TEXT,
-      currency TEXT NOT NULL,
-      primary_amount_cents INTEGER NOT NULL DEFAULT 0,
-      gross_amount_cents INTEGER NOT NULL DEFAULT 0,
-      fee_amount_cents INTEGER NOT NULL DEFAULT 0,
-      withholding_amount_cents INTEGER NOT NULL DEFAULT 0,
-      other_adjustment_amount_cents INTEGER NOT NULL DEFAULT 0,
-      net_cash_amount_cents INTEGER NOT NULL DEFAULT 0,
-      business_use_bps INTEGER NOT NULL DEFAULT 10000,
       tax_category_code TEXT,
       tax_line_code TEXT,
-      is_capitalizable INTEGER NOT NULL DEFAULT 0,
-      placed_in_service_on TEXT,
-      primary_account_id TEXT,
-      cash_account_id TEXT,
-      fee_account_id TEXT,
-      withholding_account_id TEXT,
-      adjustment_account_id TEXT,
-      offset_account_id TEXT,
+      business_use_bps INTEGER NOT NULL DEFAULT 10000,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL,
       FOREIGN KEY (entity_id) REFERENCES entities(entity_id),
-      FOREIGN KEY (counterparty_id) REFERENCES counterparties(counterparty_id),
-      FOREIGN KEY (platform_account_id) REFERENCES platform_accounts(platform_account_id),
-      FOREIGN KEY (related_record_id) REFERENCES records(record_id),
-      FOREIGN KEY (primary_account_id) REFERENCES accounts(account_id),
-      FOREIGN KEY (cash_account_id) REFERENCES accounts(account_id),
-      FOREIGN KEY (fee_account_id) REFERENCES accounts(account_id),
-      FOREIGN KEY (withholding_account_id) REFERENCES accounts(account_id),
-      FOREIGN KEY (adjustment_account_id) REFERENCES accounts(account_id),
-      FOREIGN KEY (offset_account_id) REFERENCES accounts(account_id)
+      FOREIGN KEY (source_counterparty_id) REFERENCES counterparties(counterparty_id),
+      FOREIGN KEY (target_counterparty_id) REFERENCES counterparties(counterparty_id)
+    );`,
+  },
+  {
+    name: "record_entry_classifications",
+    summary:
+      "User-facing simplified-entry classifications resolved beside the canonical records table.",
+    createStatement: `CREATE TABLE IF NOT EXISTS record_entry_classifications (
+      record_id TEXT PRIMARY KEY NOT NULL,
+      entry_mode TEXT NOT NULL,
+      user_classification TEXT NOT NULL,
+      classification_status TEXT NOT NULL,
+      resolver_code TEXT,
+      resolver_note TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY (record_id) REFERENCES records(record_id) ON DELETE CASCADE
+    );`,
+  },
+  {
+    name: "tax_year_profiles",
+    summary: "Entity and tax-year settings that scope local Schedule C and Schedule SE reads.",
+    createStatement: `CREATE TABLE IF NOT EXISTS tax_year_profiles (
+      entity_id TEXT NOT NULL,
+      tax_year INTEGER NOT NULL,
+      accounting_method TEXT NOT NULL DEFAULT 'cash',
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      PRIMARY KEY (entity_id, tax_year),
+      FOREIGN KEY (entity_id) REFERENCES entities(entity_id)
     );`,
   },
   {
     name: "evidences",
-    summary: "Logical evidence documents that can support one or many records.",
+    summary: "Sparse evidence objects that preserve the captured intake fields before manual enrichment.",
     createStatement: `CREATE TABLE IF NOT EXISTS evidences (
       evidence_id TEXT PRIMARY KEY NOT NULL,
       entity_id TEXT NOT NULL,
       evidence_kind TEXT NOT NULL,
-      title TEXT NOT NULL,
+      captured_date TEXT NOT NULL,
+      captured_amount_cents INTEGER NOT NULL,
+      captured_source TEXT NOT NULL,
+      captured_target TEXT NOT NULL,
+      captured_description TEXT NOT NULL,
       source_system TEXT NOT NULL,
-      issuer_name TEXT,
-      document_number TEXT,
-      issue_on TEXT,
-      coverage_start_on TEXT,
-      coverage_end_on TEXT,
-      total_amount_cents INTEGER,
-      currency TEXT,
-      notes TEXT,
       created_at TEXT NOT NULL,
       FOREIGN KEY (entity_id) REFERENCES entities(entity_id)
     );`,
@@ -240,7 +182,6 @@ const structuredTables = [
       vault_collection TEXT NOT NULL,
       relative_path TEXT NOT NULL,
       original_file_name TEXT NOT NULL,
-      archived_file_name TEXT NOT NULL,
       mime_type TEXT,
       size_bytes INTEGER,
       sha256_hex TEXT NOT NULL,
@@ -251,17 +192,11 @@ const structuredTables = [
   },
   {
     name: "record_evidence_links",
-    summary: "Many-to-many linkage between records and evidence with line or page coverage metadata.",
+    summary: "Many-to-many linkage between records and evidence with primary-link tracking.",
     createStatement: `CREATE TABLE IF NOT EXISTS record_evidence_links (
       record_id TEXT NOT NULL,
       evidence_id TEXT NOT NULL,
       link_role TEXT NOT NULL,
-      page_from INTEGER,
-      page_to INTEGER,
-      line_ref TEXT,
-      amount_supported_cents INTEGER,
-      coverage_start_on TEXT,
-      coverage_end_on TEXT,
       is_primary INTEGER NOT NULL DEFAULT 0,
       notes TEXT,
       created_at TEXT NOT NULL,
@@ -272,320 +207,30 @@ const structuredTables = [
   },
 ] as const satisfies readonly StructuredTableContract[];
 
-const structuredViews = [
-  {
-    name: "record_double_entry_lines_v",
-    summary: "Derived debit and credit lines expanded from records by posting pattern.",
-    createStatement: `CREATE VIEW IF NOT EXISTS record_double_entry_lines_v AS
-      SELECT
-        record_id,
-        10 AS line_no,
-        recognition_on AS posting_on,
-        cash_account_id AS account_id,
-        'cash' AS account_role,
-        net_cash_amount_cents AS debit_amount_cents,
-        0 AS credit_amount_cents,
-        currency,
-        description
-      FROM records
-      WHERE posting_pattern = 'gross_to_net_income'
-        AND net_cash_amount_cents <> 0
-      UNION ALL
-      SELECT
-        record_id,
-        20 AS line_no,
-        recognition_on AS posting_on,
-        fee_account_id AS account_id,
-        'fee' AS account_role,
-        fee_amount_cents AS debit_amount_cents,
-        0 AS credit_amount_cents,
-        currency,
-        description
-      FROM records
-      WHERE posting_pattern = 'gross_to_net_income'
-        AND fee_amount_cents <> 0
-      UNION ALL
-      SELECT
-        record_id,
-        30 AS line_no,
-        recognition_on AS posting_on,
-        withholding_account_id AS account_id,
-        'withholding' AS account_role,
-        withholding_amount_cents AS debit_amount_cents,
-        0 AS credit_amount_cents,
-        currency,
-        description
-      FROM records
-      WHERE posting_pattern = 'gross_to_net_income'
-        AND withholding_amount_cents <> 0
-      UNION ALL
-      SELECT
-        record_id,
-        CASE WHEN other_adjustment_amount_cents > 0 THEN 40 ELSE 41 END AS line_no,
-        recognition_on AS posting_on,
-        adjustment_account_id AS account_id,
-        'adjustment' AS account_role,
-        CASE WHEN other_adjustment_amount_cents > 0 THEN other_adjustment_amount_cents ELSE 0 END AS debit_amount_cents,
-        CASE WHEN other_adjustment_amount_cents < 0 THEN ABS(other_adjustment_amount_cents) ELSE 0 END AS credit_amount_cents,
-        currency,
-        description
-      FROM records
-      WHERE posting_pattern = 'gross_to_net_income'
-        AND other_adjustment_amount_cents <> 0
-      UNION ALL
-      SELECT
-        record_id,
-        90 AS line_no,
-        recognition_on AS posting_on,
-        primary_account_id AS account_id,
-        'primary' AS account_role,
-        0 AS debit_amount_cents,
-        gross_amount_cents AS credit_amount_cents,
-        currency,
-        description
-      FROM records
-      WHERE posting_pattern = 'gross_to_net_income'
-        AND gross_amount_cents <> 0
-      UNION ALL
-      SELECT
-        record_id,
-        10 AS line_no,
-        recognition_on AS posting_on,
-        primary_account_id AS account_id,
-        'primary' AS account_role,
-        primary_amount_cents AS debit_amount_cents,
-        0 AS credit_amount_cents,
-        currency,
-        description
-      FROM records
-      WHERE posting_pattern IN ('simple_expense', 'asset_purchase')
-        AND primary_amount_cents <> 0
-      UNION ALL
-      SELECT
-        record_id,
-        90 AS line_no,
-        recognition_on AS posting_on,
-        COALESCE(offset_account_id, cash_account_id) AS account_id,
-        'offset' AS account_role,
-        0 AS debit_amount_cents,
-        primary_amount_cents AS credit_amount_cents,
-        currency,
-        description
-      FROM records
-      WHERE posting_pattern IN ('simple_expense', 'asset_purchase')
-        AND primary_amount_cents <> 0
-      UNION ALL
-      SELECT
-        record_id,
-        10 AS line_no,
-        recognition_on AS posting_on,
-        primary_account_id AS account_id,
-        'destination' AS account_role,
-        primary_amount_cents AS debit_amount_cents,
-        0 AS credit_amount_cents,
-        currency,
-        description
-      FROM records
-      WHERE posting_pattern = 'transfer'
-        AND primary_amount_cents <> 0
-      UNION ALL
-      SELECT
-        record_id,
-        90 AS line_no,
-        recognition_on AS posting_on,
-        offset_account_id AS account_id,
-        'source' AS account_role,
-        0 AS debit_amount_cents,
-        primary_amount_cents AS credit_amount_cents,
-        currency,
-        description
-      FROM records
-      WHERE posting_pattern = 'transfer'
-        AND primary_amount_cents <> 0
-      UNION ALL
-      SELECT
-        record_id,
-        10 AS line_no,
-        recognition_on AS posting_on,
-        cash_account_id AS account_id,
-        'cash' AS account_role,
-        primary_amount_cents AS debit_amount_cents,
-        0 AS credit_amount_cents,
-        currency,
-        description
-      FROM records
-      WHERE posting_pattern = 'owner_contribution'
-        AND primary_amount_cents <> 0
-      UNION ALL
-      SELECT
-        record_id,
-        90 AS line_no,
-        recognition_on AS posting_on,
-        primary_account_id AS account_id,
-        'equity' AS account_role,
-        0 AS debit_amount_cents,
-        primary_amount_cents AS credit_amount_cents,
-        currency,
-        description
-      FROM records
-      WHERE posting_pattern = 'owner_contribution'
-        AND primary_amount_cents <> 0
-      UNION ALL
-      SELECT
-        record_id,
-        10 AS line_no,
-        recognition_on AS posting_on,
-        primary_account_id AS account_id,
-        'equity' AS account_role,
-        primary_amount_cents AS debit_amount_cents,
-        0 AS credit_amount_cents,
-        currency,
-        description
-      FROM records
-      WHERE posting_pattern = 'owner_draw'
-        AND primary_amount_cents <> 0
-      UNION ALL
-      SELECT
-        record_id,
-        90 AS line_no,
-        recognition_on AS posting_on,
-        cash_account_id AS account_id,
-        'cash' AS account_role,
-        0 AS debit_amount_cents,
-        primary_amount_cents AS credit_amount_cents,
-        currency,
-        description
-      FROM records
-      WHERE posting_pattern = 'owner_draw'
-        AND primary_amount_cents <> 0;`,
-  },
-  {
-    name: "accounting_posting_lines_v",
-    summary:
-      "Canonical accounting-reporting surface for postable record lines with account semantics.",
-    createStatement: `CREATE VIEW IF NOT EXISTS accounting_posting_lines_v AS
-      SELECT
-        records.entity_id,
-        records.record_id,
-        records.record_kind,
-        records.posting_pattern,
-        records.record_status,
-        records.source_system,
-        records.counterparty_id,
-        records.platform_account_id,
-        lines.posting_on,
-        lines.line_no,
-        lines.account_id,
-        accounts.account_code,
-        accounts.account_name,
-        accounts.account_type,
-        accounts.normal_balance,
-        CASE
-          WHEN accounts.account_type IN ('asset', 'liability', 'equity') THEN 'balance_sheet'
-          WHEN accounts.account_type IN ('income', 'expense') THEN 'profit_and_loss'
-          ELSE 'unclassified'
-        END AS statement_section,
-        lines.account_role,
-        lines.debit_amount_cents,
-        lines.credit_amount_cents,
-        lines.debit_amount_cents - lines.credit_amount_cents AS net_amount_cents,
-        CASE
-          WHEN accounts.normal_balance = 'debit'
-            THEN lines.debit_amount_cents - lines.credit_amount_cents
-          ELSE lines.credit_amount_cents - lines.debit_amount_cents
-        END AS normalized_balance_delta_cents,
-        lines.currency,
-        lines.description
-      FROM record_double_entry_lines_v AS lines
-      INNER JOIN records ON records.record_id = lines.record_id
-      INNER JOIN accounts ON accounts.account_id = lines.account_id
-      WHERE records.record_status IN (${accountingPostableRecordStatusSqlList});`,
-  },
-  {
-    name: "income_snapshots_v",
-    summary: "Compatibility view for grouped income snapshots derived from records.",
-    createStatement: `CREATE VIEW IF NOT EXISTS income_snapshots_v AS
-      SELECT
-        entity_id,
-        COALESCE(platform_account_id, 'unassigned') AS platform_account_id,
-        currency AS payout_currency,
-        SUBSTR(COALESCE(cash_on, recognition_on), 1, 7) AS payout_window,
-        SUM(gross_amount_cents) AS gross_amount_cents,
-        COUNT(*) AS record_count,
-        MAX(updated_at) AS captured_at
-      FROM records
-      WHERE record_kind IN ('income', 'invoice_payment', 'platform_payout')
-      GROUP BY
-        entity_id,
-        COALESCE(platform_account_id, 'unassigned'),
-        currency,
-        SUBSTR(COALESCE(cash_on, recognition_on), 1, 7);`,
-  },
-  {
-    name: "invoice_records_v",
-    summary: "Compatibility view for invoice-focused record projections.",
-    createStatement: `CREATE VIEW IF NOT EXISTS invoice_records_v AS
-      SELECT
-        record_id AS id,
-        entity_id,
-        counterparty_id,
-        invoice_number,
-        description,
-        primary_amount_cents AS amount_cents,
-        currency,
-        record_status AS status,
-        due_on,
-        cash_on AS paid_on
-      FROM records
-      WHERE record_kind IN ('invoice', 'receivable', 'invoice_payment');`,
-  },
-  {
-    name: "expense_records_v",
-    summary: "Compatibility view for expense-focused record projections.",
-    createStatement: `CREATE VIEW IF NOT EXISTS expense_records_v AS
-      SELECT
-        record_id AS id,
-        entity_id,
-        counterparty_id,
-        category_code AS category,
-        subcategory_code AS subcategory,
-        primary_amount_cents AS amount_cents,
-        currency,
-        COALESCE(cash_on, recognition_on) AS incurred_on,
-        description AS note
-      FROM records
-      WHERE record_kind IN ('expense', 'asset_purchase', 'reimbursable_expense');`,
-  },
-] as const satisfies readonly StructuredViewContract[];
+const structuredViews: readonly StructuredViewContract[] = [];
 
 const structuredIndexes = [
   {
-    name: "accounts_entity_code_idx",
-    summary: "Enforces unique account codes per entity.",
+    name: "counterparties_entity_name_idx",
+    summary: "Speeds local counterparty normalization by entity and display name.",
     createStatement:
-      "CREATE UNIQUE INDEX IF NOT EXISTS accounts_entity_code_idx ON accounts(entity_id, account_code);",
+      "CREATE INDEX IF NOT EXISTS counterparties_entity_name_idx ON counterparties(entity_id, display_name);",
   },
   {
-    name: "records_entity_recognition_idx",
-    summary: "Speeds record timelines by entity and recognition date.",
+    name: "records_entity_occurred_status_idx",
+    summary: "Speeds record timelines and tax-year reads by entity, date, and status.",
     createStatement:
-      "CREATE INDEX IF NOT EXISTS records_entity_recognition_idx ON records(entity_id, recognition_on);",
+      "CREATE INDEX IF NOT EXISTS records_entity_occurred_status_idx ON records(entity_id, occurred_on, record_status);",
   },
   {
-    name: "records_status_due_idx",
-    summary: "Speeds due-date and open-status record queries.",
+    name: "records_entity_tax_line_occurred_status_idx",
+    summary: "Speeds Schedule C and Schedule SE candidate reads by entity, line mapping, date, and status.",
     createStatement:
-      "CREATE INDEX IF NOT EXISTS records_status_due_idx ON records(entity_id, record_status, due_on);",
-  },
-  {
-    name: "records_platform_idx",
-    summary: "Speeds revenue and payout lookups by platform account.",
-    createStatement:
-      "CREATE INDEX IF NOT EXISTS records_platform_idx ON records(platform_account_id, recognition_on);",
+      "CREATE INDEX IF NOT EXISTS records_entity_tax_line_occurred_status_idx ON records(entity_id, tax_line_code, occurred_on, record_status);",
   },
   {
     name: "evidence_files_sha_idx",
-    summary: "Supports de-duplication by file hash and size.",
+    summary: "Supports evidence de-duplication by file hash and size.",
     createStatement:
       "CREATE UNIQUE INDEX IF NOT EXISTS evidence_files_sha_idx ON evidence_files(sha256_hex, size_bytes);",
   },
@@ -597,14 +242,49 @@ const structuredIndexes = [
   },
 ] as const satisfies readonly StructuredIndexContract[];
 
+const structuredMaintenanceStatements = [
+  `INSERT OR IGNORE INTO record_entry_classifications (
+    record_id,
+    entry_mode,
+    user_classification,
+    classification_status,
+    resolver_code,
+    resolver_note,
+    created_at,
+    updated_at
+  )
+  SELECT
+    record_id,
+    'legacy',
+    CASE
+      WHEN record_kind = 'income' THEN 'income'
+      WHEN record_kind = 'expense' THEN 'expense'
+      WHEN record_kind = 'personal_spending' THEN 'personal_spending'
+      ELSE 'other'
+    END AS user_classification,
+    'legacy',
+    'legacy_backfill_v1',
+    'Derived from existing record_kind during the v1 simplified-entry bootstrap.',
+    created_at,
+    updated_at
+  FROM records;`,
+  `UPDATE records
+   SET tax_line_code = 'line27a',
+       updated_at = COALESCE(updated_at, strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+   WHERE LOWER(TRIM(COALESCE(tax_line_code, ''))) = 'line27b'
+     AND LOWER(TRIM(COALESCE(tax_category_code, ''))) = 'schedule-c-other-expense';`,
+] as const;
+
 const structuredSchemaStatements = [
   ...structuredTables.map((table) => table.createStatement),
   ...structuredViews.map((view) => view.createStatement),
   ...structuredIndexes.map((index) => index.createStatement),
 ] as const;
+
 export const structuredStoreContract = {
   databaseName: "creator-cfo-local.db",
-  version: 2,
+  maintenanceStatements: structuredMaintenanceStatements,
+  version: 1,
   pragmas: structuredStorePragmas,
   tables: structuredTables,
   views: structuredViews,
@@ -613,6 +293,7 @@ export const structuredStoreContract = {
 } as const satisfies {
   databaseName: string;
   indexes: readonly StructuredIndexContract[];
+  maintenanceStatements: readonly string[];
   pragmas: readonly string[];
   schemaStatements: readonly string[];
   tables: readonly StructuredTableContract[];
@@ -694,13 +375,11 @@ export type DeviceStateRecordKey = (typeof deviceStateContract.records)[number][
 
 function normalizeSha256Hex(sha256Hex: string): string {
   const normalized = sha256Hex.trim().toLowerCase().replace(/[^a-f0-9]+/g, "");
-
   return normalized.length > 0 ? normalized : "0000";
 }
 
 function normalizeFileExtension(extension: string): string {
   const normalized = extension.trim().toLowerCase().replace(/^\.+/, "").replace(/[^a-z0-9]+/g, "");
-
   return normalized.length > 0 ? normalized : "bin";
 }
 
@@ -820,6 +499,7 @@ export function getLocalStorageBootstrapPlan(): LocalStorageBootstrapPlan {
     databaseName: structuredStoreContract.databaseName,
     fileCollections: fileVaultContract.collections,
     fileVaultRoot: fileVaultContract.rootDirectory,
+    maintenanceStatements: structuredStoreContract.maintenanceStatements,
     overview: getLocalStorageOverview(),
     pragmas: structuredStoreContract.pragmas,
     schemaStatements: structuredStoreContract.schemaStatements,

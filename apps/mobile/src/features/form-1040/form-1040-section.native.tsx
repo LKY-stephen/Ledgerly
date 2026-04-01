@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { SQLiteProvider } from "expo-sqlite";
 import type { ReactNode } from "react";
 import { getLocalStorageBootstrapPlan } from "@creator-cfo/storage";
@@ -6,13 +5,12 @@ import type { SurfaceTokens } from "@creator-cfo/ui";
 
 import type { AppCopy } from "../app-shell/copy";
 import { initializeLocalDatabase } from "../../storage/database";
-import { getCurrentFormScheduleCTaxYear } from "./form-schedule-c-model";
-import { FormScheduleCPreview } from "./form-schedule-c-preview";
-import { useFormScheduleC } from "./use-form-schedule-c.native";
+import { Form1040Preview } from "./form-1040-preview";
+import { useForm1040 } from "./use-form-1040.native";
 
-interface FormScheduleCSectionProps {
+interface Form1040SectionProps {
   calculatedBadge: string;
-  copy: AppCopy["discover"]["formScheduleC"];
+  copy: AppCopy["discover"]["form1040"];
   manualBadge: string;
   palette: SurfaceTokens;
   renderLauncher?: (openPreview: () => void) => ReactNode;
@@ -20,23 +18,20 @@ interface FormScheduleCSectionProps {
 
 const storagePlan = getLocalStorageBootstrapPlan();
 
-export function FormScheduleCSection(props: FormScheduleCSectionProps) {
+export function Form1040Section(props: Form1040SectionProps) {
   return (
     <SQLiteProvider databaseName={storagePlan.databaseName} onInit={initializeLocalDatabase}>
-      <FormScheduleCNativeSection {...props} />
+      <Form1040NativeSection {...props} />
     </SQLiteProvider>
   );
 }
 
-function FormScheduleCNativeSection(props: FormScheduleCSectionProps) {
+function Form1040NativeSection(props: Form1040SectionProps) {
   const { calculatedBadge, copy, manualBadge, palette, renderLauncher } = props;
-  const currentTaxYear = getCurrentFormScheduleCTaxYear();
-  const taxYearOptions = [currentTaxYear - 1, currentTaxYear];
-  const [selectedTaxYear, setSelectedTaxYear] = useState(currentTaxYear);
-  const { error, isLoaded, snapshot } = useFormScheduleC({ taxYear: selectedTaxYear });
+  const { error, isLoaded, snapshot } = useForm1040();
 
   return (
-    <FormScheduleCPreview
+    <Form1040Preview
       calculatedBadge={calculatedBadge}
       copy={copy}
       error={error}
@@ -45,11 +40,8 @@ function FormScheduleCNativeSection(props: FormScheduleCSectionProps) {
       manualBadge={manualBadge}
       palette={palette}
       renderLauncher={renderLauncher}
-      selectedTaxYear={selectedTaxYear}
-      sectionEyebrow="Schedule C"
+      sectionEyebrow="Form 1040"
       snapshot={snapshot}
-      taxYearOptions={taxYearOptions}
-      onSelectTaxYear={setSelectedTaxYear}
     />
   );
 }

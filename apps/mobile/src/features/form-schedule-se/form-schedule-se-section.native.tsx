@@ -6,13 +6,12 @@ import type { SurfaceTokens } from "@creator-cfo/ui";
 
 import type { AppCopy } from "../app-shell/copy";
 import { initializeLocalDatabase } from "../../storage/database";
-import { getCurrentFormScheduleCTaxYear } from "./form-schedule-c-model";
-import { FormScheduleCPreview } from "./form-schedule-c-preview";
-import { useFormScheduleC } from "./use-form-schedule-c.native";
+import { FormScheduleSEPreview } from "./form-schedule-se-preview";
+import { useFormScheduleSE } from "./use-form-schedule-se.native";
 
-interface FormScheduleCSectionProps {
+interface FormScheduleSESectionProps {
   calculatedBadge: string;
-  copy: AppCopy["discover"]["formScheduleC"];
+  copy: AppCopy["discover"]["formScheduleSE"];
   manualBadge: string;
   palette: SurfaceTokens;
   renderLauncher?: (openPreview: () => void) => ReactNode;
@@ -20,36 +19,36 @@ interface FormScheduleCSectionProps {
 
 const storagePlan = getLocalStorageBootstrapPlan();
 
-export function FormScheduleCSection(props: FormScheduleCSectionProps) {
+export function FormScheduleSESection(props: FormScheduleSESectionProps) {
   return (
     <SQLiteProvider databaseName={storagePlan.databaseName} onInit={initializeLocalDatabase}>
-      <FormScheduleCNativeSection {...props} />
+      <FormScheduleSENativeSection {...props} />
     </SQLiteProvider>
   );
 }
 
-function FormScheduleCNativeSection(props: FormScheduleCSectionProps) {
+function FormScheduleSENativeSection(props: FormScheduleSESectionProps) {
   const { calculatedBadge, copy, manualBadge, palette, renderLauncher } = props;
-  const currentTaxYear = getCurrentFormScheduleCTaxYear();
+  const currentTaxYear = new Date().getFullYear();
   const taxYearOptions = [currentTaxYear - 1, currentTaxYear];
   const [selectedTaxYear, setSelectedTaxYear] = useState(currentTaxYear);
-  const { error, isLoaded, snapshot } = useFormScheduleC({ taxYear: selectedTaxYear });
+  const { error, isLoaded, snapshot } = useFormScheduleSE({ taxYear: selectedTaxYear });
 
   return (
-    <FormScheduleCPreview
+    <FormScheduleSEPreview
       calculatedBadge={calculatedBadge}
       copy={copy}
       error={error}
       footerNote={copy.footerNative}
       isLoaded={isLoaded}
       manualBadge={manualBadge}
+      onSelectTaxYear={setSelectedTaxYear}
       palette={palette}
       renderLauncher={renderLauncher}
       selectedTaxYear={selectedTaxYear}
-      sectionEyebrow="Schedule C"
+      sectionEyebrow="Schedule SE"
       snapshot={snapshot}
       taxYearOptions={taxYearOptions}
-      onSelectTaxYear={setSelectedTaxYear}
     />
   );
 }

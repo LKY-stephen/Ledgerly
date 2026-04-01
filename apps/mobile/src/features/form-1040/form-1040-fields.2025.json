@@ -1,0 +1,4960 @@
+{
+  "excludedFields": [],
+  "fields": [
+    {
+      "contextLines": [
+        "Filed pursuant to section 301.9100-2 Combat zone",
+        "Deceased MM DD YYYY// Spouse MM DD YYYY// Other"
+      ],
+      "fieldName": "f1_01[0]",
+      "height": 10.999000000000024,
+      "highlight": {
+        "heightPct": 1.3887626262626291,
+        "leftPct": 37.38562091503268,
+        "topPct": 6.1236111111111144,
+        "widthPct": 14.37908496732026
+      },
+      "id": "f1_01[0]",
+      "index": 1,
+      "kind": "text",
+      "left": 228.8,
+      "page": 1,
+      "top": 48.499000000000024,
+      "widgetType": "text",
+      "width": 88.0,
+      "fieldLabel": "Filed pursuant to section 301.9100-2 Combat zone (1 of 8)",
+      "badge": "P1-001"
+    },
+    {
+      "contextLines": [
+        "Deceased MM DD YYYY// Spouse MM DD YYYY// Other",
+        "Filed pursuant to section 301.9100-2 Combat zone"
+      ],
+      "fieldName": "f1_02[0]",
+      "height": 10.999000000000024,
+      "highlight": {
+        "heightPct": 1.3887626262626291,
+        "leftPct": 59.73856209150327,
+        "topPct": 6.1236111111111144,
+        "widthPct": 14.37908496732026
+      },
+      "id": "f1_02[0]",
+      "index": 2,
+      "kind": "text",
+      "left": 365.6,
+      "page": 1,
+      "top": 48.499000000000024,
+      "widgetType": "text",
+      "width": 88.0,
+      "fieldLabel": "Deceased MM DD YYYY// Spouse MM DD YYYY// Other (1 of 7)",
+      "badge": "P1-002"
+    },
+    {
+      "contextLines": [
+        "Deceased MM DD YYYY// Spouse MM DD YYYY// Other"
+      ],
+      "fieldName": "f1_03[0]",
+      "height": 10.999000000000024,
+      "highlight": {
+        "heightPct": 1.3887626262626291,
+        "leftPct": 76.5686274509804,
+        "topPct": 6.1236111111111144,
+        "widthPct": 2.7777777777777777
+      },
+      "id": "f1_03[0]",
+      "index": 3,
+      "kind": "amount",
+      "left": 468.6,
+      "page": 1,
+      "top": 48.499000000000024,
+      "widgetType": "text",
+      "width": 17.0,
+      "fieldLabel": "Deceased MM DD YYYY// Spouse MM DD YYYY// Other (2 of 7)",
+      "badge": "P1-003"
+    },
+    {
+      "contextLines": [
+        "Filed pursuant to section 301.9100-2 Combat zone",
+        "Deceased MM DD YYYY// Spouse MM DD YYYY// Other",
+        "Your first name and middle initial Last name Your social security number"
+      ],
+      "fieldName": "f1_04[0]",
+      "height": 10.999000000000024,
+      "highlight": {
+        "heightPct": 1.3887626262626291,
+        "leftPct": 34.28104575163399,
+        "topPct": 7.639015151515148,
+        "widthPct": 26.307189542483663
+      },
+      "id": "f1_04[0]",
+      "index": 6,
+      "kind": "text",
+      "left": 209.8,
+      "page": 1,
+      "top": 60.500999999999976,
+      "widgetType": "text",
+      "width": 161.0,
+      "fieldLabel": "Filed pursuant to section 301.9100-2 Combat zone (2 of 8)",
+      "badge": "P1-006"
+    },
+    {
+      "contextLines": [
+        "Filed pursuant to section 301.9100-2 Combat zone",
+        "Deceased MM DD YYYY// Spouse MM DD YYYY// Other",
+        "Your first name and middle initial Last name Your social security number"
+      ],
+      "fieldName": "f1_05[0]",
+      "height": 10.999000000000024,
+      "highlight": {
+        "heightPct": 1.3887626262626291,
+        "leftPct": 68.23529411764706,
+        "topPct": 7.639015151515148,
+        "widthPct": 2.3529411764705843
+      },
+      "id": "f1_05[0]",
+      "index": 8,
+      "kind": "amount",
+      "left": 417.6,
+      "page": 1,
+      "top": 60.500999999999976,
+      "widgetType": "text",
+      "width": 14.399999999999977,
+      "fieldLabel": "Filed pursuant to section 301.9100-2 Combat zone (3 of 8)",
+      "badge": "P1-008"
+    },
+    {
+      "contextLines": [
+        "Deceased MM DD YYYY// Spouse MM DD YYYY// Other",
+        "Your first name and middle initial Last name Your social security number"
+      ],
+      "fieldName": "f1_06[0]",
+      "height": 10.999000000000024,
+      "highlight": {
+        "heightPct": 1.3887626262626291,
+        "leftPct": 71.76470588235294,
+        "topPct": 7.639015151515148,
+        "widthPct": 2.3529411764705936
+      },
+      "id": "f1_06[0]",
+      "index": 9,
+      "kind": "amount",
+      "left": 439.2,
+      "page": 1,
+      "top": 60.500999999999976,
+      "widgetType": "text",
+      "width": 14.400000000000034,
+      "fieldLabel": "Deceased MM DD YYYY// Spouse MM DD YYYY// Other (3 of 7)",
+      "badge": "P1-009"
+    },
+    {
+      "contextLines": [
+        "Deceased MM DD YYYY// Spouse MM DD YYYY// Other",
+        "Your first name and middle initial Last name Your social security number"
+      ],
+      "fieldName": "f1_07[0]",
+      "height": 10.999000000000024,
+      "highlight": {
+        "heightPct": 1.3887626262626291,
+        "leftPct": 75.29411764705883,
+        "topPct": 7.639015151515148,
+        "widthPct": 3.529411764705877
+      },
+      "id": "f1_07[0]",
+      "index": 10,
+      "kind": "amount",
+      "left": 460.8,
+      "page": 1,
+      "top": 60.500999999999976,
+      "widgetType": "text",
+      "width": 21.599999999999966,
+      "fieldLabel": "Deceased MM DD YYYY// Spouse MM DD YYYY// Other (4 of 7)",
+      "badge": "P1-010"
+    },
+    {
+      "contextLines": [
+        "Deceased MM DD YYYY// Spouse MM DD YYYY// Other",
+        "Your first name and middle initial Last name Your social security number"
+      ],
+      "fieldName": "f1_08[0]",
+      "height": 10.999000000000024,
+      "highlight": {
+        "heightPct": 1.3887626262626291,
+        "leftPct": 83.52941176470588,
+        "topPct": 7.639015151515148,
+        "widthPct": 2.3529411764705936
+      },
+      "id": "f1_08[0]",
+      "index": 11,
+      "kind": "amount",
+      "left": 511.2,
+      "page": 1,
+      "top": 60.500999999999976,
+      "widgetType": "text",
+      "width": 14.400000000000034,
+      "fieldLabel": "Deceased MM DD YYYY// Spouse MM DD YYYY// Other (5 of 7)",
+      "badge": "P1-011"
+    },
+    {
+      "contextLines": [
+        "Deceased MM DD YYYY// Spouse MM DD YYYY// Other",
+        "Your first name and middle initial Last name Your social security number"
+      ],
+      "fieldName": "f1_09[0]",
+      "height": 10.999000000000024,
+      "highlight": {
+        "heightPct": 1.3887626262626291,
+        "leftPct": 87.05882352941175,
+        "topPct": 7.639015151515148,
+        "widthPct": 2.352941176470603
+      },
+      "id": "f1_09[0]",
+      "index": 12,
+      "kind": "amount",
+      "left": 532.8,
+      "page": 1,
+      "top": 60.500999999999976,
+      "widgetType": "text",
+      "width": 14.400000000000091,
+      "fieldLabel": "Deceased MM DD YYYY// Spouse MM DD YYYY// Other (6 of 7)",
+      "badge": "P1-012"
+    },
+    {
+      "contextLines": [
+        "Deceased MM DD YYYY// Spouse MM DD YYYY// Other",
+        "Your first name and middle initial Last name Your social security number"
+      ],
+      "fieldName": "f1_10[0]",
+      "height": 10.999000000000024,
+      "highlight": {
+        "heightPct": 1.3887626262626291,
+        "leftPct": 90.58823529411765,
+        "topPct": 7.639015151515148,
+        "widthPct": 3.529411764705886
+      },
+      "id": "f1_10[0]",
+      "index": 13,
+      "kind": "amount",
+      "left": 554.4,
+      "page": 1,
+      "top": 60.500999999999976,
+      "widgetType": "text",
+      "width": 21.600000000000023,
+      "fieldLabel": "Deceased MM DD YYYY// Spouse MM DD YYYY// Other (7 of 7)",
+      "badge": "P1-013"
+    },
+    {
+      "contextLines": [
+        "Filed pursuant to section 301.9100-2 Combat zone",
+        "Your first name and middle initial Last name Your social security number",
+        "Deceased MM DD YYYY// Spouse MM DD YYYY// Other"
+      ],
+      "fieldName": "c1_1[0]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 5.88235294117647,
+        "topPct": 7.828282828282829,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c1_1[0]",
+      "index": 4,
+      "kind": "checkbox",
+      "left": 36.0,
+      "page": 1,
+      "top": 62.0,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "Filed pursuant to section 301.9100-2 Combat zone (4 of 8)",
+      "badge": "P1-004"
+    },
+    {
+      "contextLines": [
+        "Filed pursuant to section 301.9100-2 Combat zone",
+        "Deceased MM DD YYYY// Spouse MM DD YYYY// Other",
+        "Your first name and middle initial Last name Your social security number"
+      ],
+      "fieldName": "c1_2[0]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 25.359477124183005,
+        "topPct": 7.828282828282829,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c1_2[0]",
+      "index": 5,
+      "kind": "checkbox",
+      "left": 155.2,
+      "page": 1,
+      "top": 62.0,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "Filed pursuant to section 301.9100-2 Combat zone (5 of 8)",
+      "badge": "P1-005"
+    },
+    {
+      "contextLines": [
+        "Filed pursuant to section 301.9100-2 Combat zone",
+        "Deceased MM DD YYYY// Spouse MM DD YYYY// Other",
+        "Your first name and middle initial Last name Your social security number"
+      ],
+      "fieldName": "c1_3[0]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 61.24183006535948,
+        "topPct": 7.828282828282829,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c1_3[0]",
+      "index": 7,
+      "kind": "checkbox",
+      "left": 374.8,
+      "page": 1,
+      "top": 62.0,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "Filed pursuant to section 301.9100-2 Combat zone (6 of 8)",
+      "badge": "P1-007"
+    },
+    {
+      "contextLines": [
+        "Filed pursuant to section 301.9100-2 Combat zone",
+        "Your first name and middle initial Last name Your social security number",
+        "Deceased MM DD YYYY// Spouse MM DD YYYY// Other"
+      ],
+      "fieldName": "f1_11[0]",
+      "height": 10.999000000000024,
+      "highlight": {
+        "heightPct": 1.3887626262626291,
+        "leftPct": 11.176470588235295,
+        "topPct": 9.154040404040405,
+        "widthPct": 27.483660130718953
+      },
+      "id": "f1_11[0]",
+      "index": 15,
+      "kind": "text",
+      "left": 68.4,
+      "page": 1,
+      "top": 72.5,
+      "widgetType": "text",
+      "width": 168.2,
+      "fieldLabel": "Filed pursuant to section 301.9100-2 Combat zone (7 of 8)",
+      "badge": "P1-015"
+    },
+    {
+      "contextLines": [
+        "Filed pursuant to section 301.9100-2 Combat zone",
+        "Your first name and middle initial Last name Your social security number",
+        "Deceased MM DD YYYY// Spouse MM DD YYYY// Other"
+      ],
+      "fieldName": "f1_12[0]",
+      "height": 10.999000000000024,
+      "highlight": {
+        "heightPct": 1.3887626262626291,
+        "leftPct": 38.98692810457516,
+        "topPct": 9.154040404040405,
+        "widthPct": 27.90849673202614
+      },
+      "id": "f1_12[0]",
+      "index": 16,
+      "kind": "text",
+      "left": 238.6,
+      "page": 1,
+      "top": 72.5,
+      "widgetType": "text",
+      "width": 170.79999999999998,
+      "fieldLabel": "Filed pursuant to section 301.9100-2 Combat zone (8 of 8)",
+      "badge": "P1-016"
+    },
+    {
+      "contextLines": [
+        "Your first name and middle initial Last name Your social security number",
+        "Filed pursuant to section 301.9100-2 Combat zone",
+        "Deceased MM DD YYYY// Spouse MM DD YYYY// Other"
+      ],
+      "fieldName": "f1_13[0]",
+      "height": 10.999000000000024,
+      "highlight": {
+        "heightPct": 1.3887626262626291,
+        "leftPct": 67.22222222222221,
+        "topPct": 9.154040404040405,
+        "widthPct": 26.89542483660131
+      },
+      "id": "f1_13[0]",
+      "index": 17,
+      "kind": "text",
+      "left": 411.4,
+      "page": 1,
+      "top": 72.5,
+      "widgetType": "text",
+      "width": 164.60000000000002,
+      "fieldLabel": "Your first name and middle initial Last name Your social security number (1 of 5)",
+      "badge": "P1-017"
+    },
+    {
+      "contextLines": [
+        "Your first name and middle initial Last name Your social security number",
+        "Filed pursuant to section 301.9100-2 Combat zone",
+        "Deceased MM DD YYYY// Spouse MM DD YYYY// Other"
+      ],
+      "fieldName": "c1_4[0]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 5.88235294117647,
+        "topPct": 9.343308080808084,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c1_4[0]",
+      "index": 14,
+      "kind": "checkbox",
+      "left": 36.0,
+      "page": 1,
+      "top": 73.99900000000002,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "Your first name and middle initial Last name Your social security number (2 of 5)",
+      "badge": "P1-014"
+    },
+    {
+      "contextLines": [
+        "Your first name and middle initial Last name Your social security number",
+        "If joint return, spouse\u2019s first name and middle initial Last name Spouse\u2019s social security number",
+        "Deceased MM DD YYYY// Spouse MM DD YYYY// Other"
+      ],
+      "fieldName": "f1_14[0]",
+      "height": 14.000999999999976,
+      "highlight": {
+        "heightPct": 1.7678030303030272,
+        "leftPct": 5.88235294117647,
+        "topPct": 11.868560606060608,
+        "widthPct": 35.17156862745098
+      },
+      "id": "f1_14[0]",
+      "index": 18,
+      "kind": "text",
+      "left": 36.0,
+      "page": 1,
+      "top": 93.99900000000002,
+      "widgetType": "text",
+      "width": 215.25,
+      "fieldLabel": "Your first name and middle initial Last name Your social security number (3 of 5)",
+      "badge": "P1-018"
+    },
+    {
+      "contextLines": [
+        "Your first name and middle initial Last name Your social security number",
+        "If joint return, spouse\u2019s first name and middle initial Last name Spouse\u2019s social security number",
+        "Deceased MM DD YYYY// Spouse MM DD YYYY// Other"
+      ],
+      "fieldName": "f1_15[0]",
+      "height": 14.000999999999976,
+      "highlight": {
+        "heightPct": 1.7678030303030272,
+        "leftPct": 41.33986928104575,
+        "topPct": 11.868560606060608,
+        "widthPct": 35.00816993464052
+      },
+      "id": "f1_15[0]",
+      "index": 19,
+      "kind": "text",
+      "left": 253.0,
+      "page": 1,
+      "top": 93.99900000000002,
+      "widgetType": "text",
+      "width": 214.25,
+      "fieldLabel": "Your first name and middle initial Last name Your social security number (4 of 5)",
+      "badge": "P1-019"
+    },
+    {
+      "contextLines": [
+        "Your first name and middle initial Last name Your social security number",
+        "If joint return, spouse\u2019s first name and middle initial Last name Spouse\u2019s social security number",
+        "Deceased MM DD YYYY// Spouse MM DD YYYY// Other"
+      ],
+      "fieldName": "f1_16[0]",
+      "height": 14.000999999999976,
+      "highlight": {
+        "heightPct": 1.7678030303030272,
+        "leftPct": 76.63398692810458,
+        "topPct": 11.868560606060608,
+        "widthPct": 17.483660130718953
+      },
+      "id": "f1_16[0]",
+      "index": 20,
+      "kind": "text",
+      "left": 469.0,
+      "page": 1,
+      "top": 93.99900000000002,
+      "widgetType": "text",
+      "width": 107.0,
+      "fieldLabel": "Your first name and middle initial Last name Your social security number (5 of 5)",
+      "badge": "P1-020"
+    },
+    {
+      "contextLines": [
+        "Home address (number and street). If you have a P.O. box, see instructions. Apt. no.",
+        "If joint return, spouse\u2019s first name and middle initial Last name Spouse\u2019s social security number"
+      ],
+      "fieldName": "f1_17[0]",
+      "height": 14.000999999999976,
+      "highlight": {
+        "heightPct": 1.7678030303030272,
+        "leftPct": 5.88235294117647,
+        "topPct": 14.898989898989898,
+        "widthPct": 35.17156862745098
+      },
+      "id": "f1_17[0]",
+      "index": 21,
+      "kind": "text",
+      "left": 36.0,
+      "page": 1,
+      "top": 118.0,
+      "widgetType": "text",
+      "width": 215.25,
+      "fieldLabel": "Home address (number and street). If you have a P.O. box, see instructions. Apt. no. (1 of 4)",
+      "badge": "P1-021"
+    },
+    {
+      "contextLines": [
+        "Home address (number and street). If you have a P.O. box, see instructions. Apt. no.",
+        "If joint return, spouse\u2019s first name and middle initial Last name Spouse\u2019s social security number",
+        "Check here if your main home, and your spouse\u2019s if filing a joint return, was in the U.S. for more than half of 2025."
+      ],
+      "fieldName": "f1_18[0]",
+      "height": 14.000999999999976,
+      "highlight": {
+        "heightPct": 1.7678030303030272,
+        "leftPct": 41.33986928104575,
+        "topPct": 14.898989898989898,
+        "widthPct": 35.00816993464052
+      },
+      "id": "f1_18[0]",
+      "index": 22,
+      "kind": "text",
+      "left": 253.0,
+      "page": 1,
+      "top": 118.0,
+      "widgetType": "text",
+      "width": 214.25,
+      "fieldLabel": "Home address (number and street). If you have a P.O. box, see instructions. Apt. no. (2 of 4)",
+      "badge": "P1-022"
+    },
+    {
+      "contextLines": [
+        "Check here if your main home, and your spouse\u2019s if filing a joint return, was in the U.S. for more than half of 2025.",
+        "Home address (number and street). If you have a P.O. box, see instructions. Apt. no.",
+        "If joint return, spouse\u2019s first name and middle initial Last name Spouse\u2019s social security number"
+      ],
+      "fieldName": "f1_19[0]",
+      "height": 14.000999999999976,
+      "highlight": {
+        "heightPct": 1.7678030303030272,
+        "leftPct": 76.63398692810458,
+        "topPct": 14.898989898989898,
+        "widthPct": 17.483660130718953
+      },
+      "id": "f1_19[0]",
+      "index": 23,
+      "kind": "amount",
+      "left": 469.0,
+      "page": 1,
+      "top": 118.0,
+      "widgetType": "text",
+      "width": 107.0,
+      "fieldLabel": "Check here if your main home, and your spouse\u2019s if filing a joint return, was in the U.S. for more than half of 2025.",
+      "badge": "P1-023"
+    },
+    {
+      "contextLines": [
+        "Home address (number and street). If you have a P.O. box, see instructions. Apt. no.",
+        "City, town, or post office. If you have a foreign address, also complete spaces below. State ZIP code"
+      ],
+      "fieldName": "f1_20[0]",
+      "height": 14.000999999999976,
+      "highlight": {
+        "heightPct": 1.7678030303030272,
+        "leftPct": 5.88235294117647,
+        "topPct": 17.929419191919187,
+        "widthPct": 62.23039215686275
+      },
+      "id": "f1_20[0]",
+      "index": 24,
+      "kind": "text",
+      "left": 36.0,
+      "page": 1,
+      "top": 142.00099999999998,
+      "widgetType": "text",
+      "width": 380.85,
+      "fieldLabel": "Home address (number and street). If you have a P.O. box, see instructions. Apt. no. (3 of 4)",
+      "badge": "P1-024"
+    },
+    {
+      "contextLines": [
+        "Home address (number and street). If you have a P.O. box, see instructions. Apt. no.",
+        "City, town, or post office. If you have a foreign address, also complete spaces below. State ZIP code",
+        "Presidential Election Campaign Check here if you, or your spouse if filing jointly, want $3 to go to this fund. Checking a box below will not change your tax or refund."
+      ],
+      "fieldName": "f1_21[0]",
+      "height": 14.000999999999976,
+      "highlight": {
+        "heightPct": 1.7678030303030272,
+        "leftPct": 68.39869281045752,
+        "topPct": 17.929419191919187,
+        "widthPct": 7.949346405228755
+      },
+      "id": "f1_21[0]",
+      "index": 25,
+      "kind": "amount",
+      "left": 418.6,
+      "page": 1,
+      "top": 142.00099999999998,
+      "widgetType": "text",
+      "width": 48.64999999999998,
+      "fieldLabel": "Home address (number and street). If you have a P.O. box, see instructions. Apt. no. (4 of 4)",
+      "badge": "P1-025"
+    },
+    {
+      "contextLines": [
+        "Presidential Election Campaign Check here if you, or your spouse if filing jointly, want $3 to go to this fund. Checking a box below will not change your tax or refund.",
+        "Check here if your main home, and your spouse\u2019s if filing a joint return, was in the U.S. for more than half of 2025.",
+        "City, town, or post office. If you have a foreign address, also complete spaces below. State ZIP code"
+      ],
+      "fieldName": "c1_5[0]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 92.81045751633987,
+        "topPct": 18.528914141414145,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c1_5[0]",
+      "index": 32,
+      "kind": "checkbox",
+      "left": 568.0,
+      "page": 1,
+      "top": 146.74900000000002,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "Presidential Election Campaign Check here if you, or your spouse if filing jointly, want $3 to go to this fund. Checking a box below will not change your tax or refund. (1 of 3)",
+      "badge": "P1-032"
+    },
+    {
+      "contextLines": [
+        "City, town, or post office. If you have a foreign address, also complete spaces below. State ZIP code",
+        "Foreign country name Foreign province/state/county Foreign postal code",
+        "Spouse Filing Status"
+      ],
+      "fieldName": "f1_22[0]",
+      "height": 14.000999999999976,
+      "highlight": {
+        "heightPct": 1.7678030303030272,
+        "leftPct": 5.88235294117647,
+        "topPct": 20.9594696969697,
+        "widthPct": 48.11274509803921
+      },
+      "id": "f1_22[0]",
+      "index": 26,
+      "kind": "text",
+      "left": 36.0,
+      "page": 1,
+      "top": 165.99900000000002,
+      "widgetType": "text",
+      "width": 294.45,
+      "fieldLabel": "City, town, or post office. If you have a foreign address, also complete spaces below. State ZIP code (1 of 3)",
+      "badge": "P1-026"
+    },
+    {
+      "contextLines": [
+        "City, town, or post office. If you have a foreign address, also complete spaces below. State ZIP code",
+        "Foreign country name Foreign province/state/county Foreign postal code",
+        "Spouse Filing Status"
+      ],
+      "fieldName": "f1_23[0]",
+      "height": 14.000999999999976,
+      "highlight": {
+        "heightPct": 1.7678030303030272,
+        "leftPct": 54.28104575163398,
+        "topPct": 20.9594696969697,
+        "widthPct": 10.302287581699348
+      },
+      "id": "f1_23[0]",
+      "index": 27,
+      "kind": "text",
+      "left": 332.2,
+      "page": 1,
+      "top": 165.99900000000002,
+      "widgetType": "text",
+      "width": 63.05000000000001,
+      "fieldLabel": "City, town, or post office. If you have a foreign address, also complete spaces below. State ZIP code (2 of 3)",
+      "badge": "P1-027"
+    },
+    {
+      "contextLines": [
+        "City, town, or post office. If you have a foreign address, also complete spaces below. State ZIP code",
+        "Foreign country name Foreign province/state/county Foreign postal code",
+        "Presidential Election Campaign Check here if you, or your spouse if filing jointly, want $3 to go to this fund. Checking a box below will not change your tax or refund."
+      ],
+      "fieldName": "f1_24[0]",
+      "height": 14.000999999999976,
+      "highlight": {
+        "heightPct": 1.7678030303030272,
+        "leftPct": 64.86928104575163,
+        "topPct": 20.9594696969697,
+        "widthPct": 11.47875816993464
+      },
+      "id": "f1_24[0]",
+      "index": 28,
+      "kind": "text",
+      "left": 397.0,
+      "page": 1,
+      "top": 165.99900000000002,
+      "widgetType": "text",
+      "width": 70.25,
+      "fieldLabel": "City, town, or post office. If you have a foreign address, also complete spaces below. State ZIP code (3 of 3)",
+      "badge": "P1-028"
+    },
+    {
+      "contextLines": [
+        "Foreign country name Foreign province/state/county Foreign postal code",
+        "Check only one box. Single Married filing jointly (even if only one had income) Married filing separately (MFS). Enter spouse\u2019s SSN above and full name here: Head of household (HOH) Qualifying surviving spouse (QSS) If y",
+        "Spouse Filing Status"
+      ],
+      "fieldName": "f1_25[0]",
+      "height": 14.000999999999976,
+      "highlight": {
+        "heightPct": 1.7678030303030272,
+        "leftPct": 5.88235294117647,
+        "topPct": 23.98989898989899,
+        "widthPct": 30.4656862745098
+      },
+      "id": "f1_25[0]",
+      "index": 29,
+      "kind": "text",
+      "left": 36.0,
+      "page": 1,
+      "top": 190.0,
+      "widgetType": "text",
+      "width": 186.45,
+      "fieldLabel": "Foreign country name Foreign province/state/county Foreign postal code (1 of 3)",
+      "badge": "P1-029"
+    },
+    {
+      "contextLines": [
+        "Foreign country name Foreign province/state/county Foreign postal code",
+        "Check only one box. Single Married filing jointly (even if only one had income) Married filing separately (MFS). Enter spouse\u2019s SSN above and full name here: Head of household (HOH) Qualifying surviving spouse (QSS) If y",
+        "Spouse Filing Status"
+      ],
+      "fieldName": "f1_26[0]",
+      "height": 14.000999999999976,
+      "highlight": {
+        "heightPct": 1.7678030303030272,
+        "leftPct": 36.63398692810457,
+        "topPct": 23.98989898989899,
+        "widthPct": 27.94934640522876
+      },
+      "id": "f1_26[0]",
+      "index": 30,
+      "kind": "text",
+      "left": 224.2,
+      "page": 1,
+      "top": 190.0,
+      "widgetType": "text",
+      "width": 171.05,
+      "fieldLabel": "Foreign country name Foreign province/state/county Foreign postal code (2 of 3)",
+      "badge": "P1-030"
+    },
+    {
+      "contextLines": [
+        "Foreign country name Foreign province/state/county Foreign postal code",
+        "Check only one box. Single Married filing jointly (even if only one had income) Married filing separately (MFS). Enter spouse\u2019s SSN above and full name here: Head of household (HOH) Qualifying surviving spouse (QSS) If y",
+        "Spouse Filing Status"
+      ],
+      "fieldName": "f1_27[0]",
+      "height": 14.000999999999976,
+      "highlight": {
+        "heightPct": 1.7678030303030272,
+        "leftPct": 64.86928104575163,
+        "topPct": 23.98989898989899,
+        "widthPct": 11.47875816993464
+      },
+      "id": "f1_27[0]",
+      "index": 31,
+      "kind": "text",
+      "left": 397.0,
+      "page": 1,
+      "top": 190.0,
+      "widgetType": "text",
+      "width": 70.25,
+      "fieldLabel": "Foreign country name Foreign province/state/county Foreign postal code (3 of 3)",
+      "badge": "P1-031"
+    },
+    {
+      "contextLines": [
+        "Presidential Election Campaign Check here if you, or your spouse if filing jointly, want $3 to go to this fund. Checking a box below will not change your tax or refund.",
+        "Foreign country name Foreign province/state/county Foreign postal code",
+        "Check only one box. Single Married filing jointly (even if only one had income) Married filing separately (MFS). Enter spouse\u2019s SSN above and full name here: Head of household (HOH) Qualifying surviving spouse (QSS) If y"
+      ],
+      "fieldName": "c1_6[0]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 78.82352941176471,
+        "topPct": 24.55782828282829,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c1_6[0]",
+      "index": 33,
+      "kind": "checkbox",
+      "left": 482.4,
+      "page": 1,
+      "top": 194.49800000000005,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "Presidential Election Campaign Check here if you, or your spouse if filing jointly, want $3 to go to this fund. Checking a box below will not change your tax or refund. (2 of 3)",
+      "badge": "P1-033"
+    },
+    {
+      "contextLines": [
+        "Presidential Election Campaign Check here if you, or your spouse if filing jointly, want $3 to go to this fund. Checking a box below will not change your tax or refund.",
+        "You",
+        "Check only one box. Single Married filing jointly (even if only one had income) Married filing separately (MFS). Enter spouse\u2019s SSN above and full name here: Head of household (HOH) Qualifying surviving spouse (QSS) If y"
+      ],
+      "fieldName": "c1_7[0]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 85.88235294117648,
+        "topPct": 24.55782828282829,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c1_7[0]",
+      "index": 34,
+      "kind": "checkbox",
+      "left": 525.6,
+      "page": 1,
+      "top": 194.49800000000005,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "Presidential Election Campaign Check here if you, or your spouse if filing jointly, want $3 to go to this fund. Checking a box below will not change your tax or refund. (3 of 3)",
+      "badge": "P1-034"
+    },
+    {
+      "contextLines": [
+        "Spouse Filing Status",
+        "Check only one box. Single Married filing jointly (even if only one had income) Married filing separately (MFS). Enter spouse\u2019s SSN above and full name here: Head of household (HOH) Qualifying surviving spouse (QSS) If y"
+      ],
+      "fieldName": "c1_8[0]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 15.947549019607843,
+        "topPct": 26.01010101010101,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c1_8[0]",
+      "index": 35,
+      "kind": "checkbox",
+      "left": 97.599,
+      "page": 1,
+      "top": 206.0,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "Spouse Filing Status (1 of 4)",
+      "badge": "P1-035"
+    },
+    {
+      "contextLines": [
+        "Spouse Filing Status",
+        "Check only one box. Single Married filing jointly (even if only one had income) Married filing separately (MFS). Enter spouse\u2019s SSN above and full name here: Head of household (HOH) Qualifying surviving spouse (QSS) If y"
+      ],
+      "fieldName": "c1_8[0]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 57.12401960784314,
+        "topPct": 26.01010101010101,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c1_8[0]",
+      "index": 39,
+      "kind": "checkbox",
+      "left": 349.599,
+      "page": 1,
+      "top": 206.0,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "Spouse Filing Status (2 of 4)",
+      "badge": "P1-039"
+    },
+    {
+      "contextLines": [
+        "Spouse Filing Status",
+        "Check only one box. Single Married filing jointly (even if only one had income) Married filing separately (MFS). Enter spouse\u2019s SSN above and full name here: Head of household (HOH) Qualifying surviving spouse (QSS) If y"
+      ],
+      "fieldName": "c1_8[1]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 15.947549019607843,
+        "topPct": 27.525126262626266,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c1_8[1]",
+      "index": 36,
+      "kind": "checkbox",
+      "left": 97.599,
+      "page": 1,
+      "top": 217.99900000000002,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "Spouse Filing Status (3 of 4)",
+      "badge": "P1-036"
+    },
+    {
+      "contextLines": [
+        "Spouse Filing Status",
+        "Check only one box. Single Married filing jointly (even if only one had income) Married filing separately (MFS). Enter spouse\u2019s SSN above and full name here: Head of household (HOH) Qualifying surviving spouse (QSS) If y"
+      ],
+      "fieldName": "c1_8[1]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 57.12401960784314,
+        "topPct": 27.525126262626266,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c1_8[1]",
+      "index": 40,
+      "kind": "checkbox",
+      "left": 349.599,
+      "page": 1,
+      "top": 217.99900000000002,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "Spouse Filing Status (4 of 4)",
+      "badge": "P1-040"
+    },
+    {
+      "contextLines": [
+        "Check only one box. Single Married filing jointly (even if only one had income) Married filing separately (MFS). Enter spouse\u2019s SSN above and full name here: Head of household (HOH) Qualifying surviving spouse (QSS) If y",
+        "Spouse Filing Status",
+        "If treating a nonresident alien or dual-status alien spouse as a U.S. resident for the entire tax year, check the box and enter their name (see instructions and attach statement if required):"
+      ],
+      "fieldName": "c1_8[2]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 15.947549019607843,
+        "topPct": 29.040151515151518,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c1_8[2]",
+      "index": 37,
+      "kind": "checkbox",
+      "left": 97.599,
+      "page": 1,
+      "top": 229.99800000000005,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "Check only one box. Single Married filing jointly (even if only one had income) Married filing separately (MFS). Enter spouse\u2019s SSN above and full name here: Head of household (HOH) Qualifying surviving spouse (QSS) If y (1 of 2)",
+      "badge": "P1-037"
+    },
+    {
+      "contextLines": [
+        "If treating a nonresident alien or dual-status alien spouse as a U.S. resident for the entire tax year, check the box and enter their name (see instructions and attach statement if required):",
+        "Check only one box. Single Married filing jointly (even if only one had income) Married filing separately (MFS). Enter spouse\u2019s SSN above and full name here: Head of household (HOH) Qualifying surviving spouse (QSS) If y"
+      ],
+      "fieldName": "f1_28[0]",
+      "height": 11.999000000000024,
+      "highlight": {
+        "heightPct": 1.5150252525252554,
+        "leftPct": 29.411764705882355,
+        "topPct": 30.303156565656565,
+        "widthPct": 23.52941176470588
+      },
+      "id": "f1_28[0]",
+      "index": 38,
+      "kind": "text",
+      "left": 180.0,
+      "page": 1,
+      "top": 240.00099999999998,
+      "widgetType": "text",
+      "width": 144.0,
+      "fieldLabel": "If treating a nonresident alien or dual-status alien spouse as a U.S. resident for the entire tax year, check the box and enter their name (see instructions and attach statement if required): (1 of 2)",
+      "badge": "P1-038"
+    },
+    {
+      "contextLines": [
+        "If treating a nonresident alien or dual-status alien spouse as a U.S. resident for the entire tax year, check the box and enter their name (see instructions and attach statement if required):",
+        "Check only one box. Single Married filing jointly (even if only one had income) Married filing separately (MFS). Enter spouse\u2019s SSN above and full name here: Head of household (HOH) Qualifying surviving spouse (QSS) If y"
+      ],
+      "fieldName": "f1_29[0]",
+      "height": 11.999000000000024,
+      "highlight": {
+        "heightPct": 1.5150252525252554,
+        "leftPct": 59.150326797385624,
+        "topPct": 31.060479797979802,
+        "widthPct": 34.967320261437905
+      },
+      "id": "f1_29[0]",
+      "index": 41,
+      "kind": "text",
+      "left": 362.0,
+      "page": 1,
+      "top": 245.99900000000002,
+      "widgetType": "text",
+      "width": 214.0,
+      "fieldLabel": "If treating a nonresident alien or dual-status alien spouse as a U.S. resident for the entire tax year, check the box and enter their name (see instructions and attach statement if required): (2 of 2)",
+      "badge": "P1-041"
+    },
+    {
+      "contextLines": [
+        "Check only one box. Single Married filing jointly (even if only one had income) Married filing separately (MFS). Enter spouse\u2019s SSN above and full name here: Head of household (HOH) Qualifying surviving spouse (QSS) If y",
+        "Digital Assets At any time during 2025, did you: (a) receive (as a reward, award, or payment for property or services); or (b) sell,exchange, or otherwise dispose of a digital asset (or a financial interest in a digital ",
+        "If treating a nonresident alien or dual-status alien spouse as a U.S. resident for the entire tax year, check the box and enter their name (see instructions and attach statement if required):"
+      ],
+      "fieldName": "c1_9[0]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 15.947549019607843,
+        "topPct": 32.5915404040404,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c1_9[0]",
+      "index": 42,
+      "kind": "checkbox",
+      "left": 97.599,
+      "page": 1,
+      "top": 258.125,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "Check only one box. Single Married filing jointly (even if only one had income) Married filing separately (MFS). Enter spouse\u2019s SSN above and full name here: Head of household (HOH) Qualifying surviving spouse (QSS) If y (2 of 2)",
+      "badge": "P1-042"
+    },
+    {
+      "contextLines": [
+        "Digital Assets At any time during 2025, did you: (a) receive (as a reward, award, or payment for property or services); or (b) sell,exchange, or otherwise dispose of a digital asset (or a financial interest in a digital ",
+        "Yes No",
+        "If treating a nonresident alien or dual-status alien spouse as a U.S. resident for the entire tax year, check the box and enter their name (see instructions and attach statement if required):"
+      ],
+      "fieldName": "f1_30[0]",
+      "height": 11.499000000000024,
+      "highlight": {
+        "heightPct": 1.4518939393939425,
+        "leftPct": 51.17647058823529,
+        "topPct": 33.71224747474747,
+        "widthPct": 42.94117647058824
+      },
+      "id": "f1_30[0]",
+      "index": 43,
+      "kind": "text",
+      "left": 313.2,
+      "page": 1,
+      "top": 267.001,
+      "widgetType": "text",
+      "width": 262.8,
+      "fieldLabel": "Digital Assets At any time during 2025, did you: (a) receive (as a reward, award, or payment for property or services); or (b) sell,exchange, or otherwise dispose of a digital asset (or a financial interest in a digital ",
+      "badge": "P1-043"
+    },
+    {
+      "contextLines": [
+        "Dependent 1 Dependent 2 Dependent 3 Dependent 4",
+        "Digital Assets At any time during 2025, did you: (a) receive (as a reward, award, or payment for property or services); or (b) sell,exchange, or otherwise dispose of a digital asset (or a financial interest in a digital ",
+        "Yes No"
+      ],
+      "fieldName": "c1_10[0]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 84.70588235294117,
+        "topPct": 36.23737373737374,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c1_10[0]",
+      "index": 44,
+      "kind": "checkbox",
+      "left": 518.4,
+      "page": 1,
+      "top": 287.0,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "Dependent 1 Dependent 2 Dependent 3 Dependent 4 (1 of 5)",
+      "badge": "P1-044"
+    },
+    {
+      "contextLines": [
+        "Yes No",
+        "Dependent 1 Dependent 2 Dependent 3 Dependent 4",
+        "Digital Assets At any time during 2025, did you: (a) receive (as a reward, award, or payment for property or services); or (b) sell,exchange, or otherwise dispose of a digital asset (or a financial interest in a digital "
+      ],
+      "fieldName": "c1_10[1]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 90.58823529411765,
+        "topPct": 36.23737373737374,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c1_10[1]",
+      "index": 45,
+      "kind": "checkbox",
+      "left": 554.4,
+      "page": 1,
+      "top": 287.0,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "Yes No",
+      "badge": "P1-045"
+    },
+    {
+      "contextLines": [
+        "(1) First name",
+        "(2) Last name",
+        "Dependent 1 Dependent 2 Dependent 3 Dependent 4"
+      ],
+      "fieldName": "f1_31[0]",
+      "height": 11.998999999999967,
+      "highlight": {
+        "heightPct": 1.5150252525252483,
+        "leftPct": 23.692810457516337,
+        "topPct": 39.015025252525255,
+        "widthPct": 17.36111111111111
+      },
+      "id": "f1_31[0]",
+      "index": 47,
+      "kind": "text",
+      "left": 145.0,
+      "page": 1,
+      "top": 308.999,
+      "widgetType": "text",
+      "width": 106.25,
+      "fieldLabel": "(1) First name",
+      "badge": "P1-047"
+    },
+    {
+      "contextLines": [
+        "Dependent 1 Dependent 2 Dependent 3 Dependent 4",
+        "(1) First name",
+        "(2) Last name"
+      ],
+      "fieldName": "f1_32[0]",
+      "height": 11.998999999999967,
+      "highlight": {
+        "heightPct": 1.5150252525252483,
+        "leftPct": 41.33986928104575,
+        "topPct": 39.015025252525255,
+        "widthPct": 17.36111111111111
+      },
+      "id": "f1_32[0]",
+      "index": 48,
+      "kind": "text",
+      "left": 253.0,
+      "page": 1,
+      "top": 308.999,
+      "widgetType": "text",
+      "width": 106.25,
+      "fieldLabel": "Dependent 1 Dependent 2 Dependent 3 Dependent 4 (2 of 5)",
+      "badge": "P1-048"
+    },
+    {
+      "contextLines": [
+        "Dependent 1 Dependent 2 Dependent 3 Dependent 4",
+        "If more than four dependents, see instructions and check here . . (4) Relationship",
+        "Digital Assets At any time during 2025, did you: (a) receive (as a reward, award, or payment for property or services); or (b) sell,exchange, or otherwise dispose of a digital asset (or a financial interest in a digital "
+      ],
+      "fieldName": "f1_33[0]",
+      "height": 11.998999999999967,
+      "highlight": {
+        "heightPct": 1.5150252525252483,
+        "leftPct": 58.98692810457516,
+        "topPct": 39.015025252525255,
+        "widthPct": 17.36111111111111
+      },
+      "id": "f1_33[0]",
+      "index": 49,
+      "kind": "text",
+      "left": 361.0,
+      "page": 1,
+      "top": 308.999,
+      "widgetType": "text",
+      "width": 106.25,
+      "fieldLabel": "Dependent 1 Dependent 2 Dependent 3 Dependent 4 (3 of 5)",
+      "badge": "P1-049"
+    },
+    {
+      "contextLines": [
+        "Dependent 1 Dependent 2 Dependent 3 Dependent 4",
+        "Yes No",
+        "Digital Assets At any time during 2025, did you: (a) receive (as a reward, award, or payment for property or services); or (b) sell,exchange, or otherwise dispose of a digital asset (or a financial interest in a digital "
+      ],
+      "fieldName": "f1_34[0]",
+      "height": 11.998999999999967,
+      "highlight": {
+        "heightPct": 1.5150252525252483,
+        "leftPct": 76.63398692810458,
+        "topPct": 39.015025252525255,
+        "widthPct": 17.483660130718953
+      },
+      "id": "f1_34[0]",
+      "index": 50,
+      "kind": "amount",
+      "left": 469.0,
+      "page": 1,
+      "top": 308.999,
+      "widgetType": "text",
+      "width": 107.0,
+      "fieldLabel": "Dependent 1 Dependent 2 Dependent 3 Dependent 4 (4 of 5)",
+      "badge": "P1-050"
+    },
+    {
+      "contextLines": [
+        "(2) Last name",
+        "(3) SSN",
+        "Dependents (see instructions)"
+      ],
+      "fieldName": "f1_35[0]",
+      "height": 11.999000000000024,
+      "highlight": {
+        "heightPct": 1.5150252525252554,
+        "leftPct": 23.692810457516337,
+        "topPct": 40.530050505050504,
+        "widthPct": 17.36111111111111
+      },
+      "id": "f1_35[0]",
+      "index": 51,
+      "kind": "text",
+      "left": 145.0,
+      "page": 1,
+      "top": 320.998,
+      "widgetType": "text",
+      "width": 106.25,
+      "fieldLabel": "(2) Last name (1 of 2)",
+      "badge": "P1-051"
+    },
+    {
+      "contextLines": [
+        "(2) Last name",
+        "(3) SSN",
+        "Dependents (see instructions)"
+      ],
+      "fieldName": "f1_36[0]",
+      "height": 11.999000000000024,
+      "highlight": {
+        "heightPct": 1.5150252525252554,
+        "leftPct": 41.33986928104575,
+        "topPct": 40.530050505050504,
+        "widthPct": 17.36111111111111
+      },
+      "id": "f1_36[0]",
+      "index": 52,
+      "kind": "text",
+      "left": 253.0,
+      "page": 1,
+      "top": 320.998,
+      "widgetType": "text",
+      "width": 106.25,
+      "fieldLabel": "(2) Last name (2 of 2)",
+      "badge": "P1-052"
+    },
+    {
+      "contextLines": [
+        "If more than four dependents, see instructions and check here . . (4) Relationship",
+        "Dependent 1 Dependent 2 Dependent 3 Dependent 4"
+      ],
+      "fieldName": "f1_37[0]",
+      "height": 11.999000000000024,
+      "highlight": {
+        "heightPct": 1.5150252525252554,
+        "leftPct": 58.98692810457516,
+        "topPct": 40.530050505050504,
+        "widthPct": 17.36111111111111
+      },
+      "id": "f1_37[0]",
+      "index": 53,
+      "kind": "text",
+      "left": 361.0,
+      "page": 1,
+      "top": 320.998,
+      "widgetType": "text",
+      "width": 106.25,
+      "fieldLabel": "If more than four dependents, see instructions and check here . . (4) Relationship (1 of 2)",
+      "badge": "P1-053"
+    },
+    {
+      "contextLines": [
+        "Dependent 1 Dependent 2 Dependent 3 Dependent 4"
+      ],
+      "fieldName": "f1_38[0]",
+      "height": 11.999000000000024,
+      "highlight": {
+        "heightPct": 1.5150252525252554,
+        "leftPct": 76.63398692810458,
+        "topPct": 40.530050505050504,
+        "widthPct": 17.483660130718953
+      },
+      "id": "f1_38[0]",
+      "index": 54,
+      "kind": "amount",
+      "left": 469.0,
+      "page": 1,
+      "top": 320.998,
+      "widgetType": "text",
+      "width": 107.0,
+      "fieldLabel": "Dependent 1 Dependent 2 Dependent 3 Dependent 4 (5 of 5)",
+      "badge": "P1-054"
+    },
+    {
+      "contextLines": [
+        "(3) SSN",
+        "(2) Last name",
+        "(5) Check if lived with you more than half of 2025"
+      ],
+      "fieldName": "f1_39[0]",
+      "height": 11.998999999999967,
+      "highlight": {
+        "heightPct": 1.5150252525252483,
+        "leftPct": 23.692810457516337,
+        "topPct": 42.04507575757576,
+        "widthPct": 17.36111111111111
+      },
+      "id": "f1_39[0]",
+      "index": 55,
+      "kind": "text",
+      "left": 145.0,
+      "page": 1,
+      "top": 332.997,
+      "widgetType": "text",
+      "width": 106.25,
+      "fieldLabel": "(3) SSN (1 of 2)",
+      "badge": "P1-055"
+    },
+    {
+      "contextLines": [
+        "(3) SSN",
+        "(2) Last name",
+        "(a) Yes (a) Yes (a) Yes (a) Yes"
+      ],
+      "fieldName": "f1_40[0]",
+      "height": 11.998999999999967,
+      "highlight": {
+        "heightPct": 1.5150252525252483,
+        "leftPct": 41.33986928104575,
+        "topPct": 42.04507575757576,
+        "widthPct": 17.36111111111111
+      },
+      "id": "f1_40[0]",
+      "index": 56,
+      "kind": "text",
+      "left": 253.0,
+      "page": 1,
+      "top": 332.997,
+      "widgetType": "text",
+      "width": 106.25,
+      "fieldLabel": "(3) SSN (2 of 2)",
+      "badge": "P1-056"
+    },
+    {
+      "contextLines": [
+        "(a) Yes (a) Yes (a) Yes (a) Yes",
+        "(5) Check if lived with you more than half of 2025",
+        "If more than four dependents, see instructions and check here . . (4) Relationship"
+      ],
+      "fieldName": "f1_41[0]",
+      "height": 11.998999999999967,
+      "highlight": {
+        "heightPct": 1.5150252525252483,
+        "leftPct": 58.98692810457516,
+        "topPct": 42.04507575757576,
+        "widthPct": 17.36111111111111
+      },
+      "id": "f1_41[0]",
+      "index": 57,
+      "kind": "text",
+      "left": 361.0,
+      "page": 1,
+      "top": 332.997,
+      "widgetType": "text",
+      "width": 106.25,
+      "fieldLabel": "(a) Yes (a) Yes (a) Yes (a) Yes (1 of 9)",
+      "badge": "P1-057"
+    },
+    {
+      "contextLines": [
+        "(a) Yes (a) Yes (a) Yes (a) Yes"
+      ],
+      "fieldName": "f1_42[0]",
+      "height": 11.998999999999967,
+      "highlight": {
+        "heightPct": 1.5150252525252483,
+        "leftPct": 76.63398692810458,
+        "topPct": 42.04507575757576,
+        "widthPct": 17.483660130718953
+      },
+      "id": "f1_42[0]",
+      "index": 58,
+      "kind": "amount",
+      "left": 469.0,
+      "page": 1,
+      "top": 332.997,
+      "widgetType": "text",
+      "width": 107.0,
+      "fieldLabel": "(a) Yes (a) Yes (a) Yes (a) Yes (2 of 9)",
+      "badge": "P1-058"
+    },
+    {
+      "contextLines": [
+        "(5) Check if lived with you more than half of 2025",
+        "If more than four dependents, see instructions and check here . . (4) Relationship",
+        "(a) Yes (a) Yes (a) Yes (a) Yes"
+      ],
+      "fieldName": "f1_43[0]",
+      "height": 11.999000000000024,
+      "highlight": {
+        "heightPct": 1.5150252525252554,
+        "leftPct": 23.692810457516337,
+        "topPct": 43.56010101010101,
+        "widthPct": 17.36111111111111
+      },
+      "id": "f1_43[0]",
+      "index": 59,
+      "kind": "text",
+      "left": 145.0,
+      "page": 1,
+      "top": 344.996,
+      "widgetType": "text",
+      "width": 106.25,
+      "fieldLabel": "(5) Check if lived with you more than half of 2025",
+      "badge": "P1-059"
+    },
+    {
+      "contextLines": [
+        "(a) Yes (a) Yes (a) Yes (a) Yes",
+        "(5) Check if lived with you more than half of 2025",
+        "If more than four dependents, see instructions and check here . . (4) Relationship"
+      ],
+      "fieldName": "f1_44[0]",
+      "height": 11.999000000000024,
+      "highlight": {
+        "heightPct": 1.5150252525252554,
+        "leftPct": 41.33986928104575,
+        "topPct": 43.56010101010101,
+        "widthPct": 17.36111111111111
+      },
+      "id": "f1_44[0]",
+      "index": 60,
+      "kind": "text",
+      "left": 253.0,
+      "page": 1,
+      "top": 344.996,
+      "widgetType": "text",
+      "width": 106.25,
+      "fieldLabel": "(a) Yes (a) Yes (a) Yes (a) Yes (3 of 9)",
+      "badge": "P1-060"
+    },
+    {
+      "contextLines": [
+        "(a) Yes (a) Yes (a) Yes (a) Yes",
+        "(5) Check if lived with you more than half of 2025",
+        "If more than four dependents, see instructions and check here . . (4) Relationship"
+      ],
+      "fieldName": "f1_45[0]",
+      "height": 11.999000000000024,
+      "highlight": {
+        "heightPct": 1.5150252525252554,
+        "leftPct": 58.98692810457516,
+        "topPct": 43.56010101010101,
+        "widthPct": 17.36111111111111
+      },
+      "id": "f1_45[0]",
+      "index": 61,
+      "kind": "text",
+      "left": 361.0,
+      "page": 1,
+      "top": 344.996,
+      "widgetType": "text",
+      "width": 106.25,
+      "fieldLabel": "(a) Yes (a) Yes (a) Yes (a) Yes (4 of 9)",
+      "badge": "P1-061"
+    },
+    {
+      "contextLines": [
+        "(a) Yes (a) Yes (a) Yes (a) Yes",
+        "(b) And in the U.S. (b) And in the U.S. (b) And in the U.S. (b) And in the U.S."
+      ],
+      "fieldName": "f1_46[0]",
+      "height": 11.999000000000024,
+      "highlight": {
+        "heightPct": 1.5150252525252554,
+        "leftPct": 76.63398692810458,
+        "topPct": 43.56010101010101,
+        "widthPct": 17.483660130718953
+      },
+      "id": "f1_46[0]",
+      "index": 62,
+      "kind": "amount",
+      "left": 469.0,
+      "page": 1,
+      "top": 344.996,
+      "widgetType": "text",
+      "width": 107.0,
+      "fieldLabel": "(a) Yes (a) Yes (a) Yes (a) Yes (5 of 9)",
+      "badge": "P1-062"
+    },
+    {
+      "contextLines": [
+        "(a) Yes (a) Yes (a) Yes (a) Yes",
+        "(b) And in the U.S. (b) And in the U.S. (b) And in the U.S. (b) And in the U.S.",
+        "(5) Check if lived with you more than half of 2025"
+      ],
+      "fieldName": "c1_12[0]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 27.712418300653596,
+        "topPct": 45.32840909090909,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c1_12[0]",
+      "index": 63,
+      "kind": "checkbox",
+      "left": 169.6,
+      "page": 1,
+      "top": 359.001,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "(a) Yes (a) Yes (a) Yes (a) Yes (6 of 9)",
+      "badge": "P1-063"
+    },
+    {
+      "contextLines": [
+        "(a) Yes (a) Yes (a) Yes (a) Yes",
+        "(b) And in the U.S. (b) And in the U.S. (b) And in the U.S. (b) And in the U.S.",
+        "(5) Check if lived with you more than half of 2025"
+      ],
+      "fieldName": "c1_14[0]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 45.35947712418301,
+        "topPct": 45.32840909090909,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c1_14[0]",
+      "index": 65,
+      "kind": "checkbox",
+      "left": 277.6,
+      "page": 1,
+      "top": 359.001,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "(a) Yes (a) Yes (a) Yes (a) Yes (7 of 9)",
+      "badge": "P1-065"
+    },
+    {
+      "contextLines": [
+        "(a) Yes (a) Yes (a) Yes (a) Yes",
+        "(b) And in the U.S. (b) And in the U.S. (b) And in the U.S. (b) And in the U.S.",
+        "Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled"
+      ],
+      "fieldName": "c1_16[0]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 63.006535947712415,
+        "topPct": 45.32840909090909,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c1_16[0]",
+      "index": 67,
+      "kind": "checkbox",
+      "left": 385.6,
+      "page": 1,
+      "top": 359.001,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "(a) Yes (a) Yes (a) Yes (a) Yes (8 of 9)",
+      "badge": "P1-067"
+    },
+    {
+      "contextLines": [
+        "(a) Yes (a) Yes (a) Yes (a) Yes",
+        "(b) And in the U.S. (b) And in the U.S. (b) And in the U.S. (b) And in the U.S.",
+        "Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled"
+      ],
+      "fieldName": "c1_18[0]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 80.65359477124183,
+        "topPct": 45.32840909090909,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c1_18[0]",
+      "index": 69,
+      "kind": "checkbox",
+      "left": 493.6,
+      "page": 1,
+      "top": 359.001,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "(a) Yes (a) Yes (a) Yes (a) Yes (9 of 9)",
+      "badge": "P1-069"
+    },
+    {
+      "contextLines": [
+        "If more than four dependents, see instructions and check here . . (4) Relationship",
+        "(5) Check if lived with you more than half of 2025",
+        "(6) Check if"
+      ],
+      "fieldName": "c1_11[0]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 13.022712418300653,
+        "topPct": 46.52777777777778,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c1_11[0]",
+      "index": 46,
+      "kind": "checkbox",
+      "left": 79.699,
+      "page": 1,
+      "top": 368.5,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "If more than four dependents, see instructions and check here . . (4) Relationship (2 of 2)",
+      "badge": "P1-046"
+    },
+    {
+      "contextLines": [
+        "(b) And in the U.S. (b) And in the U.S. (b) And in the U.S. (b) And in the U.S.",
+        "(a) Yes (a) Yes (a) Yes (a) Yes",
+        "Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled"
+      ],
+      "fieldName": "c1_13[0]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 27.712418300653596,
+        "topPct": 46.84343434343434,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c1_13[0]",
+      "index": 64,
+      "kind": "checkbox",
+      "left": 169.6,
+      "page": 1,
+      "top": 371.0,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "(b) And in the U.S. (b) And in the U.S. (b) And in the U.S. (b) And in the U.S. (1 of 9)",
+      "badge": "P1-064"
+    },
+    {
+      "contextLines": [
+        "(b) And in the U.S. (b) And in the U.S. (b) And in the U.S. (b) And in the U.S.",
+        "(a) Yes (a) Yes (a) Yes (a) Yes",
+        "Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled"
+      ],
+      "fieldName": "c1_15[0]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 45.35947712418301,
+        "topPct": 46.84343434343434,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c1_15[0]",
+      "index": 66,
+      "kind": "checkbox",
+      "left": 277.6,
+      "page": 1,
+      "top": 371.0,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "(b) And in the U.S. (b) And in the U.S. (b) And in the U.S. (b) And in the U.S. (2 of 9)",
+      "badge": "P1-066"
+    },
+    {
+      "contextLines": [
+        "(b) And in the U.S. (b) And in the U.S. (b) And in the U.S. (b) And in the U.S.",
+        "(a) Yes (a) Yes (a) Yes (a) Yes",
+        "Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled"
+      ],
+      "fieldName": "c1_17[0]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 63.006535947712415,
+        "topPct": 46.84343434343434,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c1_17[0]",
+      "index": 68,
+      "kind": "checkbox",
+      "left": 385.6,
+      "page": 1,
+      "top": 371.0,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "(b) And in the U.S. (b) And in the U.S. (b) And in the U.S. (b) And in the U.S. (3 of 9)",
+      "badge": "P1-068"
+    },
+    {
+      "contextLines": [
+        "(b) And in the U.S. (b) And in the U.S. (b) And in the U.S. (b) And in the U.S.",
+        "(a) Yes (a) Yes (a) Yes (a) Yes",
+        "Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled"
+      ],
+      "fieldName": "c1_19[0]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 80.65359477124183,
+        "topPct": 46.84343434343434,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c1_19[0]",
+      "index": 70,
+      "kind": "checkbox",
+      "left": 493.6,
+      "page": 1,
+      "top": 371.0,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "(b) And in the U.S. (b) And in the U.S. (b) And in the U.S. (b) And in the U.S. (4 of 9)",
+      "badge": "P1-070"
+    },
+    {
+      "contextLines": [
+        "(6) Check if",
+        "(5) Check if lived with you more than half of 2025",
+        "If more than four dependents, see instructions and check here . . (4) Relationship"
+      ],
+      "fieldName": "c1_20[0]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 24.18300653594771,
+        "topPct": 48.358459595959594,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c1_20[0]",
+      "index": 71,
+      "kind": "checkbox",
+      "left": 148.0,
+      "page": 1,
+      "top": 382.999,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "(6) Check if (1 of 3)",
+      "badge": "P1-071"
+    },
+    {
+      "contextLines": [
+        "(6) Check if",
+        "(5) Check if lived with you more than half of 2025",
+        "(b) And in the U.S. (b) And in the U.S. (b) And in the U.S. (b) And in the U.S."
+      ],
+      "fieldName": "c1_21[0]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 32.41830065359477,
+        "topPct": 48.358459595959594,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c1_21[0]",
+      "index": 72,
+      "kind": "checkbox",
+      "left": 198.4,
+      "page": 1,
+      "top": 382.999,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "(6) Check if (2 of 3)",
+      "badge": "P1-072"
+    },
+    {
+      "contextLines": [
+        "(6) Check if",
+        "(b) And in the U.S. (b) And in the U.S. (b) And in the U.S. (b) And in the U.S.",
+        "Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled"
+      ],
+      "fieldName": "c1_22[0]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 41.830065359477125,
+        "topPct": 48.358459595959594,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c1_22[0]",
+      "index": 73,
+      "kind": "checkbox",
+      "left": 256.0,
+      "page": 1,
+      "top": 382.999,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "(6) Check if (3 of 3)",
+      "badge": "P1-073"
+    },
+    {
+      "contextLines": [
+        "(b) And in the U.S. (b) And in the U.S. (b) And in the U.S. (b) And in the U.S.",
+        "Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled",
+        "(6) Check if"
+      ],
+      "fieldName": "c1_23[0]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 50.06535947712418,
+        "topPct": 48.358459595959594,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c1_23[0]",
+      "index": 74,
+      "kind": "checkbox",
+      "left": 306.4,
+      "page": 1,
+      "top": 382.999,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "(b) And in the U.S. (b) And in the U.S. (b) And in the U.S. (b) And in the U.S. (5 of 9)",
+      "badge": "P1-074"
+    },
+    {
+      "contextLines": [
+        "(b) And in the U.S. (b) And in the U.S. (b) And in the U.S. (b) And in the U.S.",
+        "Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled",
+        "Child tax credit Credit for other dependents Child tax credit Credit for other dependents Child tax credit Credit for other dependents Child tax credit Credit for other dependents"
+      ],
+      "fieldName": "c1_24[0]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 59.47712418300654,
+        "topPct": 48.358459595959594,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c1_24[0]",
+      "index": 75,
+      "kind": "checkbox",
+      "left": 364.0,
+      "page": 1,
+      "top": 382.999,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "(b) And in the U.S. (b) And in the U.S. (b) And in the U.S. (b) And in the U.S. (6 of 9)",
+      "badge": "P1-075"
+    },
+    {
+      "contextLines": [
+        "(b) And in the U.S. (b) And in the U.S. (b) And in the U.S. (b) And in the U.S.",
+        "Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled",
+        "Child tax credit Credit for other dependents Child tax credit Credit for other dependents Child tax credit Credit for other dependents Child tax credit Credit for other dependents"
+      ],
+      "fieldName": "c1_25[0]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 67.71241830065358,
+        "topPct": 48.358459595959594,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c1_25[0]",
+      "index": 76,
+      "kind": "checkbox",
+      "left": 414.4,
+      "page": 1,
+      "top": 382.999,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "(b) And in the U.S. (b) And in the U.S. (b) And in the U.S. (b) And in the U.S. (7 of 9)",
+      "badge": "P1-076"
+    },
+    {
+      "contextLines": [
+        "(b) And in the U.S. (b) And in the U.S. (b) And in the U.S. (b) And in the U.S.",
+        "Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled",
+        "Child tax credit Credit for other dependents Child tax credit Credit for other dependents Child tax credit Credit for other dependents Child tax credit Credit for other dependents"
+      ],
+      "fieldName": "c1_26[0]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 77.12418300653596,
+        "topPct": 48.358459595959594,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c1_26[0]",
+      "index": 77,
+      "kind": "checkbox",
+      "left": 472.0,
+      "page": 1,
+      "top": 382.999,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "(b) And in the U.S. (b) And in the U.S. (b) And in the U.S. (b) And in the U.S. (8 of 9)",
+      "badge": "P1-077"
+    },
+    {
+      "contextLines": [
+        "(b) And in the U.S. (b) And in the U.S. (b) And in the U.S. (b) And in the U.S.",
+        "Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled",
+        "Child tax credit Credit for other dependents Child tax credit Credit for other dependents Child tax credit Credit for other dependents Child tax credit Credit for other dependents"
+      ],
+      "fieldName": "c1_27[0]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 85.359477124183,
+        "topPct": 48.358459595959594,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c1_27[0]",
+      "index": 78,
+      "kind": "checkbox",
+      "left": 522.4,
+      "page": 1,
+      "top": 382.999,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "(b) And in the U.S. (b) And in the U.S. (b) And in the U.S. (b) And in the U.S. (9 of 9)",
+      "badge": "P1-078"
+    },
+    {
+      "contextLines": [
+        "(7) Credits",
+        "(6) Check if",
+        "Check if your filing status is MFS or HOH and you lived apart from your spouse for the last 6 months of 2025, or you are legally separated according to your state law under a written separation agreement or a decree of s"
+      ],
+      "fieldName": "c1_28[0]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 24.18300653594771,
+        "topPct": 51.00984848484848,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c1_28[0]",
+      "index": 79,
+      "kind": "checkbox",
+      "left": 148.0,
+      "page": 1,
+      "top": 403.998,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "(7) Credits (1 of 3)",
+      "badge": "P1-079"
+    },
+    {
+      "contextLines": [
+        "(7) Credits",
+        "Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled",
+        "Child tax credit Credit for other dependents Child tax credit Credit for other dependents Child tax credit Credit for other dependents Child tax credit Credit for other dependents"
+      ],
+      "fieldName": "c1_28[1]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 32.41830065359477,
+        "topPct": 51.00984848484848,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c1_28[1]",
+      "index": 80,
+      "kind": "checkbox",
+      "left": 198.4,
+      "page": 1,
+      "top": 403.998,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "(7) Credits (2 of 3)",
+      "badge": "P1-080"
+    },
+    {
+      "contextLines": [
+        "Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled",
+        "(7) Credits",
+        "Child tax credit Credit for other dependents Child tax credit Credit for other dependents Child tax credit Credit for other dependents Child tax credit Credit for other dependents"
+      ],
+      "fieldName": "c1_29[0]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 41.830065359477125,
+        "topPct": 51.00984848484848,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c1_29[0]",
+      "index": 81,
+      "kind": "checkbox",
+      "left": 256.0,
+      "page": 1,
+      "top": 403.998,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled (1 of 6)",
+      "badge": "P1-081"
+    },
+    {
+      "contextLines": [
+        "Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled",
+        "Child tax credit Credit for other dependents Child tax credit Credit for other dependents Child tax credit Credit for other dependents Child tax credit Credit for other dependents",
+        "(7) Credits"
+      ],
+      "fieldName": "c1_29[1]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 50.06535947712418,
+        "topPct": 51.00984848484848,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c1_29[1]",
+      "index": 82,
+      "kind": "checkbox",
+      "left": 306.4,
+      "page": 1,
+      "top": 403.998,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled (2 of 6)",
+      "badge": "P1-082"
+    },
+    {
+      "contextLines": [
+        "Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled",
+        "Child tax credit Credit for other dependents Child tax credit Credit for other dependents Child tax credit Credit for other dependents Child tax credit Credit for other dependents",
+        "Check if your filing status is MFS or HOH and you lived apart from your spouse for the last 6 months of 2025, or you are legally separated according to your state law under a written separation agreement or a decree of s"
+      ],
+      "fieldName": "c1_30[0]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 59.47712418300654,
+        "topPct": 51.00984848484848,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c1_30[0]",
+      "index": 83,
+      "kind": "checkbox",
+      "left": 364.0,
+      "page": 1,
+      "top": 403.998,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled (3 of 6)",
+      "badge": "P1-083"
+    },
+    {
+      "contextLines": [
+        "Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled",
+        "Child tax credit Credit for other dependents Child tax credit Credit for other dependents Child tax credit Credit for other dependents Child tax credit Credit for other dependents",
+        "Check if your filing status is MFS or HOH and you lived apart from your spouse for the last 6 months of 2025, or you are legally separated according to your state law under a written separation agreement or a decree of s"
+      ],
+      "fieldName": "c1_30[1]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 67.71241830065358,
+        "topPct": 51.00984848484848,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c1_30[1]",
+      "index": 84,
+      "kind": "checkbox",
+      "left": 414.4,
+      "page": 1,
+      "top": 403.998,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled (4 of 6)",
+      "badge": "P1-084"
+    },
+    {
+      "contextLines": [
+        "Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled",
+        "Child tax credit Credit for other dependents Child tax credit Credit for other dependents Child tax credit Credit for other dependents Child tax credit Credit for other dependents",
+        "Check if your filing status is MFS or HOH and you lived apart from your spouse for the last 6 months of 2025, or you are legally separated according to your state law under a written separation agreement or a decree of s"
+      ],
+      "fieldName": "c1_31[0]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 77.12418300653596,
+        "topPct": 51.00984848484848,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c1_31[0]",
+      "index": 85,
+      "kind": "checkbox",
+      "left": 472.0,
+      "page": 1,
+      "top": 403.998,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled (5 of 6)",
+      "badge": "P1-085"
+    },
+    {
+      "contextLines": [
+        "Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled",
+        "Child tax credit Credit for other dependents Child tax credit Credit for other dependents Child tax credit Credit for other dependents Child tax credit Credit for other dependents",
+        "Check if your filing status is MFS or HOH and you lived apart from your spouse for the last 6 months of 2025, or you are legally separated according to your state law under a written separation agreement or a decree of s"
+      ],
+      "fieldName": "c1_31[1]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 85.359477124183,
+        "topPct": 51.00984848484848,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c1_31[1]",
+      "index": 86,
+      "kind": "checkbox",
+      "left": 522.4,
+      "page": 1,
+      "top": 403.998,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled Full-time student Permanently and totally disabled (6 of 6)",
+      "badge": "P1-086"
+    },
+    {
+      "contextLines": [
+        "(7) Credits",
+        "Income 1a Total amount from Form(s) W-2, box 1 (see instructions) . . . . . . . . . . . . . 1a",
+        "Check if your filing status is MFS or HOH and you lived apart from your spouse for the last 6 months of 2025, or you are legally separated according to your state law under a written separation agreement or a decree of s"
+      ],
+      "fieldName": "c1_32[0]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 15.620751633986929,
+        "topPct": 53.598358585858584,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c1_32[0]",
+      "index": 87,
+      "kind": "checkbox",
+      "left": 95.599,
+      "page": 1,
+      "top": 424.499,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "(7) Credits (3 of 3)",
+      "badge": "P1-087"
+    },
+    {
+      "contextLines": [
+        "b Household employee wages not reported on Form(s) W-2 . . . . . . . . . . . . . 1b",
+        "Check if your filing status is MFS or HOH and you lived apart from your spouse for the last 6 months of 2025, or you are legally separated according to your state law under a written separation agreement or a decree of s",
+        "Income 1a Total amount from Form(s) W-2, box 1 (see instructions) . . . . . . . . . . . . . 1a"
+      ],
+      "fieldName": "f1_47[0]",
+      "height": 11.999000000000024,
+      "highlight": {
+        "heightPct": 1.5150252525252554,
+        "leftPct": 82.35294117647058,
+        "topPct": 56.81818181818182,
+        "widthPct": 11.76470588235294
+      },
+      "id": "f1_47[0]",
+      "index": 88,
+      "kind": "amount",
+      "left": 504.0,
+      "page": 1,
+      "top": 450.0,
+      "widgetType": "text",
+      "width": 72.0,
+      "fieldLabel": "b Household employee wages not reported on Form(s) W-2 . . . . . . . . . . . . . 1b (1 of 3)",
+      "badge": "b"
+    },
+    {
+      "contextLines": [
+        "b Household employee wages not reported on Form(s) W-2 . . . . . . . . . . . . . 1b",
+        "c Tip income not reported on line 1a (see instructions) . . . . . . . . . . . . . . 1c",
+        "Income 1a Total amount from Form(s) W-2, box 1 (see instructions) . . . . . . . . . . . . . 1a"
+      ],
+      "fieldName": "f1_48[0]",
+      "height": 11.998999999999967,
+      "highlight": {
+        "heightPct": 1.5150252525252483,
+        "leftPct": 82.35294117647058,
+        "topPct": 58.33320707070707,
+        "widthPct": 11.76470588235294
+      },
+      "id": "f1_48[0]",
+      "index": 89,
+      "kind": "amount",
+      "left": 504.0,
+      "page": 1,
+      "top": 461.999,
+      "widgetType": "text",
+      "width": 72.0,
+      "fieldLabel": "b Household employee wages not reported on Form(s) W-2 . . . . . . . . . . . . . 1b (2 of 3)",
+      "badge": "b"
+    },
+    {
+      "contextLines": [
+        "b Household employee wages not reported on Form(s) W-2 . . . . . . . . . . . . . 1b",
+        "c Tip income not reported on line 1a (see instructions) . . . . . . . . . . . . . . 1c",
+        "Income 1a Total amount from Form(s) W-2, box 1 (see instructions) . . . . . . . . . . . . . 1a"
+      ],
+      "fieldName": "f1_49[0]",
+      "height": 11.999000000000024,
+      "highlight": {
+        "heightPct": 1.5150252525252554,
+        "leftPct": 82.35294117647058,
+        "topPct": 59.848611111111104,
+        "widthPct": 11.76470588235294
+      },
+      "id": "f1_49[0]",
+      "index": 90,
+      "kind": "amount",
+      "left": 504.0,
+      "page": 1,
+      "top": 474.001,
+      "widgetType": "text",
+      "width": 72.0,
+      "fieldLabel": "b Household employee wages not reported on Form(s) W-2 . . . . . . . . . . . . . 1b (3 of 3)",
+      "badge": "b"
+    },
+    {
+      "contextLines": [
+        "c Tip income not reported on line 1a (see instructions) . . . . . . . . . . . . . . 1c",
+        "e Taxable dependent care benefits from Form 2441, line 26 . . . . . . . . . . . . 1e",
+        "Attach Form(s) W-2 here. Also attach Forms W-2G and 1099-R if tax was withheld. d Medicaid waiver payments not reported on Form(s) W-2 (see instructions) . . . . . . . . 1d"
+      ],
+      "fieldName": "f1_50[0]",
+      "height": 11.999000000000024,
+      "highlight": {
+        "heightPct": 1.5150252525252554,
+        "leftPct": 82.35294117647058,
+        "topPct": 61.36363636363637,
+        "widthPct": 11.76470588235294
+      },
+      "id": "f1_50[0]",
+      "index": 91,
+      "kind": "amount",
+      "left": 504.0,
+      "page": 1,
+      "top": 486.0,
+      "widgetType": "text",
+      "width": 72.0,
+      "fieldLabel": "c Tip income not reported on line 1a (see instructions) . . . . . . . . . . . . . . 1c",
+      "badge": "c"
+    },
+    {
+      "contextLines": [
+        "e Taxable dependent care benefits from Form 2441, line 26 . . . . . . . . . . . . 1e",
+        "f Employer-provided adoption benefits from Form 8839, line 31 . . . . . . . . . . . 1f",
+        "c Tip income not reported on line 1a (see instructions) . . . . . . . . . . . . . . 1c"
+      ],
+      "fieldName": "f1_51[0]",
+      "height": 11.998999999999967,
+      "highlight": {
+        "heightPct": 1.5150252525252483,
+        "leftPct": 82.35294117647058,
+        "topPct": 62.87866161616162,
+        "widthPct": 11.76470588235294
+      },
+      "id": "f1_51[0]",
+      "index": 92,
+      "kind": "amount",
+      "left": 504.0,
+      "page": 1,
+      "top": 497.999,
+      "widgetType": "text",
+      "width": 72.0,
+      "fieldLabel": "e Taxable dependent care benefits from Form 2441, line 26 . . . . . . . . . . . . 1e (1 of 2)",
+      "badge": "e"
+    },
+    {
+      "contextLines": [
+        "e Taxable dependent care benefits from Form 2441, line 26 . . . . . . . . . . . . 1e",
+        "f Employer-provided adoption benefits from Form 8839, line 31 . . . . . . . . . . . 1f",
+        "g Wages from Form 8919, line 6 . . . . . . . . . . . . . . . . . . . . . 1g"
+      ],
+      "fieldName": "f1_52[0]",
+      "height": 11.999000000000024,
+      "highlight": {
+        "heightPct": 1.5150252525252554,
+        "leftPct": 82.35294117647058,
+        "topPct": 64.39406565656566,
+        "widthPct": 11.76470588235294
+      },
+      "id": "f1_52[0]",
+      "index": 93,
+      "kind": "amount",
+      "left": 504.0,
+      "page": 1,
+      "top": 510.001,
+      "widgetType": "text",
+      "width": 72.0,
+      "fieldLabel": "e Taxable dependent care benefits from Form 2441, line 26 . . . . . . . . . . . . 1e (2 of 2)",
+      "badge": "e"
+    },
+    {
+      "contextLines": [
+        "f Employer-provided adoption benefits from Form 8839, line 31 . . . . . . . . . . . 1f",
+        "g Wages from Form 8919, line 6 . . . . . . . . . . . . . . . . . . . . . 1g",
+        "h Other earned income (see instructions). Enter type and amount: 1h"
+      ],
+      "fieldName": "f1_53[0]",
+      "height": 11.999000000000024,
+      "highlight": {
+        "heightPct": 1.5150252525252554,
+        "leftPct": 82.35294117647058,
+        "topPct": 65.9090909090909,
+        "widthPct": 11.76470588235294
+      },
+      "id": "f1_53[0]",
+      "index": 94,
+      "kind": "amount",
+      "left": 504.0,
+      "page": 1,
+      "top": 522.0,
+      "widgetType": "text",
+      "width": 72.0,
+      "fieldLabel": "f Employer-provided adoption benefits from Form 8839, line 31 . . . . . . . . . . . 1f",
+      "badge": "f"
+    },
+    {
+      "contextLines": [
+        "g Wages from Form 8919, line 6 . . . . . . . . . . . . . . . . . . . . . 1g",
+        "h Other earned income (see instructions). Enter type and amount: 1h",
+        "i Nontaxable combat pay election (see instructions) . . . . . . . 1i z Add lines 1a through 1h . . . . . . . . . . . . . . . . . . . . . . 1z"
+      ],
+      "fieldName": "f1_54[0]",
+      "height": 10.998999999999967,
+      "highlight": {
+        "heightPct": 1.388762626262622,
+        "leftPct": 56.24183006535948,
+        "topPct": 67.42411616161617,
+        "widthPct": 21.405228758169933
+      },
+      "id": "f1_54[0]",
+      "index": 95,
+      "kind": "text",
+      "left": 344.2,
+      "page": 1,
+      "top": 533.999,
+      "widgetType": "text",
+      "width": 131.0,
+      "fieldLabel": "g Wages from Form 8919, line 6 . . . . . . . . . . . . . . . . . . . . . 1g (1 of 2)",
+      "badge": "g"
+    },
+    {
+      "contextLines": [
+        "g Wages from Form 8919, line 6 . . . . . . . . . . . . . . . . . . . . . 1g",
+        "h Other earned income (see instructions). Enter type and amount: 1h",
+        "i Nontaxable combat pay election (see instructions) . . . . . . . 1i z Add lines 1a through 1h . . . . . . . . . . . . . . . . . . . . . . 1z"
+      ],
+      "fieldName": "f1_55[0]",
+      "height": 11.998999999999967,
+      "highlight": {
+        "heightPct": 1.5150252525252483,
+        "leftPct": 82.35294117647058,
+        "topPct": 67.42411616161617,
+        "widthPct": 11.76470588235294
+      },
+      "id": "f1_55[0]",
+      "index": 96,
+      "kind": "amount",
+      "left": 504.0,
+      "page": 1,
+      "top": 533.999,
+      "widgetType": "text",
+      "width": 72.0,
+      "fieldLabel": "g Wages from Form 8919, line 6 . . . . . . . . . . . . . . . . . . . . . 1g (2 of 2)",
+      "badge": "g"
+    },
+    {
+      "contextLines": [
+        "h Other earned income (see instructions). Enter type and amount: 1h",
+        "i Nontaxable combat pay election (see instructions) . . . . . . . 1i z Add lines 1a through 1h . . . . . . . . . . . . . . . . . . . . . . 1z",
+        "g Wages from Form 8919, line 6 . . . . . . . . . . . . . . . . . . . . . 1g"
+      ],
+      "fieldName": "f1_56[0]",
+      "height": 11.998999999999995,
+      "highlight": {
+        "heightPct": 1.5150252525252519,
+        "leftPct": 67.05882352941175,
+        "topPct": 68.9395202020202,
+        "widthPct": 11.642156862745098
+      },
+      "id": "f1_56[0]",
+      "index": 97,
+      "kind": "amount",
+      "left": 410.4,
+      "page": 1,
+      "top": 546.001,
+      "widgetType": "text",
+      "width": 71.25,
+      "fieldLabel": "h Other earned income (see instructions). Enter type and amount: 1h",
+      "badge": "h"
+    },
+    {
+      "contextLines": [
+        "2a Tax-exempt interest . . . 2a b Taxable interest . . . . . 2b",
+        "i Nontaxable combat pay election (see instructions) . . . . . . . 1i z Add lines 1a through 1h . . . . . . . . . . . . . . . . . . . . . . 1z",
+        "h Other earned income (see instructions). Enter type and amount: 1h"
+      ],
+      "fieldName": "f1_57[0]",
+      "height": 11.998999999999995,
+      "highlight": {
+        "heightPct": 1.5150252525252519,
+        "leftPct": 82.35294117647058,
+        "topPct": 70.45454545454545,
+        "widthPct": 11.76470588235294
+      },
+      "id": "f1_57[0]",
+      "index": 98,
+      "kind": "amount",
+      "left": 504.0,
+      "page": 1,
+      "top": 558.0,
+      "widgetType": "text",
+      "width": 72.0,
+      "fieldLabel": "2a Tax-exempt interest . . . 2a b Taxable interest . . . . . 2b (1 of 2)",
+      "badge": "2a"
+    },
+    {
+      "contextLines": [
+        "3a",
+        "i Nontaxable combat pay election (see instructions) . . . . . . . 1i z Add lines 1a through 1h . . . . . . . . . . . . . . . . . . . . . . 1z",
+        "2a Tax-exempt interest . . . 2a b Taxable interest . . . . . 2b"
+      ],
+      "fieldName": "f1_58[0]",
+      "height": 11.998999999999995,
+      "highlight": {
+        "heightPct": 1.5150252525252519,
+        "leftPct": 41.17647058823529,
+        "topPct": 71.9695707070707,
+        "widthPct": 11.642156862745098
+      },
+      "id": "f1_58[0]",
+      "index": 99,
+      "kind": "amount",
+      "left": 252.0,
+      "page": 1,
+      "top": 569.999,
+      "widgetType": "text",
+      "width": 71.25,
+      "fieldLabel": "3a (1 of 3)",
+      "badge": "3a"
+    },
+    {
+      "contextLines": [
+        "i Nontaxable combat pay election (see instructions) . . . . . . . 1i z Add lines 1a through 1h . . . . . . . . . . . . . . . . . . . . . . 1z",
+        "2a Tax-exempt interest . . . 2a b Taxable interest . . . . . 2b",
+        "3a Qualified dividends . . . b Ordinary dividends . . . . . 3b c Check if your child\u2019s dividends are included in 1"
+      ],
+      "fieldName": "f1_59[0]",
+      "height": 11.998999999999995,
+      "highlight": {
+        "heightPct": 1.5150252525252519,
+        "leftPct": 82.35294117647058,
+        "topPct": 71.9695707070707,
+        "widthPct": 11.76470588235294
+      },
+      "id": "f1_59[0]",
+      "index": 100,
+      "kind": "amount",
+      "left": 504.0,
+      "page": 1,
+      "top": 569.999,
+      "widgetType": "text",
+      "width": 72.0,
+      "fieldLabel": "i Nontaxable combat pay election (see instructions) . . . . . . . 1i z Add lines 1a through 1h . . . . . . . . . . . . . . . . . . . . . . 1z",
+      "badge": "i"
+    },
+    {
+      "contextLines": [
+        "3a",
+        "Line 3a 2 Line 3b",
+        "2a Tax-exempt interest . . . 2a b Taxable interest . . . . . 2b"
+      ],
+      "fieldName": "f1_60[0]",
+      "height": 11.998999999999995,
+      "highlight": {
+        "heightPct": 1.5150252525252519,
+        "leftPct": 41.17647058823529,
+        "topPct": 73.48497474747474,
+        "widthPct": 11.642156862745098
+      },
+      "id": "f1_60[0]",
+      "index": 101,
+      "kind": "amount",
+      "left": 252.0,
+      "page": 1,
+      "top": 582.001,
+      "widgetType": "text",
+      "width": 71.25,
+      "fieldLabel": "3a (2 of 3)",
+      "badge": "3a"
+    },
+    {
+      "contextLines": [
+        "2a Tax-exempt interest . . . 2a b Taxable interest . . . . . 2b",
+        "Line 3a 2 Line 3b",
+        "3a Qualified dividends . . . b Ordinary dividends . . . . . 3b c Check if your child\u2019s dividends are included in 1"
+      ],
+      "fieldName": "f1_61[0]",
+      "height": 11.998999999999995,
+      "highlight": {
+        "heightPct": 1.5150252525252519,
+        "leftPct": 82.35294117647058,
+        "topPct": 73.48497474747474,
+        "widthPct": 11.76470588235294
+      },
+      "id": "f1_61[0]",
+      "index": 102,
+      "kind": "amount",
+      "left": 504.0,
+      "page": 1,
+      "top": 582.001,
+      "widgetType": "text",
+      "width": 72.0,
+      "fieldLabel": "2a Tax-exempt interest . . . 2a b Taxable interest . . . . . 2b (2 of 2)",
+      "badge": "2a"
+    },
+    {
+      "contextLines": [
+        "3a",
+        "4a IRA distributions . . . . 4a b Taxable amount . . . . . . 4b c Check if (see instructions) . . . . . 1",
+        "3a Qualified dividends . . . b Ordinary dividends . . . . . 3b c Check if your child\u2019s dividends are included in 1"
+      ],
+      "fieldName": "c1_33[0]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 46.372549019607845,
+        "topPct": 75.31553030303031,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c1_33[0]",
+      "index": 103,
+      "kind": "checkbox",
+      "left": 283.8,
+      "page": 1,
+      "top": 596.499,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "3a (3 of 3)",
+      "badge": "3a"
+    },
+    {
+      "contextLines": [
+        "Line 3a 2 Line 3b",
+        "4a IRA distributions . . . . 4a b Taxable amount . . . . . . 4b c Check if (see instructions) . . . . . 1",
+        "3a"
+      ],
+      "fieldName": "c1_34[0]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 59.31372549019608,
+        "topPct": 75.31553030303031,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c1_34[0]",
+      "index": 104,
+      "kind": "checkbox",
+      "left": 363.0,
+      "page": 1,
+      "top": 596.499,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "Line 3a 2 Line 3b (1 of 2)",
+      "badge": "P1-104"
+    },
+    {
+      "contextLines": [
+        "Line 3a 2 Line 3b",
+        "Rollover 2 QCD 3",
+        "3a Qualified dividends . . . b Ordinary dividends . . . . . 3b c Check if your child\u2019s dividends are included in 1"
+      ],
+      "fieldName": "f1_62[0]",
+      "height": 11.998999999999995,
+      "highlight": {
+        "heightPct": 1.5150252525252519,
+        "leftPct": 41.17647058823529,
+        "topPct": 76.51502525252526,
+        "widthPct": 11.642156862745098
+      },
+      "id": "f1_62[0]",
+      "index": 105,
+      "kind": "text",
+      "left": 252.0,
+      "page": 1,
+      "top": 605.999,
+      "widgetType": "text",
+      "width": 71.25,
+      "fieldLabel": "Line 3a 2 Line 3b (2 of 2)",
+      "badge": "P1-105"
+    },
+    {
+      "contextLines": [
+        "3a Qualified dividends . . . b Ordinary dividends . . . . . 3b c Check if your child\u2019s dividends are included in 1",
+        "Line 3a 2 Line 3b",
+        "Rollover 2 QCD 3"
+      ],
+      "fieldName": "f1_63[0]",
+      "height": 11.998999999999995,
+      "highlight": {
+        "heightPct": 1.5150252525252519,
+        "leftPct": 82.35294117647058,
+        "topPct": 76.51502525252526,
+        "widthPct": 11.76470588235294
+      },
+      "id": "f1_63[0]",
+      "index": 106,
+      "kind": "amount",
+      "left": 504.0,
+      "page": 1,
+      "top": 605.999,
+      "widgetType": "text",
+      "width": 72.0,
+      "fieldLabel": "3a Qualified dividends . . . b Ordinary dividends . . . . . 3b c Check if your child\u2019s dividends are included in 1",
+      "badge": "3a"
+    },
+    {
+      "contextLines": [
+        "Rollover 2 QCD 3",
+        "5a Pensions and annuities . . 5a b Taxable amount . . . . . . 5b c Check if (see instructions) . . . . . 1",
+        "4a IRA distributions . . . . 4a b Taxable amount . . . . . . 4b c Check if (see instructions) . . . . . 1"
+      ],
+      "fieldName": "f1_64[0]",
+      "height": 11.998999999999995,
+      "highlight": {
+        "heightPct": 1.5150252525252519,
+        "leftPct": 71.76470588235294,
+        "topPct": 78.0304292929293,
+        "widthPct": 5.88235294117647
+      },
+      "id": "f1_64[0]",
+      "index": 110,
+      "kind": "amount",
+      "left": 439.2,
+      "page": 1,
+      "top": 618.001,
+      "widgetType": "text",
+      "width": 36.0,
+      "fieldLabel": "Rollover 2 QCD 3 (1 of 4)",
+      "badge": "P1-110"
+    },
+    {
+      "contextLines": [
+        "5a Pensions and annuities . . 5a b Taxable amount . . . . . . 5b c Check if (see instructions) . . . . . 1",
+        "4a IRA distributions . . . . 4a b Taxable amount . . . . . . 4b c Check if (see instructions) . . . . . 1",
+        "Rollover 2 QCD 3"
+      ],
+      "fieldName": "c1_35[0]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 46.372549019607845,
+        "topPct": 78.34595959595958,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c1_35[0]",
+      "index": 107,
+      "kind": "checkbox",
+      "left": 283.8,
+      "page": 1,
+      "top": 620.5,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "5a Pensions and annuities . . 5a b Taxable amount . . . . . . 5b c Check if (see instructions) . . . . . 1 (1 of 2)",
+      "badge": "5a"
+    },
+    {
+      "contextLines": [
+        "Rollover 2 QCD 3",
+        "5a Pensions and annuities . . 5a b Taxable amount . . . . . . 5b c Check if (see instructions) . . . . . 1",
+        "4a IRA distributions . . . . 4a b Taxable amount . . . . . . 4b c Check if (see instructions) . . . . . 1"
+      ],
+      "fieldName": "c1_36[0]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 59.31372549019608,
+        "topPct": 78.34595959595958,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c1_36[0]",
+      "index": 108,
+      "kind": "checkbox",
+      "left": 363.0,
+      "page": 1,
+      "top": 620.5,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "Rollover 2 QCD 3 (2 of 4)",
+      "badge": "P1-108"
+    },
+    {
+      "contextLines": [
+        "Rollover 2 QCD 3",
+        "5a Pensions and annuities . . 5a b Taxable amount . . . . . . 5b c Check if (see instructions) . . . . . 1",
+        "4a IRA distributions . . . . 4a b Taxable amount . . . . . . 4b c Check if (see instructions) . . . . . 1"
+      ],
+      "fieldName": "c1_37[0]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 69.90179738562091,
+        "topPct": 78.34595959595958,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c1_37[0]",
+      "index": 109,
+      "kind": "checkbox",
+      "left": 427.799,
+      "page": 1,
+      "top": 620.5,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "Rollover 2 QCD 3 (3 of 4)",
+      "badge": "P1-109"
+    },
+    {
+      "contextLines": [
+        "Rollover 2 QCD 3",
+        "Rollover 2 PSO 3",
+        "4a IRA distributions . . . . 4a b Taxable amount . . . . . . 4b c Check if (see instructions) . . . . . 1"
+      ],
+      "fieldName": "f1_65[0]",
+      "height": 11.998999999999995,
+      "highlight": {
+        "heightPct": 1.5150252525252519,
+        "leftPct": 41.17647058823529,
+        "topPct": 79.54545454545455,
+        "widthPct": 11.642156862745098
+      },
+      "id": "f1_65[0]",
+      "index": 111,
+      "kind": "text",
+      "left": 252.0,
+      "page": 1,
+      "top": 630.0,
+      "widgetType": "text",
+      "width": 71.25,
+      "fieldLabel": "Rollover 2 QCD 3 (4 of 4)",
+      "badge": "P1-111"
+    },
+    {
+      "contextLines": [
+        "4a IRA distributions . . . . 4a b Taxable amount . . . . . . 4b c Check if (see instructions) . . . . . 1",
+        "Rollover 2 QCD 3",
+        "Rollover 2 PSO 3"
+      ],
+      "fieldName": "f1_66[0]",
+      "height": 11.998999999999995,
+      "highlight": {
+        "heightPct": 1.5150252525252519,
+        "leftPct": 82.35294117647058,
+        "topPct": 79.54545454545455,
+        "widthPct": 11.76470588235294
+      },
+      "id": "f1_66[0]",
+      "index": 112,
+      "kind": "amount",
+      "left": 504.0,
+      "page": 1,
+      "top": 630.0,
+      "widgetType": "text",
+      "width": 72.0,
+      "fieldLabel": "4a IRA distributions . . . . 4a b Taxable amount . . . . . . 4b c Check if (see instructions) . . . . . 1",
+      "badge": "4a"
+    },
+    {
+      "contextLines": [
+        "Rollover 2 PSO 3",
+        "6a Social security benefits . . 6a b Taxable amount . . . . . . 6b c If you elect to use the lump-sum election method, check here (see instructions) . . . . . d If you are married filing separately and lived apart from y",
+        "5a Pensions and annuities . . 5a b Taxable amount . . . . . . 5b c Check if (see instructions) . . . . . 1"
+      ],
+      "fieldName": "f1_67[0]",
+      "height": 11.998999999999995,
+      "highlight": {
+        "heightPct": 1.5150252525252519,
+        "leftPct": 71.76470588235294,
+        "topPct": 81.0604797979798,
+        "widthPct": 5.88235294117647
+      },
+      "id": "f1_67[0]",
+      "index": 116,
+      "kind": "amount",
+      "left": 439.2,
+      "page": 1,
+      "top": 641.999,
+      "widgetType": "text",
+      "width": 36.0,
+      "fieldLabel": "Rollover 2 PSO 3 (1 of 4)",
+      "badge": "P1-116"
+    },
+    {
+      "contextLines": [
+        "6a Social security benefits . . 6a b Taxable amount . . . . . . 6b c If you elect to use the lump-sum election method, check here (see instructions) . . . . . d If you are married filing separately and lived apart from y",
+        "5a Pensions and annuities . . 5a b Taxable amount . . . . . . 5b c Check if (see instructions) . . . . . 1",
+        "Rollover 2 PSO 3"
+      ],
+      "fieldName": "c1_38[0]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 46.372549019607845,
+        "topPct": 81.37601010101011,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c1_38[0]",
+      "index": 113,
+      "kind": "checkbox",
+      "left": 283.8,
+      "page": 1,
+      "top": 644.498,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "6a Social security benefits . . 6a b Taxable amount . . . . . . 6b c If you elect to use the lump-sum election method, check here (see instructions) . . . . . d If you are married filing separately and lived apart from y (1 of 3)",
+      "badge": "6a"
+    },
+    {
+      "contextLines": [
+        "Rollover 2 PSO 3",
+        "6a Social security benefits . . 6a b Taxable amount . . . . . . 6b c If you elect to use the lump-sum election method, check here (see instructions) . . . . . d If you are married filing separately and lived apart from y",
+        "5a Pensions and annuities . . 5a b Taxable amount . . . . . . 5b c Check if (see instructions) . . . . . 1"
+      ],
+      "fieldName": "c1_39[0]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 59.31372549019608,
+        "topPct": 81.37601010101011,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c1_39[0]",
+      "index": 114,
+      "kind": "checkbox",
+      "left": 363.0,
+      "page": 1,
+      "top": 644.498,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "Rollover 2 PSO 3 (2 of 4)",
+      "badge": "P1-114"
+    },
+    {
+      "contextLines": [
+        "Rollover 2 PSO 3",
+        "6a Social security benefits . . 6a b Taxable amount . . . . . . 6b c If you elect to use the lump-sum election method, check here (see instructions) . . . . . d If you are married filing separately and lived apart from y",
+        "5a Pensions and annuities . . 5a b Taxable amount . . . . . . 5b c Check if (see instructions) . . . . . 1"
+      ],
+      "fieldName": "c1_40[0]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 69.90179738562091,
+        "topPct": 81.37601010101011,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c1_40[0]",
+      "index": 115,
+      "kind": "checkbox",
+      "left": 427.799,
+      "page": 1,
+      "top": 644.498,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "Rollover 2 PSO 3 (3 of 4)",
+      "badge": "P1-115"
+    },
+    {
+      "contextLines": [
+        "Rollover 2 PSO 3",
+        "5a Pensions and annuities . . 5a b Taxable amount . . . . . . 5b c Check if (see instructions) . . . . . 1",
+        "6a Social security benefits . . 6a b Taxable amount . . . . . . 6b c If you elect to use the lump-sum election method, check here (see instructions) . . . . . d If you are married filing separately and lived apart from y"
+      ],
+      "fieldName": "f1_68[0]",
+      "height": 11.998999999999995,
+      "highlight": {
+        "heightPct": 1.5150252525252519,
+        "leftPct": 41.17647058823529,
+        "topPct": 82.57588383838383,
+        "widthPct": 11.642156862745098
+      },
+      "id": "f1_68[0]",
+      "index": 117,
+      "kind": "text",
+      "left": 252.0,
+      "page": 1,
+      "top": 654.001,
+      "widgetType": "text",
+      "width": 71.25,
+      "fieldLabel": "Rollover 2 PSO 3 (4 of 4)",
+      "badge": "P1-117"
+    },
+    {
+      "contextLines": [
+        "5a Pensions and annuities . . 5a b Taxable amount . . . . . . 5b c Check if (see instructions) . . . . . 1",
+        "Rollover 2 PSO 3",
+        "6a Social security benefits . . 6a b Taxable amount . . . . . . 6b c If you elect to use the lump-sum election method, check here (see instructions) . . . . . d If you are married filing separately and lived apart from y"
+      ],
+      "fieldName": "f1_69[0]",
+      "height": 11.998999999999995,
+      "highlight": {
+        "heightPct": 1.5150252525252519,
+        "leftPct": 82.35294117647058,
+        "topPct": 82.57588383838383,
+        "widthPct": 11.76470588235294
+      },
+      "id": "f1_69[0]",
+      "index": 118,
+      "kind": "amount",
+      "left": 504.0,
+      "page": 1,
+      "top": 654.001,
+      "widgetType": "text",
+      "width": 72.0,
+      "fieldLabel": "5a Pensions and annuities . . 5a b Taxable amount . . . . . . 5b c Check if (see instructions) . . . . . 1 (2 of 2)",
+      "badge": "5a"
+    },
+    {
+      "contextLines": [
+        "6a Social security benefits . . 6a b Taxable amount . . . . . . 6b c If you elect to use the lump-sum election method, check here (see instructions) . . . . . d If you are married filing separately and lived apart from y",
+        "Rollover 2 PSO 3",
+        "5a Pensions and annuities . . 5a b Taxable amount . . . . . . 5b c Check if (see instructions) . . . . . 1"
+      ],
+      "fieldName": "c1_41[0]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 76.33986928104575,
+        "topPct": 84.34330808080809,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c1_41[0]",
+      "index": 119,
+      "kind": "checkbox",
+      "left": 467.2,
+      "page": 1,
+      "top": 667.999,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "6a Social security benefits . . 6a b Taxable amount . . . . . . 6b c If you elect to use the lump-sum election method, check here (see instructions) . . . . . d If you are married filing separately and lived apart from y (2 of 3)",
+      "badge": "6a"
+    },
+    {
+      "contextLines": [
+        "7a Capital gain or (loss). Attach Schedule D if required . . . . . . . . . . . . . . 7a b Check if:",
+        "6a Social security benefits . . 6a b Taxable amount . . . . . . 6b c If you elect to use the lump-sum election method, check here (see instructions) . . . . . d If you are married filing separately and lived apart from y",
+        "Schedule D not required Includes child\u2019s capital gain or (loss)"
+      ],
+      "fieldName": "c1_42[0]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 76.33986928104575,
+        "topPct": 85.85833333333333,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c1_42[0]",
+      "index": 120,
+      "kind": "checkbox",
+      "left": 467.2,
+      "page": 1,
+      "top": 679.998,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "7a Capital gain or (loss). Attach Schedule D if required . . . . . . . . . . . . . . 7a b Check if: (1 of 2)",
+      "badge": "7a"
+    },
+    {
+      "contextLines": [
+        "6a Social security benefits . . 6a b Taxable amount . . . . . . 6b c If you elect to use the lump-sum election method, check here (see instructions) . . . . . d If you are married filing separately and lived apart from y",
+        "Schedule D not required Includes child\u2019s capital gain or (loss)",
+        "7a Capital gain or (loss). Attach Schedule D if required . . . . . . . . . . . . . . 7a b Check if:"
+      ],
+      "fieldName": "f1_70[0]",
+      "height": 11.998999999999995,
+      "highlight": {
+        "heightPct": 1.5150252525252519,
+        "leftPct": 82.35294117647058,
+        "topPct": 87.12133838383838,
+        "widthPct": 11.76470588235294
+      },
+      "id": "f1_70[0]",
+      "index": 121,
+      "kind": "amount",
+      "left": 504.0,
+      "page": 1,
+      "top": 690.001,
+      "widgetType": "text",
+      "width": 72.0,
+      "fieldLabel": "6a Social security benefits . . 6a b Taxable amount . . . . . . 6b c If you elect to use the lump-sum election method, check here (see instructions) . . . . . d If you are married filing separately and lived apart from y (3 of 3)",
+      "badge": "6a"
+    },
+    {
+      "contextLines": [
+        "Schedule D not required Includes child\u2019s capital gain or (loss)",
+        "8 Additional income from Schedule 1, line 10 . . . . . . . . . . . . . . . . . 8",
+        "7a Capital gain or (loss). Attach Schedule D if required . . . . . . . . . . . . . . 7a b Check if:"
+      ],
+      "fieldName": "f1_71[0]",
+      "height": 11.998999999999995,
+      "highlight": {
+        "heightPct": 1.5150252525252519,
+        "leftPct": 65.88235294117646,
+        "topPct": 88.63636363636364,
+        "widthPct": 11.76470588235294
+      },
+      "id": "f1_71[0]",
+      "index": 124,
+      "kind": "amount",
+      "left": 403.2,
+      "page": 1,
+      "top": 702.0,
+      "widgetType": "text",
+      "width": 72.0,
+      "fieldLabel": "Schedule D not required Includes child\u2019s capital gain or (loss) (1 of 2)",
+      "badge": "P1-124"
+    },
+    {
+      "contextLines": [
+        "8 Additional income from Schedule 1, line 10 . . . . . . . . . . . . . . . . . 8",
+        "7a Capital gain or (loss). Attach Schedule D if required . . . . . . . . . . . . . . 7a b Check if:",
+        "Schedule D not required Includes child\u2019s capital gain or (loss)"
+      ],
+      "fieldName": "c1_43[0]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 25.03267973856209,
+        "topPct": 88.95189393939394,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c1_43[0]",
+      "index": 122,
+      "kind": "checkbox",
+      "left": 153.2,
+      "page": 1,
+      "top": 704.499,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "8 Additional income from Schedule 1, line 10 . . . . . . . . . . . . . . . . . 8 (1 of 2)",
+      "badge": "8"
+    },
+    {
+      "contextLines": [
+        "Schedule D not required Includes child\u2019s capital gain or (loss)",
+        "8 Additional income from Schedule 1, line 10 . . . . . . . . . . . . . . . . . 8",
+        "7a Capital gain or (loss). Attach Schedule D if required . . . . . . . . . . . . . . 7a b Check if:"
+      ],
+      "fieldName": "c1_44[0]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 42.6797385620915,
+        "topPct": 88.95189393939394,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c1_44[0]",
+      "index": 123,
+      "kind": "checkbox",
+      "left": 261.2,
+      "page": 1,
+      "top": 704.499,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "Schedule D not required Includes child\u2019s capital gain or (loss) (2 of 2)",
+      "badge": "P1-123"
+    },
+    {
+      "contextLines": [
+        "7a Capital gain or (loss). Attach Schedule D if required . . . . . . . . . . . . . . 7a b Check if:",
+        "8 Additional income from Schedule 1, line 10 . . . . . . . . . . . . . . . . . 8",
+        "9 Add lines 1z, 2b, 3b, 4b, 5b, 6b, 7a, and 8. This is your total income . . . . . . . . . 9"
+      ],
+      "fieldName": "f1_72[0]",
+      "height": 11.99900000000001,
+      "highlight": {
+        "heightPct": 1.5150252525252537,
+        "leftPct": 82.35294117647058,
+        "topPct": 90.15138888888889,
+        "widthPct": 11.76470588235294
+      },
+      "id": "f1_72[0]",
+      "index": 125,
+      "kind": "amount",
+      "left": 504.0,
+      "page": 1,
+      "top": 713.999,
+      "widgetType": "text",
+      "width": 72.0,
+      "fieldLabel": "7a Capital gain or (loss). Attach Schedule D if required . . . . . . . . . . . . . . 7a b Check if: (2 of 2)",
+      "badge": "7a"
+    },
+    {
+      "contextLines": [
+        "8 Additional income from Schedule 1, line 10 . . . . . . . . . . . . . . . . . 8",
+        "9 Add lines 1z, 2b, 3b, 4b, 5b, 6b, 7a, and 8. This is your total income . . . . . . . . . 9",
+        "10 Adjustments to income from Schedule 1, line 26 . . . . . . . . . . . . . . . 10"
+      ],
+      "fieldName": "f1_73[0]",
+      "height": 11.998999999999995,
+      "highlight": {
+        "heightPct": 1.5150252525252519,
+        "leftPct": 82.35294117647058,
+        "topPct": 91.66679292929292,
+        "widthPct": 11.76470588235294
+      },
+      "id": "f1_73[0]",
+      "index": 126,
+      "kind": "amount",
+      "left": 504.0,
+      "page": 1,
+      "top": 726.001,
+      "widgetType": "text",
+      "width": 72.0,
+      "fieldLabel": "8 Additional income from Schedule 1, line 10 . . . . . . . . . . . . . . . . . 8 (2 of 2)",
+      "badge": "8"
+    },
+    {
+      "contextLines": [
+        "9 Add lines 1z, 2b, 3b, 4b, 5b, 6b, 7a, and 8. This is your total income . . . . . . . . . 9",
+        "10 Adjustments to income from Schedule 1, line 26 . . . . . . . . . . . . . . . 10",
+        "11a Subtract line 10 from line 9. This is your adjusted gross income . . . . . . . . . . 11a"
+      ],
+      "fieldName": "f1_74[0]",
+      "height": 11.999000000000002,
+      "highlight": {
+        "heightPct": 1.5150252525252528,
+        "leftPct": 82.35294117647058,
+        "topPct": 93.18181818181817,
+        "widthPct": 11.76470588235294
+      },
+      "id": "f1_74[0]",
+      "index": 127,
+      "kind": "amount",
+      "left": 504.0,
+      "page": 1,
+      "top": 738.0,
+      "widgetType": "text",
+      "width": 72.0,
+      "fieldLabel": "9 Add lines 1z, 2b, 3b, 4b, 5b, 6b, 7a, and 8. This is your total income . . . . . . . . . 9",
+      "badge": "9"
+    },
+    {
+      "contextLines": [
+        "11a Subtract line 10 from line 9. This is your adjusted gross income . . . . . . . . . . 11a",
+        "10 Adjustments to income from Schedule 1, line 26 . . . . . . . . . . . . . . . 10",
+        "For Disclosure, Privacy Act, and Paperwork Reduction Act Notice, see separate instructions. Cat. No. 11320B Form 1040 (2025) Created 9/5/25"
+      ],
+      "fieldName": "f1_75[0]",
+      "height": 11.998999999999999,
+      "highlight": {
+        "heightPct": 1.5150252525252523,
+        "leftPct": 82.35294117647058,
+        "topPct": 94.69684343434344,
+        "widthPct": 11.76470588235294
+      },
+      "id": "f1_75[0]",
+      "index": 128,
+      "kind": "amount",
+      "left": 504.0,
+      "page": 1,
+      "top": 749.999,
+      "widgetType": "text",
+      "width": 72.0,
+      "fieldLabel": "11a Subtract line 10 from line 9. This is your adjusted gross income . . . . . . . . . . 11a",
+      "badge": "11a"
+    },
+    {
+      "contextLines": [
+        "11b Amount from line 11a (adjusted gross income) . . . . . . . . . . . . . . . . 11b",
+        "Your spouse as a dependent b",
+        "12a Someone can claim You as a dependent"
+      ],
+      "fieldName": "f2_01[0]",
+      "height": 11.999000000000024,
+      "highlight": {
+        "heightPct": 1.5150252525252554,
+        "leftPct": 82.35294117647058,
+        "topPct": 4.545454545454546,
+        "widthPct": 11.76470588235294
+      },
+      "id": "f2_01[0]",
+      "index": 1,
+      "kind": "amount",
+      "left": 504.0,
+      "page": 2,
+      "top": 36.0,
+      "widgetType": "text",
+      "width": 72.0,
+      "fieldLabel": "11b Amount from line 11a (adjusted gross income) . . . . . . . . . . . . . . . . 11b",
+      "badge": "11b"
+    },
+    {
+      "contextLines": [
+        "12a Someone can claim You as a dependent",
+        "Spouse itemizes on a separate return c",
+        "You were a dual-status alien d You:"
+      ],
+      "fieldName": "c2_1[0]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 33.267973856209146,
+        "topPct": 6.312878787878794,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c2_1[0]",
+      "index": 2,
+      "kind": "checkbox",
+      "left": 203.6,
+      "page": 2,
+      "top": 49.99800000000005,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "12a Someone can claim You as a dependent (1 of 3)",
+      "badge": "12a"
+    },
+    {
+      "contextLines": [
+        "12a Someone can claim You as a dependent",
+        "You were a dual-status alien d You:",
+        "Spouse itemizes on a separate return c"
+      ],
+      "fieldName": "c2_2[0]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 49.73856209150326,
+        "topPct": 6.312878787878794,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c2_2[0]",
+      "index": 3,
+      "kind": "checkbox",
+      "left": 304.4,
+      "page": 2,
+      "top": 49.99800000000005,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "12a Someone can claim You as a dependent (2 of 3)",
+      "badge": "12a"
+    },
+    {
+      "contextLines": [
+        "12a Someone can claim You as a dependent",
+        "Are blind Spouse:",
+        "Your spouse as a dependent b"
+      ],
+      "fieldName": "c2_3[0]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 18.823529411764707,
+        "topPct": 7.828282828282829,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c2_3[0]",
+      "index": 4,
+      "kind": "checkbox",
+      "left": 115.2,
+      "page": 2,
+      "top": 62.0,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "12a Someone can claim You as a dependent (3 of 3)",
+      "badge": "12a"
+    },
+    {
+      "contextLines": [
+        "Spouse itemizes on a separate return c",
+        "12a Someone can claim You as a dependent",
+        "Are blind Spouse:"
+      ],
+      "fieldName": "c2_4[0]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 49.73856209150326,
+        "topPct": 7.828282828282829,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c2_4[0]",
+      "index": 5,
+      "kind": "checkbox",
+      "left": 304.4,
+      "page": 2,
+      "top": 62.0,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "Spouse itemizes on a separate return c",
+      "badge": "P2-005"
+    },
+    {
+      "contextLines": [
+        "Your spouse as a dependent b",
+        "Spouse itemizes on a separate return c",
+        "Was born before January 2, 1961 Is blindStandard deduction for\u2014"
+      ],
+      "fieldName": "c2_5[0]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 25.03267973856209,
+        "topPct": 9.343308080808084,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c2_5[0]",
+      "index": 6,
+      "kind": "checkbox",
+      "left": 153.2,
+      "page": 2,
+      "top": 73.99900000000002,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "Your spouse as a dependent b",
+      "badge": "P2-006"
+    },
+    {
+      "contextLines": [
+        "Were born before January 2, 1961",
+        "Your spouse as a dependent b",
+        "Spouse itemizes on a separate return c"
+      ],
+      "fieldName": "c2_6[0]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 50.91503267973857,
+        "topPct": 9.343308080808084,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c2_6[0]",
+      "index": 7,
+      "kind": "checkbox",
+      "left": 311.6,
+      "page": 2,
+      "top": 73.99900000000002,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "Were born before January 2, 1961",
+      "badge": "P2-007"
+    },
+    {
+      "contextLines": [
+        "You were a dual-status alien d You:",
+        "Are blind Spouse:",
+        "e Standard deduction or itemized deductions (from Schedule A) . . . . . . . . . . . 12e"
+      ],
+      "fieldName": "c2_7[0]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 25.03267973856209,
+        "topPct": 10.85833333333334,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c2_7[0]",
+      "index": 8,
+      "kind": "checkbox",
+      "left": 153.2,
+      "page": 2,
+      "top": 85.99800000000005,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "You were a dual-status alien d You: (1 of 2)",
+      "badge": "P2-008"
+    },
+    {
+      "contextLines": [
+        "You were a dual-status alien d You:",
+        "Were born before January 2, 1961",
+        "Are blind Spouse:"
+      ],
+      "fieldName": "c2_8[0]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 50.91503267973857,
+        "topPct": 10.85833333333334,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c2_8[0]",
+      "index": 9,
+      "kind": "checkbox",
+      "left": 311.6,
+      "page": 2,
+      "top": 85.99800000000005,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "You were a dual-status alien d You: (2 of 2)",
+      "badge": "P2-009"
+    },
+    {
+      "contextLines": [
+        "e Standard deduction or itemized deductions (from Schedule A) . . . . . . . . . . . 12e",
+        "13a Qualified business income deduction from Form 8995 or Form 8995-A . . . . . . . . . 13a b Additional deductions from Schedule 1-A, line 38 . . . . . . . . . . . . . . . 13b",
+        "Are blind Spouse:"
+      ],
+      "fieldName": "f2_02[0]",
+      "height": 11.999000000000024,
+      "highlight": {
+        "heightPct": 1.5150252525252554,
+        "leftPct": 82.35294117647058,
+        "topPct": 12.121338383838381,
+        "widthPct": 11.76470588235294
+      },
+      "id": "f2_02[0]",
+      "index": 10,
+      "kind": "amount",
+      "left": 504.0,
+      "page": 2,
+      "top": 96.00099999999998,
+      "widgetType": "text",
+      "width": 72.0,
+      "fieldLabel": "e Standard deduction or itemized deductions (from Schedule A) . . . . . . . . . . . 12e (1 of 2)",
+      "badge": "e"
+    },
+    {
+      "contextLines": [
+        "e Standard deduction or itemized deductions (from Schedule A) . . . . . . . . . . . 12e",
+        "Was born before January 2, 1961 Is blindStandard deduction for\u2014",
+        "13a Qualified business income deduction from Form 8995 or Form 8995-A . . . . . . . . . 13a b Additional deductions from Schedule 1-A, line 38 . . . . . . . . . . . . . . . 13b"
+      ],
+      "fieldName": "f2_03[0]",
+      "height": 11.999000000000024,
+      "highlight": {
+        "heightPct": 1.5150252525252554,
+        "leftPct": 82.35294117647058,
+        "topPct": 13.636363636363635,
+        "widthPct": 11.76470588235294
+      },
+      "id": "f2_03[0]",
+      "index": 11,
+      "kind": "amount",
+      "left": 504.0,
+      "page": 2,
+      "top": 108.0,
+      "widgetType": "text",
+      "width": 72.0,
+      "fieldLabel": "e Standard deduction or itemized deductions (from Schedule A) . . . . . . . . . . . 12e (2 of 2)",
+      "badge": "e"
+    },
+    {
+      "contextLines": [
+        "14 Add lines 12e, 13a, and 13b . . . . . . . . . . . . . . . . . . . . . 14",
+        "13a Qualified business income deduction from Form 8995 or Form 8995-A . . . . . . . . . 13a b Additional deductions from Schedule 1-A, line 38 . . . . . . . . . . . . . . . 13b",
+        "\u2022 Married filing jointly or Qualifying surviving spouse, $31,500 16 Tax (see instructions). Check if any from Form(s): 1 8814 2 4972 3 16"
+      ],
+      "fieldName": "f2_04[0]",
+      "height": 11.999000000000024,
+      "highlight": {
+        "heightPct": 1.5150252525252554,
+        "leftPct": 82.35294117647058,
+        "topPct": 15.151388888888892,
+        "widthPct": 11.76470588235294
+      },
+      "id": "f2_04[0]",
+      "index": 12,
+      "kind": "amount",
+      "left": 504.0,
+      "page": 2,
+      "top": 119.99900000000002,
+      "widgetType": "text",
+      "width": 72.0,
+      "fieldLabel": "14 Add lines 12e, 13a, and 13b . . . . . . . . . . . . . . . . . . . . . 14",
+      "badge": "14"
+    },
+    {
+      "contextLines": [
+        "13a Qualified business income deduction from Form 8995 or Form 8995-A . . . . . . . . . 13a b Additional deductions from Schedule 1-A, line 38 . . . . . . . . . . . . . . . 13b",
+        "14 Add lines 12e, 13a, and 13b . . . . . . . . . . . . . . . . . . . . . 14",
+        "15 Subtract line 14 from line 11b. If zero or less, enter -0-. This is your taxable income . . . . . 15"
+      ],
+      "fieldName": "f2_05[0]",
+      "height": 11.999000000000024,
+      "highlight": {
+        "heightPct": 1.5150252525252554,
+        "leftPct": 82.35294117647058,
+        "topPct": 16.666792929292924,
+        "widthPct": 11.76470588235294
+      },
+      "id": "f2_05[0]",
+      "index": 13,
+      "kind": "amount",
+      "left": 504.0,
+      "page": 2,
+      "top": 132.00099999999998,
+      "widgetType": "text",
+      "width": 72.0,
+      "fieldLabel": "13a Qualified business income deduction from Form 8995 or Form 8995-A . . . . . . . . . 13a b Additional deductions from Schedule 1-A, line 38 . . . . . . . . . . . . . . . 13b",
+      "badge": "13a"
+    },
+    {
+      "contextLines": [
+        "15 Subtract line 14 from line 11b. If zero or less, enter -0-. This is your taxable income . . . . . 15",
+        "14 Add lines 12e, 13a, and 13b . . . . . . . . . . . . . . . . . . . . . 14",
+        "13a Qualified business income deduction from Form 8995 or Form 8995-A . . . . . . . . . 13a b Additional deductions from Schedule 1-A, line 38 . . . . . . . . . . . . . . . 13b"
+      ],
+      "fieldName": "f2_06[0]",
+      "height": 11.999000000000024,
+      "highlight": {
+        "heightPct": 1.5150252525252554,
+        "leftPct": 82.35294117647058,
+        "topPct": 18.181818181818183,
+        "widthPct": 11.76470588235294
+      },
+      "id": "f2_06[0]",
+      "index": 14,
+      "kind": "amount",
+      "left": 504.0,
+      "page": 2,
+      "top": 144.0,
+      "widgetType": "text",
+      "width": 72.0,
+      "fieldLabel": "15 Subtract line 14 from line 11b. If zero or less, enter -0-. This is your taxable income . . . . . 15 (1 of 6)",
+      "badge": "15"
+    },
+    {
+      "contextLines": [
+        "15 Subtract line 14 from line 11b. If zero or less, enter -0-. This is your taxable income . . . . . 15",
+        "17 Amount from Schedule 2, line 3 . . . . . . . . . . . . . . . . . . . . 17",
+        "\u2022 Married filing jointly or Qualifying surviving spouse, $31,500 16 Tax (see instructions). Check if any from Form(s): 1 8814 2 4972 3 16"
+      ],
+      "fieldName": "f2_07[0]",
+      "height": 11.999000000000024,
+      "highlight": {
+        "heightPct": 1.5150252525252554,
+        "leftPct": 71.76470588235294,
+        "topPct": 19.696843434343435,
+        "widthPct": 5.88235294117647
+      },
+      "id": "f2_07[0]",
+      "index": 18,
+      "kind": "amount",
+      "left": 439.2,
+      "page": 2,
+      "top": 155.99900000000002,
+      "widgetType": "text",
+      "width": 36.0,
+      "fieldLabel": "15 Subtract line 14 from line 11b. If zero or less, enter -0-. This is your taxable income . . . . . 15 (2 of 6)",
+      "badge": "15"
+    },
+    {
+      "contextLines": [
+        "15 Subtract line 14 from line 11b. If zero or less, enter -0-. This is your taxable income . . . . . 15",
+        "17 Amount from Schedule 2, line 3 . . . . . . . . . . . . . . . . . . . . 17",
+        "\u2022 Married filing jointly or Qualifying surviving spouse, $31,500 16 Tax (see instructions). Check if any from Form(s): 1 8814 2 4972 3 16"
+      ],
+      "fieldName": "f2_08[0]",
+      "height": 11.999000000000024,
+      "highlight": {
+        "heightPct": 1.5150252525252554,
+        "leftPct": 82.35294117647058,
+        "topPct": 19.696843434343435,
+        "widthPct": 11.76470588235294
+      },
+      "id": "f2_08[0]",
+      "index": 19,
+      "kind": "amount",
+      "left": 504.0,
+      "page": 2,
+      "top": 155.99900000000002,
+      "widgetType": "text",
+      "width": 72.0,
+      "fieldLabel": "15 Subtract line 14 from line 11b. If zero or less, enter -0-. This is your taxable income . . . . . 15 (3 of 6)",
+      "badge": "15"
+    },
+    {
+      "contextLines": [
+        "15 Subtract line 14 from line 11b. If zero or less, enter -0-. This is your taxable income . . . . . 15",
+        "\u2022 Married filing jointly or Qualifying surviving spouse, $31,500 16 Tax (see instructions). Check if any from Form(s): 1 8814 2 4972 3 16",
+        "17 Amount from Schedule 2, line 3 . . . . . . . . . . . . . . . . . . . . 17"
+      ],
+      "fieldName": "c2_9[0]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 51.078431372549026,
+        "topPct": 19.94924242424243,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c2_9[0]",
+      "index": 15,
+      "kind": "checkbox",
+      "left": 312.6,
+      "page": 2,
+      "top": 157.99800000000005,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "15 Subtract line 14 from line 11b. If zero or less, enter -0-. This is your taxable income . . . . . 15 (4 of 6)",
+      "badge": "15"
+    },
+    {
+      "contextLines": [
+        "15 Subtract line 14 from line 11b. If zero or less, enter -0-. This is your taxable income . . . . . 15",
+        "\u2022 Married filing jointly or Qualifying surviving spouse, $31,500 16 Tax (see instructions). Check if any from Form(s): 1 8814 2 4972 3 16",
+        "17 Amount from Schedule 2, line 3 . . . . . . . . . . . . . . . . . . . . 17"
+      ],
+      "fieldName": "c2_10[0]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 60.49019607843137,
+        "topPct": 19.94924242424243,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c2_10[0]",
+      "index": 16,
+      "kind": "checkbox",
+      "left": 370.2,
+      "page": 2,
+      "top": 157.99800000000005,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "15 Subtract line 14 from line 11b. If zero or less, enter -0-. This is your taxable income . . . . . 15 (5 of 6)",
+      "badge": "15"
+    },
+    {
+      "contextLines": [
+        "15 Subtract line 14 from line 11b. If zero or less, enter -0-. This is your taxable income . . . . . 15",
+        "\u2022 Married filing jointly or Qualifying surviving spouse, $31,500 16 Tax (see instructions). Check if any from Form(s): 1 8814 2 4972 3 16",
+        "17 Amount from Schedule 2, line 3 . . . . . . . . . . . . . . . . . . . . 17"
+      ],
+      "fieldName": "c2_11[0]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 69.90179738562091,
+        "topPct": 19.94924242424243,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c2_11[0]",
+      "index": 17,
+      "kind": "checkbox",
+      "left": 427.799,
+      "page": 2,
+      "top": 157.99800000000005,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "15 Subtract line 14 from line 11b. If zero or less, enter -0-. This is your taxable income . . . . . 15 (6 of 6)",
+      "badge": "15"
+    },
+    {
+      "contextLines": [
+        "17 Amount from Schedule 2, line 3 . . . . . . . . . . . . . . . . . . . . 17",
+        "18 Add lines 16 and 17 . . . . . . . . . . . . . . . . . . . . . . . . 18",
+        "\u2022 Head of household, $23,625 19 Child tax credit or credit for other dependents from Schedule 8812 . . . . . . . . . . 19"
+      ],
+      "fieldName": "f2_09[0]",
+      "height": 11.999000000000024,
+      "highlight": {
+        "heightPct": 1.5150252525252554,
+        "leftPct": 82.35294117647058,
+        "topPct": 21.21224747474747,
+        "widthPct": 11.76470588235294
+      },
+      "id": "f2_09[0]",
+      "index": 20,
+      "kind": "amount",
+      "left": 504.0,
+      "page": 2,
+      "top": 168.00099999999998,
+      "widgetType": "text",
+      "width": 72.0,
+      "fieldLabel": "17 Amount from Schedule 2, line 3 . . . . . . . . . . . . . . . . . . . . 17 (1 of 2)",
+      "badge": "17"
+    },
+    {
+      "contextLines": [
+        "17 Amount from Schedule 2, line 3 . . . . . . . . . . . . . . . . . . . . 17",
+        "18 Add lines 16 and 17 . . . . . . . . . . . . . . . . . . . . . . . . 18",
+        "\u2022 Head of household, $23,625 19 Child tax credit or credit for other dependents from Schedule 8812 . . . . . . . . . . 19"
+      ],
+      "fieldName": "f2_10[0]",
+      "height": 11.999000000000024,
+      "highlight": {
+        "heightPct": 1.5150252525252554,
+        "leftPct": 82.35294117647058,
+        "topPct": 22.727272727272727,
+        "widthPct": 11.76470588235294
+      },
+      "id": "f2_10[0]",
+      "index": 21,
+      "kind": "amount",
+      "left": 504.0,
+      "page": 2,
+      "top": 180.0,
+      "widgetType": "text",
+      "width": 72.0,
+      "fieldLabel": "17 Amount from Schedule 2, line 3 . . . . . . . . . . . . . . . . . . . . 17 (2 of 2)",
+      "badge": "17"
+    },
+    {
+      "contextLines": [
+        "18 Add lines 16 and 17 . . . . . . . . . . . . . . . . . . . . . . . . 18",
+        "20 Amount from Schedule 3, line 8 . . . . . . . . . . . . . . . . . . . . 20",
+        "\u2022 Head of household, $23,625 19 Child tax credit or credit for other dependents from Schedule 8812 . . . . . . . . . . 19"
+      ],
+      "fieldName": "f2_11[0]",
+      "height": 11.999000000000024,
+      "highlight": {
+        "heightPct": 1.5150252525252554,
+        "leftPct": 82.35294117647058,
+        "topPct": 24.242297979797982,
+        "widthPct": 11.76470588235294
+      },
+      "id": "f2_11[0]",
+      "index": 22,
+      "kind": "amount",
+      "left": 504.0,
+      "page": 2,
+      "top": 191.99900000000002,
+      "widgetType": "text",
+      "width": 72.0,
+      "fieldLabel": "18 Add lines 16 and 17 . . . . . . . . . . . . . . . . . . . . . . . . 18",
+      "badge": "18"
+    },
+    {
+      "contextLines": [
+        "20 Amount from Schedule 3, line 8 . . . . . . . . . . . . . . . . . . . . 20",
+        "21 Add lines 19 and 20 . . . . . . . . . . . . . . . . . . . . . . . . 21",
+        "\u2022 Head of household, $23,625 19 Child tax credit or credit for other dependents from Schedule 8812 . . . . . . . . . . 19"
+      ],
+      "fieldName": "f2_12[0]",
+      "height": 11.999000000000024,
+      "highlight": {
+        "heightPct": 1.5150252525252554,
+        "leftPct": 82.35294117647058,
+        "topPct": 25.757702020202018,
+        "widthPct": 11.76470588235294
+      },
+      "id": "f2_12[0]",
+      "index": 23,
+      "kind": "amount",
+      "left": 504.0,
+      "page": 2,
+      "top": 204.00099999999998,
+      "widgetType": "text",
+      "width": 72.0,
+      "fieldLabel": "20 Amount from Schedule 3, line 8 . . . . . . . . . . . . . . . . . . . . 20 (1 of 2)",
+      "badge": "20"
+    },
+    {
+      "contextLines": [
+        "20 Amount from Schedule 3, line 8 . . . . . . . . . . . . . . . . . . . . 20",
+        "21 Add lines 19 and 20 . . . . . . . . . . . . . . . . . . . . . . . . 21",
+        "22 Subtract line 21 from line 18. If zero or less, enter -0- . . . . . . . . . . . . . . 22"
+      ],
+      "fieldName": "f2_13[0]",
+      "height": 11.999000000000024,
+      "highlight": {
+        "heightPct": 1.5150252525252554,
+        "leftPct": 82.35294117647058,
+        "topPct": 27.27272727272727,
+        "widthPct": 11.76470588235294
+      },
+      "id": "f2_13[0]",
+      "index": 24,
+      "kind": "amount",
+      "left": 504.0,
+      "page": 2,
+      "top": 216.0,
+      "widgetType": "text",
+      "width": 72.0,
+      "fieldLabel": "20 Amount from Schedule 3, line 8 . . . . . . . . . . . . . . . . . . . . 20 (2 of 2)",
+      "badge": "20"
+    },
+    {
+      "contextLines": [
+        "21 Add lines 19 and 20 . . . . . . . . . . . . . . . . . . . . . . . . 21",
+        "22 Subtract line 21 from line 18. If zero or less, enter -0- . . . . . . . . . . . . . . 22",
+        "23 Other taxes, including self-employment tax, from Schedule 2, line 21 . . . . . . . . . 23"
+      ],
+      "fieldName": "f2_14[0]",
+      "height": 11.999000000000024,
+      "highlight": {
+        "heightPct": 1.5150252525252554,
+        "leftPct": 82.35294117647058,
+        "topPct": 28.78775252525253,
+        "widthPct": 11.76470588235294
+      },
+      "id": "f2_14[0]",
+      "index": 25,
+      "kind": "amount",
+      "left": 504.0,
+      "page": 2,
+      "top": 227.99900000000002,
+      "widgetType": "text",
+      "width": 72.0,
+      "fieldLabel": "21 Add lines 19 and 20 . . . . . . . . . . . . . . . . . . . . . . . . 21",
+      "badge": "21"
+    },
+    {
+      "contextLines": [
+        "22 Subtract line 21 from line 18. If zero or less, enter -0- . . . . . . . . . . . . . . 22",
+        "23 Other taxes, including self-employment tax, from Schedule 2, line 21 . . . . . . . . . 23",
+        "24 Add lines 22 and 23. This is your total tax . . . . . . . . . . . . . . . . . 24"
+      ],
+      "fieldName": "f2_15[0]",
+      "height": 11.999000000000024,
+      "highlight": {
+        "heightPct": 1.5150252525252554,
+        "leftPct": 82.35294117647058,
+        "topPct": 30.303156565656565,
+        "widthPct": 11.76470588235294
+      },
+      "id": "f2_15[0]",
+      "index": 26,
+      "kind": "amount",
+      "left": 504.0,
+      "page": 2,
+      "top": 240.00099999999998,
+      "widgetType": "text",
+      "width": 72.0,
+      "fieldLabel": "22 Subtract line 21 from line 18. If zero or less, enter -0- . . . . . . . . . . . . . . 22",
+      "badge": "22"
+    },
+    {
+      "contextLines": [
+        "24 Add lines 22 and 23. This is your total tax . . . . . . . . . . . . . . . . . 24",
+        "23 Other taxes, including self-employment tax, from Schedule 2, line 21 . . . . . . . . . 23",
+        "22 Subtract line 21 from line 18. If zero or less, enter -0- . . . . . . . . . . . . . . 22"
+      ],
+      "fieldName": "f2_16[0]",
+      "height": 11.999000000000024,
+      "highlight": {
+        "heightPct": 1.5150252525252554,
+        "leftPct": 82.35294117647058,
+        "topPct": 31.818181818181817,
+        "widthPct": 11.76470588235294
+      },
+      "id": "f2_16[0]",
+      "index": 27,
+      "kind": "amount",
+      "left": 504.0,
+      "page": 2,
+      "top": 252.0,
+      "widgetType": "text",
+      "width": 72.0,
+      "fieldLabel": "24 Add lines 22 and 23. This is your total tax . . . . . . . . . . . . . . . . . 24",
+      "badge": "24"
+    },
+    {
+      "contextLines": [
+        "a Form(s) W-2 . . . . . . . . . . . . . . . . . . 25a",
+        "b Form(s) 1099 . . . . . . . . . . . . . . . . . . 25b",
+        "25 Federal income tax withheld from:"
+      ],
+      "fieldName": "f2_17[0]",
+      "height": 11.999000000000024,
+      "highlight": {
+        "heightPct": 1.5150252525252554,
+        "leftPct": 67.05882352941175,
+        "topPct": 34.84861111111111,
+        "widthPct": 11.642156862745098
+      },
+      "id": "f2_17[0]",
+      "index": 28,
+      "kind": "amount",
+      "left": 410.4,
+      "page": 2,
+      "top": 276.001,
+      "widgetType": "text",
+      "width": 71.25,
+      "fieldLabel": "a Form(s) W-2 . . . . . . . . . . . . . . . . . . 25a (1 of 2)",
+      "badge": "a"
+    },
+    {
+      "contextLines": [
+        "a Form(s) W-2 . . . . . . . . . . . . . . . . . . 25a",
+        "b Form(s) 1099 . . . . . . . . . . . . . . . . . . 25b",
+        "c Other forms (see instructions) . . . . . . . . . . . . . 25c"
+      ],
+      "fieldName": "f2_18[0]",
+      "height": 11.999000000000024,
+      "highlight": {
+        "heightPct": 1.5150252525252554,
+        "leftPct": 67.05882352941175,
+        "topPct": 36.36363636363637,
+        "widthPct": 11.642156862745098
+      },
+      "id": "f2_18[0]",
+      "index": 29,
+      "kind": "amount",
+      "left": 410.4,
+      "page": 2,
+      "top": 288.0,
+      "widgetType": "text",
+      "width": 71.25,
+      "fieldLabel": "a Form(s) W-2 . . . . . . . . . . . . . . . . . . 25a (2 of 2)",
+      "badge": "a"
+    },
+    {
+      "contextLines": [
+        "b Form(s) 1099 . . . . . . . . . . . . . . . . . . 25b",
+        "c Other forms (see instructions) . . . . . . . . . . . . . 25c",
+        "d Add lines 25a through 25c . . . . . . . . . . . . . . . . . . . . . . 25d"
+      ],
+      "fieldName": "f2_19[0]",
+      "height": 11.998999999999967,
+      "highlight": {
+        "heightPct": 1.5150252525252483,
+        "leftPct": 67.05882352941175,
+        "topPct": 37.878661616161615,
+        "widthPct": 11.642156862745098
+      },
+      "id": "f2_19[0]",
+      "index": 30,
+      "kind": "amount",
+      "left": 410.4,
+      "page": 2,
+      "top": 299.999,
+      "widgetType": "text",
+      "width": 71.25,
+      "fieldLabel": "b Form(s) 1099 . . . . . . . . . . . . . . . . . . 25b",
+      "badge": "b"
+    },
+    {
+      "contextLines": [
+        "d Add lines 25a through 25c . . . . . . . . . . . . . . . . . . . . . . 25d",
+        "26 2025 estimated tax payments and amount applied from 2024 return . . . . . . . . . . 26 If you made estimated tax payments with your former spouse in 2025,",
+        "c Other forms (see instructions) . . . . . . . . . . . . . 25c"
+      ],
+      "fieldName": "f2_20[0]",
+      "height": 11.999000000000024,
+      "highlight": {
+        "heightPct": 1.5150252525252554,
+        "leftPct": 82.35294117647058,
+        "topPct": 39.39406565656565,
+        "widthPct": 11.76470588235294
+      },
+      "id": "f2_20[0]",
+      "index": 31,
+      "kind": "amount",
+      "left": 504.0,
+      "page": 2,
+      "top": 312.001,
+      "widgetType": "text",
+      "width": 72.0,
+      "fieldLabel": "d Add lines 25a through 25c . . . . . . . . . . . . . . . . . . . . . . 25d (1 of 2)",
+      "badge": "d"
+    },
+    {
+      "contextLines": [
+        "d Add lines 25a through 25c . . . . . . . . . . . . . . . . . . . . . . 25d",
+        "26 2025 estimated tax payments and amount applied from 2024 return . . . . . . . . . . 26 If you made estimated tax payments with your former spouse in 2025,",
+        "c Other forms (see instructions) . . . . . . . . . . . . . 25c"
+      ],
+      "fieldName": "f2_21[0]",
+      "height": 11.999000000000024,
+      "highlight": {
+        "heightPct": 1.5150252525252554,
+        "leftPct": 82.35294117647058,
+        "topPct": 40.909090909090914,
+        "widthPct": 11.76470588235294
+      },
+      "id": "f2_21[0]",
+      "index": 32,
+      "kind": "amount",
+      "left": 504.0,
+      "page": 2,
+      "top": 324.0,
+      "widgetType": "text",
+      "width": 72.0,
+      "fieldLabel": "d Add lines 25a through 25c . . . . . . . . . . . . . . . . . . . . . . 25d (2 of 2)",
+      "badge": "d"
+    },
+    {
+      "contextLines": [
+        "enter their SSN (see instructions):If you have a",
+        "26 2025 estimated tax payments and amount applied from 2024 return . . . . . . . . . . 26 If you made estimated tax payments with your former spouse in 2025,",
+        "qualifying child, you may need to attach Sch. EIC. 27a Earned income credit (EIC) . . . . . . . . . . . . . . 27a"
+      ],
+      "fieldName": "f2_22[0]",
+      "height": 11.999000000000024,
+      "highlight": {
+        "heightPct": 1.5150252525252554,
+        "leftPct": 38.82352941176471,
+        "topPct": 43.9395202020202,
+        "widthPct": 14.117647058823529
+      },
+      "id": "f2_22[0]",
+      "index": 33,
+      "kind": "text",
+      "left": 237.6,
+      "page": 2,
+      "top": 348.001,
+      "widgetType": "text",
+      "width": 86.4,
+      "fieldLabel": "enter their SSN (see instructions):If you have a",
+      "badge": "P2-033"
+    },
+    {
+      "contextLines": [
+        "b Clergy filing Schedule SE (see instructions) . . . . . . . . . . . . . . . .",
+        "qualifying child, you may need to attach Sch. EIC. 27a Earned income credit (EIC) . . . . . . . . . . . . . . 27a",
+        "enter their SSN (see instructions):If you have a"
+      ],
+      "fieldName": "f2_23[0]",
+      "height": 11.999000000000024,
+      "highlight": {
+        "heightPct": 1.5150252525252554,
+        "leftPct": 67.05882352941175,
+        "topPct": 45.45454545454545,
+        "widthPct": 11.642156862745098
+      },
+      "id": "f2_23[0]",
+      "index": 34,
+      "kind": "amount",
+      "left": 410.4,
+      "page": 2,
+      "top": 360.0,
+      "widgetType": "text",
+      "width": 71.25,
+      "fieldLabel": "b Clergy filing Schedule SE (see instructions) . . . . . . . . . . . . . . . . (1 of 2)",
+      "badge": "b"
+    },
+    {
+      "contextLines": [
+        "b Clergy filing Schedule SE (see instructions) . . . . . . . . . . . . . . . .",
+        "c If you do not want to claim the EIC, check here . . . . . . . . . . . . . . .",
+        "qualifying child, you may need to attach Sch. EIC. 27a Earned income credit (EIC) . . . . . . . . . . . . . . 27a"
+      ],
+      "fieldName": "c2_12[0]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 76.33986928104575,
+        "topPct": 47.221969696969694,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c2_12[0]",
+      "index": 35,
+      "kind": "checkbox",
+      "left": 467.2,
+      "page": 2,
+      "top": 373.998,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "b Clergy filing Schedule SE (see instructions) . . . . . . . . . . . . . . . . (2 of 2)",
+      "badge": "b"
+    },
+    {
+      "contextLines": [
+        "c If you do not want to claim the EIC, check here . . . . . . . . . . . . . . .",
+        "b Clergy filing Schedule SE (see instructions) . . . . . . . . . . . . . . . .",
+        "qualifying child, you may need to attach Sch. EIC. 27a Earned income credit (EIC) . . . . . . . . . . . . . . 27a"
+      ],
+      "fieldName": "c2_13[0]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 76.33986928104575,
+        "topPct": 48.73737373737374,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c2_13[0]",
+      "index": 36,
+      "kind": "checkbox",
+      "left": 467.2,
+      "page": 2,
+      "top": 386.0,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "c If you do not want to claim the EIC, check here . . . . . . . . . . . . . . .",
+      "badge": "c"
+    },
+    {
+      "contextLines": [
+        "28",
+        "29 American opportunity credit from Form 8863, line 8 . . . . . . . 29",
+        "28 Additional child tax credit (ACTC) from Schedule 8812. If you do not want to claim the ACTC, check here . . . . . . . . . . . ."
+      ],
+      "fieldName": "f2_24[0]",
+      "height": 11.998999999999967,
+      "highlight": {
+        "heightPct": 1.5150252525252483,
+        "leftPct": 67.05882352941175,
+        "topPct": 51.51502525252526,
+        "widthPct": 11.642156862745098
+      },
+      "id": "f2_24[0]",
+      "index": 38,
+      "kind": "amount",
+      "left": 410.4,
+      "page": 2,
+      "top": 407.999,
+      "widgetType": "text",
+      "width": 71.25,
+      "fieldLabel": "28 (1 of 2)",
+      "badge": "28"
+    },
+    {
+      "contextLines": [
+        "29 American opportunity credit from Form 8863, line 8 . . . . . . . 29",
+        "28 Additional child tax credit (ACTC) from Schedule 8812. If you do not want to claim the ACTC, check here . . . . . . . . . . . .",
+        "28"
+      ],
+      "fieldName": "c2_14[0]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 61.04575163398693,
+        "topPct": 51.76742424242424,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c2_14[0]",
+      "index": 37,
+      "kind": "checkbox",
+      "left": 373.6,
+      "page": 2,
+      "top": 409.998,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "29 American opportunity credit from Form 8863, line 8 . . . . . . . 29 (1 of 2)",
+      "badge": "29"
+    },
+    {
+      "contextLines": [
+        "28",
+        "29 American opportunity credit from Form 8863, line 8 . . . . . . . 29",
+        "30 Refundable adoption credit from Form 8839, line 13 . . . . . . 30"
+      ],
+      "fieldName": "f2_25[0]",
+      "height": 11.999000000000024,
+      "highlight": {
+        "heightPct": 1.5150252525252554,
+        "leftPct": 67.05882352941175,
+        "topPct": 53.03042929292929,
+        "widthPct": 11.642156862745098
+      },
+      "id": "f2_25[0]",
+      "index": 39,
+      "kind": "amount",
+      "left": 410.4,
+      "page": 2,
+      "top": 420.001,
+      "widgetType": "text",
+      "width": 71.25,
+      "fieldLabel": "28 (2 of 2)",
+      "badge": "28"
+    },
+    {
+      "contextLines": [
+        "29 American opportunity credit from Form 8863, line 8 . . . . . . . 29",
+        "30 Refundable adoption credit from Form 8839, line 13 . . . . . . 30",
+        "31 Amount from Schedule 3, line 15 . . . . . . . . . . . . 31"
+      ],
+      "fieldName": "f2_26[0]",
+      "height": 11.999000000000024,
+      "highlight": {
+        "heightPct": 1.5150252525252554,
+        "leftPct": 67.05882352941175,
+        "topPct": 54.54545454545454,
+        "widthPct": 11.642156862745098
+      },
+      "id": "f2_26[0]",
+      "index": 40,
+      "kind": "amount",
+      "left": 410.4,
+      "page": 2,
+      "top": 432.0,
+      "widgetType": "text",
+      "width": 71.25,
+      "fieldLabel": "29 American opportunity credit from Form 8863, line 8 . . . . . . . 29 (2 of 2)",
+      "badge": "29"
+    },
+    {
+      "contextLines": [
+        "30 Refundable adoption credit from Form 8839, line 13 . . . . . . 30",
+        "31 Amount from Schedule 3, line 15 . . . . . . . . . . . . 31",
+        "32 Add lines 27a, 28, 29, 30, and 31. These are your total other payments and refundable credits . 32"
+      ],
+      "fieldName": "f2_27[0]",
+      "height": 11.998999999999967,
+      "highlight": {
+        "heightPct": 1.5150252525252483,
+        "leftPct": 67.05882352941175,
+        "topPct": 56.0604797979798,
+        "widthPct": 11.642156862745098
+      },
+      "id": "f2_27[0]",
+      "index": 41,
+      "kind": "amount",
+      "left": 410.4,
+      "page": 2,
+      "top": 443.999,
+      "widgetType": "text",
+      "width": 71.25,
+      "fieldLabel": "30 Refundable adoption credit from Form 8839, line 13 . . . . . . 30",
+      "badge": "30"
+    },
+    {
+      "contextLines": [
+        "32 Add lines 27a, 28, 29, 30, and 31. These are your total other payments and refundable credits . 32",
+        "33 Add lines 25d, 26, and 32. These are your total payments . . . . . . . . . . . . 33",
+        "31 Amount from Schedule 3, line 15 . . . . . . . . . . . . 31"
+      ],
+      "fieldName": "f2_28[0]",
+      "height": 11.999000000000024,
+      "highlight": {
+        "heightPct": 1.5150252525252554,
+        "leftPct": 82.35294117647058,
+        "topPct": 57.57588383838383,
+        "widthPct": 11.76470588235294
+      },
+      "id": "f2_28[0]",
+      "index": 42,
+      "kind": "amount",
+      "left": 504.0,
+      "page": 2,
+      "top": 456.001,
+      "widgetType": "text",
+      "width": 72.0,
+      "fieldLabel": "32 Add lines 27a, 28, 29, 30, and 31. These are your total other payments and refundable credits . 32",
+      "badge": "32"
+    },
+    {
+      "contextLines": [
+        "33 Add lines 25d, 26, and 32. These are your total payments . . . . . . . . . . . . 33",
+        "32 Add lines 27a, 28, 29, 30, and 31. These are your total other payments and refundable credits . 32",
+        "Refund 34 If line 33 is more than line 24, subtract line 24 from line 33. This is the amount you overpaid . . 34"
+      ],
+      "fieldName": "f2_29[0]",
+      "height": 11.999000000000024,
+      "highlight": {
+        "heightPct": 1.5150252525252554,
+        "leftPct": 82.35294117647058,
+        "topPct": 59.09090909090909,
+        "widthPct": 11.76470588235294
+      },
+      "id": "f2_29[0]",
+      "index": 43,
+      "kind": "amount",
+      "left": 504.0,
+      "page": 2,
+      "top": 468.0,
+      "widgetType": "text",
+      "width": 72.0,
+      "fieldLabel": "33 Add lines 25d, 26, and 32. These are your total payments . . . . . . . . . . . . 33 (1 of 2)",
+      "badge": "33"
+    },
+    {
+      "contextLines": [
+        "33 Add lines 25d, 26, and 32. These are your total payments . . . . . . . . . . . . 33",
+        "35a Amount of line 34 you want refunded to you. If Form 8888 is attached, check here . . . . 35a",
+        "Refund 34 If line 33 is more than line 24, subtract line 24 from line 33. This is the amount you overpaid . . 34"
+      ],
+      "fieldName": "f2_30[0]",
+      "height": 11.998999999999967,
+      "highlight": {
+        "heightPct": 1.5150252525252483,
+        "leftPct": 82.35294117647058,
+        "topPct": 60.60593434343434,
+        "widthPct": 11.76470588235294
+      },
+      "id": "f2_30[0]",
+      "index": 44,
+      "kind": "amount",
+      "left": 504.0,
+      "page": 2,
+      "top": 479.999,
+      "widgetType": "text",
+      "width": 72.0,
+      "fieldLabel": "33 Add lines 25d, 26, and 32. These are your total payments . . . . . . . . . . . . 33 (2 of 2)",
+      "badge": "33"
+    },
+    {
+      "contextLines": [
+        "35a Amount of line 34 you want refunded to you. If Form 8888 is attached, check here . . . . 35a",
+        "b Routing number c Type: Checking",
+        "Direct deposit? See instructions. Savings d Account number"
+      ],
+      "fieldName": "f2_31[0]",
+      "height": 11.999000000000024,
+      "highlight": {
+        "heightPct": 1.5150252525252554,
+        "leftPct": 82.35294117647058,
+        "topPct": 62.12133838383838,
+        "widthPct": 11.76470588235294
+      },
+      "id": "f2_31[0]",
+      "index": 46,
+      "kind": "amount",
+      "left": 504.0,
+      "page": 2,
+      "top": 492.001,
+      "widgetType": "text",
+      "width": 72.0,
+      "fieldLabel": "35a Amount of line 34 you want refunded to you. If Form 8888 is attached, check here . . . . 35a (1 of 2)",
+      "badge": "35a"
+    },
+    {
+      "contextLines": [
+        "35a Amount of line 34 you want refunded to you. If Form 8888 is attached, check here . . . . 35a",
+        "Refund 34 If line 33 is more than line 24, subtract line 24 from line 33. This is the amount you overpaid . . 34",
+        "b Routing number c Type: Checking"
+      ],
+      "fieldName": "c2_15[0]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 76.33986928104575,
+        "topPct": 62.37373737373737,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c2_15[0]",
+      "index": 45,
+      "kind": "checkbox",
+      "left": 467.2,
+      "page": 2,
+      "top": 494.0,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "35a Amount of line 34 you want refunded to you. If Form 8888 is attached, check here . . . . 35a (2 of 2)",
+      "badge": "35a"
+    },
+    {
+      "contextLines": [
+        "b Routing number c Type: Checking",
+        "35a Amount of line 34 you want refunded to you. If Form 8888 is attached, check here . . . . 35a",
+        "Direct deposit? See instructions. Savings d Account number"
+      ],
+      "fieldName": "f2_32[0]",
+      "height": 11.000999999999976,
+      "highlight": {
+        "heightPct": 1.3890151515151485,
+        "leftPct": 29.411764705882355,
+        "topPct": 63.63636363636363,
+        "widthPct": 21.176470588235297
+      },
+      "id": "f2_32[0]",
+      "index": 47,
+      "kind": "text",
+      "left": 180.0,
+      "page": 2,
+      "top": 504.0,
+      "widgetType": "text",
+      "width": 129.60000000000002,
+      "fieldLabel": "b Routing number c Type: Checking (1 of 4)",
+      "badge": "b"
+    },
+    {
+      "contextLines": [
+        "b Routing number c Type: Checking",
+        "35a Amount of line 34 you want refunded to you. If Form 8888 is attached, check here . . . . 35a",
+        "Direct deposit? See instructions. Savings d Account number"
+      ],
+      "fieldName": "c2_16[0]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 61.66666666666666,
+        "topPct": 63.88876262626263,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c2_16[0]",
+      "index": 48,
+      "kind": "checkbox",
+      "left": 377.4,
+      "page": 2,
+      "top": 505.999,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "b Routing number c Type: Checking (2 of 4)",
+      "badge": "b"
+    },
+    {
+      "contextLines": [
+        "b Routing number c Type: Checking",
+        "35a Amount of line 34 you want refunded to you. If Form 8888 is attached, check here . . . . 35a",
+        "Direct deposit? See instructions. Savings d Account number"
+      ],
+      "fieldName": "c2_16[1]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 71.07843137254902,
+        "topPct": 63.88876262626263,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c2_16[1]",
+      "index": 49,
+      "kind": "checkbox",
+      "left": 435.0,
+      "page": 2,
+      "top": 505.999,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "b Routing number c Type: Checking (3 of 4)",
+      "badge": "b"
+    },
+    {
+      "contextLines": [
+        "b Routing number c Type: Checking",
+        "36 Amount of line 34 you want applied to your 2026 estimated tax . . . 36",
+        "Direct deposit? See instructions. Savings d Account number"
+      ],
+      "fieldName": "f2_33[0]",
+      "height": 11.000999999999976,
+      "highlight": {
+        "heightPct": 1.3890151515151485,
+        "leftPct": 29.411764705882355,
+        "topPct": 65.15138888888889,
+        "widthPct": 40.0
+      },
+      "id": "f2_33[0]",
+      "index": 50,
+      "kind": "text",
+      "left": 180.0,
+      "page": 2,
+      "top": 515.999,
+      "widgetType": "text",
+      "width": 244.8,
+      "fieldLabel": "b Routing number c Type: Checking (4 of 4)",
+      "badge": "b"
+    },
+    {
+      "contextLines": [
+        "36 Amount of line 34 you want applied to your 2026 estimated tax . . . 36",
+        "Direct deposit? See instructions. Savings d Account number",
+        "Amount You Owe 37 Subtract line 33 from line 24. This is the amount you owe. For details on how to pay, go to www.irs.gov/Payments or see instructions . . . . . . . . 37"
+      ],
+      "fieldName": "f2_34[0]",
+      "height": 11.999000000000024,
+      "highlight": {
+        "heightPct": 1.5150252525252554,
+        "leftPct": 67.05882352941175,
+        "topPct": 66.66679292929292,
+        "widthPct": 11.642156862745098
+      },
+      "id": "f2_34[0]",
+      "index": 51,
+      "kind": "amount",
+      "left": 410.4,
+      "page": 2,
+      "top": 528.001,
+      "widgetType": "text",
+      "width": 71.25,
+      "fieldLabel": "36 Amount of line 34 you want applied to your 2026 estimated tax . . . 36",
+      "badge": "36"
+    },
+    {
+      "contextLines": [
+        "38 Estimated tax penalty (see instructions) . . . . . . . . . . 38",
+        "Amount You Owe 37 Subtract line 33 from line 24. This is the amount you owe. For details on how to pay, go to www.irs.gov/Payments or see instructions . . . . . . . . 37",
+        "36 Amount of line 34 you want applied to your 2026 estimated tax . . . 36"
+      ],
+      "fieldName": "f2_35[0]",
+      "height": 12.001000000000005,
+      "highlight": {
+        "heightPct": 1.5152777777777784,
+        "leftPct": 82.35294117647058,
+        "topPct": 69.6969696969697,
+        "widthPct": 11.76470588235294
+      },
+      "id": "f2_35[0]",
+      "index": 52,
+      "kind": "amount",
+      "left": 504.0,
+      "page": 2,
+      "top": 552.0,
+      "widgetType": "text",
+      "width": 72.0,
+      "fieldLabel": "38 Estimated tax penalty (see instructions) . . . . . . . . . . 38 (1 of 3)",
+      "badge": "38"
+    },
+    {
+      "contextLines": [
+        "38 Estimated tax penalty (see instructions) . . . . . . . . . . 38",
+        "Amount You Owe 37 Subtract line 33 from line 24. This is the amount you owe. For details on how to pay, go to www.irs.gov/Payments or see instructions . . . . . . . . 37",
+        "Do you want to allow another person to discuss this return with the IRS? See instructions. Yes. Complete below. No"
+      ],
+      "fieldName": "f2_36[0]",
+      "height": 11.998999999999995,
+      "highlight": {
+        "heightPct": 1.5150252525252519,
+        "leftPct": 67.05882352941175,
+        "topPct": 71.21224747474747,
+        "widthPct": 11.642156862745098
+      },
+      "id": "f2_36[0]",
+      "index": 53,
+      "kind": "amount",
+      "left": 410.4,
+      "page": 2,
+      "top": 564.001,
+      "widgetType": "text",
+      "width": 71.25,
+      "fieldLabel": "38 Estimated tax penalty (see instructions) . . . . . . . . . . 38 (2 of 3)",
+      "badge": "38"
+    },
+    {
+      "contextLines": [
+        "38 Estimated tax penalty (see instructions) . . . . . . . . . . 38",
+        "Do you want to allow another person to discuss this return with the IRS? See instructions. Yes. Complete below. No",
+        "Designee\u2019s name Phone no. Personal identification number (PIN)"
+      ],
+      "fieldName": "c2_17[0]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 70.58823529411765,
+        "topPct": 72.94810606060607,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c2_17[0]",
+      "index": 54,
+      "kind": "checkbox",
+      "left": 432.0,
+      "page": 2,
+      "top": 577.749,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "38 Estimated tax penalty (see instructions) . . . . . . . . . . 38 (3 of 3)",
+      "badge": "38"
+    },
+    {
+      "contextLines": [
+        "Do you want to allow another person to discuss this return with the IRS? See instructions. Yes. Complete below. No",
+        "38 Estimated tax penalty (see instructions) . . . . . . . . . . 38",
+        "Designee\u2019s name Phone no. Personal identification number (PIN)"
+      ],
+      "fieldName": "c2_17[1]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 88.23529411764706,
+        "topPct": 72.94810606060607,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c2_17[1]",
+      "index": 55,
+      "kind": "checkbox",
+      "left": 540.0,
+      "page": 2,
+      "top": 577.749,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "Do you want to allow another person to discuss this return with the IRS? See instructions. Yes. Complete below. No",
+      "badge": "P2-055"
+    },
+    {
+      "contextLines": [
+        "Designee\u2019s name Phone no. Personal identification number (PIN)",
+        "Sign Here",
+        "Under penalties of perjury, I declare that I have examined this return and accompanying schedules and statements, and to the best of my knowledge and belief, they are true, correct, and complete. Declaration of preparer "
+      ],
+      "fieldName": "f2_37[0]",
+      "height": 18.0,
+      "highlight": {
+        "heightPct": 2.272727272727273,
+        "leftPct": 21.176470588235293,
+        "topPct": 75.0,
+        "widthPct": 27.058823529411764
+      },
+      "id": "f2_37[0]",
+      "index": 56,
+      "kind": "text",
+      "left": 129.6,
+      "page": 2,
+      "top": 594.0,
+      "widgetType": "text",
+      "width": 165.6,
+      "fieldLabel": "Designee\u2019s name Phone no. Personal identification number (PIN) (1 of 3)",
+      "badge": "P2-056"
+    },
+    {
+      "contextLines": [
+        "Designee\u2019s name Phone no. Personal identification number (PIN)",
+        "Under penalties of perjury, I declare that I have examined this return and accompanying schedules and statements, and to the best of my knowledge and belief, they are true, correct, and complete. Declaration of preparer ",
+        "Do you want to allow another person to discuss this return with the IRS? See instructions. Yes. Complete below. No"
+      ],
+      "fieldName": "f2_38[0]",
+      "height": 18.0,
+      "highlight": {
+        "heightPct": 2.272727272727273,
+        "leftPct": 52.94117647058824,
+        "topPct": 75.0,
+        "widthPct": 16.47058823529412
+      },
+      "id": "f2_38[0]",
+      "index": 57,
+      "kind": "text",
+      "left": 324.0,
+      "page": 2,
+      "top": 594.0,
+      "widgetType": "text",
+      "width": 100.80000000000001,
+      "fieldLabel": "Designee\u2019s name Phone no. Personal identification number (PIN) (2 of 3)",
+      "badge": "P2-057"
+    },
+    {
+      "contextLines": [
+        "Designee\u2019s name Phone no. Personal identification number (PIN)",
+        "Under penalties of perjury, I declare that I have examined this return and accompanying schedules and statements, and to the best of my knowledge and belief, they are true, correct, and complete. Declaration of preparer ",
+        "Do you want to allow another person to discuss this return with the IRS? See instructions. Yes. Complete below. No"
+      ],
+      "fieldName": "f2_39[0]",
+      "height": 11.498999999999995,
+      "highlight": {
+        "heightPct": 1.4518939393939387,
+        "leftPct": 82.35294117647058,
+        "topPct": 75.75770202020202,
+        "widthPct": 11.76470588235294
+      },
+      "id": "f2_39[0]",
+      "index": 58,
+      "kind": "text",
+      "left": 504.0,
+      "page": 2,
+      "top": 600.001,
+      "widgetType": "text",
+      "width": 72.0,
+      "fieldLabel": "Designee\u2019s name Phone no. Personal identification number (PIN) (3 of 3)",
+      "badge": "P2-058"
+    },
+    {
+      "contextLines": [
+        "Joint return? See instructions. Keep a copy for your records. Spouse\u2019s signature. If a joint return, both must sign. Date Spouse\u2019s occupation If the IRS sent your spouse an Identity Protection PIN, enter it here (see ins",
+        "Your signature Date Your occupation If the IRS sent you an Identity Protection PIN, enter it here (see inst.)",
+        "Under penalties of perjury, I declare that I have examined this return and accompanying schedules and statements, and to the best of my knowledge and belief, they are true, correct, and complete. Declaration of preparer "
+      ],
+      "fieldName": "f2_40[0]",
+      "height": 19.998999999999995,
+      "highlight": {
+        "heightPct": 2.5251262626262623,
+        "leftPct": 53.10457516339869,
+        "topPct": 81.56578282828283,
+        "widthPct": 22.06699346405229
+      },
+      "id": "f2_40[0]",
+      "index": 59,
+      "kind": "text",
+      "left": 325.0,
+      "page": 2,
+      "top": 646.001,
+      "widgetType": "text",
+      "width": 135.05,
+      "fieldLabel": "Joint return? See instructions. Keep a copy for your records. Spouse\u2019s signature. If a joint return, both must sign. Date Spouse\u2019s occupation If the IRS sent your spouse an Identity Protection PIN, enter it here (see ins (1 of 2)",
+      "badge": "P2-059"
+    },
+    {
+      "contextLines": [
+        "Joint return? See instructions. Keep a copy for your records. Spouse\u2019s signature. If a joint return, both must sign. Date Spouse\u2019s occupation If the IRS sent your spouse an Identity Protection PIN, enter it here (see ins",
+        "Your signature Date Your occupation If the IRS sent you an Identity Protection PIN, enter it here (see inst.)"
+      ],
+      "fieldName": "f2_41[0]",
+      "height": 11.998999999999995,
+      "highlight": {
+        "heightPct": 1.5150252525252519,
+        "leftPct": 82.35294117647058,
+        "topPct": 82.57588383838383,
+        "widthPct": 11.76470588235294
+      },
+      "id": "f2_41[0]",
+      "index": 60,
+      "kind": "text",
+      "left": 504.0,
+      "page": 2,
+      "top": 654.001,
+      "widgetType": "text",
+      "width": 72.0,
+      "fieldLabel": "Joint return? See instructions. Keep a copy for your records. Spouse\u2019s signature. If a joint return, both must sign. Date Spouse\u2019s occupation If the IRS sent your spouse an Identity Protection PIN, enter it here (see ins (2 of 2)",
+      "badge": "P2-060"
+    },
+    {
+      "contextLines": [
+        "Phone no. Email address",
+        "Joint return? See instructions. Keep a copy for your records. Spouse\u2019s signature. If a joint return, both must sign. Date Spouse\u2019s occupation If the IRS sent your spouse an Identity Protection PIN, enter it here (see ins",
+        "Preparer\u2019s name Preparer\u2019s signature Date PTIN Check if: Self-employed"
+      ],
+      "fieldName": "f2_42[0]",
+      "height": 19.998999999999995,
+      "highlight": {
+        "heightPct": 2.5251262626262623,
+        "leftPct": 53.10457516339869,
+        "topPct": 85.35353535353535,
+        "widthPct": 22.06699346405229
+      },
+      "id": "f2_42[0]",
+      "index": 61,
+      "kind": "text",
+      "left": 325.0,
+      "page": 2,
+      "top": 676.0,
+      "widgetType": "text",
+      "width": 135.05,
+      "fieldLabel": "Phone no. Email address (1 of 4)",
+      "badge": "P2-061"
+    },
+    {
+      "contextLines": [
+        "Phone no. Email address",
+        "Joint return? See instructions. Keep a copy for your records. Spouse\u2019s signature. If a joint return, both must sign. Date Spouse\u2019s occupation If the IRS sent your spouse an Identity Protection PIN, enter it here (see ins",
+        "Preparer\u2019s name Preparer\u2019s signature Date PTIN Check if: Self-employed"
+      ],
+      "fieldName": "f2_43[0]",
+      "height": 11.998999999999995,
+      "highlight": {
+        "heightPct": 1.5150252525252519,
+        "leftPct": 82.35294117647058,
+        "topPct": 86.36363636363636,
+        "widthPct": 11.76470588235294
+      },
+      "id": "f2_43[0]",
+      "index": 62,
+      "kind": "text",
+      "left": 504.0,
+      "page": 2,
+      "top": 684.0,
+      "widgetType": "text",
+      "width": 72.0,
+      "fieldLabel": "Phone no. Email address (2 of 4)",
+      "badge": "P2-062"
+    },
+    {
+      "contextLines": [
+        "Phone no. Email address",
+        "Paid Preparer Use Only",
+        "Preparer\u2019s name Preparer\u2019s signature Date PTIN Check if: Self-employed"
+      ],
+      "fieldName": "f2_44[0]",
+      "height": 11.99900000000001,
+      "highlight": {
+        "heightPct": 1.5150252525252537,
+        "leftPct": 20.84950980392157,
+        "topPct": 87.87866161616162,
+        "widthPct": 23.733823529411772
+      },
+      "id": "f2_44[0]",
+      "index": 63,
+      "kind": "text",
+      "left": 127.599,
+      "page": 2,
+      "top": 695.999,
+      "widgetType": "text",
+      "width": 145.25100000000003,
+      "fieldLabel": "Phone no. Email address (3 of 4)",
+      "badge": "P2-063"
+    },
+    {
+      "contextLines": [
+        "Phone no. Email address",
+        "Preparer\u2019s name Preparer\u2019s signature Date PTIN Check if: Self-employed",
+        "Joint return? See instructions. Keep a copy for your records. Spouse\u2019s signature. If a joint return, both must sign. Date Spouse\u2019s occupation If the IRS sent your spouse an Identity Protection PIN, enter it here (see ins"
+      ],
+      "fieldName": "f2_45[0]",
+      "height": 11.99900000000001,
+      "highlight": {
+        "heightPct": 1.5150252525252537,
+        "leftPct": 52.94117647058824,
+        "topPct": 87.87866161616162,
+        "widthPct": 41.17647058823529
+      },
+      "id": "f2_45[0]",
+      "index": 64,
+      "kind": "text",
+      "left": 324.0,
+      "page": 2,
+      "top": 695.999,
+      "widgetType": "text",
+      "width": 252.0,
+      "fieldLabel": "Phone no. Email address (4 of 4)",
+      "badge": "P2-064"
+    },
+    {
+      "contextLines": [
+        "Paid Preparer Use Only",
+        "Firm\u2019s name Phone no. Firm\u2019s address Firm\u2019s EIN",
+        "Preparer\u2019s name Preparer\u2019s signature Date PTIN Check if: Self-employed"
+      ],
+      "fieldName": "f2_46[0]",
+      "height": 14.000999999999998,
+      "highlight": {
+        "heightPct": 1.7678030303030299,
+        "leftPct": 14.967156862745098,
+        "topPct": 90.65669191919191,
+        "widthPct": 21.38088235294118
+      },
+      "id": "f2_46[0]",
+      "index": 65,
+      "kind": "text",
+      "left": 91.599,
+      "page": 2,
+      "top": 718.001,
+      "widgetType": "text",
+      "width": 130.851,
+      "fieldLabel": "Paid Preparer Use Only (1 of 2)",
+      "badge": "P2-065"
+    },
+    {
+      "contextLines": [
+        "Firm\u2019s name Phone no. Firm\u2019s address Firm\u2019s EIN",
+        "Preparer\u2019s name Preparer\u2019s signature Date PTIN Check if: Self-employed",
+        "Phone no. Email address"
+      ],
+      "fieldName": "f2_47[0]",
+      "height": 14.000999999999998,
+      "highlight": {
+        "heightPct": 1.7678030303030299,
+        "leftPct": 74.281045751634,
+        "topPct": 90.65669191919191,
+        "widthPct": 9.125816993464046
+      },
+      "id": "f2_47[0]",
+      "index": 66,
+      "kind": "text",
+      "left": 454.6,
+      "page": 2,
+      "top": 718.001,
+      "widgetType": "text",
+      "width": 55.849999999999966,
+      "fieldLabel": "Firm\u2019s name Phone no. Firm\u2019s address Firm\u2019s EIN (1 of 2)",
+      "badge": "P2-066"
+    },
+    {
+      "contextLines": [
+        "Firm\u2019s name Phone no. Firm\u2019s address Firm\u2019s EIN",
+        "Preparer\u2019s name Preparer\u2019s signature Date PTIN Check if: Self-employed",
+        "Phone no. Email address"
+      ],
+      "fieldName": "c2_18[0]",
+      "height": 8.000000000000007,
+      "highlight": {
+        "heightPct": 1.010101010101011,
+        "leftPct": 84.70588235294117,
+        "topPct": 90.97209595959596,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c2_18[0]",
+      "index": 67,
+      "kind": "checkbox",
+      "left": 518.4,
+      "page": 2,
+      "top": 720.499,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "Firm\u2019s name Phone no. Firm\u2019s address Firm\u2019s EIN (2 of 2)",
+      "badge": "P2-067"
+    },
+    {
+      "contextLines": [
+        "Preparer\u2019s name Preparer\u2019s signature Date PTIN Check if: Self-employed",
+        "Firm\u2019s name Phone no. Firm\u2019s address Firm\u2019s EIN",
+        "Paid Preparer Use Only"
+      ],
+      "fieldName": "f2_48[0]",
+      "height": 11.998999999999995,
+      "highlight": {
+        "heightPct": 1.5150252525252519,
+        "leftPct": 21.99330065359477,
+        "topPct": 92.42411616161617,
+        "widthPct": 52.00179738562092
+      },
+      "id": "f2_48[0]",
+      "index": 68,
+      "kind": "text",
+      "left": 134.599,
+      "page": 2,
+      "top": 731.999,
+      "widgetType": "text",
+      "width": 318.25100000000003,
+      "fieldLabel": "Preparer\u2019s name Preparer\u2019s signature Date PTIN Check if: Self-employed (1 of 2)",
+      "badge": "P2-068"
+    },
+    {
+      "contextLines": [
+        "Preparer\u2019s name Preparer\u2019s signature Date PTIN Check if: Self-employed",
+        "Firm\u2019s name Phone no. Firm\u2019s address Firm\u2019s EIN",
+        "Go to www.irs.gov/Form1040 for instructions and the latest information. Form 1040 (2025)"
+      ],
+      "fieldName": "f2_49[0]",
+      "height": 11.998999999999995,
+      "highlight": {
+        "heightPct": 1.5150252525252519,
+        "leftPct": 80.81699346405229,
+        "topPct": 92.42411616161617,
+        "widthPct": 13.300653594771239
+      },
+      "id": "f2_49[0]",
+      "index": 69,
+      "kind": "text",
+      "left": 494.6,
+      "page": 2,
+      "top": 731.999,
+      "widgetType": "text",
+      "width": 81.39999999999998,
+      "fieldLabel": "Preparer\u2019s name Preparer\u2019s signature Date PTIN Check if: Self-employed (2 of 2)",
+      "badge": "P2-069"
+    },
+    {
+      "contextLines": [
+        "Paid Preparer Use Only",
+        "Go to www.irs.gov/Form1040 for instructions and the latest information. Form 1040 (2025)",
+        "Firm\u2019s name Phone no. Firm\u2019s address Firm\u2019s EIN"
+      ],
+      "fieldName": "f2_50[0]",
+      "height": 11.999000000000002,
+      "highlight": {
+        "heightPct": 1.5150252525252528,
+        "leftPct": 23.30049019607843,
+        "topPct": 93.9395202020202,
+        "widthPct": 50.69460784313726
+      },
+      "id": "f2_50[0]",
+      "index": 70,
+      "kind": "text",
+      "left": 142.599,
+      "page": 2,
+      "top": 744.001,
+      "widgetType": "text",
+      "width": 310.25100000000003,
+      "fieldLabel": "Paid Preparer Use Only (2 of 2)",
+      "badge": "P2-070"
+    },
+    {
+      "contextLines": [
+        "Go to www.irs.gov/Form1040 for instructions and the latest information. Form 1040 (2025)",
+        "Firm\u2019s name Phone no. Firm\u2019s address Firm\u2019s EIN",
+        "Preparer\u2019s name Preparer\u2019s signature Date PTIN Check if: Self-employed"
+      ],
+      "fieldName": "f2_51[0]",
+      "height": 11.999000000000002,
+      "highlight": {
+        "heightPct": 1.5150252525252528,
+        "leftPct": 80.81699346405229,
+        "topPct": 93.9395202020202,
+        "widthPct": 13.300653594771239
+      },
+      "id": "f2_51[0]",
+      "index": 71,
+      "kind": "amount",
+      "left": 494.6,
+      "page": 2,
+      "top": 744.001,
+      "widgetType": "text",
+      "width": 81.39999999999998,
+      "fieldLabel": "Go to www.irs.gov/Form1040 for instructions and the latest information. Form 1040 (2025)",
+      "badge": "P2-071"
+    }
+  ],
+  "numberOfFields": 199,
+  "numberOfPages": 2,
+  "sourceLayout": "/private/tmp/form-1040-layout-rerun.json",
+  "sourcePdf": "/private/tmp/f1040.current.pdf"
+}

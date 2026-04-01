@@ -10,73 +10,85 @@ import {
 } from "react-native";
 import { SectionCard, type SurfaceTokens } from "@creator-cfo/ui";
 
-import type { AppCopy } from "../app-shell/copy";
-import {
-  buildFormScheduleCSlots,
-  formScheduleCDisclaimerText,
-  getCurrentFormScheduleCTaxYear,
-  type FormScheduleCDatabaseSnapshot,
-  type FormScheduleCPage,
-  type FormScheduleCSlotId,
-} from "./form-schedule-c-model";
-import { FormScheduleCCanvas } from "./form-schedule-c-canvas";
+import type { TaxFormPage, TaxFormSlotId, TaxFormSlotSource, TaxFormSlotState } from "./types";
 
 const calculatedLegendColor = "#2563eb";
 
-interface FormScheduleCPreviewProps {
+interface TaxFormCopyLike {
+  acknowledge: string;
+  closePreview: string;
+  databaseBadge: string;
+  disclaimerTitle: string;
+  intro: string;
+  launcherHint: string;
+  openPreview: string;
+  pageOneLabel: string;
+  pageSwitcherTitle: string;
+  pageTwoLabel: string;
+  sourceLabel: string;
+  slotGuideTitle: string;
+  taxYearTitle?: string;
+  title: string;
+}
+
+interface TaxFormPreviewProps {
   calculatedBadge: string;
-  copy: AppCopy["discover"]["formScheduleC"];
+  copy: TaxFormCopyLike;
+  disclaimerText: string;
   error: string | null;
   footerNote: string;
   isLoaded: boolean;
   manualBadge: string;
   onSelectTaxYear?: (taxYear: number) => void;
   palette: SurfaceTokens;
+  renderCanvas: (props: {
+    onSelectSlot: (slotId: TaxFormSlotId) => void;
+    page: TaxFormPage;
+    palette: SurfaceTokens;
+    selectedSlotId: TaxFormSlotId;
+    slots: readonly TaxFormSlotState[];
+    width: number;
+  }) => ReactNode;
   renderLauncher?: (openPreview: () => void) => ReactNode;
   selectedTaxYear?: number;
   sectionEyebrow: string;
-  snapshot: FormScheduleCDatabaseSnapshot;
+  slots: readonly TaxFormSlotState[];
   taxYearOptions?: readonly number[];
 }
 
-export function FormScheduleCPreview(props: FormScheduleCPreviewProps) {
+export function TaxFormPreview(props: TaxFormPreviewProps) {
   const {
     calculatedBadge,
     copy,
+    disclaimerText,
     error,
     footerNote,
     isLoaded,
     manualBadge,
+    onSelectTaxYear,
     palette,
+    renderCanvas,
     renderLauncher,
+    selectedTaxYear,
     sectionEyebrow,
-    snapshot,
+    slots,
+    taxYearOptions,
   } = props;
   const { width: viewportWidth } = useWindowDimensions();
-  const currentTaxYear = getCurrentFormScheduleCTaxYear();
   const [isPreviewVisible, setIsPreviewVisible] = useState(false);
   const [isDisclaimerVisible, setIsDisclaimerVisible] = useState(true);
   const [formZoom, setFormZoom] = useState(1);
-  const [selectedPage, setSelectedPage] = useState<FormScheduleCPage>(1);
-  const [uncontrolledTaxYear, setUncontrolledTaxYear] = useState(currentTaxYear);
-  const selectedTaxYear = props.selectedTaxYear ?? uncontrolledTaxYear;
-  const taxYearOptions = props.taxYearOptions ?? [currentTaxYear - 1, currentTaxYear];
-  const selectTaxYear = props.onSelectTaxYear ?? setUncontrolledTaxYear;
-  const slots = buildFormScheduleCSlots(snapshot, {
-    noInstructionNote: copy.noInstructionNote,
-    taxYear: selectedTaxYear,
-  });
+  const [selectedPage, setSelectedPage] = useState<TaxFormPage>(1);
   const pageSlots = slots.filter((slot) => slot.page === selectedPage);
-  const [selectedSlotId, setSelectedSlotId] = useState<FormScheduleCSlotId>(
-    pageSlots[0]?.id ?? slots[0]?.id ?? "proprietorName",
+  const [selectedSlotId, setSelectedSlotId] = useState<TaxFormSlotId>(
+    pageSlots[0]?.id ?? slots[0]?.id ?? "slot-1",
   );
   const baseFormWidth = Math.max(Math.min(viewportWidth - 88, 980), 320);
   const canvasWidth = Math.round(baseFormWidth * formZoom);
-  const accentLabelColor = palette.name === "dark" ? palette.shell : palette.inkOnAccent;
 
   useEffect(() => {
     if (!pageSlots.some((slot) => slot.id === selectedSlotId)) {
-      setSelectedSlotId(pageSlots[0]?.id ?? slots[0]?.id ?? "proprietorName");
+      setSelectedSlotId(pageSlots[0]?.id ?? slots[0]?.id ?? "slot-1");
     }
   }, [pageSlots, selectedSlotId, slots]);
 
@@ -122,7 +134,7 @@ export function FormScheduleCPreview(props: FormScheduleCPreviewProps) {
             onPress={openPreview}
             style={[styles.launchButton, { backgroundColor: palette.accent }]}
           >
-            <Text style={[styles.launchButtonLabel, { color: accentLabelColor }]}>
+            <Text style={[styles.launchButtonLabel, { color: palette.inkOnAccent }]}>
               {copy.openPreview}
             </Text>
           </Pressable>
@@ -144,9 +156,7 @@ export function FormScheduleCPreview(props: FormScheduleCPreviewProps) {
                 ]}
               >
                 <Text style={[styles.modalTitle, { color: palette.ink }]}>{copy.disclaimerTitle}</Text>
-                <Text style={[styles.modalBody, { color: palette.inkMuted }]}>
-                  {formScheduleCDisclaimerText}
-                </Text>
+                <Text style={[styles.modalBody, { color: palette.inkMuted }]}>{disclaimerText}</Text>
                 <View style={styles.modalButtonRow}>
                   <Pressable
                     accessibilityRole="button"
@@ -164,7 +174,7 @@ export function FormScheduleCPreview(props: FormScheduleCPreviewProps) {
                     }}
                     style={[styles.modalButton, { backgroundColor: palette.accent }]}
                   >
-                    <Text style={[styles.modalButtonLabel, { color: accentLabelColor }]}>
+                    <Text style={[styles.modalButtonLabel, { color: palette.inkOnAccent }]}>
                       {copy.acknowledge}
                     </Text>
                   </Pressable>
@@ -188,7 +198,9 @@ export function FormScheduleCPreview(props: FormScheduleCPreviewProps) {
                   onPress={closePreview}
                   style={[styles.closeButton, { borderColor: palette.border }]}
                 >
-                  <Text style={[styles.closeButtonLabel, { color: palette.ink }]}>{copy.closePreview}</Text>
+                  <Text style={[styles.closeButtonLabel, { color: palette.ink }]}>
+                    {copy.closePreview}
+                  </Text>
                 </Pressable>
               </View>
 
@@ -211,20 +223,26 @@ export function FormScheduleCPreview(props: FormScheduleCPreviewProps) {
                     <Text style={[styles.errorText, { color: palette.destructive }]}>{error}</Text>
                   ) : null}
 
-                  <Text style={[styles.subheading, { color: palette.ink }]}>{copy.taxYearTitle}</Text>
-                  <View style={styles.pageButtonRow}>
-                    {taxYearOptions.map((taxYear) => (
-                      <PageButton
-                        key={taxYear}
-                        isSelected={selectedTaxYear === taxYear}
-                        label={String(taxYear)}
-                        onPress={() => {
-                          selectTaxYear(taxYear);
-                        }}
-                        palette={palette}
-                      />
-                    ))}
-                  </View>
+                  {copy.taxYearTitle && selectedTaxYear !== undefined && onSelectTaxYear && taxYearOptions ? (
+                    <>
+                      <Text style={[styles.subheading, { color: palette.ink }]}>
+                        {copy.taxYearTitle}
+                      </Text>
+                      <View style={styles.pageButtonRow}>
+                        {taxYearOptions.map((taxYear) => (
+                          <PageButton
+                            key={taxYear}
+                            isSelected={selectedTaxYear === taxYear}
+                            label={String(taxYear)}
+                            onPress={() => {
+                              onSelectTaxYear(taxYear);
+                            }}
+                            palette={palette}
+                          />
+                        ))}
+                      </View>
+                    </>
+                  ) : null}
 
                   <Text style={[styles.subheading, { color: palette.ink }]}>{copy.pageSwitcherTitle}</Text>
                   <View style={styles.pageButtonRow}>
@@ -303,15 +321,14 @@ export function FormScheduleCPreview(props: FormScheduleCPreviewProps) {
                       showsHorizontalScrollIndicator={true}
                       contentContainerStyle={styles.formScrollerContent}
                     >
-                      <FormScheduleCCanvas
-                        onSelectSlot={setSelectedSlotId}
-                        page={selectedPage}
-                        palette={palette}
-                        selectedSlotId={selectedSlotId}
-                        slots={slots}
-                        taxYear={selectedTaxYear}
-                        width={canvasWidth}
-                      />
+                      {renderCanvas({
+                        onSelectSlot: setSelectedSlotId,
+                        page: selectedPage,
+                        palette,
+                        selectedSlotId,
+                        slots,
+                        width: canvasWidth,
+                      })}
                     </ScrollView>
                   </View>
 
@@ -383,7 +400,7 @@ export function FormScheduleCPreview(props: FormScheduleCPreviewProps) {
 }
 
 function getSlotTone(
-  source: "database" | "calculated" | "manual",
+  source: TaxFormSlotSource,
   calculatedBadge: string,
   databaseBadge: string,
   manualBadge: string,
@@ -526,55 +543,57 @@ const styles = StyleSheet.create({
   },
   modalButton: {
     alignItems: "center",
-    borderRadius: 16,
+    borderRadius: 14,
     justifyContent: "center",
-    minHeight: 48,
-    paddingHorizontal: 20,
+    minHeight: 46,
+    minWidth: 132,
+    paddingHorizontal: 18,
   },
   modalButtonLabel: {
     fontSize: 15,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   modalButtonRow: {
     flexDirection: "row",
-    gap: 10,
+    flexWrap: "wrap",
+    gap: 12,
+    justifyContent: "flex-end",
   },
   modalButtonSecondary: {
     alignItems: "center",
-    borderRadius: 16,
+    borderRadius: 14,
     borderWidth: 1,
-    flex: 1,
     justifyContent: "center",
-    minHeight: 48,
-    paddingHorizontal: 20,
+    minHeight: 46,
+    minWidth: 132,
+    paddingHorizontal: 18,
   },
   modalButtonSecondaryLabel: {
     fontSize: 15,
     fontWeight: "700",
   },
   modalCard: {
-    borderRadius: 24,
+    borderRadius: 26,
     borderWidth: 1,
-    gap: 16,
+    gap: 18,
     maxWidth: 560,
-    padding: 20,
-    width: "100%",
+    padding: 24,
     shadowOffset: {
-      height: 14,
+      height: 16,
       width: 0,
     },
-    shadowOpacity: 0.24,
-    shadowRadius: 24,
+    shadowOpacity: 0.2,
+    shadowRadius: 32,
+    width: "100%",
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: "800",
-    lineHeight: 26,
   },
   pageButton: {
     borderRadius: 14,
     borderWidth: 1,
-    minWidth: 140,
+    minWidth: 110,
     paddingHorizontal: 14,
     paddingVertical: 10,
   },
@@ -593,14 +612,14 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingHorizontal: 20,
+    paddingHorizontal: 18,
     paddingVertical: 14,
   },
   previewHeaderTitle: {
     flex: 1,
     fontSize: 18,
     fontWeight: "800",
-    lineHeight: 24,
+    paddingRight: 16,
   },
   previewModalScreen: {
     flex: 1,
@@ -609,9 +628,8 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   previewValue: {
-    fontSize: 15,
-    fontWeight: "700",
-    lineHeight: 20,
+    fontSize: 17,
+    fontWeight: "800",
   },
   selectionHint: {
     fontSize: 14,
@@ -624,18 +642,19 @@ const styles = StyleSheet.create({
   slotCard: {
     borderRadius: 18,
     borderWidth: 1,
-    gap: 8,
-    padding: 14,
+    gap: 10,
+    padding: 16,
   },
   slotCardHeader: {
     alignItems: "flex-start",
     flexDirection: "row",
-    gap: 10,
+    gap: 12,
     justifyContent: "space-between",
   },
   slotPill: {
     fontSize: 12,
-    fontWeight: "700",
+    fontWeight: "800",
+    textAlign: "right",
   },
   slotStack: {
     gap: 12,
@@ -644,16 +663,15 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 15,
     fontWeight: "800",
-    lineHeight: 20,
   },
   sourceLine: {
-    fontSize: 13,
+    fontSize: 12,
+    fontWeight: "600",
     lineHeight: 18,
   },
   subheading: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "800",
-    lineHeight: 22,
   },
   summary: {
     fontSize: 15,
@@ -663,29 +681,32 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderRadius: 12,
     borderWidth: 1,
+    height: 38,
     justifyContent: "center",
-    minHeight: 42,
-    minWidth: 42,
+    width: 38,
   },
   zoomButtonDisabled: {
     opacity: 0.45,
   },
   zoomButtonLabel: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "700",
+    marginTop: -2,
   },
   zoomButtonRow: {
+    alignItems: "center",
     flexDirection: "row",
     gap: 8,
   },
   zoomLabel: {
     flex: 1,
     fontSize: 14,
-    lineHeight: 20,
+    fontWeight: "700",
   },
   zoomRow: {
     alignItems: "center",
     flexDirection: "row",
+    flexWrap: "wrap",
     gap: 12,
     justifyContent: "space-between",
   },
@@ -693,12 +714,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderRadius: 12,
     borderWidth: 1,
+    height: 38,
     justifyContent: "center",
-    minHeight: 42,
     minWidth: 72,
+    paddingHorizontal: 10,
   },
   zoomValueLabel: {
     fontSize: 14,
-    fontWeight: "700",
+    fontWeight: "800",
   },
 });

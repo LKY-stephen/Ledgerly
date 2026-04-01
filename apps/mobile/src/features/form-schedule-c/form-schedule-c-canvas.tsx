@@ -1,27 +1,34 @@
-import Svg, { G, Rect, Text as SvgText, TSpan } from "react-native-svg";
+import Svg, { G, Path, Rect, Text as SvgText, TSpan } from "react-native-svg";
 
 import type { SurfaceTokens } from "@creator-cfo/ui";
 
 import {
+  getScheduleCCanvasGroupId,
   getScheduleCLayoutPage,
+  parsedScheduleCOverlayHighlightOverrides,
+  scheduleCTemplateTaxYear,
   type ScheduleCLayoutElement,
+  type ScheduleCSlotHighlight,
   type ScheduleCLayoutTextElement,
 } from "./form-schedule-c-layout";
 import type {
   FormScheduleCPage,
   FormScheduleCSlotId,
   FormScheduleCSlotState,
+  FormScheduleCTaxYear,
 } from "./form-schedule-c-model";
 
 const FORM_INK = "#111827";
 const FORM_MUTED = "#4b5563";
 const FORM_RULE = "#0f172a";
 const FORM_SHEET = "#fffef9";
+const FORM_FONT_FAMILY = "Helvetica";
 const CALCULATED_COLOR = "#2563eb";
 const MIN_PARSED_TEXT_FONT_SIZE = 5.2;
-const PARSED_TEXT_WIDTH_FACTOR = 0.4;
-const PARSED_TEXT_MIN_WIDTH = 2.6;
+const PARSED_TEXT_WIDTH_FACTOR = 0.5;
+const PARSED_TEXT_MIN_WIDTH = 3;
 const PARSED_TEXT_FONT_STEP = 0.25;
+const PARSED_TEXT_LINE_GAP = 1.05;
 const SECTION_LABEL_BOX_MIN_WIDTH = 35;
 const SECTION_LABEL_BOX_MAX_WIDTH = 37;
 const SECTION_LABEL_BOX_MIN_HEIGHT = 11;
@@ -47,65 +54,81 @@ interface FormScheduleCCanvasProps {
   palette: SurfaceTokens;
   selectedSlotId: FormScheduleCSlotId;
   slots: readonly FormScheduleCSlotState[];
+  taxYear: FormScheduleCTaxYear;
   width: number;
 }
 
 export function FormScheduleCCanvas(props: FormScheduleCCanvasProps) {
-  const { onSelectSlot, page, palette, selectedSlotId, slots, width } = props;
+  const { onSelectSlot, page, palette, selectedSlotId, slots, taxYear, width } = props;
   const pageLayout = getScheduleCLayoutPage(page);
   const pageSlots = slots.filter((slot) => slot.page === page);
+  const canvasSlots = buildCanvasSlots(pageSlots, selectedSlotId);
   const height = Math.round((width * pageLayout.height) / pageLayout.width);
 
   return (
     <Svg height={height} viewBox={`0 0 ${pageLayout.width} ${pageLayout.height}`} width={width}>
       <Rect fill={FORM_SHEET} height={pageLayout.height} width={pageLayout.width} x={0} y={0} />
-      {pageLayout.elements.map((element, index) => renderLayoutElement(element, index))}
-      {pageSlots.map((slot) => {
-        const rect = toRect(slot, pageLayout.width, pageLayout.height);
-        const isSelected = slot.id === selectedSlotId;
-        const accentColor = getSlotColor(slot, palette);
-        const previewLines = getPreviewLines(slot, rect.width);
-        const previewY = getPreviewY(slot, rect, previewLines.length);
+      {pageLayout.elements.map((element, index) => renderLayoutElement(element, index, taxYear))}
+      {canvasSlots.map((canvasSlot) => {
+        const rects = toRects(canvasSlot.geometrySlot, pageLayout.width, pageLayout.height);
+        const rect = mergeRects(rects);
+        const accentColor = getSlotColor(canvasSlot.activeSlot, palette);
+        const previewLines = getPreviewLines(canvasSlot.activeSlot, rect.width);
+        const previewY = getPreviewY(canvasSlot.activeSlot, rect, previewLines.length);
 
         return (
-          <G key={slot.id}>
+          <G key={canvasSlot.groupId}>
             <Rect
-              fill={getSlotFill(slot, palette)}
+              fill="transparent"
               height={rect.height}
               onPress={(event) => {
-                onSelectSlot(slot.id);
+                onSelectSlot(canvasSlot.pressSlotId);
                 return event;
               }}
-              rx={slot.kind === "checkbox" ? 2 : 3}
-              stroke={accentColor}
-              strokeWidth={isSelected ? 1.8 : 1.1}
+              stroke="none"
               width={rect.width}
               x={rect.x}
               y={rect.y}
             />
+            {rects.map((visibleRect, rectIndex) => (
+              <Rect
+                fill={getSlotFill(canvasSlot.activeSlot, palette)}
+                height={visibleRect.height}
+                key={`${canvasSlot.groupId}-rect-${rectIndex}`}
+                rx={getSlotRadius(canvasSlot.activeSlot, visibleRect)}
+                stroke={accentColor}
+                strokeWidth={canvasSlot.isSelected ? 1.8 : 1.1}
+                width={visibleRect.width}
+                x={visibleRect.x}
+                y={visibleRect.y}
+              />
+            ))}
             {previewLines.length > 0 ? (
               <SvgTextBlock
-                fill={slot.source === "manual" ? FORM_MUTED : FORM_INK}
-                fontSize={slot.kind === "amount" ? 8.8 : 7.8}
+                fill={canvasSlot.activeSlot.source === "manual" ? FORM_MUTED : FORM_INK}
+                fontSize={canvasSlot.activeSlot.kind === "amount" ? 8.8 : 7.8}
                 fontWeight="700"
                 lines={previewLines}
-                textAnchor={slot.kind === "amount" ? "end" : "start"}
-                x={slot.kind === "amount" ? rect.x + rect.width - 4 : rect.x + 4}
+                textAnchor={canvasSlot.activeSlot.kind === "amount" ? "end" : "start"}
+                x={canvasSlot.activeSlot.kind === "amount" ? rect.x + rect.width - 4 : rect.x + 4}
                 y={previewY}
               />
             ) : null}
-            {isSelected ? (
-              <Rect
-                fill="none"
-                height={Math.max(rect.height - 1.5, 1)}
-                rx={slot.kind === "checkbox" ? 1.5 : 2.5}
-                stroke="rgba(15, 23, 42, 0.35)"
-                strokeWidth={0.7}
-                width={Math.max(rect.width - 1.5, 1)}
-                x={rect.x + 0.75}
-                y={rect.y + 0.75}
-              />
-            ) : null}
+            {canvasSlot.isSelected
+              ? rects.map((visibleRect, rectIndex) => (
+                  <Rect
+                    fill="none"
+                    height={Math.max(visibleRect.height - 1.5, 1)}
+                    key={`${canvasSlot.groupId}-selected-${rectIndex}`}
+                    rx={Math.max(getSlotRadius(canvasSlot.activeSlot, visibleRect) - 0.5, 1.5)}
+                    stroke="rgba(15, 23, 42, 0.35)"
+                    strokeWidth={0.7}
+                    width={Math.max(visibleRect.width - 1.5, 1)}
+                    x={visibleRect.x + 0.75}
+                    y={visibleRect.y + 0.75}
+                  />
+                ))
+              : null}
           </G>
         );
       })}
@@ -113,7 +136,11 @@ export function FormScheduleCCanvas(props: FormScheduleCCanvasProps) {
   );
 }
 
-function renderLayoutElement(element: ScheduleCLayoutElement, index: number) {
+function renderLayoutElement(
+  element: ScheduleCLayoutElement,
+  index: number,
+  taxYear: FormScheduleCTaxYear,
+) {
   if (element.type === "shape") {
     if (element.orientation === "box") {
       return (
@@ -162,25 +189,31 @@ function renderLayoutElement(element: ScheduleCLayoutElement, index: number) {
   }
 
   if (element.type === "text") {
-    return renderParsedText(element, index);
+    return renderParsedText(element, index, taxYear);
   }
 
   return null;
 }
 
-function renderParsedText(element: ScheduleCLayoutTextElement, index: number) {
-  const normalizedText = element.text.replace(/\s+/g, " ").trim();
-  const specialText = renderSpecialParsedText(element, normalizedText, index);
+function renderParsedText(
+  element: ScheduleCLayoutTextElement,
+  index: number,
+  taxYear: FormScheduleCTaxYear,
+) {
+  const renderedText = replaceScheduleCTemplateYear(element.text, taxYear);
+  const normalizedText = normalizeText(renderedText);
+  const specialText = renderSpecialParsedText(element, normalizedText, index, taxYear);
 
   if (specialText !== undefined) {
     return specialText;
   }
 
-  const { fontSize, lines } = fitParsedTextBlock(element);
+  const { fontSize, lines } = fitParsedTextBlock(element, renderedText);
 
   return (
     <SvgTextBlock
       fill={element.sourceType === "paragraph" ? FORM_MUTED : FORM_INK}
+      fontFamily={FORM_FONT_FAMILY}
       fontSize={fontSize}
       fontWeight={getTextWeight(element.sourceType)}
       key={`text-${index}`}
@@ -195,8 +228,29 @@ function renderSpecialParsedText(
   element: ScheduleCLayoutTextElement,
   normalizedText: string,
   index: number,
+  taxYear: FormScheduleCTaxYear,
 ) {
   switch (normalizedText) {
+    case getScheduleCPageOneFormLabelText(taxYear):
+      return renderManualTextGroup(index, [
+        {
+          fill: FORM_MUTED,
+          fontSize: 8,
+          fontWeight: "700",
+          lines: ["(Form 1040)"],
+          x: 36.5,
+          y: element.top + 8.2,
+        },
+        {
+          fill: FORM_MUTED,
+          fontSize: 18.4,
+          fontWeight: "700",
+          lines: [String(taxYear)],
+          textAnchor: "middle",
+          x: 532,
+          y: 63.5,
+        },
+      ]);
     case "Name of proprietor Social security number (SSN)":
       return renderManualTextGroup(index, [
         {
@@ -212,7 +266,7 @@ function renderSpecialParsedText(
           fontSize: 8,
           fontWeight: "700",
           lines: ["Social security number (SSN)"],
-          x: 489.5,
+          x: 449.5,
           y: element.top + 8,
         },
       ]);
@@ -254,13 +308,13 @@ function renderSpecialParsedText(
           y: element.top + 8,
         },
       ]);
-    case "Schedule C (Form 1040) 2025 Page 2":
+    case getScheduleCPageTwoHeaderText(taxYear):
       return renderManualTextGroup(index, [
         {
           fill: FORM_MUTED,
           fontSize: 7,
           fontWeight: "500",
-          lines: ["Schedule C (Form 1040) 2025"],
+          lines: [getScheduleCPageTwoTitleText(taxYear)],
           x: 36,
           y: element.top + 7,
         },
@@ -291,20 +345,118 @@ function renderSpecialParsedText(
         },
       ]);
     case "Part IV Information on Your Vehicle. Complete this part only if you are claiming car or truck expenses on line 9 andare not required to file Form 4562 for this business. See the instructions for line 13 to find out if you must fileForm 4562.":
+      return (
+        <G key={`text-${index}`}>
+          <Rect fill={FORM_RULE} height={0.75} width={540.5} x={35.75} y={311.25} />
+          <SvgTextBlock {...getSectionLabelBlock(element, "Part IV")} fontFamily={FORM_FONT_FAMILY} />
+          <SvgTextBlock
+            fill={FORM_INK}
+            fontFamily={FORM_FONT_FAMILY}
+            fontSize={10.2}
+            fontWeight="700"
+            lineGap={10.9}
+            lines={[
+              "Information on Your Vehicle. Complete this part only if you are claiming car or truck",
+              "expenses on line 9 and are not required to file Form 4562 for this business. See the",
+              "instructions for line 13 to find out if you must file Form 4562.",
+            ]}
+            x={80}
+            y={element.top + 10.1}
+          />
+        </G>
+      );
+    case "30 Expenses for business use of your home. Do not report these expenses elsewhere. Attach Form 8829 unless using the simplified method. See instructions. Simplified method filers only: Enter the total square footage of (a) your home: and (b) the part of your home used for business: . Use the Simplified Method Worksheet in the instructions to figure the amount to enter on line 30 . . . . . . . . .":
       return renderManualTextGroup(index, [
-        getSectionLabelBlock(element, "Part IV"),
         {
-          fill: FORM_INK,
-          fontSize: 9.2,
-          fontWeight: "700",
-          lineGap: 10.4,
+          fill: FORM_MUTED,
+          fontSize: 8,
+          fontWeight: "500",
+          lineGap: 8.95,
           lines: [
-            "Information on Your Vehicle. Complete this part only if you are claiming car or truck",
-            "expenses on line 9 and are not required to file Form 4562 for this business. See the",
-            "instructions for line 13 to find out if you must file Form 4562.",
+            "30 Expenses for business use of your home. Do not report these expenses elsewhere. Attach Form 8829",
+            "unless using the simplified method. See instructions.",
           ],
-          x: 80,
-          y: element.top + 9.6,
+          x: 41.504,
+          y: element.top + 8,
+        },
+        {
+          fill: FORM_MUTED,
+          fontSize: 8,
+          fontWeight: "700",
+          lines: ["Simplified method filers only:"],
+          x: 64.8,
+          y: element.top + 23.8,
+        },
+        {
+          fill: FORM_MUTED,
+          fontSize: 8,
+          fontWeight: "500",
+          lines: ["Enter the total square footage of (a) your home:"],
+          x: 192.8,
+          y: element.top + 23.8,
+        },
+        {
+          fill: FORM_MUTED,
+          fontSize: 8,
+          fontWeight: "500",
+          lines: ["and (b) the part of your home used for business:"],
+          x: 64.8,
+          y: element.top + 32.15,
+        },
+        {
+          fill: FORM_MUTED,
+          fontSize: 8,
+          fontWeight: "500",
+          lines: [". Use the Simplified"],
+          x: 371.5,
+          y: element.top + 32.15,
+        },
+        {
+          fill: FORM_MUTED,
+          fontSize: 8,
+          fontWeight: "500",
+          lines: ["Method Worksheet in the instructions to figure the amount to enter on line 30 . . . . . . . . ."],
+          x: 64.8,
+          y: element.top + 40.65,
+        },
+      ]);
+    case "43 When did you place your vehicle in service for business purposes? (month/day/year) / /":
+      return (
+        <G key={`text-${index}`}>
+          <SvgTextBlock
+            fill={FORM_MUTED}
+            fontFamily={FORM_FONT_FAMILY}
+            fontSize={8}
+            fontWeight="500"
+            lines={["43 When did you place your vehicle in service for business purposes? (month/day/year)"]}
+            x={41.504}
+            y={element.top + 8}
+          />
+          <Path
+            d={`M 404.1 ${element.top + 10.2} L 407 ${element.top + 0.45}`}
+            fill="none"
+            stroke={FORM_MUTED}
+            strokeLinecap="round"
+            strokeWidth={0.95}
+          />
+          <Path
+            d={`M 440.1 ${element.top + 10.2} L 443 ${element.top + 0.45}`}
+            fill="none"
+            stroke={FORM_MUTED}
+            strokeLinecap="round"
+            strokeWidth={0.95}
+          />
+        </G>
+      );
+    case getScheduleCLine44PromptText(taxYear):
+      return renderManualTextGroup(index, [
+        {
+          fill: FORM_MUTED,
+          fontSize: 8,
+          fontWeight: "500",
+          lines: [getScheduleCLine44PromptText(taxYear)],
+          x: 41.504,
+          y: element.top + 8,
         },
       ]);
     case "a Business b Commuting (see instructions) c Other":
@@ -322,7 +474,7 @@ function renderSpecialParsedText(
           fontSize: 8,
           fontWeight: "500",
           lines: ["b Commuting (see instructions)"],
-          x: 194,
+          x: 215.5,
           y: element.top + 8,
         },
         {
@@ -330,7 +482,7 @@ function renderSpecialParsedText(
           fontSize: 8,
           fontWeight: "500",
           lines: ["c Other"],
-          x: 418,
+          x: 431.5,
           y: element.top + 8,
         },
       ]);
@@ -385,6 +537,7 @@ function renderManualTextGroup(index: number, blocks: ManualTextBlock[]) {
       {blocks.map((block, blockIndex) => (
         <SvgTextBlock
           fill={block.fill}
+          fontFamily={FORM_FONT_FAMILY}
           fontSize={block.fontSize}
           fontWeight={block.fontWeight}
           key={`text-${index}-${blockIndex}`}
@@ -431,9 +584,9 @@ function isSectionLabelBox(element: Extract<ScheduleCLayoutElement, { type: "sha
   );
 }
 
-function fitParsedTextBlock(element: ScheduleCLayoutTextElement) {
+function fitParsedTextBlock(element: ScheduleCLayoutTextElement, renderedText: string) {
   let fontSize = clamp(element.fontSize, 6.2, 13.8);
-  const normalizedText = element.text.replace(/\s+/g, " ").trim();
+  const normalizedText = normalizeText(renderedText);
 
   while (fontSize >= MIN_PARSED_TEXT_FONT_SIZE) {
     const wrapped = wrapTextToFit(
@@ -464,6 +617,7 @@ function fitParsedTextBlock(element: ScheduleCLayoutTextElement) {
 
 function SvgTextBlock(props: {
   fill: string;
+  fontFamily?: string;
   fontSize: number;
   fontWeight: SvgTextWeight;
   lineGap?: number;
@@ -472,11 +626,22 @@ function SvgTextBlock(props: {
   x: number;
   y: number;
 }) {
-  const { fill, fontSize, fontWeight, lineGap = fontSize + 1.8, lines, textAnchor = "start", x, y } = props;
+  const {
+    fill,
+    fontFamily = FORM_FONT_FAMILY,
+    fontSize,
+    fontWeight,
+    lineGap = fontSize + PARSED_TEXT_LINE_GAP,
+    lines,
+    textAnchor = "start",
+    x,
+    y,
+  } = props;
 
   return (
     <SvgText
       fill={fill}
+      fontFamily={fontFamily}
       fontSize={fontSize}
       fontWeight={fontWeight}
       textAnchor={textAnchor}
@@ -498,6 +663,35 @@ function toRect(slot: FormScheduleCSlotState, pageWidth: number, pageHeight: num
     width: (slot.highlight.widthPct / 100) * pageWidth,
     x: (slot.highlight.leftPct / 100) * pageWidth,
     y: (slot.highlight.topPct / 100) * pageHeight,
+  };
+}
+
+function toRects(slot: FormScheduleCSlotState, pageWidth: number, pageHeight: number): SlotRect[] {
+  const overrideHighlights = parsedScheduleCOverlayHighlightOverrides[slot.id];
+
+  if (!overrideHighlights) {
+    return [toRect(slot, pageWidth, pageHeight)];
+  }
+
+  return overrideHighlights.map((highlight: ScheduleCSlotHighlight) => ({
+    height: (highlight.heightPct / 100) * pageHeight,
+    width: (highlight.widthPct / 100) * pageWidth,
+    x: (highlight.leftPct / 100) * pageWidth,
+    y: (highlight.topPct / 100) * pageHeight,
+  }));
+}
+
+function mergeRects(rects: readonly SlotRect[]): SlotRect {
+  const left = Math.min(...rects.map((rect) => rect.x));
+  const top = Math.min(...rects.map((rect) => rect.y));
+  const right = Math.max(...rects.map((rect) => rect.x + rect.width));
+  const bottom = Math.max(...rects.map((rect) => rect.y + rect.height));
+
+  return {
+    height: bottom - top,
+    width: right - left,
+    x: left,
+    y: top,
   };
 }
 
@@ -563,7 +757,7 @@ function estimateMaxCharsPerLine(width: number, fontSize: number) {
 }
 
 function estimateMaxLines(height: number, fontSize: number) {
-  return Math.max(1, Math.round((height + 2) / (fontSize + 1.8)));
+  return Math.max(1, Math.round((height + 1.5) / (fontSize + PARSED_TEXT_LINE_GAP)));
 }
 
 function wrapTextToFit(
@@ -690,4 +884,86 @@ interface SlotRect {
   width: number;
   x: number;
   y: number;
+}
+
+interface CanvasSlot {
+  activeSlot: FormScheduleCSlotState;
+  geometrySlot: FormScheduleCSlotState;
+  groupId: string;
+  isSelected: boolean;
+  pressSlotId: FormScheduleCSlotId;
+}
+
+function buildCanvasSlots(
+  slots: readonly FormScheduleCSlotState[],
+  selectedSlotId: FormScheduleCSlotId,
+): CanvasSlot[] {
+  const groupedSlots = new Map<
+    string,
+    {
+      representative: FormScheduleCSlotState;
+      selectedSlot: FormScheduleCSlotState | null;
+    }
+  >();
+
+  for (const slot of slots) {
+    const groupId = getScheduleCCanvasGroupId(slot.id);
+    const existingGroup = groupedSlots.get(groupId);
+
+    if (!existingGroup) {
+      groupedSlots.set(groupId, {
+        representative: slot,
+        selectedSlot: slot.id === selectedSlotId ? slot : null,
+      });
+      continue;
+    }
+
+    if (slot.id === selectedSlotId) {
+      existingGroup.selectedSlot = slot;
+    }
+  }
+
+  return Array.from(groupedSlots.entries()).map(([groupId, group]) => {
+    const activeSlot = group.selectedSlot ?? group.representative;
+
+    return {
+      activeSlot,
+      geometrySlot: group.representative,
+      groupId,
+      isSelected: group.selectedSlot !== null,
+      pressSlotId: activeSlot.id,
+    };
+  });
+}
+
+function getSlotRadius(slot: FormScheduleCSlotState, rect: SlotRect) {
+  if (slot.kind === "checkbox" && rect.width <= 16 && rect.height <= 16) {
+    return 2;
+  }
+
+  return 3;
+}
+
+function normalizeText(value: string) {
+  return value.replace(/\s+/g, " ").trim();
+}
+
+function replaceScheduleCTemplateYear(value: string, taxYear: FormScheduleCTaxYear) {
+  return value.replaceAll(new RegExp(`\\b${scheduleCTemplateTaxYear}\\b`, "g"), String(taxYear));
+}
+
+function getScheduleCPageOneFormLabelText(taxYear: FormScheduleCTaxYear) {
+  return `(Form 1040) ${taxYear}`;
+}
+
+function getScheduleCPageTwoTitleText(taxYear: FormScheduleCTaxYear) {
+  return `Schedule C (Form 1040) ${taxYear}`;
+}
+
+function getScheduleCPageTwoHeaderText(taxYear: FormScheduleCTaxYear) {
+  return `${getScheduleCPageTwoTitleText(taxYear)} Page 2`;
+}
+
+function getScheduleCLine44PromptText(taxYear: FormScheduleCTaxYear) {
+  return `44 Of the total number of miles you drove your vehicle during ${taxYear}, enter the number of miles you used your vehicle for:`;
 }

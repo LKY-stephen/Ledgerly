@@ -1,0 +1,647 @@
+{
+  "excludedFields": [
+    {
+      "fieldName": "f1_13[0]",
+      "height": 11.999000000000024,
+      "page": 1,
+      "reason": "tiny_widget",
+      "width": 1.0
+    },
+    {
+      "fieldName": "f2_1[0]",
+      "height": 11.999000000000024,
+      "page": 2,
+      "reason": "tiny_widget",
+      "width": 1.0
+    }
+  ],
+  "fields": [
+    {
+      "contextLines": [
+        "Social security number of person with self-employment income",
+        "Part I Self-Employment Tax Note: If your only income subject to self-employment tax is church employee income, see instructions for how to report your income and the definition of church employee income. A If you are a m",
+        "Name of person with self-employment income (as shown on Form 1040, 1040-SR, 1040-SS, or 1040-NR)"
+      ],
+      "fieldName": "f1_2[0]",
+      "height": 23.000999999999976,
+      "highlight": {
+        "heightPct": 2.9041666666666637,
+        "leftPct": 80.0,
+        "topPct": 10.732196969696972,
+        "widthPct": 14.117647058823527
+      },
+      "id": "f1_2[0]",
+      "index": 2,
+      "kind": "text",
+      "left": 489.6,
+      "page": 1,
+      "top": 84.99900000000002,
+      "widgetType": "text",
+      "width": 86.39999999999998,
+      "fieldLabel": "Social security number of person with self-employment income",
+      "badge": "P1-002"
+    },
+    {
+      "contextLines": [
+        "Name of person with self-employment income (as shown on Form 1040, 1040-SR, 1040-SS, or 1040-NR)",
+        "Part I Self-Employment Tax Note: If your only income subject to self-employment tax is church employee income, see instructions for how to report your income and the definition of church employee income. A If you are a m",
+        "Social security number of person with self-employment income"
+      ],
+      "fieldName": "f1_1[0]",
+      "height": 14.000999999999976,
+      "highlight": {
+        "heightPct": 1.7678030303030272,
+        "leftPct": 5.88235294117647,
+        "topPct": 11.868560606060608,
+        "widthPct": 52.818627450980394
+      },
+      "id": "f1_1[0]",
+      "index": 1,
+      "kind": "text",
+      "left": 36.0,
+      "page": 1,
+      "top": 93.99900000000002,
+      "widgetType": "text",
+      "width": 323.25,
+      "fieldLabel": "Name of person with self-employment income (as shown on Form 1040, 1040-SR, 1040-SS, or 1040-NR)",
+      "badge": "P1-001"
+    },
+    {
+      "contextLines": [
+        "Part I Self-Employment Tax Note: If your only income subject to self-employment tax is church employee income, see instructions for how to report your income and the definition of church employee income. A If you are a m",
+        "$400 or more of other net earnings from self-employment, check here and continue with Part I . . . . . . . . . Skip lines 1a and 1b if you use the farm optional method in Part II. See instructions.",
+        "1a Net farm profit or (loss) from Schedule F, line 34, and farm partnerships, Schedule K-1 (Form 1065),"
+      ],
+      "fieldName": "c1_1[0]",
+      "height": 8.0,
+      "highlight": {
+        "heightPct": 1.0101010101010102,
+        "leftPct": 92.3202614379085,
+        "topPct": 19.94924242424243,
+        "widthPct": 1.3071895424836601
+      },
+      "id": "c1_1[0]",
+      "index": 3,
+      "kind": "checkbox",
+      "left": 565.0,
+      "page": 1,
+      "top": 157.99800000000005,
+      "widgetType": "checkbox",
+      "width": 8.0,
+      "fieldLabel": "Part I Self-Employment Tax Note: If your only income subject to self-employment tax is church employee income, see instructions for how to report your income and the definition of church employee income. A If you are a m",
+      "badge": "P1-003"
+    },
+    {
+      "contextLines": [
+        "1a Net farm profit or (loss) from Schedule F, line 34, and farm partnerships, Schedule K-1 (Form 1065),",
+        "box 14, code A . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 1a b If you received social security retirement or disability benefits, enter the amount of Conservation Reserve",
+        "$400 or more of other net earnings from self-employment, check here and continue with Part I . . . . . . . . . Skip lines 1a and 1b if you use the farm optional method in Part II. See instructions."
+      ],
+      "fieldName": "f1_3[0]",
+      "height": 11.999000000000024,
+      "highlight": {
+        "heightPct": 1.5150252525252554,
+        "leftPct": 82.35294117647058,
+        "topPct": 24.242297979797982,
+        "widthPct": 11.76470588235294
+      },
+      "id": "f1_3[0]",
+      "index": 4,
+      "kind": "amount",
+      "left": 504.0,
+      "page": 1,
+      "top": 191.99900000000002,
+      "widgetType": "text",
+      "width": 72.0,
+      "fieldLabel": "1a Net farm profit or (loss) from Schedule F, line 34, and farm partnerships, Schedule K-1 (Form 1065),",
+      "badge": "1a"
+    },
+    {
+      "contextLines": [
+        "box 14, code A . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 1a b If you received social security retirement or disability benefits, enter the amount of Conservation Reserve",
+        "Program payments included on Schedule F, line 4b, or listed on Schedule K-1 (Form 1065), box 20, code AQ 1b ( ) Skip line 2 if you use the nonfarm optional method in Part II. See instructions.",
+        "2 Net profit or (loss) from Schedule C, line 31; and Schedule K-1 (Form 1065), box 14, code A (other than farming). See instructions for other income to report or if you are a minister or member of a religious order 2"
+      ],
+      "fieldName": "f1_4[0]",
+      "height": 11.999000000000024,
+      "highlight": {
+        "heightPct": 1.5150252525252554,
+        "leftPct": 83.00653594771242,
+        "topPct": 27.27272727272727,
+        "widthPct": 10.620915032679738
+      },
+      "id": "f1_4[0]",
+      "index": 5,
+      "kind": "amount",
+      "left": 508.0,
+      "page": 1,
+      "top": 216.0,
+      "widgetType": "text",
+      "width": 65.0,
+      "fieldLabel": "box 14, code A . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 1a b If you received social security retirement or disability benefits, enter the amount of Conservation Reserve",
+      "badge": "P1-005"
+    },
+    {
+      "contextLines": [
+        "3 Combine lines 1a, 1b, and 2 . . . . . . . . . . . . . . . . . . . . . . . . . 3",
+        "2 Net profit or (loss) from Schedule C, line 31; and Schedule K-1 (Form 1065), box 14, code A (other than farming). See instructions for other income to report or if you are a minister or member of a religious order 2",
+        "4a If line 3 is more than zero, multiply line 3 by 92.35% (0.9235). Otherwise, enter amount from line 3 . 4a Note: If line 4a is less than $400 due to Conservation Reserve Program payments on line 1b, see instructions."
+      ],
+      "fieldName": "f1_5[0]",
+      "height": 11.999000000000024,
+      "highlight": {
+        "heightPct": 1.5150252525252554,
+        "leftPct": 82.35294117647058,
+        "topPct": 31.818181818181817,
+        "widthPct": 11.76470588235294
+      },
+      "id": "f1_5[0]",
+      "index": 6,
+      "kind": "amount",
+      "left": 504.0,
+      "page": 1,
+      "top": 252.0,
+      "widgetType": "text",
+      "width": 72.0,
+      "fieldLabel": "3 Combine lines 1a, 1b, and 2 . . . . . . . . . . . . . . . . . . . . . . . . . 3 (1 of 3)",
+      "badge": "3"
+    },
+    {
+      "contextLines": [
+        "3 Combine lines 1a, 1b, and 2 . . . . . . . . . . . . . . . . . . . . . . . . . 3",
+        "2 Net profit or (loss) from Schedule C, line 31; and Schedule K-1 (Form 1065), box 14, code A (other than farming). See instructions for other income to report or if you are a minister or member of a religious order 2",
+        "4a If line 3 is more than zero, multiply line 3 by 92.35% (0.9235). Otherwise, enter amount from line 3 . 4a Note: If line 4a is less than $400 due to Conservation Reserve Program payments on line 1b, see instructions."
+      ],
+      "fieldName": "f1_6[0]",
+      "height": 11.999000000000024,
+      "highlight": {
+        "heightPct": 1.5150252525252554,
+        "leftPct": 82.35294117647058,
+        "topPct": 33.33320707070707,
+        "widthPct": 11.76470588235294
+      },
+      "id": "f1_6[0]",
+      "index": 7,
+      "kind": "amount",
+      "left": 504.0,
+      "page": 1,
+      "top": 263.999,
+      "widgetType": "text",
+      "width": 72.0,
+      "fieldLabel": "3 Combine lines 1a, 1b, and 2 . . . . . . . . . . . . . . . . . . . . . . . . . 3 (2 of 3)",
+      "badge": "3"
+    },
+    {
+      "contextLines": [
+        "3 Combine lines 1a, 1b, and 2 . . . . . . . . . . . . . . . . . . . . . . . . . 3",
+        "4a If line 3 is more than zero, multiply line 3 by 92.35% (0.9235). Otherwise, enter amount from line 3 . 4a Note: If line 4a is less than $400 due to Conservation Reserve Program payments on line 1b, see instructions.",
+        "b If you elect one or both of the optional methods, enter the total of lines 15 and 17 here . . . . . 4b"
+      ],
+      "fieldName": "f1_7[0]",
+      "height": 11.999000000000024,
+      "highlight": {
+        "heightPct": 1.5150252525252554,
+        "leftPct": 82.35294117647058,
+        "topPct": 34.84861111111111,
+        "widthPct": 11.76470588235294
+      },
+      "id": "f1_7[0]",
+      "index": 8,
+      "kind": "amount",
+      "left": 504.0,
+      "page": 1,
+      "top": 276.001,
+      "widgetType": "text",
+      "width": 72.0,
+      "fieldLabel": "3 Combine lines 1a, 1b, and 2 . . . . . . . . . . . . . . . . . . . . . . . . . 3 (3 of 3)",
+      "badge": "3"
+    },
+    {
+      "contextLines": [
+        "b If you elect one or both of the optional methods, enter the total of lines 15 and 17 here . . . . . 4b",
+        "4a If line 3 is more than zero, multiply line 3 by 92.35% (0.9235). Otherwise, enter amount from line 3 . 4a Note: If line 4a is less than $400 due to Conservation Reserve Program payments on line 1b, see instructions.",
+        "c Combine lines 4a and 4b. If less than $400, stop; you don\u2019t owe self-employment tax. Exception: If less than $400 and you had church employee income, enter -0- and continue . . . . . . . . 4c"
+      ],
+      "fieldName": "f1_8[0]",
+      "height": 11.998999999999967,
+      "highlight": {
+        "heightPct": 1.5150252525252483,
+        "leftPct": 82.35294117647058,
+        "topPct": 37.878661616161615,
+        "widthPct": 11.76470588235294
+      },
+      "id": "f1_8[0]",
+      "index": 9,
+      "kind": "amount",
+      "left": 504.0,
+      "page": 1,
+      "top": 299.999,
+      "widgetType": "text",
+      "width": 72.0,
+      "fieldLabel": "b If you elect one or both of the optional methods, enter the total of lines 15 and 17 here . . . . . 4b",
+      "badge": "b"
+    },
+    {
+      "contextLines": [
+        "5a Enter your church employee income from Form W-2. See instructions for definition of church employee income . . . . . . . . . . . . . 5a",
+        "c Combine lines 4a and 4b. If less than $400, stop; you don\u2019t owe self-employment tax. Exception: If less than $400 and you had church employee income, enter -0- and continue . . . . . . . . 4c",
+        "b If you elect one or both of the optional methods, enter the total of lines 15 and 17 here . . . . . 4b"
+      ],
+      "fieldName": "f1_9[0]",
+      "height": 11.999000000000024,
+      "highlight": {
+        "heightPct": 1.5150252525252554,
+        "leftPct": 82.35294117647058,
+        "topPct": 40.909090909090914,
+        "widthPct": 11.76470588235294
+      },
+      "id": "f1_9[0]",
+      "index": 10,
+      "kind": "amount",
+      "left": 504.0,
+      "page": 1,
+      "top": 324.0,
+      "widgetType": "text",
+      "width": 72.0,
+      "fieldLabel": "5a Enter your church employee income from Form W-2. See instructions for definition of church employee income . . . . . . . . . . . . . 5a",
+      "badge": "5a"
+    },
+    {
+      "contextLines": [
+        "b Multiply line 5a by 92.35% (0.9235). If less than $100, enter -0- . . . . . . . . . . . . . 5b",
+        "5a Enter your church employee income from Form W-2. See instructions for definition of church employee income . . . . . . . . . . . . . 5a",
+        "c Combine lines 4a and 4b. If less than $400, stop; you don\u2019t owe self-employment tax. Exception: If less than $400 and you had church employee income, enter -0- and continue . . . . . . . . 4c"
+      ],
+      "fieldName": "f1_10[0]",
+      "height": 11.999000000000024,
+      "highlight": {
+        "heightPct": 1.5150252525252554,
+        "leftPct": 67.05882352941175,
+        "topPct": 43.9395202020202,
+        "widthPct": 11.642156862745098
+      },
+      "id": "f1_10[0]",
+      "index": 11,
+      "kind": "amount",
+      "left": 410.4,
+      "page": 1,
+      "top": 348.001,
+      "widgetType": "text",
+      "width": 71.25,
+      "fieldLabel": "b Multiply line 5a by 92.35% (0.9235). If less than $100, enter -0- . . . . . . . . . . . . . 5b (1 of 2)",
+      "badge": "b"
+    },
+    {
+      "contextLines": [
+        "b Multiply line 5a by 92.35% (0.9235). If less than $100, enter -0- . . . . . . . . . . . . . 5b",
+        "6 Add lines 4c and 5b . . . . . . . . . . . . . . . . . . . . . . . . . . . 6",
+        "5a Enter your church employee income from Form W-2. See instructions for definition of church employee income . . . . . . . . . . . . . 5a"
+      ],
+      "fieldName": "f1_11[0]",
+      "height": 11.999000000000024,
+      "highlight": {
+        "heightPct": 1.5150252525252554,
+        "leftPct": 82.35294117647058,
+        "topPct": 45.45454545454545,
+        "widthPct": 11.76470588235294
+      },
+      "id": "f1_11[0]",
+      "index": 12,
+      "kind": "amount",
+      "left": 504.0,
+      "page": 1,
+      "top": 360.0,
+      "widgetType": "text",
+      "width": 72.0,
+      "fieldLabel": "b Multiply line 5a by 92.35% (0.9235). If less than $100, enter -0- . . . . . . . . . . . . . 5b (2 of 2)",
+      "badge": "b"
+    },
+    {
+      "contextLines": [
+        "6 Add lines 4c and 5b . . . . . . . . . . . . . . . . . . . . . . . . . . . 6",
+        "b Multiply line 5a by 92.35% (0.9235). If less than $100, enter -0- . . . . . . . . . . . . . 5b",
+        "7 Maximum amount of combined wages and self-employment earnings subject to social security tax or the 6.2% portion of the 7.65% railroad retirement (tier 1) tax for 2025 . . . . . . . . . . . 7 $176,100"
+      ],
+      "fieldName": "f1_12[0]",
+      "height": 11.998999999999967,
+      "highlight": {
+        "heightPct": 1.5150252525252483,
+        "leftPct": 82.35294117647058,
+        "topPct": 46.969570707070716,
+        "widthPct": 11.76470588235294
+      },
+      "id": "f1_12[0]",
+      "index": 13,
+      "kind": "amount",
+      "left": 504.0,
+      "page": 1,
+      "top": 371.999,
+      "widgetType": "text",
+      "width": 72.0,
+      "fieldLabel": "6 Add lines 4c and 5b . . . . . . . . . . . . . . . . . . . . . . . . . . . 6",
+      "badge": "6"
+    },
+    {
+      "contextLines": [
+        "b Unreported tips subject to social security tax from Form 4137, line 10 . . . 8b",
+        "8a Total social security wages and tips (total of boxes 3 and 7 on Form(s) W-2) and railroad retirement (tier 1) compensation. If $176,100 or more, skip lines 8b through 10, and go to line 11 . . . . . . . . . . . . . . ",
+        "c Wages subject to social security tax from Form 8919, line 10 . . . . . . 8c"
+      ],
+      "fieldName": "f1_14[0]",
+      "height": 11.999000000000024,
+      "highlight": {
+        "heightPct": 1.5150252525252554,
+        "leftPct": 67.05882352941175,
+        "topPct": 54.54545454545454,
+        "widthPct": 11.642156862745098
+      },
+      "id": "f1_14[0]",
+      "index": 14,
+      "kind": "amount",
+      "left": 410.4,
+      "page": 1,
+      "top": 432.0,
+      "widgetType": "text",
+      "width": 71.25,
+      "fieldLabel": "b Unreported tips subject to social security tax from Form 4137, line 10 . . . 8b (1 of 2)",
+      "badge": "b"
+    },
+    {
+      "contextLines": [
+        "b Unreported tips subject to social security tax from Form 4137, line 10 . . . 8b",
+        "c Wages subject to social security tax from Form 8919, line 10 . . . . . . 8c",
+        "8a Total social security wages and tips (total of boxes 3 and 7 on Form(s) W-2) and railroad retirement (tier 1) compensation. If $176,100 or more, skip lines 8b through 10, and go to line 11 . . . . . . . . . . . . . . "
+      ],
+      "fieldName": "f1_15[0]",
+      "height": 11.998999999999967,
+      "highlight": {
+        "heightPct": 1.5150252525252483,
+        "leftPct": 67.05882352941175,
+        "topPct": 56.0604797979798,
+        "widthPct": 11.642156862745098
+      },
+      "id": "f1_15[0]",
+      "index": 15,
+      "kind": "amount",
+      "left": 410.4,
+      "page": 1,
+      "top": 443.999,
+      "widgetType": "text",
+      "width": 71.25,
+      "fieldLabel": "b Unreported tips subject to social security tax from Form 4137, line 10 . . . 8b (2 of 2)",
+      "badge": "b"
+    },
+    {
+      "contextLines": [
+        "c Wages subject to social security tax from Form 8919, line 10 . . . . . . 8c",
+        "b Unreported tips subject to social security tax from Form 4137, line 10 . . . 8b",
+        "d Add lines 8a, 8b, and 8c . . . . . . . . . . . . . . . . . . . . . . . . . . 8d"
+      ],
+      "fieldName": "f1_16[0]",
+      "height": 11.999000000000024,
+      "highlight": {
+        "heightPct": 1.5150252525252554,
+        "leftPct": 67.05882352941175,
+        "topPct": 57.57588383838383,
+        "widthPct": 11.642156862745098
+      },
+      "id": "f1_16[0]",
+      "index": 16,
+      "kind": "amount",
+      "left": 410.4,
+      "page": 1,
+      "top": 456.001,
+      "widgetType": "text",
+      "width": 71.25,
+      "fieldLabel": "c Wages subject to social security tax from Form 8919, line 10 . . . . . . 8c",
+      "badge": "c"
+    },
+    {
+      "contextLines": [
+        "d Add lines 8a, 8b, and 8c . . . . . . . . . . . . . . . . . . . . . . . . . . 8d",
+        "9 Subtract line 8d from line 7. If zero or less, enter -0- here and on line 10 and go to line 11 . . . . 9",
+        "c Wages subject to social security tax from Form 8919, line 10 . . . . . . 8c"
+      ],
+      "fieldName": "f1_17[0]",
+      "height": 11.999000000000024,
+      "highlight": {
+        "heightPct": 1.5150252525252554,
+        "leftPct": 82.35294117647058,
+        "topPct": 59.09090909090909,
+        "widthPct": 11.76470588235294
+      },
+      "id": "f1_17[0]",
+      "index": 17,
+      "kind": "amount",
+      "left": 504.0,
+      "page": 1,
+      "top": 468.0,
+      "widgetType": "text",
+      "width": 72.0,
+      "fieldLabel": "d Add lines 8a, 8b, and 8c . . . . . . . . . . . . . . . . . . . . . . . . . . 8d",
+      "badge": "d"
+    },
+    {
+      "contextLines": [
+        "9 Subtract line 8d from line 7. If zero or less, enter -0- here and on line 10 and go to line 11 . . . . 9",
+        "d Add lines 8a, 8b, and 8c . . . . . . . . . . . . . . . . . . . . . . . . . . 8d",
+        "10 Multiply the smaller of line 6 or line 9 by 12.4% (0.124) . . . . . . . . . . . . . . . . 10"
+      ],
+      "fieldName": "f1_18[0]",
+      "height": 11.998999999999967,
+      "highlight": {
+        "heightPct": 1.5150252525252483,
+        "leftPct": 82.35294117647058,
+        "topPct": 60.60593434343434,
+        "widthPct": 11.76470588235294
+      },
+      "id": "f1_18[0]",
+      "index": 18,
+      "kind": "amount",
+      "left": 504.0,
+      "page": 1,
+      "top": 479.999,
+      "widgetType": "text",
+      "width": 72.0,
+      "fieldLabel": "9 Subtract line 8d from line 7. If zero or less, enter -0- here and on line 10 and go to line 11 . . . . 9",
+      "badge": "9"
+    },
+    {
+      "contextLines": [
+        "10 Multiply the smaller of line 6 or line 9 by 12.4% (0.124) . . . . . . . . . . . . . . . . 10",
+        "9 Subtract line 8d from line 7. If zero or less, enter -0- here and on line 10 and go to line 11 . . . . 9",
+        "11 Multiply line 6 by 2.9% (0.029) . . . . . . . . . . . . . . . . . . . . . . . . 11"
+      ],
+      "fieldName": "f1_19[0]",
+      "height": 11.999000000000024,
+      "highlight": {
+        "heightPct": 1.5150252525252554,
+        "leftPct": 82.35294117647058,
+        "topPct": 62.12133838383838,
+        "widthPct": 11.76470588235294
+      },
+      "id": "f1_19[0]",
+      "index": 19,
+      "kind": "amount",
+      "left": 504.0,
+      "page": 1,
+      "top": 492.001,
+      "widgetType": "text",
+      "width": 72.0,
+      "fieldLabel": "10 Multiply the smaller of line 6 or line 9 by 12.4% (0.124) . . . . . . . . . . . . . . . . 10",
+      "badge": "10"
+    },
+    {
+      "contextLines": [
+        "11 Multiply line 6 by 2.9% (0.029) . . . . . . . . . . . . . . . . . . . . . . . . 11",
+        "10 Multiply the smaller of line 6 or line 9 by 12.4% (0.124) . . . . . . . . . . . . . . . . 10",
+        "12 Self-employment tax. Add lines 10 and 11. Enter here and on Schedule 2 (Form 1040), line 4, or Form 1040-SS, Part I, line 3 . . . . . . . . . . . . . . . . . . . . . . . . 12"
+      ],
+      "fieldName": "f1_20[0]",
+      "height": 11.999000000000024,
+      "highlight": {
+        "heightPct": 1.5150252525252554,
+        "leftPct": 82.35294117647058,
+        "topPct": 63.63636363636363,
+        "widthPct": 11.76470588235294
+      },
+      "id": "f1_20[0]",
+      "index": 20,
+      "kind": "amount",
+      "left": 504.0,
+      "page": 1,
+      "top": 504.0,
+      "widgetType": "text",
+      "width": 72.0,
+      "fieldLabel": "11 Multiply line 6 by 2.9% (0.029) . . . . . . . . . . . . . . . . . . . . . . . . 11",
+      "badge": "11"
+    },
+    {
+      "contextLines": [
+        "13 Deduction for one-half of self-employment tax. Multiply line 12 by 50% (0.50). Enter here and on Schedule 1 (Form 1040), line 15 . . . . . . . . . . . . . . . . . . . . . . . . 13",
+        "12 Self-employment tax. Add lines 10 and 11. Enter here and on Schedule 2 (Form 1040), line 4, or Form 1040-SS, Part I, line 3 . . . . . . . . . . . . . . . . . . . . . . . . 12",
+        "11 Multiply line 6 by 2.9% (0.029) . . . . . . . . . . . . . . . . . . . . . . . . 11"
+      ],
+      "fieldName": "f1_21[0]",
+      "height": 11.999000000000024,
+      "highlight": {
+        "heightPct": 1.5150252525252554,
+        "leftPct": 82.35294117647058,
+        "topPct": 66.66679292929292,
+        "widthPct": 11.76470588235294
+      },
+      "id": "f1_21[0]",
+      "index": 21,
+      "kind": "amount",
+      "left": 504.0,
+      "page": 1,
+      "top": 528.001,
+      "widgetType": "text",
+      "width": 72.0,
+      "fieldLabel": "13 Deduction for one-half of self-employment tax. Multiply line 12 by 50% (0.50). Enter here and on Schedule 1 (Form 1040), line 15 . . . . . . . . . . . . . . . . . . . . . . . . 13 (1 of 2)",
+      "badge": "13"
+    },
+    {
+      "contextLines": [
+        "13 Deduction for one-half of self-employment tax. Multiply line 12 by 50% (0.50). Enter here and on Schedule 1 (Form 1040), line 15 . . . . . . . . . . . . . . . . . . . . . . . . 13"
+      ],
+      "fieldName": "f1_22[0]",
+      "height": 11.998999999999995,
+      "highlight": {
+        "heightPct": 1.5150252525252519,
+        "leftPct": 67.05882352941175,
+        "topPct": 71.21224747474747,
+        "widthPct": 11.642156862745098
+      },
+      "id": "f1_22[0]",
+      "index": 22,
+      "kind": "amount",
+      "left": 410.4,
+      "page": 1,
+      "top": 564.001,
+      "widgetType": "text",
+      "width": 71.25,
+      "fieldLabel": "13 Deduction for one-half of self-employment tax. Multiply line 12 by 50% (0.50). Enter here and on Schedule 1 (Form 1040), line 15 . . . . . . . . . . . . . . . . . . . . . . . . 13 (2 of 2)",
+      "badge": "13"
+    },
+    {
+      "contextLines": [
+        "15",
+        "Nonfarm Optional Method. You may use this method only if (a) your net nonfarm profits3were less than $7,840 and also less than 72.189% of your gross nonfarm income,4 and (b) you had net earnings from self-employment of a",
+        "15 Enter the smaller of: two-thirds (2/3) of gross farm income1 (not less than zero) or $7,240. Also, include this amount on line 4b above . . . . . . . . . . . . . . . . . . . . . . . ."
+      ],
+      "fieldName": "f2_2[0]",
+      "height": 11.999000000000024,
+      "highlight": {
+        "heightPct": 1.5150252525252554,
+        "leftPct": 82.35294117647058,
+        "topPct": 13.636363636363635,
+        "widthPct": 11.76470588235294
+      },
+      "id": "f2_2[0]",
+      "index": 1,
+      "kind": "amount",
+      "left": 504.0,
+      "page": 2,
+      "top": 108.0,
+      "widgetType": "text",
+      "width": 72.0,
+      "fieldLabel": "15",
+      "badge": "15"
+    },
+    {
+      "contextLines": [
+        "16 Subtract line 15 from line 14 . . . . . . . . . . . . . . . . . . . . . . . . . 16",
+        "17 Enter the smaller of: two-thirds (2/3) of gross nonfarm income4 (not less than zero) or the amount on line 16. Also, include this amount on line 4b above . . . . . . . . . . . . . . . . .",
+        "Nonfarm Optional Method. You may use this method only if (a) your net nonfarm profits3were less than $7,840 and also less than 72.189% of your gross nonfarm income,4 and (b) you had net earnings from self-employment of a"
+      ],
+      "fieldName": "f2_3[0]",
+      "height": 11.999000000000024,
+      "highlight": {
+        "heightPct": 1.5150252525252554,
+        "leftPct": 82.35294117647058,
+        "topPct": 19.696843434343435,
+        "widthPct": 11.76470588235294
+      },
+      "id": "f2_3[0]",
+      "index": 2,
+      "kind": "amount",
+      "left": 504.0,
+      "page": 2,
+      "top": 155.99900000000002,
+      "widgetType": "text",
+      "width": 72.0,
+      "fieldLabel": "16 Subtract line 15 from line 14 . . . . . . . . . . . . . . . . . . . . . . . . . 16",
+      "badge": "16"
+    },
+    {
+      "contextLines": [
+        "17",
+        "1 From Sch. F, line 9; and Sch. K-1 (Form 1065), box 14, code B. 3 From Sch. C, line 31; and Sch. K-1 (Form 1065), box 14, code A.",
+        "17 Enter the smaller of: two-thirds (2/3) of gross nonfarm income4 (not less than zero) or the amount on line 16. Also, include this amount on line 4b above . . . . . . . . . . . . . . . . ."
+      ],
+      "fieldName": "f2_4[0]",
+      "height": 11.999000000000024,
+      "highlight": {
+        "heightPct": 1.5150252525252554,
+        "leftPct": 82.35294117647058,
+        "topPct": 22.727272727272727,
+        "widthPct": 11.76470588235294
+      },
+      "id": "f2_4[0]",
+      "index": 3,
+      "kind": "amount",
+      "left": 504.0,
+      "page": 2,
+      "top": 180.0,
+      "widgetType": "text",
+      "width": 72.0,
+      "fieldLabel": "17",
+      "badge": "17"
+    }
+  ],
+  "numberOfFields": 25,
+  "numberOfPages": 2,
+  "sourceLayout": "/private/tmp/schedule-se-layout-rerun.json",
+  "sourcePdf": "/private/tmp/f1040sse.current.pdf"
+}

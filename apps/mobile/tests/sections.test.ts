@@ -24,7 +24,7 @@ describe("home sections", () => {
     expect(sections.storageCards[1]).toMatchObject({
       icon: "workflow",
       label: "Derived views",
-      value: "5",
+      value: "0",
     });
     expect(sections.storageCards[3]).toMatchObject({
       icon: "device",

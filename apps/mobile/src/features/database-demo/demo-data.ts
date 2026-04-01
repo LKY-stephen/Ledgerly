@@ -1,9 +1,17 @@
+import type {
+  StandardReceiptEntryInput,
+  StandardReceiptPersistenceContext,
+  StandardReceiptUserClassification,
+} from "@creator-cfo/storage";
+
 export const databaseDemoIds = {
   cashAccountId: "demo-account-cash",
   counterpartyId: "demo-counterparty-platform",
   entityId: "demo-entity",
+  expenseAccountId: "demo-account-office-expense",
   feeAccountId: "demo-account-platform-fees",
   incomeAccountId: "demo-account-platform-income",
+  ownerEquityAccountId: "demo-account-owner-equity",
   platformAccountId: "demo-platform-youtube",
   recordIdPrefix: "demo-record-platform-payout",
   withholdingAccountId: "demo-account-withholding-tax",
@@ -29,6 +37,14 @@ export interface DatabaseDemoReportTabOption {
   description: string;
   label: string;
   value: DatabaseDemoReportTab;
+}
+
+export type DatabaseDemoReceiptClassification = StandardReceiptUserClassification;
+
+export interface DatabaseDemoReceiptClassificationOption {
+  description: string;
+  label: string;
+  value: DatabaseDemoReceiptClassification;
 }
 
 export const databaseDemoEditableFields: readonly DatabaseDemoEditableFieldOption[] = [
@@ -72,6 +88,27 @@ export const databaseDemoReportTabs: readonly DatabaseDemoReportTabOption[] = [
   },
 ] as const;
 
+export const databaseDemoReceiptClassificationOptions: readonly DatabaseDemoReceiptClassificationOption[] =
+  [
+    {
+      description: "Create a standard income receipt that resolves to Schedule C gross receipts.",
+      label: "Income",
+      value: "income",
+    },
+    {
+      description:
+        "Create a standard expense receipt that resolves to a safe Schedule C Part V deduction.",
+      label: "Expense",
+      value: "expense",
+    },
+    {
+      description:
+        "Create a personal-spending receipt that resolves to owner draw and stays out of tax totals.",
+      label: "Personal spending",
+      value: "personal_spending",
+    },
+  ] as const;
+
 export interface DatabaseDemoCounts {
   journalEntryCount: number;
   ledgerAccountCount: number;
@@ -80,10 +117,11 @@ export interface DatabaseDemoCounts {
 }
 
 export interface DatabaseDemoRecordPreview {
+  amountLabel: string;
+  cashMovementLabel: string;
+  classificationLabel: string;
   description: string;
-  grossAmountLabel: string;
-  netAmountLabel: string;
-  recognizedOn: string;
+  occurredOn: string;
   recordId: string;
   recordKind: string;
   status: string;
@@ -234,30 +272,9 @@ interface DatabaseDemoPlatformAccountFixture {
   platformCode: string;
 }
 
-export interface DatabaseDemoRecordDraft {
-  cashAccountId: string;
-  cashOn: string;
-  counterpartyId: string;
-  createdAt: string;
-  currency: string;
-  description: string;
-  entityId: string;
-  evidenceStatus: string;
-  feeAccountId: string;
-  feeAmountCents: number;
-  grossAmountCents: number;
-  netCashAmountCents: number;
-  platformAccountId: string;
-  postingPattern: string;
-  primaryAccountId: string;
-  recognitionOn: string;
-  recordId: string;
-  recordKind: string;
-  recordStatus: string;
-  sourceSystem: string;
-  updatedAt: string;
-  withholdingAccountId: string;
-  withholdingAmountCents: number;
+export interface DatabaseDemoStandardReceiptDraft {
+  input: StandardReceiptEntryInput;
+  persistenceContext: StandardReceiptPersistenceContext;
 }
 
 export interface DatabaseDemoFixture {
@@ -271,6 +288,7 @@ export interface DatabaseDemoFieldUpdateInput {
   description: string;
   recordId: string;
   recordStatus: string;
+  userClassification: DatabaseDemoReceiptClassification | null;
 }
 
 export interface DatabaseDemoFieldUpdate {
@@ -320,6 +338,24 @@ export function createDatabaseDemoFixture(): DatabaseDemoFixture {
         normalBalance: "debit",
       },
       {
+        accountCode: "6100",
+        accountId: databaseDemoIds.expenseAccountId,
+        accountName: "Office Expense",
+        accountType: "expense",
+        createdAt,
+        entityId: databaseDemoIds.entityId,
+        normalBalance: "debit",
+      },
+      {
+        accountCode: "3010",
+        accountId: databaseDemoIds.ownerEquityAccountId,
+        accountName: "Owner Equity",
+        accountType: "equity",
+        createdAt,
+        entityId: databaseDemoIds.entityId,
+        normalBalance: "credit",
+      },
+      {
         accountCode: "2150",
         accountId: databaseDemoIds.withholdingAccountId,
         accountName: "Withholding Tax Receivable",
@@ -350,37 +386,35 @@ export function createDatabaseDemoFixture(): DatabaseDemoFixture {
   };
 }
 
-export function createDatabaseDemoRecordDraft(sequence: number): DatabaseDemoRecordDraft {
+export function createDatabaseDemoStandardReceiptDraft(
+  sequence: number,
+  classification: DatabaseDemoReceiptClassification,
+): DatabaseDemoStandardReceiptDraft {
   const normalizedSequence = Math.max(1, Math.trunc(sequence));
   const baseDate = createDemoBaseDate(normalizedSequence);
-  const grossAmountCents = 12_500 + (normalizedSequence - 1) * 2_100;
-  const feeAmountCents = 1_250 + (normalizedSequence - 1) * 150;
-  const withholdingAmountCents = 450 + (normalizedSequence - 1) * 50;
+  const amountCents = getDatabaseDemoAmountCents(normalizedSequence, classification);
+  const description = buildDatabaseDemoBaseDescription(normalizedSequence, classification);
 
   return {
-    cashAccountId: databaseDemoIds.cashAccountId,
-    cashOn: formatDateOnly(baseDate),
-    counterpartyId: databaseDemoIds.counterpartyId,
-    createdAt: createIsoTimestamp(baseDate, 9, normalizedSequence),
-    currency: "USD",
-    description: `YouTube payout ${normalizedSequence}`,
-    entityId: databaseDemoIds.entityId,
-    evidenceStatus: "pending",
-    feeAccountId: databaseDemoIds.feeAccountId,
-    feeAmountCents,
-    grossAmountCents,
-    netCashAmountCents: grossAmountCents - feeAmountCents - withholdingAmountCents,
-    platformAccountId: databaseDemoIds.platformAccountId,
-    postingPattern: "gross_to_net_income",
-    primaryAccountId: databaseDemoIds.incomeAccountId,
-    recognitionOn: formatDateOnly(baseDate),
-    recordId: createDatabaseDemoRecordId(normalizedSequence),
-    recordKind: "platform_payout",
-    recordStatus: "posted",
-    sourceSystem: databaseDemoSourceSystem,
-    updatedAt: createIsoTimestamp(baseDate, 10, normalizedSequence),
-    withholdingAccountId: databaseDemoIds.withholdingAccountId,
-    withholdingAmountCents,
+    input: {
+      amountCents,
+      currency: "USD",
+      description,
+      entityId: databaseDemoIds.entityId,
+      occurredOn: formatDateOnly(baseDate),
+      source: classification === "income" ? "YouTube" : "Business checking",
+      target: classification === "income" ? "Business checking" : "Office supplier",
+      userClassification: classification,
+    },
+    persistenceContext: {
+      createdAt: createIsoTimestamp(baseDate, 9, normalizedSequence),
+      recordId: createDatabaseDemoRecordId(normalizedSequence),
+      recordStatus: "posted",
+      sourceCounterpartyId: classification === "income" ? databaseDemoIds.counterpartyId : null,
+      sourceSystem: databaseDemoSourceSystem,
+      targetCounterpartyId: null,
+      updatedAt: createIsoTimestamp(baseDate, 10, normalizedSequence),
+    },
   };
 }
 
@@ -441,15 +475,23 @@ export function buildDatabaseDemoFieldUpdate(
   field: DatabaseDemoEditableField,
 ): DatabaseDemoFieldUpdate {
   const sequence = getDatabaseDemoRecordSequence(record.recordId) ?? 1;
-  const baseDraft = createDatabaseDemoRecordDraft(sequence);
-  const updatedAt = createIsoTimestamp(createDemoBaseDate(sequence), field === "description" ? 12 : 13, sequence);
+  const baseDescription = buildDatabaseDemoBaseDescription(
+    sequence,
+    record.userClassification ?? inferDatabaseDemoClassificationFromRecordId(record.recordId),
+  );
+  const updatedAt = createIsoTimestamp(
+    createDemoBaseDate(sequence),
+    field === "description" ? 12 : 13,
+    sequence,
+  );
 
   if (field === "description") {
-    const reviewedDescription = `${baseDraft.description} reviewed`;
+    const reviewedDescription = `${baseDescription} reviewed`;
 
     return {
       field,
-      nextValue: record.description === reviewedDescription ? baseDraft.description : reviewedDescription,
+      nextValue:
+        record.description === reviewedDescription ? baseDescription : reviewedDescription,
       updatedAt,
     };
   }
@@ -483,7 +525,7 @@ export function createEmptyDatabaseDemoSnapshot(): DatabaseDemoSnapshot {
     recentRecords: [],
     selectedPostingLines: [],
     summary:
-      "No demo records exist yet. Use Create record to insert one or more deterministic rows, then inspect journal, general ledger, balance sheet, and profit/loss tabs.",
+      "No demo records exist yet. Pick a simplified receipt classification, create one or more deterministic rows, then inspect journal, general ledger, balance sheet, profit/loss, and tax-form tabs.",
   };
 }
 
@@ -513,7 +555,7 @@ export function buildDatabaseDemoSummary(
   selectedRecordId: string | null,
 ): string {
   if (snapshot.counts.recordCount === 0) {
-    return "No demo records exist yet. Use Create record to insert one or more deterministic rows, then inspect journal, general ledger, balance sheet, and profit/loss tabs.";
+    return "No demo records exist yet. Pick a simplified receipt classification, create one or more deterministic rows, then inspect journal, general ledger, balance sheet, profit/loss, and tax-form tabs.";
   }
 
   const recordLabel = snapshot.counts.recordCount === 1 ? "record is" : "records are";
@@ -536,6 +578,63 @@ export function formatAmountLabel(amountCents: number, currency: string): string
   const sign = amountCents < 0 ? "-" : "";
 
   return `${sign}${currency} ${wholeUnits}.${minorUnits}`;
+}
+
+export function formatDatabaseDemoClassificationLabel(
+  classification: DatabaseDemoReceiptClassification | null,
+): string {
+  if (classification === "personal_spending") {
+    return "personal spending";
+  }
+
+  return classification ?? "legacy";
+}
+
+function buildDatabaseDemoBaseDescription(
+  sequence: number,
+  classification: DatabaseDemoReceiptClassification,
+): string {
+  if (classification === "expense") {
+    return `Office receipt ${sequence}`;
+  }
+
+  if (classification === "personal_spending") {
+    return `Owner card spend ${sequence}`;
+  }
+
+  return `YouTube payout ${sequence}`;
+}
+
+function getDatabaseDemoAmountCents(
+  sequence: number,
+  classification: DatabaseDemoReceiptClassification,
+): number {
+  if (classification === "expense") {
+    return 4_200 + (sequence - 1) * 650;
+  }
+
+  if (classification === "personal_spending") {
+    return 2_100 + (sequence - 1) * 325;
+  }
+
+  return 12_500 + (sequence - 1) * 2_100;
+}
+
+function inferDatabaseDemoClassificationFromRecordId(
+  recordId: string,
+): DatabaseDemoReceiptClassification {
+  const sequence = getDatabaseDemoRecordSequence(recordId) ?? 1;
+  const sequenceMod = sequence % 3;
+
+  if (sequenceMod === 2) {
+    return "expense";
+  }
+
+  if (sequenceMod === 0) {
+    return "personal_spending";
+  }
+
+  return "income";
 }
 
 export function buildDatabaseDemoReportState(
