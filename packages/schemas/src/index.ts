@@ -9,6 +9,33 @@ export interface WorkflowPrinciple {
   summary: string;
 }
 
+export const evidenceParseStatuses = ["pending", "parsed", "failed"] as const;
+export type EvidenceParseStatus = (typeof evidenceParseStatuses)[number];
+
+export const evidenceParserKinds = ["ios_vision_ocr", "rule_fallback"] as const;
+export type EvidenceParserKind = (typeof evidenceParserKinds)[number];
+
+export interface EvidenceFieldCandidates {
+  amountCents: number | null;
+  category: string | null;
+  date: string | null;
+  description: string | null;
+  notes: string | null;
+  source: string | null;
+  target: string | null;
+  taxCategory: string | null;
+}
+
+export interface EvidenceExtractedData {
+  candidates: EvidenceFieldCandidates;
+  errorReason?: string | null;
+  failureReason?: string | null;
+  parser: EvidenceParserKind;
+  rawLines: string[];
+  rawText: string;
+  sourceLabel: string;
+}
+
 export const productModules: ProductModule[] = [
   {
     slug: "revenue-hub",

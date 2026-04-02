@@ -23,7 +23,7 @@ pnpm smoke
 
 在自动化通过仍不足时，或验证真实运行时：
 
-1. 运行 `pnpm --filter @creator-cfo/mobile start`，在 Expo Go、iOS、Android 或 Web 中打开应用。
+1. 运行 `pnpm --filter @creator-cfo/mobile start`，在 iOS development build、Android 或 Web 中打开应用。
 2. 冷启动时确认先进入登录页，并能看到：
    - Apple 登录入口
    - 右上角「暂不登录」
@@ -34,10 +34,11 @@ pnpm smoke
    - 设置
 4. 确认三个 Tab 均有清晰图标，切换时当前图标会出现轻微选中反馈。
 5. 在首页确认 dashboard 壳层正常渲染，并能看到：
-   - 顶部 `Monthly profit`
-   - 带 Add 图标的 `New Records` 主按钮
-   - 重构后的概览卡片与 cash movement 区块
-   - recent activity 区块
+   - 顶部 `Monthly Profit` 与本月净额
+   - `Income / Outflow / Net` 三个本月指标
+   - `New Records` 主按钮
+   - `30-Day Income Trend` 图表
+   - `Recent Activity` 区块
 6. 确认首页不再出现以下旧模块或 CTA：
    - `download report`
    - `Action Queue`
@@ -54,18 +55,23 @@ pnpm smoke
    - 登录页不再出现「Open database demo」之类的 CTA
    - 首页不再出现数据库 CRUD、字段选择 chip、记录选中态或报告卡片等 demo 区块
    - 主壳层三个 Tab 内不存在通往 database demo / database hooks demo 的入口
-10. 打开 Ledger 上传与解析子流程，确认本次 UI 精简生效：
-   - Upload workspace 只保留上传主卡片与继续按钮
-   - Upload workspace 不再出现 `Classification engine` 或 `Recent Processing`
-   - Parsing review 不再出现 `Parser timeline` 与底部说明文案卡片
-   - Parsing review 新增 `Fund Flow` 与 `Summary / Description` 字段
-   - Parsing review 字段进入编辑后，保存会弹出“是否确认编辑？”对话框
-   - 头部头像均替换为 `cfo_icon`
-11. 若当前构建仍暴露 Schedule C / Schedule SE 预览入口，从其现有入口打开并确认税年切换会触发真实数据重载：
+10. 在 iOS development build 打开 Ledger 上传与解析子流程，确认 OCR 主路径可用：
+   - Upload workspace 支持 `Select Photos` 与 `Select Files`
+   - 选择一张清晰收据图片后，会进入 Parse Review
+   - Parse Review 顶部标识显示 `IOS OCR`
+   - 字段进入编辑后，保存会弹出“是否确认编辑？”对话框
+   - 填完整 `date`、`amount`、`description` 后可提交
+   - 提交最后一项后会返回 Ledger
+11. 在 Android 或 Web 打开同一流程，确认 fallback 主路径可用：
+   - 上传图片或 PDF 后仍可进入 Parse Review
+   - 顶部标识显示 `FALLBACK`
+   - 可手动补全必填字段并成功保存
+   - 保存后 Home 的月度指标、趋势图与 Recent Activity 会刷新到最新本地数据
+12. 若当前构建仍暴露 Schedule C / Schedule SE 预览入口，从其现有入口打开并确认税年切换会触发真实数据重载：
    - 切换当前年与上一年时，预览内税年按钮会变化
    - Schedule C / Schedule SE 结果会根据所选税年刷新，而不是只改标题文字
    - 本地数据库中 `tax_lines_v` 可按 `entity_id`、`tax_year`、`schedule_code`、`line_key`、`line_status` 过滤查询，并与预览主数据一致
-12. 在「设置」中切换主题与语言，确认 Tab 图标、首页数据块与设置控件仍清晰可读。
-13. 在「设置」中执行退出登录，确认应用回到登录页。
-14. 若在支持的 iOS 设备上，验证 Apple 登录可进入主壳层；若当前环境不支持，确认会优雅提示并允许游客继续。
-15. 运行 `pnpm contract:check`，确认本地存储与设备状态契约测试通过。
+13. 在「设置」中切换主题与语言，确认 Tab 图标、首页数据块与设置控件仍清晰可读。
+14. 在「设置」中执行退出登录，确认应用回到登录页。
+15. 若在支持的 iOS 设备上，验证 Apple 登录可进入主壳层；若当前环境不支持，确认会优雅提示并允许游客继续。
+16. 运行 `pnpm contract:check`，确认本地存储与设备状态契约测试通过。

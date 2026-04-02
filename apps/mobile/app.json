@@ -13,7 +13,9 @@
       "backgroundColor": "#09211f"
     },
     "ios": {
-      "supportsTablet": true
+      "bundleIdentifier": "com.creatorcfo.mobile",
+      "supportsTablet": true,
+      "appleTeamId": "7LSK46Z392"
     },
     "android": {
       "adaptiveIcon": {
@@ -31,7 +33,8 @@
       "expo-router",
       "expo-apple-authentication",
       "expo-sqlite",
-      "expo-localization"
+      "expo-localization",
+      "../../modules/ios-ocr/app.plugin"
     ],
     "experiments": {
       "typedRoutes": false

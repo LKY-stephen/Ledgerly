@@ -1,0 +1,16 @@
+{
+  "name": "@creator-cfo/ios-ocr",
+  "version": "1.0.0",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "private": true,
+  "keywords": [
+    "expo-module",
+    "ios",
+    "ocr",
+    "vision"
+  ],
+  "peerDependencies": {
+    "expo-modules-core": "*"
+  }
+}

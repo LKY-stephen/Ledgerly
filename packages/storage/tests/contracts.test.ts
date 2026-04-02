@@ -9,6 +9,7 @@ import {
   buildEvidenceDerivedPath,
   buildEvidenceManifestPath,
   buildEvidenceObjectPath,
+  buildEvidenceUploadPath,
   buildInvoiceExportPath,
   buildTaxSupportPath,
   buildVaultRelativePath,
@@ -37,8 +38,8 @@ function createContractDatabase(): DatabaseSync {
   return database;
 }
 
-describe("storage contract v1", () => {
-  it("boots the simplified hybrid v1 contract and exposes the expected schema inventory", () => {
+describe("storage contract v3", () => {
+  it("boots the simplified hybrid v3 contract and exposes the expected schema inventory", () => {
     const database = createContractDatabase();
     const tableRows = database
       .prepare(`SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name ASC;`)
@@ -46,8 +47,11 @@ describe("storage contract v1", () => {
     const indexRows = database
       .prepare(`SELECT name FROM sqlite_master WHERE type = 'index' ORDER BY name ASC;`)
       .all() as Array<{ name: string }>;
+    const evidenceColumns = database
+      .prepare(`PRAGMA table_info(evidences);`)
+      .all() as Array<{ name: string }>;
 
-    expect(structuredStoreContract.version).toBe(1);
+    expect(structuredStoreContract.version).toBe(3);
     expect(accountingPostableRecordStatuses).toEqual(["posted", "reconciled"]);
     expect(tableRows.map((row) => row.name)).toEqual(
       expect.arrayContaining([
@@ -65,11 +69,15 @@ describe("storage contract v1", () => {
     expect(indexRows.map((row) => row.name)).toEqual(
       expect.arrayContaining([
         "counterparties_entity_name_idx",
+        "evidences_entity_parse_status_created_idx",
         "evidence_files_sha_idx",
         "record_evidence_primary_idx",
         "records_entity_occurred_status_idx",
         "records_entity_tax_line_occurred_status_idx",
       ]),
+    );
+    expect(evidenceColumns.map((column) => column.name)).toEqual(
+      expect.arrayContaining(["file_path", "parse_status", "extracted_data"]),
     );
   });
 
@@ -78,14 +86,14 @@ describe("storage contract v1", () => {
     const overview = getLocalStorageOverview();
     const plan = getLocalStorageBootstrapPlan();
 
-    expect(manifest.version).toBe(1);
+    expect(manifest.version).toBe(3);
     expect(manifest.schemaObjects.tables).toEqual(
       structuredStoreContract.tables.map((table) => table.name),
     );
     expect(manifest.schemaObjects.views).toEqual([]);
     expect(overview.tableCount).toBe(structuredStoreContract.tables.length);
     expect(overview.viewCount).toBe(0);
-    expect(plan.version).toBe(1);
+    expect(plan.version).toBe(3);
     expect(plan.schemaStatements.length).toBeGreaterThan(0);
   });
 
@@ -100,6 +108,9 @@ describe("storage contract v1", () => {
     expect(buildEvidenceObjectPath("ABCD1234", "pdf")).toBe(
       "evidence-objects/ab/cd/abcd1234.pdf",
     );
+    expect(
+      buildEvidenceUploadPath("entity-main", "2026-04-01T09:10:11.000Z", "entity-main_foo.pdf"),
+    ).toBe("evidence-objects/entity-main/uploads/2026/04/entity-main-foo.pdf");
     expect(buildEvidenceManifestPath("sample-evidence")).toBe(
       "evidence-manifests/sample-evidence.json",
     );
@@ -112,15 +123,16 @@ describe("storage contract v1", () => {
     );
   });
 
-  it("documents v1 as the active runtime baseline", () => {
+  it("documents v3 as the active runtime baseline", () => {
     const contractDocPath = fileURLToPath(
       new URL("../../../docs/contracts/local-storage.md", import.meta.url),
     );
     const contractDoc = readFileSync(contractDocPath, "utf8");
 
-    expect(contractDoc).toContain("Current implemented contract version: `1`");
+    expect(contractDoc).toContain("Current implemented contract version: `3`");
     expect(contractDoc).toContain("`records`");
-    expect(contractDoc).not.toContain("`tax_lines_v`");
-    expect(contractDoc).not.toContain("`accounting_posting_lines_v`");
+    expect(contractDoc).toContain("`parse_status`");
+    expect(contractDoc).toContain("`entity-main`");
+    expect(contractDoc).toContain("repeated uploads of the same binary are allowed");
   });
 });

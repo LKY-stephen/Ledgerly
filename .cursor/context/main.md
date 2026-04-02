@@ -2,9 +2,9 @@
 
 ## Version
 
-- version: 0.3.5
-- updated_at: 2026-03-31
-- scope: see `0.3.5_context.md` for the documentation-only 2025 tax parsing blueprint covering Form 1040, Schedule C, and Schedule SE
+- version: 0.4.0
+- updated_at: 2026-04-01
+- scope: see `0.4.0_context.md` for the `feat_upload` delivery covering local upload intake, iOS OCR, parse review persistence, and SQLite-backed Home data
 
 ## Active Decisions
 
@@ -14,18 +14,20 @@
 - Structured records live in SQLite; documents live in the local file vault.
 - Theme, locale, and local session summary live in AsyncStorage under the storage contract.
 - Source of truth is `packages/storage`, `packages/schemas`, `docs/contracts`, and root agent rules.
+- iOS OCR is implemented as a local Expo Module backed by Apple Vision in development builds.
+- Android and Web stay on fallback parsing for upload review.
 
 ## Implemented Structure
 
-- `apps/mobile`: Expo Router app with login gate, animated svg tab icons, theme and locale switching, icon-led home metrics, a local-first Discover news feed, and stronger light-theme CTA/tab contrast.
+- `apps/mobile`: Expo Router app with login gate, animated svg tab icons, local upload and parse review flows, SQLite-backed Home metrics, and stronger light-theme CTA/tab contrast.
 - `packages/storage`: storage contracts, path helpers, and contract tests.
 - `packages/ui`: React Native presentation primitives.
-- `packages/schemas`: creator product modules, platforms, and workflow principles.
+- `packages/schemas`: creator product modules, platforms, workflow principles, and upload-parse DTOs.
+- `modules/ios-ocr`: Apple Vision OCR bridge for iOS development builds.
 - `docs/tax-parsing-logic.md`: tax parsing blueprint for 2025 `Form 1040`, `Schedule C`, `Schedule SE`, and `1099-NEC` handoff flows.
 
 ## Verification Snapshot
 
-- Latest automated code verification remains the `0.3.4` snapshot because `0.3.5` only adds documentation.
 - `pnpm install`
 - `pnpm lint`
 - `pnpm typecheck`
@@ -36,12 +38,12 @@
 
 ## Pending Follow-Ups
 
-- Add deeper feature slices on top of the local SQLite and file-vault contracts inside Ledger beyond the current Discover news feed.
+- Validate the iOS development build upload/OCR path on device and collect product evidence.
 - Decide whether Apple sign-in should later sync to a backend account once a future PRD introduces one.
 - Only reintroduce backend or sync infrastructure through a new PRD.
-- Implement the next tax parsing slice by adding versioned template assets and validation rules for `Form 1040`, `Schedule 1`, `Schedule 2`, and `Schedule SE`.
+- Decide whether Android should later gain native OCR and whether Web should move beyond fallback runtime behavior.
 
 ## Maintenance
 
-- This file is the **current** snapshot. When a feat closes, follow `.cursor/prd/agent-dev-guide-summary.md`: **create** `.cursor/context/{semver}_context.md` (for example `0.4.0_context.md`) for that release; do not delete or rewrite existing `*_context.md` files.
+- This file is the **current** snapshot. When a feat closes, follow `.cursor/prd/agent-dev-guide-summary.md`: **create** `.cursor/context/{semver}_context.md` for that release; do not delete or rewrite existing `*_context.md` files.
 - Update the **Version** block (and body as needed) to match the latest delivery, or note “see `{semver}_context.md`” for detail.

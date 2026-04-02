@@ -14,6 +14,7 @@
     "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
+      "@creator-cfo/ios-ocr": ["modules/ios-ocr/src/index.ts"],
       "@creator-cfo/schemas": ["packages/schemas/src/index.ts"],
       "@creator-cfo/storage": ["packages/storage/src/index.ts"],
       "@creator-cfo/ui": ["packages/ui/src/index.ts"]

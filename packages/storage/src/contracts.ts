@@ -163,6 +163,9 @@ const structuredTables = [
       evidence_id TEXT PRIMARY KEY NOT NULL,
       entity_id TEXT NOT NULL,
       evidence_kind TEXT NOT NULL,
+      file_path TEXT NOT NULL DEFAULT '',
+      parse_status TEXT NOT NULL DEFAULT 'pending',
+      extracted_data TEXT,
       captured_date TEXT NOT NULL,
       captured_amount_cents INTEGER NOT NULL,
       captured_source TEXT NOT NULL,
@@ -229,10 +232,16 @@ const structuredIndexes = [
       "CREATE INDEX IF NOT EXISTS records_entity_tax_line_occurred_status_idx ON records(entity_id, tax_line_code, occurred_on, record_status);",
   },
   {
-    name: "evidence_files_sha_idx",
-    summary: "Supports evidence de-duplication by file hash and size.",
+    name: "evidences_entity_parse_status_created_idx",
+    summary: "Speeds parse-queue reads by entity, status, and creation time.",
     createStatement:
-      "CREATE UNIQUE INDEX IF NOT EXISTS evidence_files_sha_idx ON evidence_files(sha256_hex, size_bytes);",
+      "CREATE INDEX IF NOT EXISTS evidences_entity_parse_status_created_idx ON evidences(entity_id, parse_status, created_at);",
+  },
+  {
+    name: "evidence_files_sha_idx",
+    summary: "Speeds evidence lookups by file hash and size without blocking re-uploads.",
+    createStatement:
+      "CREATE INDEX IF NOT EXISTS evidence_files_sha_idx ON evidence_files(sha256_hex, size_bytes);",
   },
   {
     name: "record_evidence_primary_idx",
@@ -243,6 +252,8 @@ const structuredIndexes = [
 ] as const satisfies readonly StructuredIndexContract[];
 
 const structuredMaintenanceStatements = [
+  "DROP INDEX IF EXISTS evidence_files_sha_idx;",
+  "CREATE INDEX IF NOT EXISTS evidence_files_sha_idx ON evidence_files(sha256_hex, size_bytes);",
   `INSERT OR IGNORE INTO record_entry_classifications (
     record_id,
     entry_mode,
@@ -284,7 +295,7 @@ const structuredSchemaStatements = [
 export const structuredStoreContract = {
   databaseName: "creator-cfo-local.db",
   maintenanceStatements: structuredMaintenanceStatements,
-  version: 1,
+  version: 3,
   pragmas: structuredStorePragmas,
   tables: structuredTables,
   views: structuredViews,
@@ -428,6 +439,20 @@ export function buildEvidenceObjectPath(sha256Hex: string, extension: string): s
   return `evidence-objects/${levelOne}/${levelTwo}/${normalizedSha}.${normalizedExtension}`;
 }
 
+export function buildEvidenceUploadPath(
+  entityId: string,
+  capturedAt: string | Date,
+  fileName: string,
+): string {
+  const timestamp = capturedAt instanceof Date ? capturedAt : new Date(capturedAt);
+  const year = Number.isNaN(timestamp.getTime()) ? "unknown-year" : String(timestamp.getUTCFullYear());
+  const month = Number.isNaN(timestamp.getTime())
+    ? "unknown-month"
+    : String(timestamp.getUTCMonth() + 1).padStart(2, "0");
+
+  return `evidence-objects/${sanitizeVaultPathSegment(entityId)}/uploads/${year}/${month}/${sanitizeVaultFileName(fileName)}`;
+}
+
 export function buildEvidenceManifestPath(evidenceId: string): string {
   return `evidence-manifests/${sanitizeVaultPathSegment(evidenceId)}.json`;
 }
@@ -451,10 +476,7 @@ export function buildTaxSupportPath(periodKey: string, fileName: string): string
 export function getVaultCollectionSamplePath(collection: FileVaultCollectionSlug): string {
   switch (collection) {
     case "evidence-objects":
-      return buildEvidenceObjectPath(
-        "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
-        "bin",
-      );
+      return buildEvidenceUploadPath("entity-main", "2026-04-01T00:00:00.000Z", "sample-receipt.pdf");
     case "evidence-manifests":
       return buildEvidenceManifestPath("sample-evidence");
     case "evidence-derived":
