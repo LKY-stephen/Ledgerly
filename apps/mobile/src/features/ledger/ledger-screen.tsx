@@ -21,7 +21,7 @@ import type {
   LedgerSectionRow,
   LedgerViewId,
 } from "./ledger-reporting";
-import { useLedgerScreen } from "./use-ledger-screen.native";
+import { useLedgerScreen } from "./use-ledger-screen";
 
 const ledgerViews: ReadonlyArray<{ id: LedgerViewId; label: string }> = [
   { id: "general-ledger", label: "General Ledger" },
