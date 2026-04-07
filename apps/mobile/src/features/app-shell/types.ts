@@ -2,6 +2,12 @@ export type ThemePreference = "system" | "light" | "dark";
 export type LocalePreference = "system" | "en" | "zh-CN";
 export type ResolvedLocale = "en" | "zh-CN";
 
+export interface ProfileInfo {
+  email: string;
+  name: string;
+  phone: string;
+}
+
 export interface GuestSession {
   kind: "guest";
   displayName: string;
@@ -18,15 +24,10 @@ export interface AppleSession {
 
 export type AppSession = GuestSession | AppleSession;
 
-export interface ParseApiSettings {
-  openAiApiKey: string;
-  parseApiBaseUrl: string;
-}
-
 export interface PersistedAppState {
   localePreference: LocalePreference;
   openAiApiKey: string;
-  parseApiBaseUrl: string;
+  profileInfo: ProfileInfo;
   session: AppSession | null;
   themePreference: ThemePreference;
 }

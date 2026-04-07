@@ -19,7 +19,7 @@ describe("home sections", () => {
     expect(sections.storageCards[0]).toMatchObject({
       icon: "bootstrap",
       label: "Storage contract pulse",
-      value: "8",
+      value: "15",
     });
     expect(sections.storageCards[1]).toMatchObject({
       icon: "workflow",
@@ -29,7 +29,7 @@ describe("home sections", () => {
     expect(sections.storageCards[3]).toMatchObject({
       icon: "device",
       label: "Device state",
-      value: "5",
+      value: "7",
     });
     expect(sections.storageCollections.map((collection) => collection.slug)).toContain(
       "evidence-objects",

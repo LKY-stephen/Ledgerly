@@ -9,6 +9,7 @@ import {
 import {
   buildExtractedData,
   buildFailedExtractedData,
+  buildRemoteExtractedData,
   type ImportedEvidenceBundle,
 } from "../src/features/ledger/ledger-domain";
 import {
@@ -53,6 +54,7 @@ function createWritableDatabase(database: DatabaseSync) {
 
 function createLivePhotoBundle(): ImportedEvidenceBundle {
   return {
+    batchId: "batch-live-photo",
     capturedAt: "2026-04-01T09:00:00.000Z",
     entityId: "entity-main",
     evidenceId: "evidence-live-photo",
@@ -133,13 +135,46 @@ describe("feat_upload data flow", () => {
 
     await updateEvidenceExtraction(writableDatabase, {
       evidenceId: "evidence-live-photo",
-      extractedData: buildExtractedData({
-        fallbackDate: "2026-04-01",
+      extractedData: buildRemoteExtractedData({
         fileName: "receipt.heic",
-        parser: "openai_gpt",
-        rawLines: ["Apple Store", "04/01/2026", "$52.99"],
-        rawText: "Apple Store 04/01/2026 $52.99",
-        sourceLabel: "Vercel OpenAI GPT",
+        parsePayload: {
+          candidates: {
+            amountCents: 5299,
+            category: "expense",
+            date: "2026-04-01",
+            description: "Apple accessories",
+            notes: null,
+            source: "Business card",
+            target: "Apple Store",
+            taxCategory: "office",
+          },
+          fields: {
+            amountCents: 5299,
+            category: "expense",
+            date: "2026-04-01",
+            description: "Apple accessories",
+            notes: null,
+            source: "Business card",
+            target: "Apple Store",
+            taxCategory: "office",
+          },
+          model: "gpt-5",
+          parser: "openai_gpt",
+          rawSummary: "Apple Store receipt",
+          rawText: "Apple Store 04/01/2026 $52.99",
+          warnings: [],
+        },
+        scheme: {
+          amount_cents: 5299,
+          description: "Apple accessories",
+          memo: "",
+          occurred_on: "2026-04-01",
+          record_kind: "expense",
+          source_label: "Business card",
+          target_label: "Apple Store",
+          tax_category_code: "office",
+        },
+        sourceLabel: "OpenAI GPT",
       }),
       parseStatus: "pending",
     });
@@ -167,13 +202,15 @@ describe("feat_upload data flow", () => {
         `SELECT
           parse_status AS parseStatus,
           captured_amount_cents AS capturedAmountCents,
-          captured_description AS capturedDescription
+          captured_description AS capturedDescription,
+          extracted_data AS extractedData
         FROM evidences
         WHERE evidence_id = ?;`,
       )
       .get("evidence-live-photo") as {
       capturedAmountCents: number;
       capturedDescription: string;
+      extractedData: string;
       parseStatus: string;
     };
     const storedLink = database
@@ -191,10 +228,22 @@ describe("feat_upload data flow", () => {
       recordId: string;
     };
 
-    expect(storedEvidence).toEqual({
+    expect(storedEvidence).toMatchObject({
       capturedAmountCents: 5299,
       capturedDescription: "Apple accessories",
       parseStatus: "parsed",
+    });
+    expect(JSON.parse(storedEvidence.extractedData)).toMatchObject({
+      originData: {
+        fields: {
+          amountCents: 5299,
+          description: "Apple accessories",
+        },
+      },
+      scheme: {
+        amount_cents: 5299,
+        description: "Apple accessories",
+      },
     });
     expect(storedLink).toEqual({
       evidenceId: "evidence-live-photo",
@@ -217,7 +266,7 @@ describe("feat_upload data flow", () => {
         failureReason: "Remote GPT parsing failed.",
         fileName: "receipt.heic",
         parser: "openai_gpt",
-        sourceLabel: "Vercel OpenAI GPT",
+        sourceLabel: "OpenAI GPT",
       }),
       parseStatus: "failed",
     });
@@ -233,6 +282,7 @@ describe("feat_upload data flow", () => {
     const firstBundle = createLivePhotoBundle();
     const secondBundle: ImportedEvidenceBundle = {
       ...createLivePhotoBundle(),
+      batchId: "batch-live-photo-duplicate",
       evidenceId: "evidence-live-photo-duplicate",
       filePath: "evidence-objects/entity-main/uploads/2026/04/entity-main_primary_copy.heic",
       files: [
@@ -258,5 +308,118 @@ describe("feat_upload data flow", () => {
       .get() as { count: number };
 
     expect(evidenceFileCount.count).toBe(4);
+  });
+
+  it("keeps extracted data intact when record persistence fails during review confirmation", async () => {
+    const database = createStorageDatabase();
+    const writableDatabase = createWritableDatabase(database);
+    const bundle = createLivePhotoBundle();
+    await ensureDefaultEntity(writableDatabase, bundle.capturedAt);
+    await insertImportedEvidenceBundle(writableDatabase, bundle);
+
+    const parsedResult = buildExtractedData({
+      fallbackDate: "2026-04-01",
+      fileName: "receipt.heic",
+      parser: "openai_gpt",
+      rawLines: ["Apple Store", "04/01/2026", "$52.99"],
+      rawText: "Apple Store 04/01/2026 $52.99",
+      sourceLabel: "OpenAI GPT",
+    });
+
+    await updateEvidenceExtraction(writableDatabase, {
+      evidenceId: "evidence-live-photo",
+      extractedData: parsedResult,
+      parseStatus: "pending",
+    });
+
+    await writableDatabase.runAsync(
+      `INSERT INTO records (
+        record_id,
+        entity_id,
+        record_status,
+        source_system,
+        description,
+        memo,
+        occurred_on,
+        currency,
+        amount_cents,
+        source_label,
+        target_label,
+        source_counterparty_id,
+        target_counterparty_id,
+        record_kind,
+        category_code,
+        subcategory_code,
+        tax_category_code,
+        tax_line_code,
+        business_use_bps,
+        created_at,
+        updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+      "record-evidence-live-photo",
+      "entity-main",
+      "posted",
+      "test-conflict",
+      "Existing record",
+      null,
+      "2026-04-01",
+      "USD",
+      100,
+      "Conflict source",
+      "Conflict target",
+      null,
+      null,
+      "expense",
+      null,
+      null,
+      null,
+      null,
+      10_000,
+      "2026-04-01T08:59:00.000Z",
+      "2026-04-01T08:59:00.000Z",
+    );
+
+    await expect(
+      finalizeEvidenceReview(writableDatabase, {
+        createdAt: "2026-04-01T09:10:00.000Z",
+        evidenceId: "evidence-live-photo",
+        review: {
+          amount: "52.99",
+          category: "expense",
+          date: "2026-04-01",
+          description: "Apple accessories",
+          notes: "Reviewed on device",
+          source: "Business card",
+          target: "Apple Store",
+          taxCategory: "office",
+        },
+        sourceSystem: "feat-upload-test",
+      }),
+    ).rejects.toThrow();
+
+    const storedEvidence = database
+      .prepare(
+        `SELECT
+          parse_status AS parseStatus,
+          extracted_data AS extractedData
+        FROM evidences
+        WHERE evidence_id = ?;`,
+      )
+      .get("evidence-live-photo") as {
+      extractedData: string;
+      parseStatus: string;
+    };
+    const parsedEvidence = JSON.parse(storedEvidence.extractedData);
+    const recordLinkCount = database
+      .prepare("SELECT COUNT(*) AS count FROM record_evidence_links WHERE evidence_id = ?;")
+      .get("evidence-live-photo") as { count: number };
+
+    expect(storedEvidence.parseStatus).toBe("pending");
+    expect(parsedEvidence).toMatchObject({
+      fields: parsedResult.fields,
+      rawText: parsedResult.rawText,
+      sourceLabel: "OpenAI GPT",
+    });
+    expect(recordLinkCount.count).toBe(0);
   });
 });

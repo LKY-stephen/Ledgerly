@@ -1,18 +1,17 @@
 import * as DocumentPicker from "expo-document-picker";
 import * as ImagePicker from "expo-image-picker";
-import type { EvidenceExtractedData } from "@creator-cfo/schemas";
 
+import type { JsonValue, PlannerSummary, ReceiptPlannerPayload } from "@creator-cfo/schemas";
+
+import { parseFileWithOpenAiFromBlob, planEvidenceDbUpdates, type ParseResult } from "./remote-parse";
 import {
-  buildFailedExtractedData,
-  buildRemoteExtractedData,
-  createTrendPointsFromTotals,
-  defaultEntityId,
-  homeRecentPageSize,
-  type EvidenceQueueItem,
-  type HomeRecentRecord,
+  buildExtractedData,
   type LedgerReviewValues,
+  type WorkflowCandidateRecord,
+  type WorkflowWriteProposalItem,
 } from "./ledger-domain";
-import { parseEvidenceMultipartFromBlob } from "./remote-parse";
+import { buildPlannerSummary, buildReviewValuesFromPayload, deriveCandidateState, type PlannerReadResults } from "./workflow-planner";
+import { createTrendPointsFromTotals, homeRecentPageSize, type HomeRecentRecord } from "./ledger-domain";
 import type { HomeSnapshot } from "../home/home-data";
 
 interface UploadCandidate {
@@ -25,13 +24,18 @@ interface UploadCandidate {
   uri: string;
 }
 
-interface WebRuntimeState {
-  evidences: EvidenceQueueItem[];
-  records: HomeRecentRecord[];
+export interface PlannerResult {
+  batchId: string;
+  batchState: string;
+  candidateRecords: WorkflowCandidateRecord[];
+  error: string | null;
+  evidenceId: string;
+  plannerSummary: PlannerSummary | null;
+  reviewValues: LedgerReviewValues;
+  writeProposals: WorkflowWriteProposalItem[];
 }
 
-const storageKey = "creator-cfo-web-ledger-runtime-v1";
-let memoryState: WebRuntimeState = { evidences: [], records: [] };
+const plannerStateStore = new Map<string, PlannerResult>();
 
 export async function pickDocumentUploadCandidates(): Promise<UploadCandidate[]> {
   const result = await DocumentPicker.getDocumentAsync({
@@ -47,9 +51,9 @@ export async function pickDocumentUploadCandidates(): Promise<UploadCandidate[]>
   return result.assets.map((asset, index) => ({
     evidenceGroupKey: asset.name || `${asset.uri}-${index}`,
     isPrimary: true,
-    kind: inferUploadKind(asset.mimeType, asset.name),
+    kind: inferUploadKind(asset.mimeType ?? null, asset.name ?? ""),
     mimeType: asset.mimeType ?? null,
-    originalFileName: asset.name,
+    originalFileName: asset.name ?? `document-${index + 1}`,
     sizeBytes: asset.size ?? null,
     uri: asset.uri,
   }));
@@ -79,155 +83,24 @@ export async function pickPhotoUploadCandidates(): Promise<UploadCandidate[]> {
   }));
 }
 
-export async function importUploadCandidates(candidates: UploadCandidate[]): Promise<string[]> {
-  const state = loadState();
-  const createdAt = new Date().toISOString();
-  const grouped = new Map<string, UploadCandidate[]>();
+export async function parseFile(
+  fileUri: string,
+  fileName: string,
+  mimeType: string | null,
+): Promise<ParseResult> {
+  const response = await fetch(fileUri);
 
-  for (const candidate of candidates) {
-    const group = grouped.get(candidate.evidenceGroupKey) ?? [];
-    group.push(candidate);
-    grouped.set(candidate.evidenceGroupKey, group);
+  if (!response.ok) {
+    return {
+      rawJson: null,
+      rawText: "",
+      model: "",
+      error: `Unable to read selected file: ${response.status}`,
+    };
   }
 
-  const evidenceIds: string[] = [];
-
-  for (const [groupKey, groupItems] of grouped.entries()) {
-    const primary = groupItems.find((item) => item.isPrimary) ?? groupItems[0];
-    const evidenceId = `web-evidence-${createOpaqueId(groupKey)}`;
-    evidenceIds.push(evidenceId);
-    state.evidences.push({
-      capturedAmountCents: 0,
-      capturedDate: createdAt.slice(0, 10),
-      capturedDescription: "",
-      capturedSource: "",
-      capturedTarget: "",
-      createdAt,
-      evidenceId,
-      evidenceKind: groupItems.some((item) => item.kind === "video") ? "live_photo" : inferUploadKind(primary?.mimeType, primary?.originalFileName ?? ""),
-      extractedData: null,
-      filePath: primary?.uri ?? "",
-      mimeType: primary?.mimeType ?? null,
-      originalFileName: primary?.originalFileName ?? "upload",
-      parseStatus: "pending",
-    });
-  }
-
-  saveState(state);
-  return evidenceIds;
-}
-
-export async function loadParseQueue(): Promise<EvidenceQueueItem[]> {
-  return loadState().evidences.filter((item) => item.parseStatus !== "parsed");
-}
-
-export async function parseEvidence(evidenceId: string): Promise<EvidenceQueueItem | null> {
-  const state = loadState();
-  const evidence = state.evidences.find((item) => item.evidenceId === evidenceId);
-
-  if (!evidence) {
-    return null;
-  }
-
-  if (evidence.extractedData?.rawText) {
-    return evidence;
-  }
-
-  try {
-    const blob = await fetch(evidence.filePath).then(async (response) => {
-      if (!response.ok) {
-        throw new Error(`Unable to read selected file: ${response.status}`);
-      }
-
-      return response.blob();
-    });
-    const response = await parseEvidenceMultipartFromBlob({
-      blob,
-      fileName: evidence.originalFileName,
-      mimeType: evidence.mimeType,
-      sourcePlatform: "web",
-    });
-
-    evidence.extractedData = buildRemoteExtractedData({
-      fallbackDate: evidence.createdAt.slice(0, 10),
-      fileName: evidence.originalFileName,
-      response,
-      sourceLabel: "Vercel OpenAI GPT",
-    });
-    evidence.parseStatus = "pending";
-  } catch (error) {
-    evidence.extractedData = buildFailedExtractedData({
-      fallbackDate: evidence.createdAt.slice(0, 10),
-      failureReason: error instanceof Error ? error.message : "Remote GPT parsing failed.",
-      fileName: evidence.originalFileName,
-      parser: "openai_gpt",
-      sourceLabel: "Vercel OpenAI GPT",
-    });
-    evidence.parseStatus = "failed";
-  }
-
-  saveState(state);
-  return evidence;
-}
-
-export async function retryEvidenceParsing(evidenceId: string): Promise<EvidenceQueueItem | null> {
-  const state = loadState();
-  const evidence = state.evidences.find((item) => item.evidenceId === evidenceId);
-
-  if (!evidence) {
-    return null;
-  }
-
-  evidence.extractedData = null;
-  evidence.parseStatus = "pending";
-  saveState(state);
-  return parseEvidence(evidenceId);
-}
-
-export async function confirmEvidenceReview(
-  evidenceId: string,
-  review: LedgerReviewValues,
-): Promise<string> {
-  const state = loadState();
-  const evidence = state.evidences.find((item) => item.evidenceId === evidenceId);
-
-  if (!evidence) {
-    throw new Error("Selected evidence no longer exists.");
-  }
-
-  const amountCents = Math.round(Number.parseFloat(review.amount) * 100);
-
-  if (!review.date || !review.description || !Number.isFinite(amountCents) || amountCents <= 0) {
-    throw new Error("date, amount, and description are required.");
-  }
-
-  evidence.capturedAmountCents = amountCents;
-  evidence.capturedDate = review.date;
-  evidence.capturedDescription = review.description;
-  evidence.capturedSource = review.source;
-  evidence.capturedTarget = review.target;
-  evidence.parseStatus = "parsed";
-  evidence.extractedData = buildConfirmedExtractedData(review, evidence.extractedData);
-
-  const recordId = `record-${evidenceId}`;
-  state.records.push({
-    amountCents,
-    createdAt: new Date().toISOString(),
-    description: review.description,
-    occurredOn: review.date,
-    recordId,
-    recordKind:
-      review.category === "income"
-        ? "income"
-        : review.category === "spending"
-          ? "personal_spending"
-          : "expense",
-    sourceLabel: review.source || defaultEntityId,
-    targetLabel: review.target || review.description,
-  });
-
-  saveState(state);
-  return recordId;
+  const blob = await response.blob();
+  return parseFileWithOpenAiFromBlob({ fileName, blob, mimeType });
 }
 
 export async function loadHomeScreenSnapshot(input: {
@@ -235,80 +108,264 @@ export async function loadHomeScreenSnapshot(input: {
   now?: string;
   offset?: number;
 } = {}): Promise<HomeSnapshot> {
-  const state = loadState();
   const now = input.now ?? new Date().toISOString().slice(0, 10);
-  const monthPrefix = now.slice(0, 7);
   const offset = input.offset ?? 0;
   const limit = input.limit ?? homeRecentPageSize;
-  const monthRecords = state.records.filter((record) => record.occurredOn.startsWith(monthPrefix));
-  const incomeCents = monthRecords
-    .filter((record) => record.recordKind === "income")
-    .reduce((sum, record) => sum + record.amountCents, 0);
-  const outflowCents = monthRecords
-    .filter((record) => record.recordKind !== "income")
-    .reduce((sum, record) => sum + record.amountCents, 0);
+  const records = loadRecords();
+  const monthStart = `${now.slice(0, 7)}-01`;
+  const monthEnd = endOfMonth(now);
   const trendStart = shiftIsoDate(now, -29);
-  const totalsByDate: Record<string, number> = {};
-
-  for (const record of state.records) {
-    if (record.recordKind !== "income" || record.occurredOn < trendStart || record.occurredOn > now) {
-      continue;
-    }
-
-    totalsByDate[record.occurredOn] = (totalsByDate[record.occurredOn] ?? 0) + record.amountCents;
-  }
-
-  const sortedRecords = [...state.records].sort((left, right) =>
-    right.occurredOn.localeCompare(left.occurredOn) || right.createdAt.localeCompare(left.createdAt),
+  const metricRows = records.filter((r) => r.occurredOn >= monthStart && r.occurredOn <= monthEnd);
+  const incomeCents = metricRows.filter((r) => r.recordKind === "income").reduce((s, r) => s + r.amountCents, 0);
+  const outflowCents = metricRows.filter((r) => r.recordKind !== "income").reduce((s, r) => s + r.amountCents, 0);
+  const trendRows = records.filter((r) => r.recordKind === "income" && r.occurredOn >= trendStart && r.occurredOn <= now);
+  const totalsByDate = Object.fromEntries(
+    trendRows.map((row) => [row.occurredOn, trendRows.filter((r) => r.occurredOn === row.occurredOn).reduce((s, r) => s + r.amountCents, 0)]),
   );
-  const page = sortedRecords.slice(offset, offset + limit + 1);
 
   return {
-    hasMore: page.length > limit,
-    metrics: {
-      incomeCents,
-      netCents: incomeCents - outflowCents,
-      outflowCents,
-    },
-    recentRecords: page.slice(0, limit),
+    hasMore: records.length > offset + limit,
+    metrics: { incomeCents, netCents: incomeCents - outflowCents, outflowCents },
+    recentRecords: records.slice(offset, offset + limit),
     trend: createTrendPointsFromTotals(totalsByDate, now),
   };
 }
 
-function buildConfirmedExtractedData(
-  review: LedgerReviewValues,
-  existingExtractedData: EvidenceExtractedData | null,
-): EvidenceExtractedData {
-  const fields = {
-    amountCents: Math.round(Number.parseFloat(review.amount) * 100),
-    category: review.category,
-    date: review.date,
-    description: review.description,
-    notes: review.notes || null,
-    source: review.source || null,
-    target: review.target || null,
-    taxCategory: review.taxCategory || null,
+export async function runPlanner(input: {
+  fileName: string;
+  mimeType: string | null;
+  model: string;
+  rawJson: unknown;
+  rawText: string;
+}): Promise<PlannerResult> {
+  const now = new Date().toISOString();
+  const evidenceId = `evidence-web-${Date.now().toString(36)}`;
+  const batchId = `batch-web-${Date.now().toString(36)}`;
+  const plannerRunId = `planner-web-${Date.now().toString(36)}`;
+
+  // Call planner (second OpenAI call)
+  const remotePlan = await planEvidenceDbUpdates({
+    evidenceId,
+    fileName: input.fileName,
+    mimeType: input.mimeType,
+    rawJson: input.rawJson,
+  });
+
+  // Build extracted data for planner summary
+  const extractedData = buildExtractedData({
+    fallbackDate: now.slice(0, 10),
+    fileName: input.fileName,
+    parser: "openai_gpt",
+    rawLines: input.rawText.split("\n").filter((l) => l.trim()),
+    rawText: input.rawText,
+    sourceLabel: "openai_upload",
+  });
+  extractedData.model = input.model;
+  extractedData.originData = input.rawJson as JsonValue;
+
+  // Build read results (empty for web - no local DB)
+  const readResults: PlannerReadResults = {
+    duplicateRecordIds: [],
+    sourceCounterpartyMatches: [],
+    targetCounterpartyMatches: [],
   };
 
-  return {
-    candidates: fields,
-    fields,
-    model: existingExtractedData?.model ?? null,
-    parser: existingExtractedData?.parser ?? "rule_fallback",
-    rawLines: existingExtractedData?.rawLines ?? [],
-    rawSummary: existingExtractedData?.rawSummary ?? "Confirmed after local review.",
-    rawText: existingExtractedData?.rawText ?? "",
-    sourceLabel: existingExtractedData?.sourceLabel ?? "web-confirmed-review",
-    warnings: existingExtractedData?.warnings ?? [],
+  const evidence = {
+    capturedAmountCents: extractedData.fields.amountCents ?? 0,
+    capturedDate: extractedData.fields.date ?? now.slice(0, 10),
+    capturedDescription: extractedData.fields.description ?? input.fileName,
+    capturedSource: extractedData.fields.source ?? "",
+    capturedTarget: extractedData.fields.target ?? "",
+    evidenceId,
+    originalFileName: input.fileName,
   };
+
+  const summary = buildPlannerSummary({
+    evidence,
+    extractedData,
+    readResults,
+    remotePlan,
+  });
+
+  // Build candidate records and write proposals for UI
+  const candidateRecords: WorkflowCandidateRecord[] = summary.candidateRecords.map((payload, index) => {
+    const candidateId = `${plannerRunId}-candidate-${index + 1}`;
+    const state = deriveCandidateState({
+      duplicateHints: summary.duplicateHints,
+      payload,
+      resolutions: summary.counterpartyResolutions,
+    });
+
+    return {
+      candidateId,
+      createdAt: now,
+      errorMessage: null,
+      payload,
+      recordId: null,
+      reviewValues: buildReviewValuesFromPayload(payload),
+      state,
+      updatedAt: now,
+    };
+  });
+
+  const counterpartyProposalIds: string[] = [];
+  const writeProposals: WorkflowWriteProposalItem[] = summary.writeProposals.map((proposal, index) => {
+    const writeProposalId = `${plannerRunId}-proposal-${index + 1}`;
+    const isCounterparty = proposal.proposalType === "create_counterparty";
+
+    if (isCounterparty) {
+      counterpartyProposalIds.push(writeProposalId);
+    }
+
+    const isPersist = proposal.proposalType === "persist_candidate_record";
+    const isBlocked = isPersist && counterpartyProposalIds.length > 0;
+
+    return {
+      approvalRequired: true,
+      candidateId: candidateRecords[0]?.candidateId ?? null,
+      createdAt: now,
+      dependencyIds: isPersist ? [...counterpartyProposalIds.slice(0, -1)] : [],
+      payload: proposal.values,
+      proposalType: proposal.proposalType,
+      rationale: isCounterparty
+        ? "Parsed label does not match an existing local counterparty, so creation requires approval."
+        : "Candidate record is ready for final persistence after approval and local validation.",
+      state: isBlocked ? "blocked" : "pending_approval",
+      updatedAt: now,
+      writeProposalId,
+    };
+  });
+
+  const primaryCandidate = candidateRecords[0];
+
+  const result: PlannerResult = {
+    batchId,
+    batchState: "write_proposal_ready",
+    candidateRecords,
+    error: null,
+    evidenceId,
+    plannerSummary: summary,
+    reviewValues: primaryCandidate?.reviewValues ?? {
+      amount: "",
+      category: "expense",
+      date: "",
+      description: "",
+      notes: "",
+      source: "",
+      target: "",
+      taxCategory: "",
+    },
+    writeProposals,
+  };
+
+  plannerStateStore.set(batchId, result);
+  return result;
 }
 
-function inferUploadKind(mimeType: string | null | undefined, fileName: string): UploadCandidate["kind"] {
-  if (mimeType?.startsWith("image/") || /\.(heic|jpe?g|png)$/i.test(fileName)) {
-    return "image";
+export async function approveWriteProposal(
+  batchId: string,
+  writeProposalId: string,
+  review?: LedgerReviewValues,
+): Promise<PlannerResult> {
+  const state = plannerStateStore.get(batchId);
+
+  if (!state) {
+    throw new Error("Planner state not found for batch.");
   }
 
-  return "document";
+  const proposalIndex = state.writeProposals.findIndex((p) => p.writeProposalId === writeProposalId);
+  const proposal = state.writeProposals[proposalIndex];
+
+  if (!proposal) {
+    throw new Error("Write proposal not found.");
+  }
+
+  // Mark proposal as executed
+  proposal.state = "executed";
+  proposal.updatedAt = new Date().toISOString();
+
+  if (proposal.proposalType === "create_counterparty") {
+    // Unblock dependent proposals
+    for (const p of state.writeProposals) {
+      if (p.dependencyIds.includes(writeProposalId) && p.state === "blocked") {
+        const allDepsExecuted = p.dependencyIds.every(
+          (depId) => state.writeProposals.find((wp) => wp.writeProposalId === depId)?.state === "executed",
+        );
+
+        if (allDepsExecuted) {
+          p.state = "pending_approval";
+          p.updatedAt = new Date().toISOString();
+        }
+      }
+    }
+  }
+
+  if (proposal.proposalType === "persist_candidate_record" && state.candidateRecords[0]) {
+    state.candidateRecords[0].state = "persisted_final";
+    state.candidateRecords[0].updatedAt = new Date().toISOString();
+
+    if (review) {
+      state.candidateRecords[0].reviewValues = review;
+      state.reviewValues = review;
+    }
+
+    state.batchState = "approved";
+  }
+
+  return state;
+}
+
+export async function rejectWriteProposal(
+  batchId: string,
+  writeProposalId: string,
+): Promise<PlannerResult> {
+  const state = plannerStateStore.get(batchId);
+
+  if (!state) {
+    throw new Error("Planner state not found for batch.");
+  }
+
+  const proposal = state.writeProposals.find((p) => p.writeProposalId === writeProposalId);
+
+  if (!proposal) {
+    throw new Error("Write proposal not found.");
+  }
+
+  proposal.state = "rejected";
+  proposal.updatedAt = new Date().toISOString();
+
+  if (proposal.proposalType === "create_counterparty") {
+    for (const p of state.writeProposals) {
+      if (p.dependencyIds.includes(writeProposalId)) {
+        p.state = "blocked";
+        p.updatedAt = new Date().toISOString();
+      }
+    }
+  }
+
+  if (proposal.proposalType === "persist_candidate_record" && state.candidateRecords[0]) {
+    state.candidateRecords[0].state = "rejected";
+  }
+
+  state.batchState = "rejected";
+  return state;
+}
+
+export async function loadPlannerState(batchId: string): Promise<PlannerResult | null> {
+  return plannerStateStore.get(batchId) ?? null;
+}
+
+function inferUploadKind(mimeType: string | null, fileName: string): UploadCandidate["kind"] {
+  const normalized = `${mimeType ?? ""} ${fileName}`.toLowerCase();
+  if (normalized.includes("pdf")) return "document";
+  if (normalized.includes("live")) return "live_photo";
+  return "image";
+}
+
+function endOfMonth(dateValue: string): string {
+  const date = new Date(`${dateValue.slice(0, 7)}-01T00:00:00Z`);
+  date.setUTCMonth(date.getUTCMonth() + 1, 0);
+  return date.toISOString().slice(0, 10);
 }
 
 function shiftIsoDate(dateValue: string, offsetDays: number): string {
@@ -317,35 +374,20 @@ function shiftIsoDate(dateValue: string, offsetDays: number): string {
   return date.toISOString().slice(0, 10);
 }
 
-function createOpaqueId(seed: string): string {
-  const normalizedSeed = seed.replace(/[^a-z0-9]+/gi, "").toLowerCase().slice(0, 12) || "item";
-  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}-${normalizedSeed}`;
-}
+const storageKey = "creator-cfo-web-records-v1";
 
-function loadState(): WebRuntimeState {
-  if (typeof window === "undefined" || !window.localStorage) {
-    return memoryState;
-  }
-
-  const serialized = window.localStorage.getItem(storageKey);
-
-  if (!serialized) {
-    return { evidences: [], records: [] };
-  }
-
+function loadRecords(): HomeRecentRecord[] {
+  if (typeof localStorage === "undefined") return [];
   try {
-    return JSON.parse(serialized) as WebRuntimeState;
+    return JSON.parse(localStorage.getItem(storageKey) ?? "[]") as HomeRecentRecord[];
   } catch {
-    return { evidences: [], records: [] };
+    return [];
   }
 }
 
-function saveState(state: WebRuntimeState): void {
-  memoryState = state;
-
-  if (typeof window === "undefined" || !window.localStorage) {
-    return;
+export function resetLedgerWebRuntimeStateForTests() {
+  plannerStateStore.clear();
+  if (typeof localStorage !== "undefined") {
+    localStorage.removeItem(storageKey);
   }
-
-  window.localStorage.setItem(storageKey, JSON.stringify(state));
 }

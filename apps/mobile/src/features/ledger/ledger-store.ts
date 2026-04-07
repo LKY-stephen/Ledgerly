@@ -1,4 +1,14 @@
-import type { EvidenceExtractedData } from "@creator-cfo/schemas";
+import type {
+  CandidateRecordPayload,
+  CandidateRecordState,
+  DuplicateKind,
+  EvidenceExtractedData,
+  JsonValue,
+  PlannerSummary,
+  ReceiptPlannerPayload,
+  UploadBatchState,
+  WorkflowWriteProposalState,
+} from "@creator-cfo/schemas";
 import {
   persistResolvedStandardReceiptEntry,
   resolveStandardReceiptEntry,
@@ -12,7 +22,16 @@ import {
   type EvidenceQueueItem,
   type ImportedEvidenceBundle,
   type LedgerReviewValues,
+  type WorkflowCandidateRecord,
+  type WorkflowWriteProposalItem,
 } from "./ledger-domain";
+import {
+  buildPlannerSummary,
+  buildReviewValuesFromPayload,
+  deriveCandidateState,
+  type PlannerLookupMatch,
+  type PlannerReadResults,
+} from "./workflow-planner";
 
 const defaultEntitySeed = {
   baseCurrency: "USD",
@@ -21,6 +40,43 @@ const defaultEntitySeed = {
   entityType: "sole_proprietorship",
   legalName: "Creator CFO Main Entity",
 } as const;
+
+interface PersistedExtractionRun {
+  batchId: string;
+  createdAt: string;
+  evidenceId: string;
+  extractionRunId: string;
+}
+
+interface PersistedPlannerRun {
+  batchId: string;
+  createdAt: string;
+  evidenceId: string;
+  plannerRunId: string;
+}
+
+interface QueueBaseRow {
+  batchCreatedAt: string | null;
+  batchId: string | null;
+  batchState: UploadBatchState | null;
+  capturedAmountCents: number;
+  capturedDate: string;
+  capturedDescription: string;
+  capturedSource: string;
+  capturedTarget: string;
+  createdAt: string;
+  duplicateKind: DuplicateKind | null;
+  evidenceId: string;
+  evidenceKind: string;
+  extractionRunId: string | null;
+  extractedData: string | null;
+  filePath: string;
+  mimeType: string | null;
+  originalFileName: string;
+  parseStatus: "failed" | "parsed" | "pending";
+  plannerRunId: string | null;
+  plannerSummaryJson: string | null;
+}
 
 export async function ensureDefaultEntity(
   database: WritableStorageDatabase,
@@ -41,6 +97,68 @@ export async function ensureDefaultEntity(
     defaultEntitySeed.baseCurrency,
     defaultEntitySeed.defaultTimezone,
     createdAt,
+  );
+}
+
+export async function createUploadBatch(
+  database: WritableStorageDatabase,
+  input: {
+    batchId: string;
+    createdAt: string;
+    entityId?: string;
+    evidenceId: string;
+    sourceSystem: string;
+    state?: UploadBatchState;
+  },
+): Promise<void> {
+  const entityId = input.entityId ?? defaultEntityId;
+  const state = input.state ?? "uploaded";
+
+  await database.runAsync(
+    `INSERT INTO upload_batches (
+      batch_id,
+      evidence_id,
+      entity_id,
+      source_system,
+      state,
+      created_at,
+      updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?);`,
+    input.batchId,
+    input.evidenceId,
+    entityId,
+    input.sourceSystem,
+    state,
+    input.createdAt,
+    input.createdAt,
+  );
+}
+
+export async function updateUploadBatchState(
+  database: WritableStorageDatabase,
+  input: {
+    batchId: string;
+    duplicateKind?: DuplicateKind | null;
+    duplicateOfEvidenceId?: string | null;
+    errorMessage?: string | null;
+    state: UploadBatchState;
+    updatedAt: string;
+  },
+): Promise<void> {
+  await database.runAsync(
+    `UPDATE upload_batches
+     SET state = ?,
+         duplicate_kind = ?,
+         duplicate_of_evidence_id = ?,
+         error_message = ?,
+         updated_at = ?
+     WHERE batch_id = ?;`,
+    input.state,
+    input.duplicateKind ?? null,
+    input.duplicateOfEvidenceId ?? null,
+    input.errorMessage ?? null,
+    input.updatedAt,
+    input.batchId,
   );
 }
 
@@ -107,25 +225,332 @@ export async function insertImportedEvidenceBundle(
   }
 }
 
+export async function findDuplicateEvidenceForFingerprint(
+  database: ReadableStorageDatabase,
+  input: {
+    evidenceId: string;
+    sha256Hex: string;
+    sizeBytes: number | null;
+  },
+): Promise<string | null> {
+  const row = await database.getFirstAsync<{ evidenceId: string }>(
+    `SELECT evidence_id AS evidenceId
+     FROM evidence_files
+     WHERE sha256_hex = ?
+       AND ((size_bytes IS NULL AND ? IS NULL) OR size_bytes = ?)
+       AND evidence_id != ?
+     ORDER BY captured_at DESC
+     LIMIT 1;`,
+    input.sha256Hex,
+    input.sizeBytes,
+    input.sizeBytes,
+    input.evidenceId,
+  );
+
+  return row?.evidenceId ?? null;
+}
+
+export async function createExtractionRun(
+  database: WritableStorageDatabase,
+  input: PersistedExtractionRun,
+): Promise<void> {
+  await database.runAsync(
+    `INSERT INTO extraction_runs (
+      extraction_run_id,
+      batch_id,
+      evidence_id,
+      state,
+      parser_kind,
+      created_at,
+      updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?);`,
+    input.extractionRunId,
+    input.batchId,
+    input.evidenceId,
+    "parsing",
+    "openai_gpt",
+    input.createdAt,
+    input.createdAt,
+  );
+}
+
+export async function updateExtractionRun(
+  database: WritableStorageDatabase,
+  input: {
+    errorMessage?: string | null;
+    extractionRunId: string;
+    model?: string | null;
+    parsePayload?: JsonValue | null;
+    state: "complete" | "failed" | "parsing";
+    updatedAt: string;
+  },
+): Promise<void> {
+  await database.runAsync(
+    `UPDATE extraction_runs
+     SET state = ?,
+         model = ?,
+         parse_payload = ?,
+         error_message = ?,
+         updated_at = ?
+     WHERE extraction_run_id = ?;`,
+    input.state,
+    input.model ?? null,
+    input.parsePayload ? JSON.stringify(input.parsePayload) : null,
+    input.errorMessage ?? null,
+    input.updatedAt,
+    input.extractionRunId,
+  );
+}
+
+export async function createPlannerRun(
+  database: WritableStorageDatabase,
+  input: PersistedPlannerRun & { extractionRunId: string },
+): Promise<void> {
+  await database.runAsync(
+    `INSERT INTO planner_runs (
+      planner_run_id,
+      batch_id,
+      evidence_id,
+      extraction_run_id,
+      state,
+      created_at,
+      updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?);`,
+    input.plannerRunId,
+    input.batchId,
+    input.evidenceId,
+    input.extractionRunId,
+    "planning",
+    input.createdAt,
+    input.createdAt,
+  );
+}
+
+export async function updatePlannerRun(
+  database: WritableStorageDatabase,
+  input: {
+    errorMessage?: string | null;
+    plannerPayload?: ReceiptPlannerPayload | null;
+    plannerRunId: string;
+    state: "complete" | "failed" | "planning";
+    summary?: PlannerSummary | null;
+    updatedAt: string;
+  },
+): Promise<void> {
+  await database.runAsync(
+    `UPDATE planner_runs
+     SET state = ?,
+         planner_payload_json = ?,
+         summary_json = ?,
+         error_message = ?,
+         updated_at = ?
+     WHERE planner_run_id = ?;`,
+    input.state,
+    input.plannerPayload ? JSON.stringify(input.plannerPayload) : null,
+    input.summary ? JSON.stringify(input.summary) : null,
+    input.errorMessage ?? null,
+    input.updatedAt,
+    input.plannerRunId,
+  );
+}
+
+export async function loadPlannerReadResults(
+  database: ReadableStorageDatabase,
+  input: {
+    amountCents: number | null;
+    date: string | null;
+    description: string | null;
+    entityId?: string;
+    sourceLabel: string | null;
+    targetLabel: string | null;
+  },
+): Promise<PlannerReadResults> {
+  const entityId = input.entityId ?? defaultEntityId;
+  const sourceCounterpartyMatches = await lookupCounterparties(database, entityId, input.sourceLabel);
+  const targetCounterpartyMatches = await lookupCounterparties(database, entityId, input.targetLabel);
+  const duplicateRecordIds = await lookupDuplicateRecords(database, {
+    amountCents: input.amountCents,
+    date: input.date,
+    description: input.description,
+    entityId,
+  });
+
+  return {
+    duplicateRecordIds,
+    sourceCounterpartyMatches,
+    targetCounterpartyMatches,
+  };
+}
+
+export async function savePlannerArtifacts(
+  database: WritableStorageDatabase,
+  input: {
+    batchId: string;
+    createdAt: string;
+    evidence: EvidenceQueueItem;
+    plannerRunId: string;
+    remotePlan: ReceiptPlannerPayload;
+  },
+): Promise<void> {
+  const extractedData = input.evidence.extractedData;
+
+  if (!extractedData) {
+    throw new Error("Planner requires extracted data.");
+  }
+
+  const readResults = await loadPlannerReadResults(database, {
+    amountCents: extractedData.fields.amountCents,
+    date: extractedData.fields.date,
+    description: extractedData.fields.description,
+    sourceLabel: extractedData.fields.source,
+    targetLabel: extractedData.fields.target,
+  });
+  const summary = buildPlannerSummary({
+    evidence: input.evidence,
+    extractedData,
+    readResults,
+    remotePlan: input.remotePlan,
+  });
+  await updatePlannerRun(database, {
+    plannerPayload: input.remotePlan,
+    plannerRunId: input.plannerRunId,
+    state: "complete",
+    summary,
+    updatedAt: input.createdAt,
+  });
+
+  for (const [index, readTask] of summary.readTasks.entries()) {
+    await database.runAsync(
+      `INSERT INTO planner_read_tasks (
+        read_task_id,
+        planner_run_id,
+        task_type,
+        status,
+        input_json,
+        result_json,
+        rationale,
+        created_at,
+        updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+      `${input.plannerRunId}-read-${index + 1}`,
+      input.plannerRunId,
+      readTask.taskType,
+      readTask.status,
+      readTask.input ? JSON.stringify(readTask.input) : null,
+      readTask.result ? JSON.stringify(readTask.result) : null,
+      readTask.rationale,
+      input.createdAt,
+      input.createdAt,
+    );
+  }
+
+  const candidateIds: string[] = [];
+
+  for (const [index, payload] of summary.candidateRecords.entries()) {
+    const candidateId = `${input.plannerRunId}-candidate-${index + 1}`;
+    candidateIds.push(candidateId);
+    const resolutions = summary.counterpartyResolutions.filter((resolution) =>
+      resolution.displayName
+        ? [payload.sourceLabel, payload.targetLabel].includes(resolution.displayName)
+        : false,
+    );
+    const state = deriveCandidateState({
+      duplicateHints: summary.duplicateHints,
+      payload,
+      resolutions,
+    });
+
+    await database.runAsync(
+      `INSERT INTO candidate_records (
+        candidate_id,
+        batch_id,
+        planner_run_id,
+        evidence_id,
+        state,
+        payload_json,
+        review_json,
+        created_at,
+        updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+      candidateId,
+      input.batchId,
+      input.plannerRunId,
+      input.evidence.evidenceId,
+      state,
+      JSON.stringify(payload),
+      JSON.stringify(buildReviewValuesFromPayload(payload)),
+      input.createdAt,
+      input.createdAt,
+    );
+  }
+
+  const counterpartyProposalIds: string[] = [];
+
+  for (const [index, proposal] of summary.writeProposals.entries()) {
+    const isCounterpartyProposal = proposal.proposalType === "create_counterparty";
+    const writeProposalId = `${input.plannerRunId}-proposal-${index + 1}`;
+
+    if (isCounterpartyProposal) {
+      counterpartyProposalIds.push(writeProposalId);
+    }
+
+    const proposalState = determineInitialProposalState({
+      candidateState: candidateIds.length ? await loadCandidateState(database, candidateIds[0]!) : "candidate",
+      dependencyCount: isCounterpartyProposal ? 0 : counterpartyProposalIds.length,
+      proposalType: proposal.proposalType,
+    });
+
+    await database.runAsync(
+      `INSERT INTO workflow_write_proposals (
+        write_proposal_id,
+        planner_run_id,
+        candidate_id,
+        proposal_type,
+        state,
+        approval_required,
+        dependency_ids,
+        payload_json,
+        rationale,
+        created_at,
+        updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+      writeProposalId,
+      input.plannerRunId,
+      candidateIds[0] ?? null,
+      proposal.proposalType,
+      proposalState,
+      1,
+      isCounterpartyProposal || !counterpartyProposalIds.length
+        ? null
+        : JSON.stringify(counterpartyProposalIds),
+      JSON.stringify(proposal.values),
+      buildProposalRationale(proposal),
+      input.createdAt,
+      input.createdAt,
+    );
+  }
+
+  const batchState = determineBatchState(summary, candidateIds.length ? await loadCandidateState(database, candidateIds[0]!) : "candidate");
+  await updateUploadBatchState(database, {
+    batchId: input.batchId,
+    state: batchState,
+    updatedAt: input.createdAt,
+  });
+  await appendWorkflowAuditEvent(database, {
+    batchId: input.batchId,
+    createdAt: input.createdAt,
+    eventType: "planner_completed",
+    message: summary.summary,
+    plannerRunId: input.plannerRunId,
+    payload: summary as unknown as Record<string, JsonValue>,
+  });
+}
+
 export async function loadEvidenceQueue(
   database: ReadableStorageDatabase,
   entityId = defaultEntityId,
 ): Promise<EvidenceQueueItem[]> {
-  const rows = await database.getAllAsync<{
-    capturedAmountCents: number;
-    capturedDate: string;
-    capturedDescription: string;
-    capturedSource: string;
-    capturedTarget: string;
-    createdAt: string;
-    evidenceId: string;
-    evidenceKind: string;
-    extractedData: string | null;
-    filePath: string;
-    mimeType: string | null;
-    originalFileName: string;
-    parseStatus: "failed" | "parsed" | "pending";
-  }>(
+  const rows = await database.getAllAsync<QueueBaseRow>(
     `SELECT
       evidences.evidence_id AS evidenceId,
       evidences.evidence_kind AS evidenceKind,
@@ -139,21 +564,47 @@ export async function loadEvidenceQueue(
       evidences.captured_description AS capturedDescription,
       evidences.created_at AS createdAt,
       evidence_files.original_file_name AS originalFileName,
-      evidence_files.mime_type AS mimeType
+      evidence_files.mime_type AS mimeType,
+      upload_batches.batch_id AS batchId,
+      upload_batches.state AS batchState,
+      upload_batches.duplicate_kind AS duplicateKind,
+      upload_batches.created_at AS batchCreatedAt,
+      extraction_runs.extraction_run_id AS extractionRunId,
+      planner_runs.planner_run_id AS plannerRunId,
+      planner_runs.summary_json AS plannerSummaryJson
     FROM evidences
     LEFT JOIN evidence_files
       ON evidence_files.evidence_id = evidences.evidence_id
      AND evidence_files.is_primary = 1
+    LEFT JOIN upload_batches
+      ON upload_batches.evidence_id = evidences.evidence_id
+    LEFT JOIN extraction_runs
+      ON extraction_runs.extraction_run_id = (
+        SELECT extraction_run_id
+        FROM extraction_runs latest_extraction
+        WHERE latest_extraction.evidence_id = evidences.evidence_id
+        ORDER BY latest_extraction.created_at DESC
+        LIMIT 1
+      )
+    LEFT JOIN planner_runs
+      ON planner_runs.planner_run_id = (
+        SELECT planner_run_id
+        FROM planner_runs latest_planner
+        WHERE latest_planner.evidence_id = evidences.evidence_id
+        ORDER BY latest_planner.created_at DESC
+        LIMIT 1
+      )
     WHERE evidences.entity_id = ?
-      AND evidences.parse_status IN ('pending', 'failed')
-    ORDER BY evidences.created_at ASC;`,
+      AND COALESCE(upload_batches.state, '') != 'duplicate_file'
+      AND (
+        evidences.parse_status IN ('pending', 'failed')
+        OR COALESCE(upload_batches.state, '') NOT IN ('approved', 'rejected')
+      )
+    ORDER BY COALESCE(upload_batches.created_at, evidences.created_at) DESC;`,
     entityId,
   );
 
-  return rows.map((row) => ({
-    ...row,
-    extractedData: row.extractedData ? (JSON.parse(row.extractedData) as EvidenceExtractedData) : null,
-  }));
+  return Promise.all(rows.map((row) => hydrateEvidenceQueueItem(database, row)));
 }
 
 export async function loadEvidenceById(
@@ -183,6 +634,91 @@ export async function updateEvidenceExtraction(
   );
 }
 
+export async function approveWorkflowWriteProposal(
+  database: WritableStorageDatabase,
+  input: {
+    actor?: string;
+    evidenceId: string;
+    review?: LedgerReviewValues;
+    updatedAt: string;
+    writeProposalId: string;
+  },
+): Promise<void> {
+  const proposal = await loadProposalById(database, input.writeProposalId);
+
+  if (!proposal) {
+    throw new Error("Workflow proposal not found.");
+  }
+
+  if (proposal.proposalType === "create_counterparty") {
+    await executeCreateCounterpartyProposal(database, {
+      actor: input.actor ?? "local_user",
+      proposal,
+      updatedAt: input.updatedAt,
+    });
+    return;
+  }
+
+  await executePersistCandidateProposal(database, {
+    actor: input.actor ?? "local_user",
+    evidenceId: input.evidenceId,
+    proposal,
+    review: input.review,
+    updatedAt: input.updatedAt,
+  });
+}
+
+export async function rejectWorkflowWriteProposal(
+  database: WritableStorageDatabase,
+  input: {
+    actor?: string;
+    updatedAt: string;
+    writeProposalId: string;
+  },
+): Promise<void> {
+  const proposal = await loadProposalById(database, input.writeProposalId);
+
+  if (!proposal) {
+    throw new Error("Workflow proposal not found.");
+  }
+
+  await database.runAsync(
+    `UPDATE workflow_write_proposals
+     SET state = ?,
+         updated_at = ?
+     WHERE write_proposal_id = ?;`,
+    "rejected",
+    input.updatedAt,
+    input.writeProposalId,
+  );
+
+  if (proposal.candidateId) {
+    await database.runAsync(
+      `UPDATE candidate_records
+       SET state = ?,
+           updated_at = ?
+       WHERE candidate_id = ?;`,
+      proposal.proposalType === "persist_candidate_record" ? "rejected" : "needs_review",
+      input.updatedAt,
+      proposal.candidateId,
+    );
+  }
+
+  if (proposal.proposalType === "create_counterparty") {
+    await blockDependentProposals(database, proposal.writeProposalId, input.updatedAt);
+  }
+
+  await appendWorkflowAuditEvent(database, {
+    batchId: proposal.batchId,
+    candidateId: proposal.candidateId,
+    createdAt: input.updatedAt,
+    eventType: "proposal_rejected",
+    message: `${proposal.proposalType} was rejected by ${input.actor ?? "local_user"}.`,
+    plannerRunId: proposal.plannerRunId,
+    writeProposalId: proposal.writeProposalId,
+  });
+}
+
 export async function finalizeEvidenceReview(
   database: WritableStorageDatabase,
   input: {
@@ -193,70 +729,92 @@ export async function finalizeEvidenceReview(
     sourceSystem: string;
   },
 ): Promise<string> {
-  const entityId = input.entityId ?? defaultEntityId;
-  const normalizedReview = normalizeReviewValues(input.review);
-  const recordId = `record-${input.evidenceId}`;
-  const amountCents = Math.round(Number.parseFloat(normalizedReview.amountValue) * 100);
-  const existingEvidence = await database.getFirstAsync<{ extractedData: string | null }>(
-    "SELECT extracted_data AS extractedData FROM evidences WHERE evidence_id = ?;",
-    input.evidenceId,
-  );
-  const existingExtractedData = existingEvidence?.extractedData
-    ? (JSON.parse(existingEvidence.extractedData) as EvidenceExtractedData)
-    : null;
-  const extractedData = buildConfirmedExtractedData(
-    normalizedReview,
-    existingExtractedData,
-    normalizedReview.failureReason,
-  );
-  const resolvedEntry = resolveStandardReceiptEntry(
-    {
+  const evidence = await loadEvidenceById(database, input.evidenceId);
+
+  if (!evidence) {
+    throw new Error("Selected evidence no longer exists.");
+  }
+
+  if (!evidence.writeProposals.length) {
+    const normalizedReview = normalizeReviewValues(input.review);
+    const amountCents = Math.round(Number.parseFloat(normalizedReview.amountValue) * 100);
+    const existingEvidence = await database.getFirstAsync<{ extractedData: string | null }>(
+      "SELECT extracted_data AS extractedData FROM evidences WHERE evidence_id = ?;",
+      input.evidenceId,
+    );
+    const existingExtractedData = existingEvidence?.extractedData
+      ? (JSON.parse(existingEvidence.extractedData) as EvidenceExtractedData)
+      : null;
+    const extractedData = buildConfirmedExtractedData(
+      normalizedReview,
+      existingExtractedData,
+      normalizedReview.failureReason,
+    );
+    const resolvedEntry = resolveStandardReceiptEntry(
+      {
+        amountCents,
+        currency: "USD",
+        description: normalizedReview.description,
+        entityId: defaultEntityId,
+        evidenceIds: [input.evidenceId],
+        memo: normalizedReview.notes || null,
+        occurredOn: normalizedReview.date,
+        source: normalizedReview.source,
+        target: normalizedReview.target,
+        userClassification:
+          normalizedReview.category === "income"
+            ? "income"
+            : normalizedReview.category === "spending"
+              ? "personal_spending"
+              : "expense",
+      },
+      {
+        createdAt: input.createdAt,
+        recordId: `record-${input.evidenceId}`,
+        sourceSystem: input.sourceSystem,
+        updatedAt: input.createdAt,
+      },
+    );
+
+    await persistResolvedStandardReceiptEntry(database, resolvedEntry);
+    await database.runAsync(
+      `UPDATE evidences
+       SET parse_status = 'parsed',
+           extracted_data = ?,
+           captured_date = ?,
+           captured_amount_cents = ?,
+           captured_source = ?,
+           captured_target = ?,
+           captured_description = ?
+       WHERE evidence_id = ?;`,
+      JSON.stringify(extractedData),
+      normalizedReview.date,
       amountCents,
-      currency: "USD",
-      description: normalizedReview.description,
-      entityId,
-      evidenceIds: [input.evidenceId],
-      memo: normalizedReview.notes || null,
-      occurredOn: normalizedReview.date,
-      source: normalizedReview.source,
-      target: normalizedReview.target,
-      userClassification:
-        normalizedReview.category === "income"
-          ? "income"
-          : normalizedReview.category === "spending"
-            ? "personal_spending"
-            : "expense",
-    },
-    {
-      createdAt: input.createdAt,
-      recordId,
-      sourceSystem: input.sourceSystem,
+      normalizedReview.source,
+      normalizedReview.target,
+      normalizedReview.description,
+      input.evidenceId,
+    );
+
+    return resolvedEntry.record.recordId;
+  }
+
+  for (const proposal of evidence.writeProposals.filter((item) => item.state === "pending_approval")) {
+    await approveWorkflowWriteProposal(database, {
+      evidenceId: input.evidenceId,
+      review: proposal.proposalType === "persist_candidate_record" ? input.review : undefined,
       updatedAt: input.createdAt,
-    },
-  );
+      writeProposalId: proposal.writeProposalId,
+    });
+  }
 
-  await persistResolvedStandardReceiptEntry(database, resolvedEntry);
+  const candidate = await loadLatestCandidateForEvidence(database, input.evidenceId);
 
-  await database.runAsync(
-    `UPDATE evidences
-     SET parse_status = 'parsed',
-         extracted_data = ?,
-         captured_date = ?,
-         captured_amount_cents = ?,
-         captured_source = ?,
-         captured_target = ?,
-         captured_description = ?
-     WHERE evidence_id = ?;`,
-    JSON.stringify(extractedData),
-    normalizedReview.date,
-    amountCents,
-    normalizedReview.source,
-    normalizedReview.target,
-    normalizedReview.description,
-    input.evidenceId,
-  );
+  if (!candidate?.recordId) {
+    throw new Error("Final record was not created.");
+  }
 
-  return recordId;
+  return candidate.recordId;
 }
 
 export async function loadEvidenceQueueByIds(
@@ -268,21 +826,7 @@ export async function loadEvidenceQueueByIds(
   }
 
   const placeholders = evidenceIds.map(() => "?").join(", ");
-  const rows = await database.getAllAsync<{
-    capturedAmountCents: number;
-    capturedDate: string;
-    capturedDescription: string;
-    capturedSource: string;
-    capturedTarget: string;
-    createdAt: string;
-    evidenceId: string;
-    evidenceKind: string;
-    extractedData: string | null;
-    filePath: string;
-    mimeType: string | null;
-    originalFileName: string;
-    parseStatus: "failed" | "parsed" | "pending";
-  }>(
+  const rows = await database.getAllAsync<QueueBaseRow>(
     `SELECT
       evidences.evidence_id AS evidenceId,
       evidences.evidence_kind AS evidenceKind,
@@ -296,20 +840,757 @@ export async function loadEvidenceQueueByIds(
       evidences.captured_description AS capturedDescription,
       evidences.created_at AS createdAt,
       evidence_files.original_file_name AS originalFileName,
-      evidence_files.mime_type AS mimeType
+      evidence_files.mime_type AS mimeType,
+      upload_batches.batch_id AS batchId,
+      upload_batches.state AS batchState,
+      upload_batches.duplicate_kind AS duplicateKind,
+      upload_batches.created_at AS batchCreatedAt,
+      extraction_runs.extraction_run_id AS extractionRunId,
+      planner_runs.planner_run_id AS plannerRunId,
+      planner_runs.summary_json AS plannerSummaryJson
     FROM evidences
     LEFT JOIN evidence_files
       ON evidence_files.evidence_id = evidences.evidence_id
      AND evidence_files.is_primary = 1
+    LEFT JOIN upload_batches
+      ON upload_batches.evidence_id = evidences.evidence_id
+    LEFT JOIN extraction_runs
+      ON extraction_runs.extraction_run_id = (
+        SELECT extraction_run_id
+        FROM extraction_runs latest_extraction
+        WHERE latest_extraction.evidence_id = evidences.evidence_id
+        ORDER BY latest_extraction.created_at DESC
+        LIMIT 1
+      )
+    LEFT JOIN planner_runs
+      ON planner_runs.planner_run_id = (
+        SELECT planner_run_id
+        FROM planner_runs latest_planner
+        WHERE latest_planner.evidence_id = evidences.evidence_id
+        ORDER BY latest_planner.created_at DESC
+        LIMIT 1
+      )
     WHERE evidences.evidence_id IN (${placeholders})
-    ORDER BY evidences.created_at ASC;`,
+    ORDER BY COALESCE(upload_batches.created_at, evidences.created_at) DESC;`,
     ...evidenceIds,
   );
 
-  return rows.map((row) => ({
-    ...row,
+  return Promise.all(rows.map((row) => hydrateEvidenceQueueItem(database, row)));
+}
+
+export async function appendWorkflowAuditEvent(
+  database: WritableStorageDatabase,
+  input: {
+    batchId: string;
+    candidateId?: string | null;
+    createdAt: string;
+    eventType: string;
+    message: string;
+    payload?: Record<string, JsonValue> | null;
+    plannerRunId?: string | null;
+    writeProposalId?: string | null;
+  },
+): Promise<void> {
+  await database.runAsync(
+    `INSERT INTO workflow_audit_events (
+      event_id,
+      batch_id,
+      planner_run_id,
+      candidate_id,
+      write_proposal_id,
+      event_type,
+      message,
+      payload_json,
+      created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+    `audit-${input.eventType}-${input.createdAt}`,
+    input.batchId,
+    input.plannerRunId ?? null,
+    input.candidateId ?? null,
+    input.writeProposalId ?? null,
+    input.eventType,
+    input.message,
+    input.payload ? JSON.stringify(input.payload) : null,
+    input.createdAt,
+  );
+}
+
+async function hydrateEvidenceQueueItem(
+  database: ReadableStorageDatabase,
+  row: QueueBaseRow,
+): Promise<EvidenceQueueItem> {
+  const writeProposals = row.plannerRunId ? await loadWriteProposals(database, row.plannerRunId) : [];
+  const candidateRecords = row.plannerRunId ? await loadCandidateRecords(database, row.plannerRunId) : [];
+  const plannerSummary = row.plannerSummaryJson ? (JSON.parse(row.plannerSummaryJson) as PlannerSummary) : null;
+  const readTasks = plannerSummary?.readTasks ?? [];
+  const resolutions = plannerSummary?.counterpartyResolutions ?? [];
+
+  return {
+    batchCreatedAt: row.batchCreatedAt ?? row.createdAt,
+    batchId: row.batchId ?? `batch-missing-${row.evidenceId}`,
+    batchState: row.batchState ?? "uploaded",
+    capturedAmountCents: row.capturedAmountCents,
+    capturedDate: row.capturedDate,
+    capturedDescription: row.capturedDescription,
+    capturedSource: row.capturedSource,
+    capturedTarget: row.capturedTarget,
+    candidateRecords,
+    createdAt: row.createdAt,
+    duplicateKind: row.duplicateKind,
+    evidenceId: row.evidenceId,
+    evidenceKind: row.evidenceKind,
+    extractionRunId: row.extractionRunId,
     extractedData: row.extractedData ? (JSON.parse(row.extractedData) as EvidenceExtractedData) : null,
+    filePath: row.filePath,
+    mimeType: row.mimeType,
+    originalFileName: row.originalFileName,
+    parseStatus: row.parseStatus,
+    plannerRunId: row.plannerRunId,
+    plannerSummary,
+    readTasks,
+    resolutions,
+    writeProposals,
+  };
+}
+
+async function lookupCounterparties(
+  database: ReadableStorageDatabase,
+  entityId: string,
+  label: string | null,
+): Promise<PlannerLookupMatch[]> {
+  const normalized = normalizeText(label);
+
+  if (!normalized) {
+    return [];
+  }
+
+  return database.getAllAsync<PlannerLookupMatch>(
+    `SELECT
+      counterparty_id AS counterpartyId,
+      display_name AS displayName
+    FROM counterparties
+    WHERE entity_id = ?
+      AND LOWER(TRIM(display_name)) = LOWER(TRIM(?))
+    ORDER BY created_at ASC;`,
+    entityId,
+    normalized,
+  );
+}
+
+async function lookupDuplicateRecords(
+  database: ReadableStorageDatabase,
+  input: {
+    amountCents: number | null;
+    date: string | null;
+    description: string | null;
+    entityId: string;
+  },
+): Promise<string[]> {
+  if (!input.amountCents || !input.date || !normalizeText(input.description)) {
+    return [];
+  }
+
+  const rows = await database.getAllAsync<{ recordId: string }>(
+    `SELECT record_id AS recordId
+     FROM records
+     WHERE entity_id = ?
+       AND occurred_on = ?
+       AND amount_cents = ?
+       AND LOWER(TRIM(description)) = LOWER(TRIM(?))
+     ORDER BY created_at DESC;`,
+    input.entityId,
+    input.date,
+    input.amountCents,
+    input.description!,
+  );
+
+  return rows.map((row) => row.recordId);
+}
+
+async function loadCandidateState(
+  database: ReadableStorageDatabase,
+  candidateId: string,
+): Promise<CandidateRecordState> {
+  const row = await database.getFirstAsync<{ state: CandidateRecordState }>(
+    `SELECT state FROM candidate_records WHERE candidate_id = ?;`,
+    candidateId,
+  );
+
+  return row?.state ?? "candidate";
+}
+
+async function loadCandidateRecords(
+  database: ReadableStorageDatabase,
+  plannerRunId: string,
+): Promise<WorkflowCandidateRecord[]> {
+  const rows = await database.getAllAsync<{
+    candidateId: string;
+    createdAt: string;
+    errorMessage: string | null;
+    payloadJson: string;
+    recordId: string | null;
+    reviewJson: string | null;
+    state: CandidateRecordState;
+    updatedAt: string;
+  }>(
+    `SELECT
+      candidate_id AS candidateId,
+      state,
+      payload_json AS payloadJson,
+      review_json AS reviewJson,
+      record_id AS recordId,
+      error_message AS errorMessage,
+      created_at AS createdAt,
+      updated_at AS updatedAt
+    FROM candidate_records
+    WHERE planner_run_id = ?
+    ORDER BY created_at ASC;`,
+    plannerRunId,
+  );
+
+  return rows.map((row) => {
+    const payload = JSON.parse(row.payloadJson) as CandidateRecordPayload;
+
+    return {
+      candidateId: row.candidateId,
+      createdAt: row.createdAt,
+      errorMessage: row.errorMessage,
+      payload,
+      recordId: row.recordId,
+      reviewValues: row.reviewJson
+        ? (JSON.parse(row.reviewJson) as LedgerReviewValues)
+        : buildReviewValuesFromPayload(payload),
+      state: row.state,
+      updatedAt: row.updatedAt,
+    };
+  });
+}
+
+async function loadWriteProposals(
+  database: ReadableStorageDatabase,
+  plannerRunId: string,
+): Promise<WorkflowWriteProposalItem[]> {
+  const rows = await database.getAllAsync<{
+    approvalRequired: number;
+    candidateId: string | null;
+    createdAt: string;
+    dependencyIds: string | null;
+    payloadJson: string;
+    proposalType: WorkflowWriteProposalItem["proposalType"];
+    rationale: string;
+    state: WorkflowWriteProposalState;
+    updatedAt: string;
+    writeProposalId: string;
+  }>(
+    `SELECT
+      write_proposal_id AS writeProposalId,
+      candidate_id AS candidateId,
+      proposal_type AS proposalType,
+      state,
+      approval_required AS approvalRequired,
+      dependency_ids AS dependencyIds,
+      payload_json AS payloadJson,
+      rationale,
+      created_at AS createdAt,
+      updated_at AS updatedAt
+    FROM workflow_write_proposals
+    WHERE planner_run_id = ?
+    ORDER BY created_at ASC;`,
+    plannerRunId,
+  );
+
+  return rows.map((row) => ({
+    approvalRequired: row.approvalRequired === 1,
+    candidateId: row.candidateId,
+    createdAt: row.createdAt,
+    dependencyIds: row.dependencyIds ? (JSON.parse(row.dependencyIds) as string[]) : [],
+    payload: JSON.parse(row.payloadJson) as Record<string, JsonValue>,
+    proposalType: row.proposalType,
+    rationale: row.rationale,
+    state: row.state,
+    updatedAt: row.updatedAt,
+    writeProposalId: row.writeProposalId,
   }));
+}
+
+async function loadProposalById(
+  database: ReadableStorageDatabase,
+  writeProposalId: string,
+): Promise<{
+  batchId: string;
+  candidateId: string | null;
+  payload: Record<string, JsonValue>;
+  plannerRunId: string;
+  proposalType: WorkflowWriteProposalItem["proposalType"];
+  writeProposalId: string;
+} | null> {
+  const row = await database.getFirstAsync<{
+    batchId: string;
+    candidateId: string | null;
+    payloadJson: string;
+    plannerRunId: string;
+    proposalType: WorkflowWriteProposalItem["proposalType"];
+    writeProposalId: string;
+  }>(
+    `SELECT
+      workflow_write_proposals.write_proposal_id AS writeProposalId,
+      workflow_write_proposals.candidate_id AS candidateId,
+      workflow_write_proposals.payload_json AS payloadJson,
+      workflow_write_proposals.proposal_type AS proposalType,
+      workflow_write_proposals.planner_run_id AS plannerRunId,
+      candidate_records.batch_id AS batchId
+    FROM workflow_write_proposals
+    LEFT JOIN candidate_records
+      ON candidate_records.candidate_id = workflow_write_proposals.candidate_id
+    WHERE workflow_write_proposals.write_proposal_id = ?;`,
+    writeProposalId,
+  );
+
+  if (!row) {
+    return null;
+  }
+
+  return {
+    batchId: row.batchId,
+    candidateId: row.candidateId,
+    payload: JSON.parse(row.payloadJson) as Record<string, JsonValue>,
+    plannerRunId: row.plannerRunId,
+    proposalType: row.proposalType,
+    writeProposalId: row.writeProposalId,
+  };
+}
+
+async function executeCreateCounterpartyProposal(
+  database: WritableStorageDatabase,
+  input: {
+    actor: string;
+    proposal: NonNullable<Awaited<ReturnType<typeof loadProposalById>>>;
+    updatedAt: string;
+  },
+): Promise<void> {
+  const role = normalizeText(asString(input.proposal.payload.role)) === "target" ? "target" : "source";
+  const displayName = normalizeText(asString(input.proposal.payload.displayName));
+
+  if (!displayName || !input.proposal.candidateId) {
+    throw new Error("Counterparty proposal is missing displayName or candidate.");
+  }
+
+  const counterpartyId = `counterparty-${sanitizeId(displayName)}-${input.updatedAt.replace(/[^0-9]/g, "").slice(-10)}`;
+  await database.runAsync(
+    `INSERT INTO counterparties (
+      counterparty_id,
+      entity_id,
+      counterparty_type,
+      display_name,
+      raw_reference,
+      notes,
+      created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?);`,
+    counterpartyId,
+    defaultEntityId,
+    role,
+    displayName,
+    displayName,
+    "Created from upload planner approval.",
+    input.updatedAt,
+  );
+
+  const candidate = await loadCandidateById(database, input.proposal.candidateId);
+
+  if (!candidate) {
+    throw new Error("Candidate row no longer exists.");
+  }
+
+  const nextPayload = {
+    ...candidate.payload,
+    ...(role === "source"
+      ? { sourceCounterpartyId: counterpartyId, sourceLabel: displayName }
+      : { targetCounterpartyId: counterpartyId, targetLabel: displayName }),
+  } satisfies CandidateRecordPayload;
+
+  await database.runAsync(
+    `UPDATE candidate_records
+     SET payload_json = ?,
+         review_json = ?,
+         state = ?,
+         updated_at = ?
+     WHERE candidate_id = ?;`,
+    JSON.stringify(nextPayload),
+    JSON.stringify(buildReviewValuesFromPayload(nextPayload)),
+    "validated",
+    input.updatedAt,
+    candidate.candidateId,
+  );
+  await database.runAsync(
+    `UPDATE workflow_write_proposals
+     SET state = ?,
+         updated_at = ?
+     WHERE write_proposal_id = ?;`,
+    "executed",
+    input.updatedAt,
+    input.proposal.writeProposalId,
+  );
+  await unblockDependentProposals(database, input.proposal.writeProposalId, input.updatedAt);
+  await appendWorkflowAuditEvent(database, {
+    batchId: input.proposal.batchId,
+    candidateId: input.proposal.candidateId,
+    createdAt: input.updatedAt,
+    eventType: "counterparty_created",
+    message: `${displayName} approved and persisted as a counterparty.`,
+    plannerRunId: input.proposal.plannerRunId,
+    writeProposalId: input.proposal.writeProposalId,
+  });
+}
+
+async function executePersistCandidateProposal(
+  database: WritableStorageDatabase,
+  input: {
+    actor: string;
+    evidenceId: string;
+    proposal: NonNullable<Awaited<ReturnType<typeof loadProposalById>>>;
+    review?: LedgerReviewValues;
+    updatedAt: string;
+  },
+): Promise<void> {
+  if (!input.proposal.candidateId) {
+    throw new Error("Persistence proposal is missing a candidate.");
+  }
+
+  const candidate = await loadCandidateById(database, input.proposal.candidateId);
+
+  if (!candidate) {
+    throw new Error("Candidate row no longer exists.");
+  }
+
+  const review = normalizeReviewValues(input.review ?? candidate.reviewValues);
+  const amountCents = Math.round(Number.parseFloat(review.amountValue) * 100);
+  const nextPayload: CandidateRecordPayload = {
+    ...candidate.payload,
+    amountCents,
+    date: review.date,
+    description: review.description,
+    sourceLabel: review.source,
+    targetLabel: review.target,
+    taxCategoryCode: review.taxCategory || null,
+  };
+  const resolvedEntry = resolveStandardReceiptEntry(
+    {
+      amountCents,
+      currency: "USD",
+      description: review.description,
+      entityId: defaultEntityId,
+      evidenceIds: [input.evidenceId],
+      memo: review.notes || null,
+      occurredOn: review.date,
+      source: review.source,
+      target: review.target,
+      userClassification:
+        review.category === "income"
+          ? "income"
+          : review.category === "spending"
+            ? "personal_spending"
+            : "expense",
+    },
+    {
+      createdAt: input.updatedAt,
+      recordId: candidate.recordId ?? `record-${input.evidenceId}`,
+      sourceCounterpartyId: nextPayload.sourceCounterpartyId ?? null,
+      sourceSystem: "ledger-upload-workflow",
+      targetCounterpartyId: nextPayload.targetCounterpartyId ?? null,
+      updatedAt: input.updatedAt,
+    },
+  );
+
+  await persistResolvedStandardReceiptEntry(database, resolvedEntry);
+  await database.runAsync(
+    `UPDATE candidate_records
+     SET payload_json = ?,
+         review_json = ?,
+         record_id = ?,
+         state = ?,
+         updated_at = ?
+     WHERE candidate_id = ?;`,
+    JSON.stringify(nextPayload),
+    JSON.stringify({
+      amount: review.amountValue,
+      category: review.category,
+      date: review.date,
+      description: review.description,
+      notes: review.notes,
+      source: review.source,
+      target: review.target,
+      taxCategory: review.taxCategory,
+    }),
+    resolvedEntry.record.recordId,
+    "persisted_final",
+    input.updatedAt,
+    candidate.candidateId,
+  );
+  await database.runAsync(
+    `UPDATE workflow_write_proposals
+     SET state = ?,
+         updated_at = ?
+     WHERE write_proposal_id = ?;`,
+    "executed",
+    input.updatedAt,
+    input.proposal.writeProposalId,
+  );
+
+  const extractedData = buildConfirmedExtractedData(review, candidate.extractedData, null);
+  await database.runAsync(
+    `UPDATE evidences
+     SET parse_status = 'parsed',
+         extracted_data = ?,
+         captured_date = ?,
+         captured_amount_cents = ?,
+         captured_source = ?,
+         captured_target = ?,
+         captured_description = ?
+     WHERE evidence_id = ?;`,
+    JSON.stringify(extractedData),
+    review.date,
+    amountCents,
+    review.source,
+    review.target,
+    review.description,
+    input.evidenceId,
+  );
+  await updateUploadBatchState(database, {
+    batchId: input.proposal.batchId,
+    state: "approved",
+    updatedAt: input.updatedAt,
+  });
+  await appendWorkflowAuditEvent(database, {
+    batchId: input.proposal.batchId,
+    candidateId: input.proposal.candidateId,
+    createdAt: input.updatedAt,
+    eventType: "candidate_persisted",
+    message: `${resolvedEntry.record.recordId} persisted after approval by ${input.actor}.`,
+    plannerRunId: input.proposal.plannerRunId,
+    writeProposalId: input.proposal.writeProposalId,
+  });
+}
+
+async function loadCandidateById(
+  database: ReadableStorageDatabase,
+  candidateId: string,
+): Promise<(WorkflowCandidateRecord & { extractedData: EvidenceExtractedData | null }) | null> {
+  const row = await database.getFirstAsync<{
+    candidateId: string;
+    evidenceId: string;
+    extractedData: string | null;
+    payloadJson: string;
+    recordId: string | null;
+    reviewJson: string | null;
+    state: CandidateRecordState;
+  }>(
+    `SELECT
+      candidate_records.candidate_id AS candidateId,
+      candidate_records.evidence_id AS evidenceId,
+      candidate_records.payload_json AS payloadJson,
+      candidate_records.review_json AS reviewJson,
+      candidate_records.record_id AS recordId,
+      candidate_records.state AS state,
+      evidences.extracted_data AS extractedData
+    FROM candidate_records
+    LEFT JOIN evidences
+      ON evidences.evidence_id = candidate_records.evidence_id
+    WHERE candidate_records.candidate_id = ?;`,
+    candidateId,
+  );
+
+  if (!row) {
+    return null;
+  }
+
+  const payload = JSON.parse(row.payloadJson) as CandidateRecordPayload;
+
+  return {
+    candidateId: row.candidateId,
+    createdAt: "",
+    errorMessage: null,
+    extractedData: row.extractedData ? (JSON.parse(row.extractedData) as EvidenceExtractedData) : null,
+    payload,
+    recordId: row.recordId,
+    reviewValues: row.reviewJson
+      ? (JSON.parse(row.reviewJson) as LedgerReviewValues)
+      : buildReviewValuesFromPayload(payload),
+    state: row.state,
+    updatedAt: "",
+  };
+}
+
+async function loadLatestCandidateForEvidence(
+  database: ReadableStorageDatabase,
+  evidenceId: string,
+): Promise<WorkflowCandidateRecord | null> {
+  const rows = await database.getAllAsync<{
+    candidateId: string;
+    createdAt: string;
+    errorMessage: string | null;
+    payloadJson: string;
+    recordId: string | null;
+    reviewJson: string | null;
+    state: CandidateRecordState;
+    updatedAt: string;
+  }>(
+    `SELECT
+      candidate_id AS candidateId,
+      state,
+      payload_json AS payloadJson,
+      review_json AS reviewJson,
+      record_id AS recordId,
+      error_message AS errorMessage,
+      created_at AS createdAt,
+      updated_at AS updatedAt
+    FROM candidate_records
+    WHERE evidence_id = ?
+    ORDER BY created_at DESC
+    LIMIT 1;`,
+    evidenceId,
+  );
+
+  const row = rows[0];
+
+  if (!row) {
+    return null;
+  }
+
+  const payload = JSON.parse(row.payloadJson) as CandidateRecordPayload;
+
+  return {
+    candidateId: row.candidateId,
+    createdAt: row.createdAt,
+    errorMessage: row.errorMessage,
+    payload,
+    recordId: row.recordId,
+    reviewValues: row.reviewJson
+      ? (JSON.parse(row.reviewJson) as LedgerReviewValues)
+      : buildReviewValuesFromPayload(payload),
+    state: row.state,
+    updatedAt: row.updatedAt,
+  };
+}
+
+async function unblockDependentProposals(
+  database: WritableStorageDatabase,
+  dependencyProposalId: string,
+  updatedAt: string,
+): Promise<void> {
+  const rows = await database.getAllAsync<{ dependencyIds: string | null; writeProposalId: string }>(
+    `SELECT
+      write_proposal_id AS writeProposalId,
+      dependency_ids AS dependencyIds
+    FROM workflow_write_proposals
+    WHERE dependency_ids IS NOT NULL;`,
+  );
+
+  for (const row of rows) {
+    const dependencyIds = row.dependencyIds ? (JSON.parse(row.dependencyIds) as string[]) : [];
+
+    if (!dependencyIds.includes(dependencyProposalId)) {
+      continue;
+    }
+
+    const remainingStates = await database.getAllAsync<{ state: WorkflowWriteProposalState }>(
+      `SELECT state
+       FROM workflow_write_proposals
+       WHERE write_proposal_id IN (${dependencyIds.map(() => "?").join(", ")});`,
+      ...dependencyIds,
+    );
+
+    if (remainingStates.every((state) => state.state === "executed")) {
+      await database.runAsync(
+        `UPDATE workflow_write_proposals
+         SET state = ?,
+             updated_at = ?
+         WHERE write_proposal_id = ?;`,
+        "pending_approval",
+        updatedAt,
+        row.writeProposalId,
+      );
+    }
+  }
+}
+
+async function blockDependentProposals(
+  database: WritableStorageDatabase,
+  dependencyProposalId: string,
+  updatedAt: string,
+): Promise<void> {
+  const rows = await database.getAllAsync<{ dependencyIds: string | null; writeProposalId: string }>(
+    `SELECT
+      write_proposal_id AS writeProposalId,
+      dependency_ids AS dependencyIds
+    FROM workflow_write_proposals
+    WHERE dependency_ids IS NOT NULL;`,
+  );
+
+  for (const row of rows) {
+    const dependencyIds = row.dependencyIds ? (JSON.parse(row.dependencyIds) as string[]) : [];
+
+    if (!dependencyIds.includes(dependencyProposalId)) {
+      continue;
+    }
+
+    await database.runAsync(
+      `UPDATE workflow_write_proposals
+       SET state = ?,
+           updated_at = ?
+       WHERE write_proposal_id = ?;`,
+      "blocked",
+      updatedAt,
+      row.writeProposalId,
+    );
+  }
+}
+
+function determineInitialProposalState(input: {
+  candidateState: CandidateRecordState;
+  dependencyCount: number;
+  proposalType: WorkflowWriteProposalItem["proposalType"];
+}): WorkflowWriteProposalState {
+  if (input.candidateState === "duplicate") {
+    return "blocked";
+  }
+
+  if (input.proposalType === "persist_candidate_record" && input.candidateState !== "validated") {
+    return "blocked";
+  }
+
+  if (input.proposalType === "persist_candidate_record" && input.dependencyCount > 0) {
+    return "blocked";
+  }
+
+  return "pending_approval";
+}
+
+function determineBatchState(summary: PlannerSummary, candidateState: CandidateRecordState): UploadBatchState {
+  if (!summary.writeProposals.length && !summary.candidateRecords.length) {
+    return "no_match";
+  }
+
+  if (candidateState === "duplicate" || candidateState === "needs_review") {
+    return "review_required";
+  }
+
+  if (summary.writeProposals.length) {
+    return "write_proposal_ready";
+  }
+
+  return "candidates_generated";
+}
+
+function buildProposalRationale(proposal: PlannerSummary["writeProposals"][number]): string {
+  if (proposal.proposalType === "create_counterparty") {
+    return "Parsed label does not match an existing local counterparty, so creation requires approval.";
+  }
+
+  if (proposal.proposalType === "persist_candidate_record") {
+    return "Candidate record is ready for final persistence after approval and local validation.";
+  }
+
+  return "Workflow update requires approval.";
 }
 
 function buildConfirmedExtractedData(
@@ -333,10 +1614,12 @@ function buildConfirmedExtractedData(
     failureReason,
     fields,
     model: existingExtractedData?.model ?? null,
+    originData: existingExtractedData?.originData ?? null,
     parser: existingExtractedData?.parser ?? "rule_fallback",
     rawLines: existingExtractedData?.rawLines ?? [],
     rawSummary: existingExtractedData?.rawSummary ?? "Confirmed after local review.",
     rawText: existingExtractedData?.rawText ?? "",
+    scheme: existingExtractedData?.scheme,
     sourceLabel: existingExtractedData?.sourceLabel ?? "confirmed_review",
     warnings: existingExtractedData?.warnings ?? [],
   };
@@ -363,4 +1646,17 @@ function normalizeReviewValues(review: LedgerReviewValues) {
   }
 
   return base;
+}
+
+function asString(value: JsonValue | undefined): string {
+  return typeof value === "string" ? value : "";
+}
+
+function normalizeText(value: string | null | undefined): string | null {
+  const normalized = value?.trim();
+  return normalized ? normalized : null;
+}
+
+function sanitizeId(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "item";
 }

@@ -2,13 +2,13 @@
 
 This document is the canonical local-storage contract for the current Expo, local-first runtime.
 
-- Current implemented contract version: `4`
+- Current implemented contract version: `5`
 - Database file: `creator-cfo-local.db`
 - Architecture phase: mobile-first, local-first, no standalone backend
 
 ## Runtime Baseline
 
-The active runtime baseline is a hybrid `v4` contract:
+The active runtime baseline is a hybrid `v5` contract:
 
 - intake is optimized for sparse evidence capture
 - the canonical persisted transaction surface is `records`
@@ -35,12 +35,19 @@ The current contract creates these structured tables:
 
 - `entities`
 - `counterparties`
+- `upload_batches`
 - `records`
 - `record_entry_classifications`
 - `tax_year_profiles`
 - `evidences`
+- `extraction_runs`
+- `planner_runs`
+- `planner_read_tasks`
 - `evidence_files`
+- `candidate_records`
+- `workflow_write_proposals`
 - `record_evidence_links`
+- `workflow_audit_events`
 
 The `records` table is the canonical local-first finance record. It stores:
 
@@ -55,9 +62,19 @@ The `evidences` table now tracks upload and parse lifecycle state in addition to
 - identity and ownership: `evidence_id`, `entity_id`, `evidence_kind`
 - local file tracking: `file_path`
 - parse lifecycle: `parse_status` (`pending`, `parsed`, `failed`)
-- extracted payload cache: `extracted_data` JSON
+- extracted payload cache: `extracted_data` JSON review snapshot
 - sparse captured fields: `captured_date`, `captured_amount_cents`, `captured_source`, `captured_target`, `captured_description`
 - timestamps and source: `source_system`, `created_at`
+
+The workflow layer is now persisted explicitly instead of only living in transient screen state:
+
+- `upload_batches` summarizes one evidence-first upload workflow and exposes the operator-visible state machine
+- `extraction_runs` stores historical raw parse payloads per evidence item
+- `planner_runs` stores historical planner payloads plus locally validated summaries derived from extraction output
+- `planner_read_tasks` stores prerequisite reads and their results before approval-gated writes
+- `candidate_records` stores review-layer candidate rows before final books are mutated
+- `workflow_write_proposals` stores approval-gated proposals for `counterparties` and final `records` persistence
+- `workflow_audit_events` stores durable approval notes, rejection notes, and workflow rationale
 
 ## Runtime Scope
 
@@ -86,18 +103,29 @@ Expected upload-state rules:
 - upload always ensures the default local entity `entity-main` exists before persistence
 - upload writes new evidence into the active package root beside the active database file
 - repeated uploads of the same binary are allowed; hash and size are indexed for lookup only and no longer enforced as a global uniqueness constraint
-- newly ingested evidence starts at `parse_status = pending`
-- parser success keeps the evidence in `pending` until the user confirms and persists a `record`
+- newly ingested evidence starts at `parse_status = pending` and `upload_batches.state = uploaded`
+- exact duplicate hashes mark the batch as `duplicate_file` by default and skip automatic reprocessing unless the caller forces a retry
+- parser success keeps the evidence in `pending` until the approval workflow persists a final `record`
 - confirmed evidence becomes `parse_status = parsed`
 - parser failures become `parse_status = failed` and must remain retryable
 - runtime readers resolve `evidence_files.relative_path` and `evidences.file_path` from the active package root, not from a detached global storage location
 - runtime open/import fails closed when a tracked evidence path is absolute, escapes the package root, or points to a missing required file
+- the authoritative workflow state now lives on `upload_batches.state` plus per-row `candidate_records.state`; `evidences.parse_status` remains a compatibility summary for queue screens
+
+Expected write-policy rules:
+
+- evidence, evidence-file, extraction-run, planner-run, and audit artifacts may persist automatically
+- `counterparties`, final `records`, and `record_evidence_links` must remain approval-gated
+- planner output must not be treated as final bookkeeping truth without local validation and operator approval
+- rejected write proposals do not roll back already executed approvals; the workflow records a rejection note and may re-plan downstream proposals
 
 Expected `extracted_data` JSON fields:
 
 - `parser`: `openai_gpt` or `rule_fallback`
 - `model`: parsed model identifier when remote GPT parsing succeeds
 - `sourceLabel`: human-readable parse source
+- `originData`: validated parser DTO snapshot returned by the parser request and cached for testing plus review visibility
+- `scheme`: legacy compatibility projection derived locally from the validated parser DTO; it no longer drives the active parser/planner workflow
 - `rawText`: normalized GPT/OCR text or fallback source text
 - `rawSummary`: short parse summary for review UI
 - `rawLines`: line-by-line OCR text or fallback tokens
@@ -106,14 +134,33 @@ Expected `extracted_data` JSON fields:
 - `candidates`: structured candidates for `date`, `amountCents`, `description`, `source`, `target`, `category`, `taxCategory`, `notes`
 - `errorReason` / `failureReason`: optional parse diagnostics
 
+Expected `extraction_runs.parse_payload` semantics:
+
+- stores the raw validated parser DTO payload for that run
+- parser DTO invalidation marks `extraction_runs.state = failed`, `upload_batches.state = failed`, persists `error_message`, and appends `workflow_audit_events`
+
+Expected `planner_runs` semantics:
+
+- `planner_payload_json`: the validated remote planner DTO returned by the planner call
+- `summary_json`: the locally enriched planner summary after read-task execution, duplicate checks, counterparty resolution, dependency ordering, and writeability validation
+- planner DTO invalidation or missing required sections marks `planner_runs.state = failed`, `upload_batches.state = failed`, persists `error_message`, and appends `workflow_audit_events`
+
+Compatibility notes:
+
+- `/api/parse-origin-data` and `/api/parse-evidence` both expose the same validated parser DTO shape
+- `/api/map-evidence-scheme` is deprecated compatibility glue that only projects legacy `scheme` output from the validated parser DTO
+- new uploads no longer rely on arbitrary `originData -> fields` heuristics or a separate remote scheme-mapping prompt
+
 ## Device State
 
-The device-state contract is now at version `2`. In addition to theme, locale, and session, the app persists:
+The device-state contract is now at version `4`. In addition to theme, locale, and session, the app persists:
 
 - `openai_api_key`: the user-provided OpenAI API key used only for outbound parse requests
-- `vercel_api_base_url`: the deployed Vercel API base URL used by the mobile and web clients
+- `profile_name`: profile name used as mapping source context
+- `profile_email`: profile email used as mapping source context
+- `profile_phone`: profile phone used as mapping source context
 
-Both values remain local to the device runtime and are not written into the SQLite business tables.
+The OpenAI base URL and model now come from the runtime env (`EXPO_PUBLIC_OPENAI_BASE_URL`, `EXPO_PUBLIC_OPENAI_MODEL`) rather than local device state.
 
 ## Contract Source Of Truth
 

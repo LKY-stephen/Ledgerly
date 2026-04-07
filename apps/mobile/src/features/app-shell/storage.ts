@@ -2,15 +2,23 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { buildDeviceStateStorageKey } from "@creator-cfo/storage";
 
 import { coerceLocalePreference, coerceThemePreference, parseSession } from "./model";
-import type { AppSession, ParseApiSettings, PersistedAppState } from "./types";
+import type { AppSession, PersistedAppState, ProfileInfo } from "./types";
 
 const STORAGE_KEYS = {
   localePreference: buildDeviceStateStorageKey("locale_preference"),
   openAiApiKey: buildDeviceStateStorageKey("openai_api_key"),
-  parseApiBaseUrl: buildDeviceStateStorageKey("vercel_api_base_url"),
+  profileEmail: buildDeviceStateStorageKey("profile_email"),
+  profileName: buildDeviceStateStorageKey("profile_name"),
+  profilePhone: buildDeviceStateStorageKey("profile_phone"),
   session: buildDeviceStateStorageKey("auth_session"),
   themePreference: buildDeviceStateStorageKey("theme_preference"),
 } as const;
+
+const defaultProfileInfo: ProfileInfo = {
+  email: "",
+  name: "",
+  phone: "",
+};
 
 export async function loadPersistedAppState(): Promise<PersistedAppState> {
   const entries = await AsyncStorage.multiGet(Object.values(STORAGE_KEYS));
@@ -18,19 +26,14 @@ export async function loadPersistedAppState(): Promise<PersistedAppState> {
 
   return {
     localePreference: coerceLocalePreference(values[STORAGE_KEYS.localePreference]),
-    openAiApiKey: (values[STORAGE_KEYS.openAiApiKey] ?? "").trim(),
-    parseApiBaseUrl: (values[STORAGE_KEYS.parseApiBaseUrl] ?? "").trim(),
+    openAiApiKey: String(values[STORAGE_KEYS.openAiApiKey] ?? "").trim(),
+    profileInfo: {
+      email: String(values[STORAGE_KEYS.profileEmail] ?? "").trim(),
+      name: String(values[STORAGE_KEYS.profileName] ?? "").trim(),
+      phone: String(values[STORAGE_KEYS.profilePhone] ?? "").trim(),
+    },
     session: parseSession(values[STORAGE_KEYS.session]),
     themePreference: coerceThemePreference(values[STORAGE_KEYS.themePreference]),
-  };
-}
-
-export async function loadParseApiSettings(): Promise<ParseApiSettings> {
-  const state = await loadPersistedAppState();
-
-  return {
-    openAiApiKey: state.openAiApiKey,
-    parseApiBaseUrl: state.parseApiBaseUrl,
   };
 }
 
@@ -40,6 +43,15 @@ export async function persistThemePreference(value: PersistedAppState["themePref
 
 export async function persistLocalePreference(value: PersistedAppState["localePreference"]) {
   await AsyncStorage.setItem(STORAGE_KEYS.localePreference, value);
+}
+
+export async function persistSession(session: AppSession | null) {
+  if (session) {
+    await AsyncStorage.setItem(STORAGE_KEYS.session, JSON.stringify(session));
+    return;
+  }
+
+  await AsyncStorage.removeItem(STORAGE_KEYS.session);
 }
 
 export async function persistOpenAiApiKey(value: string) {
@@ -53,22 +65,43 @@ export async function persistOpenAiApiKey(value: string) {
   await AsyncStorage.removeItem(STORAGE_KEYS.openAiApiKey);
 }
 
-export async function persistParseApiBaseUrl(value: string) {
-  const normalized = value.trim().replace(/\/+$/g, "");
+export async function persistProfileInfo(value: ProfileInfo) {
+  const normalized = normalizeProfileInfo(value);
 
-  if (normalized) {
-    await AsyncStorage.setItem(STORAGE_KEYS.parseApiBaseUrl, normalized);
-    return;
-  }
-
-  await AsyncStorage.removeItem(STORAGE_KEYS.parseApiBaseUrl);
+  await AsyncStorage.multiSet([
+    [STORAGE_KEYS.profileName, normalized.name],
+    [STORAGE_KEYS.profileEmail, normalized.email],
+    [STORAGE_KEYS.profilePhone, normalized.phone],
+  ]);
 }
 
-export async function persistSession(session: AppSession | null) {
-  if (session) {
-    await AsyncStorage.setItem(STORAGE_KEYS.session, JSON.stringify(session));
-    return;
+export async function loadPersistedProfileInfo(): Promise<ProfileInfo> {
+  const entries = await AsyncStorage.multiGet([
+    STORAGE_KEYS.profileName,
+    STORAGE_KEYS.profileEmail,
+    STORAGE_KEYS.profilePhone,
+  ]);
+  const values = Object.fromEntries(entries);
+
+  return {
+    email: String(values[STORAGE_KEYS.profileEmail] ?? "").trim(),
+    name: String(values[STORAGE_KEYS.profileName] ?? "").trim(),
+    phone: String(values[STORAGE_KEYS.profilePhone] ?? "").trim(),
+  };
+}
+
+export async function loadPersistedOpenAiApiKey(): Promise<string> {
+  return String((await AsyncStorage.getItem(STORAGE_KEYS.openAiApiKey)) ?? "").trim();
+}
+
+function normalizeProfileInfo(value: ProfileInfo): ProfileInfo {
+  if (!value) {
+    return defaultProfileInfo;
   }
 
-  await AsyncStorage.removeItem(STORAGE_KEYS.session);
+  return {
+    email: String(value.email ?? "").trim(),
+    name: String(value.name ?? "").trim(),
+    phone: String(value.phone ?? "").trim(),
+  };
 }

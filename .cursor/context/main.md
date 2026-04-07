@@ -2,9 +2,9 @@
 
 ## Version
 
-- version: 0.4.0
-- updated_at: 2026-04-01
-- scope: see `0.4.0_context.md` for the `feat_upload` delivery covering local upload intake, iOS OCR, parse review persistence, and SQLite-backed Home data
+- version: 0.5.0
+- updated_at: 2026-04-07
+- scope: see `0.5.0_context.md` for the planner-mediated upload workflow covering PDF parsing, workflow persistence, and approval-gated writes
 
 ## Active Decisions
 
@@ -16,15 +16,18 @@
 - Source of truth is `packages/storage`, `packages/schemas`, `docs/contracts`, and root agent rules.
 - iOS OCR is implemented as a local Expo Module backed by Apple Vision in development builds.
 - Android and Web stay on fallback parsing for upload review.
+- Upload review now persists explicit workflow state through upload batches, extraction runs, planner runs, candidate records, read tasks, and write proposals.
+- Parser output is now a validated DTO snapshot; planner output is a validated DTO plus local enrichment, not an implicit records mapping.
 
 ## Implemented Structure
 
-- `apps/mobile`: Expo Router app with login gate, animated svg tab icons, local upload and parse review flows, SQLite-backed Home metrics, and stronger light-theme CTA/tab contrast.
-- `packages/storage`: storage contracts, path helpers, and contract tests.
+- `apps/mobile`: Expo Router app with login gate, animated svg tab icons, planner-mediated local upload review flows, SQLite-backed Home metrics, and stronger light-theme CTA/tab contrast.
+- `packages/storage`: storage contract v5, path helpers, and contract tests.
 - `packages/ui`: React Native presentation primitives.
-- `packages/schemas`: creator product modules, platforms, workflow principles, and upload-parse DTOs.
+- `packages/schemas`: creator product modules, platforms, workflow principles, strict parser DTOs, strict planner DTOs, and workflow enums.
 - `modules/ios-ocr`: Apple Vision OCR bridge for iOS development builds.
 - `docs/tax-parsing-logic.md`: tax parsing blueprint for 2025 `Form 1040`, `Schedule C`, `Schedule SE`, and `1099-NEC` handoff flows.
+- `docs/upload-planner-workflow.md`: parser -> planner -> local validation -> approval-gated persistence workflow spec.
 
 ## Verification Snapshot
 
