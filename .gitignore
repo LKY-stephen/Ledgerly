@@ -2,6 +2,9 @@
 .DS_Store
 Thumbs.db
 
+# IDE
+.idea/
+
 # Dependencies
 node_modules
 
@@ -42,9 +45,13 @@ __pycache__
 .env.local
 .env.*.local
 
+# Claude Code local settings (may contain API keys)
+.claude/settings.local.json
+
 # Expo / web export
 .expo
 web-build/
 
 # Hosts / deploy artifacts
 .vercel
+.env*.local

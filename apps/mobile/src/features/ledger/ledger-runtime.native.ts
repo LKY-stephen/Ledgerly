@@ -15,6 +15,8 @@ import {
   type ImportedEvidenceBundle,
   type ImportedEvidenceFile,
   type LedgerReviewValues,
+  type WorkflowCandidateRecord,
+  type WorkflowWriteProposalItem,
 } from "./ledger-domain";
 import {
   ensureDefaultEntity,
@@ -24,7 +26,8 @@ import {
   loadEvidenceQueue,
   updateEvidenceExtraction,
 } from "./ledger-store";
-import { parseEvidenceMultipartFromNative } from "./remote-parse";
+import { parseEvidenceMultipartFromNative, parseFileWithOpenAi, type ParseResult } from "./remote-parse";
+import type { PlannerSummary } from "@creator-cfo/schemas";
 import { loadHomeSnapshot, type HomeSnapshot } from "../home/home-data";
 import { getActivePackageRootDirectory } from "../../storage/package-environment.native";
 import { buildPackageAbsolutePath } from "../../storage/package-paths";
@@ -241,12 +244,335 @@ export async function confirmEvidenceReview(
   });
 }
 
+export async function parseFile(
+  fileUri: string,
+  fileName: string,
+  mimeType: string | null,
+): Promise<ParseResult> {
+  return parseFileWithOpenAi({ fileName, fileUri, mimeType });
+}
+
 export async function loadHomeScreenSnapshot(input: {
   limit?: number;
   now?: string;
   offset?: number;
 } = {}): Promise<HomeSnapshot> {
   return withWritableLocalDatabase(async ({ writableDatabase }) => loadHomeSnapshot(writableDatabase, input));
+}
+
+export interface PlannerResult {
+  batchId: string;
+  batchState: string;
+  candidateRecords: WorkflowCandidateRecord[];
+  error: string | null;
+  evidenceId: string;
+  plannerSummary: PlannerSummary | null;
+  reviewValues: LedgerReviewValues;
+  writeProposals: WorkflowWriteProposalItem[];
+}
+
+export async function runPlanner(input: {
+  fileName: string;
+  mimeType: string | null;
+  model: string;
+  rawJson: unknown;
+  rawText: string;
+}): Promise<PlannerResult> {
+  const { planEvidenceDbUpdates } = await import("./remote-parse");
+  const { buildExtractedData } = await import("./ledger-domain");
+  const {
+    createExtractionRun,
+    createPlannerRun,
+    createUploadBatch,
+    savePlannerArtifacts,
+    updateExtractionRun,
+    updateUploadBatchState,
+  } = await import("./ledger-store");
+
+  return withWritableLocalDatabase(async ({ writableDatabase }) => {
+    const now = new Date().toISOString();
+    const evidenceId = `evidence-${Date.now().toString(36)}`;
+    const batchId = `batch-${Date.now().toString(36)}`;
+    const extractionRunId = `extraction-${Date.now().toString(36)}`;
+    const plannerRunId = `planner-${Date.now().toString(36)}`;
+
+    // 1. Ensure entity exists
+    await ensureDefaultEntity(writableDatabase, now);
+
+    // 2. Insert evidence bundle (must exist before batch due to FK)
+    await insertImportedEvidenceBundle(writableDatabase, {
+      batchId,
+      capturedAt: now,
+      entityId: defaultEntityId,
+      evidenceId,
+      evidenceKind: input.mimeType?.startsWith("image/") ? "receipt_photo" : "receipt_document",
+      filePath: "",
+      files: [
+        {
+          capturedAt: now,
+          evidenceFileId: `ef-${Date.now().toString(36)}`,
+          isPrimary: true,
+          mimeType: input.mimeType,
+          originalFileName: input.fileName,
+          relativePath: "",
+          sha256Hex: "0000000000",
+          sizeBytes: null,
+          vaultCollection: "evidence-objects",
+        },
+      ],
+      sourceSystem: "ledger-upload-workflow",
+    });
+
+    // 3. Create upload batch (after evidence exists)
+    await createUploadBatch(writableDatabase, {
+      batchId,
+      createdAt: now,
+      evidenceId,
+      sourceSystem: "ledger-upload-workflow",
+      state: "uploaded",
+    });
+
+    // 4. Update batch state through parse flow
+    await updateUploadBatchState(writableDatabase, {
+      batchId,
+      state: "evidence_registered",
+      updatedAt: now,
+    });
+    await updateUploadBatchState(writableDatabase, {
+      batchId,
+      state: "parsing",
+      updatedAt: now,
+    });
+
+    // 5. Create extraction run with rawJson
+    await createExtractionRun(writableDatabase, {
+      batchId,
+      createdAt: now,
+      evidenceId,
+      extractionRunId,
+    });
+    await updateExtractionRun(writableDatabase, {
+      extractionRunId,
+      model: input.model,
+      parsePayload: input.rawJson as never,
+      state: "complete",
+      updatedAt: now,
+    });
+
+    // 6. Update batch to parse_complete
+    await updateUploadBatchState(writableDatabase, {
+      batchId,
+      state: "parse_complete",
+      updatedAt: now,
+    });
+
+    // 7. Build extracted data for the evidence row
+    const extractedData = buildExtractedData({
+      fallbackDate: now.slice(0, 10),
+      fileName: input.fileName,
+      parser: "openai_gpt",
+      rawLines: input.rawText.split("\n").filter((l: string) => l.trim()),
+      rawText: input.rawText,
+      sourceLabel: "openai_upload",
+    });
+    extractedData.model = input.model;
+    extractedData.originData = input.rawJson as never;
+
+    await writableDatabase.runAsync(
+      `UPDATE evidences SET parse_status = 'parsed', extracted_data = ? WHERE evidence_id = ?;`,
+      JSON.stringify(extractedData),
+      evidenceId,
+    );
+
+    // 8. Update batch to planning
+    await updateUploadBatchState(writableDatabase, {
+      batchId,
+      state: "planning",
+      updatedAt: now,
+    });
+
+    // 9. Call planner (second OpenAI call)
+    const remotePlan = await planEvidenceDbUpdates({
+      evidenceId,
+      fileName: input.fileName,
+      mimeType: input.mimeType,
+      rawJson: input.rawJson,
+    });
+
+    // 10. Create planner run
+    await createPlannerRun(writableDatabase, {
+      batchId,
+      createdAt: now,
+      evidenceId,
+      extractionRunId,
+      plannerRunId,
+    });
+
+    // 11. Reload evidence to get hydrated item
+    const evidenceBeforeSave = await loadEvidenceById(writableDatabase, evidenceId);
+
+    if (!evidenceBeforeSave) {
+      throw new Error("Evidence row was not found after insert.");
+    }
+
+    // 12. Save planner artifacts (read results + summary + candidates + proposals)
+    await savePlannerArtifacts(writableDatabase, {
+      batchId,
+      createdAt: now,
+      evidence: evidenceBeforeSave,
+      plannerRunId,
+      remotePlan,
+    });
+
+    // 13. Reload evidence to get final state
+    const evidence = await loadEvidenceById(writableDatabase, evidenceId);
+
+    if (!evidence) {
+      throw new Error("Evidence row was not found after planner save.");
+    }
+
+    const primaryCandidate = evidence.candidateRecords[0];
+
+    return {
+      batchId,
+      batchState: evidence.batchState,
+      candidateRecords: evidence.candidateRecords,
+      error: null,
+      evidenceId,
+      plannerSummary: evidence.plannerSummary,
+      reviewValues: primaryCandidate?.reviewValues ?? emptyReviewValues(),
+      writeProposals: evidence.writeProposals,
+    };
+  });
+}
+
+export async function approveWriteProposal(
+  batchId: string,
+  writeProposalId: string,
+  review?: LedgerReviewValues,
+): Promise<PlannerResult> {
+  const { approveWorkflowWriteProposal, updateUploadBatchState } = await import("./ledger-store");
+
+  return withWritableLocalDatabase(async ({ writableDatabase }) => {
+    const now = new Date().toISOString();
+
+    const batch = await writableDatabase.getFirstAsync<{ evidenceId: string }>(
+      "SELECT evidence_id AS evidenceId FROM upload_batches WHERE batch_id = ?;",
+      batchId,
+    );
+
+    if (!batch) {
+      throw new Error("Upload batch not found.");
+    }
+
+    await approveWorkflowWriteProposal(writableDatabase, {
+      evidenceId: batch.evidenceId,
+      review,
+      updatedAt: now,
+      writeProposalId,
+    });
+
+    const evidence = await loadEvidenceById(writableDatabase, batch.evidenceId);
+
+    if (!evidence) {
+      throw new Error("Evidence not found after approval.");
+    }
+
+    const primaryCandidate = evidence.candidateRecords[0];
+
+    return {
+      batchId,
+      batchState: evidence.batchState,
+      candidateRecords: evidence.candidateRecords,
+      error: null,
+      evidenceId: batch.evidenceId,
+      plannerSummary: evidence.plannerSummary,
+      reviewValues: primaryCandidate?.reviewValues ?? emptyReviewValues(),
+      writeProposals: evidence.writeProposals,
+    };
+  });
+}
+
+export async function rejectWriteProposal(
+  batchId: string,
+  writeProposalId: string,
+): Promise<PlannerResult> {
+  const { rejectWorkflowWriteProposal, updateUploadBatchState } = await import("./ledger-store");
+
+  return withWritableLocalDatabase(async ({ writableDatabase }) => {
+    const now = new Date().toISOString();
+
+    const batch = await writableDatabase.getFirstAsync<{ evidenceId: string }>(
+      "SELECT evidence_id AS evidenceId FROM upload_batches WHERE batch_id = ?;",
+      batchId,
+    );
+
+    if (!batch) {
+      throw new Error("Upload batch not found.");
+    }
+
+    await rejectWorkflowWriteProposal(writableDatabase, {
+      updatedAt: now,
+      writeProposalId,
+    });
+
+    await updateUploadBatchState(writableDatabase, {
+      batchId,
+      state: "rejected",
+      updatedAt: now,
+    });
+
+    const evidence = await loadEvidenceById(writableDatabase, batch.evidenceId);
+
+    if (!evidence) {
+      throw new Error("Evidence not found after rejection.");
+    }
+
+    const primaryCandidate = evidence.candidateRecords[0];
+
+    return {
+      batchId,
+      batchState: evidence.batchState,
+      candidateRecords: evidence.candidateRecords,
+      error: null,
+      evidenceId: batch.evidenceId,
+      plannerSummary: evidence.plannerSummary,
+      reviewValues: primaryCandidate?.reviewValues ?? emptyReviewValues(),
+      writeProposals: evidence.writeProposals,
+    };
+  });
+}
+
+export async function loadPlannerState(batchId: string): Promise<PlannerResult | null> {
+  return withWritableLocalDatabase(async ({ writableDatabase }) => {
+    const batch = await writableDatabase.getFirstAsync<{ evidenceId: string }>(
+      "SELECT evidence_id AS evidenceId FROM upload_batches WHERE batch_id = ?;",
+      batchId,
+    );
+
+    if (!batch) {
+      return null;
+    }
+
+    const evidence = await loadEvidenceById(writableDatabase, batch.evidenceId);
+
+    if (!evidence) {
+      return null;
+    }
+
+    const primaryCandidate = evidence.candidateRecords[0];
+
+    return {
+      batchId,
+      batchState: evidence.batchState,
+      candidateRecords: evidence.candidateRecords,
+      error: null,
+      evidenceId: batch.evidenceId,
+      plannerSummary: evidence.plannerSummary,
+      reviewValues: primaryCandidate?.reviewValues ?? emptyReviewValues(),
+      writeProposals: evidence.writeProposals,
+    };
+  });
 }
 
 async function createImportedBundles(
@@ -391,4 +717,17 @@ function inferEvidenceKind(candidates: UploadCandidate[]): string {
 
 function stripExtension(fileName: string): string {
   return fileName.replace(/\.[a-z0-9]+$/i, "");
+}
+
+function emptyReviewValues(): LedgerReviewValues {
+  return {
+    amount: "",
+    category: "expense",
+    date: "",
+    description: "",
+    notes: "",
+    source: "",
+    target: "",
+    taxCategory: "",
+  };
 }

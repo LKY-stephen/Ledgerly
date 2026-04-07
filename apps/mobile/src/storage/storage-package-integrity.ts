@@ -46,6 +46,7 @@ export async function validateDatabasePackageOrThrow(
   const evidenceFiles = await database.getAllAsync<EvidenceFileRow>(
     `SELECT relative_path AS relativePath
      FROM evidence_files
+     WHERE LENGTH(TRIM(COALESCE(relative_path, ''))) > 0
      ORDER BY relative_path ASC;`,
   );
   const evidenceRows = await database.getAllAsync<EvidenceRow>(

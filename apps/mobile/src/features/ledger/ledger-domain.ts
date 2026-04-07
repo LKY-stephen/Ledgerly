@@ -1,9 +1,20 @@
 import type {
+  CandidateRecordPayload,
+  CandidateRecordState,
+  CounterpartyResolution,
+  DuplicateKind,
   EvidenceExtractedData,
   EvidenceFieldCandidates,
   EvidenceParserKind,
-  ParseEvidenceApiSuccess,
+  JsonValue,
+  PlannerReadTask,
+  PlannerSummary,
+  ParseEvidenceScheme,
+  ReceiptParsePayload,
+  UploadBatchState,
+  WorkflowWriteProposalState,
 } from "@creator-cfo/schemas";
+import { getLocalStorageBootstrapPlan } from "@creator-cfo/storage";
 
 export const defaultEntityId = "entity-main";
 export const homeRecentPageSize = 20;
@@ -22,22 +33,34 @@ export interface LedgerReviewValues {
 }
 
 export interface EvidenceQueueItem {
+  batchCreatedAt: string;
+  batchId: string;
+  batchState: UploadBatchState;
   capturedAmountCents: number;
   capturedDate: string;
   capturedDescription: string;
   capturedSource: string;
   capturedTarget: string;
   createdAt: string;
+  duplicateKind: DuplicateKind | null;
   evidenceId: string;
   evidenceKind: string;
+  extractionRunId: string | null;
   extractedData: EvidenceExtractedData | null;
   filePath: string;
   mimeType: string | null;
   originalFileName: string;
   parseStatus: "failed" | "parsed" | "pending";
+  plannerRunId: string | null;
+  plannerSummary: PlannerSummary | null;
+  readTasks: PlannerReadTask[];
+  resolutions: CounterpartyResolution[];
+  writeProposals: WorkflowWriteProposalItem[];
+  candidateRecords: WorkflowCandidateRecord[];
 }
 
 export interface ImportedEvidenceBundle {
+  batchId: string;
   capturedAt: string;
   entityId: string;
   evidenceId: string;
@@ -57,6 +80,34 @@ export interface ImportedEvidenceFile {
   sha256Hex: string;
   sizeBytes: number | null;
   vaultCollection: "evidence-objects";
+}
+
+export interface WorkflowWriteProposalItem {
+  approvalRequired: boolean;
+  candidateId: string | null;
+  createdAt: string;
+  dependencyIds: string[];
+  payload: Record<string, JsonValue>;
+  proposalType:
+    | "create_counterparty"
+    | "persist_candidate_record"
+    | "update_candidate_record"
+    | "update_workflow_state";
+  rationale: string;
+  state: WorkflowWriteProposalState;
+  updatedAt: string;
+  writeProposalId: string;
+}
+
+export interface WorkflowCandidateRecord {
+  candidateId: string;
+  createdAt: string;
+  errorMessage: string | null;
+  payload: CandidateRecordPayload;
+  recordId: string | null;
+  reviewValues: LedgerReviewValues;
+  state: CandidateRecordState;
+  updatedAt: string;
 }
 
 export interface HomeMetricSnapshot {
@@ -113,6 +164,7 @@ export function buildExtractedData(input: {
     candidates: fields,
     fields,
     model: null,
+    originData: null,
     parser: input.parser,
     rawLines: normalizedLines,
     rawSummary: normalizedText.slice(0, 160),
@@ -123,52 +175,90 @@ export function buildExtractedData(input: {
 }
 
 export function buildFailedExtractedData(input: {
+  errorReason?: string | null;
   fallbackDate: string;
   failureReason: string;
   fileName: string;
+  originData?: JsonValue | null;
   parser: EvidenceParserKind;
+  scheme?: ParseEvidenceScheme;
   sourceLabel: string;
 }): EvidenceExtractedData {
-  const fields = extractFieldCandidates("", [], input.fileName, input.fallbackDate);
+  const rawText = input.originData ? JSON.stringify(input.originData, null, 2).trim() : "";
+  const rawLines = rawText
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+  const fields = extractFieldCandidates(rawText, rawLines, input.fileName, input.fallbackDate);
 
   return {
     candidates: fields,
+    errorReason: input.errorReason ?? null,
     failureReason: input.failureReason,
     fields,
     model: null,
+    originData: input.originData ?? null,
     parser: input.parser,
-    rawLines: [],
-    rawSummary: input.failureReason,
-    rawText: "",
+    rawLines,
+    rawSummary: rawText ? rawText.slice(0, 160) : input.failureReason,
+    rawText,
+    scheme: input.scheme,
     sourceLabel: input.sourceLabel,
     warnings: [],
   };
 }
 
 export function buildRemoteExtractedData(input: {
-  fallbackDate: string;
   fileName: string;
-  response: ParseEvidenceApiSuccess;
+  parsePayload: ReceiptParsePayload;
+  scheme: ParseEvidenceScheme;
   sourceLabel: string;
 }): EvidenceExtractedData {
-  const rawText = input.response.rawText.trim();
-  const rawLines = rawText
+  const rawLines = input.parsePayload.rawText
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter((line) => line.length > 0);
-  const fields = normalizeFields(input.response.fields, input.fallbackDate, input.fileName);
+  const fields = normalizeFields(
+    input.parsePayload.fields,
+    input.parsePayload.fields.date,
+    input.fileName,
+  );
+  const candidates = normalizeFields(
+    input.parsePayload.candidates,
+    input.parsePayload.candidates.date,
+    input.fileName,
+  );
 
   return {
-    candidates: fields,
+    candidates,
     fields,
-    model: input.response.model,
-    parser: input.response.parser,
+    model: input.parsePayload.model,
+    originData: input.parsePayload as unknown as JsonValue,
+    parser: input.parsePayload.parser,
     rawLines,
-    rawSummary: input.response.rawSummary.trim(),
-    rawText,
+    rawSummary: input.parsePayload.rawSummary.trim(),
+    rawText: input.parsePayload.rawText.trim(),
+    scheme: input.scheme,
     sourceLabel: input.sourceLabel,
-    warnings: input.response.warnings,
+    warnings: input.parsePayload.warnings,
   };
+}
+
+export function buildRecordSchemeTemplate(): ParseEvidenceScheme {
+  const createStatement = getLocalStorageBootstrapPlan().structuredTables.find((table) => table.name === "records")
+    ?.createStatement;
+
+  if (!createStatement) {
+    throw new Error("Unable to locate the records table contract.");
+  }
+
+  const scheme: ParseEvidenceScheme = {};
+
+  for (const field of extractRecordTableFields(createStatement)) {
+    scheme[field] = "";
+  }
+
+  return scheme;
 }
 
 export function createEmptyReviewValues(): LedgerReviewValues {
@@ -185,18 +275,33 @@ export function createEmptyReviewValues(): LedgerReviewValues {
 }
 
 export function deriveReviewValues(item: EvidenceQueueItem): LedgerReviewValues {
+  const candidateRecord = item.candidateRecords[0];
+  const candidatePayload = candidateRecord?.payload;
   const candidates = item.extractedData?.fields ?? item.extractedData?.candidates;
-  const amountCents = candidates?.amountCents ?? item.capturedAmountCents;
-  const description = candidates?.description ?? item.capturedDescription;
-  const source = candidates?.source ?? item.capturedSource;
-  const target = candidates?.target ?? item.capturedTarget;
-  const taxCategory = candidates?.taxCategory ?? "";
-  const notes = candidates?.notes ?? item.extractedData?.failureReason ?? "";
+  const amountCents =
+    candidatePayload?.amountCents ?? candidates?.amountCents ?? item.capturedAmountCents;
+  const description =
+    candidatePayload?.description ?? candidates?.description ?? item.capturedDescription;
+  const source = candidatePayload?.sourceLabel ?? candidates?.source ?? item.capturedSource;
+  const target = candidatePayload?.targetLabel ?? candidates?.target ?? item.capturedTarget;
+  const taxCategory = candidatePayload?.taxCategoryCode ?? candidates?.taxCategory ?? "";
+  const notes =
+    candidates?.notes ??
+    item.extractedData?.failureReason ??
+    item.plannerSummary?.warnings.join("\n") ??
+    "";
+  const occurredOn = candidatePayload?.date ?? candidates?.date ?? item.capturedDate;
+  const recordKind = candidatePayload?.recordKind;
 
   return {
     amount: amountCents > 0 ? formatCentsInput(amountCents) : "",
-    category: deriveLedgerCategory(candidates),
-    date: candidates?.date ?? item.capturedDate,
+    category:
+      recordKind === "income"
+        ? "income"
+        : recordKind === "personal_spending"
+          ? "spending"
+          : deriveLedgerCategory(candidates),
+    date: occurredOn,
     description: description || stripExtension(item.originalFileName),
     notes,
     source: source || "",
@@ -242,6 +347,54 @@ export function formatCurrencyFromCents(amountCents: number): string {
   });
 
   return formatter.format(amountCents / 100);
+}
+
+export function formatExtractedDataJson(
+  extractedData: EvidenceExtractedData | null | undefined,
+): string {
+  if (!extractedData) {
+    return "";
+  }
+
+  return JSON.stringify(extractedData, null, 2);
+}
+
+export function formatFirstParsePayloadJson(
+  extractedData: EvidenceExtractedData | null | undefined,
+): string {
+  if (!extractedData?.originData) {
+    return "";
+  }
+
+  return JSON.stringify(extractedData.originData, null, 2);
+}
+
+export function prioritizeEvidenceQueue(
+  queue: EvidenceQueueItem[],
+  focusEvidenceId: string | null | undefined,
+): EvidenceQueueItem[] {
+  const normalizedFocusEvidenceId = focusEvidenceId?.trim();
+
+  if (!normalizedFocusEvidenceId) {
+    return queue;
+  }
+
+  const focusedIndex = queue.findIndex((item) => item.evidenceId === normalizedFocusEvidenceId);
+
+  if (focusedIndex <= 0) {
+    return queue;
+  }
+
+  const focusedItem = queue[focusedIndex];
+
+  if (!focusedItem) {
+    return queue;
+  }
+
+  return [focusedItem, ...queue.slice(0, focusedIndex), ...queue.slice(focusedIndex + 1)].sort(
+    (left, right) =>
+      (right.batchCreatedAt ?? right.createdAt).localeCompare(left.batchCreatedAt ?? left.createdAt),
+  );
 }
 
 export function formatDisplayDate(dateValue: string): string {
@@ -376,19 +529,39 @@ function formatCentsInput(amountCents: number): string {
 
 function normalizeFields(
   fields: EvidenceFieldCandidates,
-  fallbackDate: string,
+  fallbackDate: string | null | undefined,
   fileName: string,
 ): EvidenceFieldCandidates {
   return {
     amountCents: fields.amountCents,
     category: fields.category,
-    date: fields.date ?? fallbackDate,
+    date: fields.date ?? fallbackDate ?? null,
     description: fields.description ?? stripExtension(fileName),
     notes: fields.notes,
     source: fields.source,
     target: fields.target,
     taxCategory: fields.taxCategory,
   };
+}
+
+function extractRecordTableFields(createStatement: string): string[] {
+  const fields: string[] = [];
+
+  for (const rawLine of createStatement.split("\n")) {
+    const line = rawLine.trim();
+
+    if (!line || line.startsWith("CREATE TABLE") || line.startsWith(");") || line.startsWith("FOREIGN KEY")) {
+      continue;
+    }
+
+    const match = /^([a-z_]+)\s+/i.exec(line);
+
+    if (match?.[1]) {
+      fields.push(match[1]);
+    }
+  }
+
+  return fields;
 }
 
 function getFileExtension(fileName: string): string | null {

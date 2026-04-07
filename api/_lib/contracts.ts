@@ -1,6 +1,6 @@
-import type { ParseSourcePlatform } from "../../packages/schemas/src/index";
+import type { ParseEvidenceScheme, ParseOriginDataApiSuccess, ParseSourcePlatform } from "./types";
 
-export const parseModel = process.env.OPENAI_PARSE_MODEL ?? "gpt-5";
+export const parseModel = process.env.OPENAI_PARSE_MODEL ?? "gpt-4o";
 export const directUploadLimitBytes = 4 * 1024 * 1024;
 export const remoteFileLimitBytes = 20 * 1024 * 1024;
 
@@ -18,6 +18,16 @@ export interface ParseRouteInput {
   filename: string;
   mimeType: string;
   sourcePlatform: ParseSourcePlatform;
+}
+
+export interface MapEvidenceSchemeRouteInput {
+  originData: ParseOriginDataApiSuccess;
+  scheme: ParseEvidenceScheme;
+  source: {
+    email: string;
+    name: string;
+    phone: string;
+  };
 }
 
 export class RouteError extends Error {
@@ -97,6 +107,44 @@ export function normalizeFilename(value: unknown): string {
   }
 
   return normalized;
+}
+
+export function parseOptionalScheme(value: unknown): ParseEvidenceScheme {
+  if (value === undefined || value === null || value === "") {
+    return {};
+  }
+
+  let parsed = value;
+
+  if (typeof value === "string") {
+    try {
+      parsed = JSON.parse(value);
+    } catch {
+      throw new RouteError(400, "invalid_scheme", "scheme must be valid JSON.");
+    }
+  }
+
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    throw new RouteError(400, "invalid_scheme", "scheme must be a JSON object.");
+  }
+
+  return parsed as ParseEvidenceScheme;
+}
+
+export function parseRequiredJsonBody<T>(value: unknown, fieldName: string): T {
+  if (value === undefined) {
+    throw new RouteError(400, `missing_${fieldName}`, `${fieldName} is required.`);
+  }
+
+  if (typeof value === "string") {
+    try {
+      return JSON.parse(value) as T;
+    } catch {
+      throw new RouteError(400, `invalid_${fieldName}`, `${fieldName} must be valid JSON.`);
+    }
+  }
+
+  return value as T;
 }
 
 export function assertDirectUploadSize(sizeBytes: number): void {

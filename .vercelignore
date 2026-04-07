@@ -1,0 +1,15 @@
+.cursor
+.expo
+.expo-home
+.git
+.github
+.turbo
+apps
+coverage
+dist
+docs
+modules
+node_modules
+packages
+prd
+tests

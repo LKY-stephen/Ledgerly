@@ -157,6 +157,24 @@ const structuredTables = [
     );`,
   },
   {
+    name: "upload_batches",
+    summary: "Operator-visible upload workflow batches that summarize parse, planning, and approval state.",
+    createStatement: `CREATE TABLE IF NOT EXISTS upload_batches (
+      batch_id TEXT PRIMARY KEY NOT NULL,
+      evidence_id TEXT,
+      entity_id TEXT NOT NULL,
+      source_system TEXT NOT NULL,
+      state TEXT NOT NULL,
+      duplicate_kind TEXT,
+      duplicate_of_evidence_id TEXT,
+      error_message TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY (evidence_id) REFERENCES evidences(evidence_id),
+      FOREIGN KEY (entity_id) REFERENCES entities(entity_id)
+    );`,
+  },
+  {
     name: "evidences",
     summary: "Sparse evidence objects that preserve the captured intake fields before manual enrichment.",
     createStatement: `CREATE TABLE IF NOT EXISTS evidences (
@@ -177,6 +195,59 @@ const structuredTables = [
     );`,
   },
   {
+    name: "extraction_runs",
+    summary: "Historical parse attempts for one evidence item, including the raw OpenAI payload.",
+    createStatement: `CREATE TABLE IF NOT EXISTS extraction_runs (
+      extraction_run_id TEXT PRIMARY KEY NOT NULL,
+      batch_id TEXT NOT NULL,
+      evidence_id TEXT NOT NULL,
+      state TEXT NOT NULL,
+      parser_kind TEXT NOT NULL,
+      model TEXT,
+      parse_payload TEXT,
+      error_message TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY (batch_id) REFERENCES upload_batches(batch_id),
+      FOREIGN KEY (evidence_id) REFERENCES evidences(evidence_id)
+    );`,
+  },
+  {
+    name: "planner_runs",
+    summary: "Historical planner passes that turn parse payloads into read tasks, proposals, and candidate records.",
+    createStatement: `CREATE TABLE IF NOT EXISTS planner_runs (
+      planner_run_id TEXT PRIMARY KEY NOT NULL,
+      batch_id TEXT NOT NULL,
+      evidence_id TEXT NOT NULL,
+      extraction_run_id TEXT NOT NULL,
+      state TEXT NOT NULL,
+      planner_payload_json TEXT,
+      summary_json TEXT,
+      error_message TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY (batch_id) REFERENCES upload_batches(batch_id),
+      FOREIGN KEY (evidence_id) REFERENCES evidences(evidence_id),
+      FOREIGN KEY (extraction_run_id) REFERENCES extraction_runs(extraction_run_id)
+    );`,
+  },
+  {
+    name: "planner_read_tasks",
+    summary: "Planner prerequisite reads and their resolved results before write proposals are approved.",
+    createStatement: `CREATE TABLE IF NOT EXISTS planner_read_tasks (
+      read_task_id TEXT PRIMARY KEY NOT NULL,
+      planner_run_id TEXT NOT NULL,
+      task_type TEXT NOT NULL,
+      status TEXT NOT NULL,
+      input_json TEXT,
+      result_json TEXT,
+      rationale TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY (planner_run_id) REFERENCES planner_runs(planner_run_id)
+    );`,
+  },
+  {
     name: "evidence_files",
     summary: "Physical file metadata for evidence objects stored in the local vault.",
     createStatement: `CREATE TABLE IF NOT EXISTS evidence_files (
@@ -194,6 +265,47 @@ const structuredTables = [
     );`,
   },
   {
+    name: "candidate_records",
+    summary: "Review-layer candidate records derived from planner output before final books are mutated.",
+    createStatement: `CREATE TABLE IF NOT EXISTS candidate_records (
+      candidate_id TEXT PRIMARY KEY NOT NULL,
+      batch_id TEXT NOT NULL,
+      planner_run_id TEXT NOT NULL,
+      evidence_id TEXT NOT NULL,
+      state TEXT NOT NULL,
+      payload_json TEXT NOT NULL,
+      review_json TEXT,
+      record_id TEXT,
+      error_message TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY (batch_id) REFERENCES upload_batches(batch_id),
+      FOREIGN KEY (planner_run_id) REFERENCES planner_runs(planner_run_id),
+      FOREIGN KEY (evidence_id) REFERENCES evidences(evidence_id),
+      FOREIGN KEY (record_id) REFERENCES records(record_id)
+    );`,
+  },
+  {
+    name: "workflow_write_proposals",
+    summary: "Approval-gated workflow proposals produced by planner runs before mutating counterparties or final records.",
+    createStatement: `CREATE TABLE IF NOT EXISTS workflow_write_proposals (
+      write_proposal_id TEXT PRIMARY KEY NOT NULL,
+      planner_run_id TEXT NOT NULL,
+      candidate_id TEXT,
+      proposal_type TEXT NOT NULL,
+      state TEXT NOT NULL,
+      approval_required INTEGER NOT NULL DEFAULT 1,
+      dependency_ids TEXT,
+      payload_json TEXT NOT NULL,
+      rationale TEXT NOT NULL,
+      error_message TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY (planner_run_id) REFERENCES planner_runs(planner_run_id),
+      FOREIGN KEY (candidate_id) REFERENCES candidate_records(candidate_id)
+    );`,
+  },
+  {
     name: "record_evidence_links",
     summary: "Many-to-many linkage between records and evidence with primary-link tracking.",
     createStatement: `CREATE TABLE IF NOT EXISTS record_evidence_links (
@@ -206,6 +318,25 @@ const structuredTables = [
       PRIMARY KEY (record_id, evidence_id, link_role),
       FOREIGN KEY (record_id) REFERENCES records(record_id),
       FOREIGN KEY (evidence_id) REFERENCES evidences(evidence_id)
+    );`,
+  },
+  {
+    name: "workflow_audit_events",
+    summary: "Durable audit notes for workflow transitions, approval decisions, and planner rationale.",
+    createStatement: `CREATE TABLE IF NOT EXISTS workflow_audit_events (
+      event_id TEXT PRIMARY KEY NOT NULL,
+      batch_id TEXT NOT NULL,
+      planner_run_id TEXT,
+      candidate_id TEXT,
+      write_proposal_id TEXT,
+      event_type TEXT NOT NULL,
+      message TEXT NOT NULL,
+      payload_json TEXT,
+      created_at TEXT NOT NULL,
+      FOREIGN KEY (batch_id) REFERENCES upload_batches(batch_id),
+      FOREIGN KEY (planner_run_id) REFERENCES planner_runs(planner_run_id),
+      FOREIGN KEY (candidate_id) REFERENCES candidate_records(candidate_id),
+      FOREIGN KEY (write_proposal_id) REFERENCES workflow_write_proposals(write_proposal_id)
     );`,
   },
 ] as const satisfies readonly StructuredTableContract[];
@@ -232,10 +363,34 @@ const structuredIndexes = [
       "CREATE INDEX IF NOT EXISTS records_entity_tax_line_occurred_status_idx ON records(entity_id, tax_line_code, occurred_on, record_status);",
   },
   {
+    name: "upload_batches_entity_state_created_idx",
+    summary: "Speeds upload batch queues by entity, summarized state, and creation time.",
+    createStatement:
+      "CREATE INDEX IF NOT EXISTS upload_batches_entity_state_created_idx ON upload_batches(entity_id, state, created_at);",
+  },
+  {
     name: "evidences_entity_parse_status_created_idx",
     summary: "Speeds parse-queue reads by entity, status, and creation time.",
     createStatement:
       "CREATE INDEX IF NOT EXISTS evidences_entity_parse_status_created_idx ON evidences(entity_id, parse_status, created_at);",
+  },
+  {
+    name: "extraction_runs_batch_created_idx",
+    summary: "Speeds extraction run lookup per batch and evidence.",
+    createStatement:
+      "CREATE INDEX IF NOT EXISTS extraction_runs_batch_created_idx ON extraction_runs(batch_id, evidence_id, created_at);",
+  },
+  {
+    name: "planner_runs_batch_created_idx",
+    summary: "Speeds planner run lookup per batch and evidence.",
+    createStatement:
+      "CREATE INDEX IF NOT EXISTS planner_runs_batch_created_idx ON planner_runs(batch_id, evidence_id, created_at);",
+  },
+  {
+    name: "planner_read_tasks_run_status_idx",
+    summary: "Speeds planner prerequisite read task lookup per planner run and status.",
+    createStatement:
+      "CREATE INDEX IF NOT EXISTS planner_read_tasks_run_status_idx ON planner_read_tasks(planner_run_id, status, created_at);",
   },
   {
     name: "evidence_files_sha_idx",
@@ -244,10 +399,28 @@ const structuredIndexes = [
       "CREATE INDEX IF NOT EXISTS evidence_files_sha_idx ON evidence_files(sha256_hex, size_bytes);",
   },
   {
+    name: "candidate_records_batch_state_created_idx",
+    summary: "Speeds candidate review queues by batch, state, and creation time.",
+    createStatement:
+      "CREATE INDEX IF NOT EXISTS candidate_records_batch_state_created_idx ON candidate_records(batch_id, state, created_at);",
+  },
+  {
+    name: "workflow_write_proposals_run_state_idx",
+    summary: "Speeds write proposal review queues by planner run and approval state.",
+    createStatement:
+      "CREATE INDEX IF NOT EXISTS workflow_write_proposals_run_state_idx ON workflow_write_proposals(planner_run_id, state, created_at);",
+  },
+  {
     name: "record_evidence_primary_idx",
     summary: "Speeds primary evidence lookup per record.",
     createStatement:
       "CREATE INDEX IF NOT EXISTS record_evidence_primary_idx ON record_evidence_links(record_id, is_primary);",
+  },
+  {
+    name: "workflow_audit_events_batch_created_idx",
+    summary: "Speeds batch-level audit trail lookup by batch and creation time.",
+    createStatement:
+      "CREATE INDEX IF NOT EXISTS workflow_audit_events_batch_created_idx ON workflow_audit_events(batch_id, created_at);",
   },
 ] as const satisfies readonly StructuredIndexContract[];
 
@@ -295,7 +468,7 @@ const structuredSchemaStatements = [
 export const structuredStoreContract = {
   databaseName: "creator-cfo-local.db",
   maintenanceStatements: structuredMaintenanceStatements,
-  version: 4,
+  version: 5,
   pragmas: structuredStorePragmas,
   tables: structuredTables,
   views: structuredViews,
@@ -354,7 +527,7 @@ export const fileVaultContract = {
 export const deviceStateContract = {
   storageEngine: "AsyncStorage",
   namespace: "@creator-cfo/mobile",
-  version: 2,
+  version: 4,
   records: [
     {
       key: "theme_preference",
@@ -376,12 +549,22 @@ export const deviceStateContract = {
     {
       key: "openai_api_key",
       summary:
-        "Persist the user-provided OpenAI API key locally on-device for Vercel parse requests.",
+        "Persist the user-provided OpenAI API key locally on-device for direct OpenAI parse requests.",
       valueShape: "string",
     },
     {
-      key: "vercel_api_base_url",
-      summary: "Persist the Vercel API base URL used by the client-side receipt parse flow.",
+      key: "profile_name",
+      summary: "Persist the profile name used as mapping source context.",
+      valueShape: "string",
+    },
+    {
+      key: "profile_email",
+      summary: "Persist the profile email used as mapping source context.",
+      valueShape: "string",
+    },
+    {
+      key: "profile_phone",
+      summary: "Persist the profile phone used as mapping source context.",
       valueShape: "string",
     },
   ],

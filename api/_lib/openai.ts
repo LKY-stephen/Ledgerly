@@ -1,110 +1,125 @@
-import type {
-  EvidenceFieldCandidates,
-  ParseEvidenceApiSuccess,
+import {
+  normalizeReceiptParsePayload,
+  projectReceiptParsePayloadToLegacyScheme,
 } from "../../packages/schemas/src/index";
+import { RouteError, parseModel, type MapEvidenceSchemeRouteInput, type ParseRouteInput } from "./contracts";
+import type {
+  JsonValue,
+  ParseEvidenceScheme,
+  ParseOriginDataApiSuccess,
+} from "./types";
 
-import { RouteError, parseModel, type ParseRouteInput } from "./contracts";
-
-const parseResponseSchema = {
-  additionalProperties: false,
-  properties: {
-    fields: {
-      additionalProperties: false,
-      properties: {
-        amountCents: { type: ["integer", "null"] },
-        category: { type: ["string", "null"] },
-        date: { type: ["string", "null"] },
-        description: { type: ["string", "null"] },
-        notes: { type: ["string", "null"] },
-        source: { type: ["string", "null"] },
-        target: { type: ["string", "null"] },
-        taxCategory: { type: ["string", "null"] },
-      },
-      required: [
-        "amountCents",
-        "category",
-        "date",
-        "description",
-        "notes",
-        "source",
-        "target",
-        "taxCategory",
-      ],
-      type: "object",
-    },
-    rawSummary: { type: "string" },
-    rawText: { type: "string" },
-    warnings: {
-      items: { type: "string" },
-      type: "array",
-    },
-  },
-  required: ["fields", "rawSummary", "rawText", "warnings"],
-  type: "object",
-} as const;
-
-const systemPrompt = [
-  "You parse creator-finance evidence such as receipts, invoices, payout screenshots, and PDFs.",
-  "Return strict JSON only.",
-  "Extract the full readable text into rawText as completely as possible.",
-  "Use warnings for uncertainty, guesses, missing values, or ambiguous currency/date interpretation.",
-  "If a field cannot be confirmed from the file, return null.",
-  "date must be YYYY-MM-DD when known.",
-  "amountCents must be an integer in cents when known.",
-  "description should be a short merchant or transaction summary.",
+const parsePrompt = [
+  "你是 receipt parser。",
+  "Only parse the file attached in the current request.",
+  "Return JSON only.",
+  "Do not treat prior parse results, prior uploads, or cached examples as truth.",
+  "The top-level object must contain parser, model, rawText, rawSummary, warnings, fields, and candidates.",
+  "fields and candidates must both include amountCents, category, date, description, notes, source, target, and taxCategory.",
+  "amountCents must be an integer in cents or null.",
+  "date must be YYYY-MM-DD when known or null.",
 ].join(" ");
 
-export async function parseEvidenceWithOpenAI(
+export async function parseOriginDataWithOpenAI(
   input: ParseRouteInput,
   apiKey: string,
-): Promise<ParseEvidenceApiSuccess> {
+): Promise<ParseOriginDataApiSuccess> {
+  const filePart = createInputFilePart(input);
+  const payload = await callOpenAI(
+    [
+      {
+        content: [
+          {
+            text: parsePrompt,
+            type: "input_text",
+          },
+        ],
+        role: "system",
+      },
+      {
+        content: [
+          {
+            text: buildParseUserPrompt(input),
+            type: "input_text",
+          },
+          filePart,
+        ],
+        role: "user",
+      },
+    ],
+    apiKey,
+  );
+  const outputText = extractOutputText(payload);
+
+  if (!outputText) {
+    logOpenAIFailure("invalid_openai_response", payload);
+    throw new RouteError(502, "invalid_openai_response", "OpenAI returned no parseable output text.");
+  }
+
+  const parsedOutput = tryParseStructuredOutput(outputText);
+
+  if (parsedOutput === null) {
+    logOpenAIFailure("invalid_openai_json", payload, outputText);
+    throw new RouteError(502, "invalid_openai_json", "OpenAI returned invalid JSON for parser output.");
+  }
+
+  const parsePayload = normalizeReceiptParsePayload(parsedOutput, {
+    defaultModel: parseModel,
+    defaultParser: "openai_gpt",
+  });
+
+  if (!parsePayload) {
+    logOpenAIFailure("invalid_openai_json", payload, outputText);
+    throw new RouteError(
+      502,
+      "invalid_openai_json",
+      "OpenAI parser output must include parser, model, rawText, rawSummary, warnings, fields, and candidates.",
+    );
+  }
+
+  return parsePayload;
+}
+
+export async function mapEvidenceSchemeWithOpenAI(
+  input: MapEvidenceSchemeRouteInput,
+): Promise<ParseEvidenceScheme> {
+  return projectReceiptParsePayloadToLegacyScheme({
+    payload: input.originData,
+    template: input.scheme,
+  });
+}
+
+function createInputFilePart(input: ParseRouteInput) {
   const base64 = Buffer.from(input.bytes).toString("base64");
-  const filePart =
-    input.mimeType === "application/pdf"
-      ? {
-          file_data: `data:${input.mimeType};base64,${base64}`,
-          filename: input.filename,
-          type: "input_file",
-        }
-      : {
-          detail: "high",
-          image_url: `data:${input.mimeType};base64,${base64}`,
-          type: "input_image",
-        };
+
+  if (input.mimeType === "application/pdf") {
+    return {
+      file_data: `data:${input.mimeType};base64,${base64}`,
+      filename: input.filename,
+      type: "input_file",
+    };
+  }
+
+  return {
+    detail: "high",
+    image_url: `data:${input.mimeType};base64,${base64}`,
+    type: "input_image",
+  };
+}
+
+function buildParseUserPrompt(input: ParseRouteInput): string {
+  return [`filename: ${input.filename}`, `mimeType: ${input.mimeType}`, `sourcePlatform: ${input.sourcePlatform}`].join("\n");
+}
+
+async function callOpenAI(input: unknown, apiKey: string): Promise<Record<string, unknown>> {
+  const isReasoning = parseModel.toLowerCase().startsWith("o1") || parseModel.toLowerCase().startsWith("o3") || parseModel.toLowerCase().startsWith("o4");
   const response = await fetch("https://api.openai.com/v1/responses", {
     body: JSON.stringify({
-      input: [
-        {
-          content: [
-            {
-              text: systemPrompt,
-              type: "input_text",
-            },
-          ],
-          role: "system",
-        },
-        {
-          content: [
-            {
-              text: `filename: ${input.filename}\nmimeType: ${input.mimeType}\nsourcePlatform: ${input.sourcePlatform}`,
-              type: "input_text",
-            },
-            filePart,
-          ],
-          role: "user",
-        },
-      ],
-      max_output_tokens: 1600,
+      input,
+      max_output_tokens: 4_000,
       model: parseModel,
+      ...(isReasoning ? { reasoning: { effort: "minimal" } } : {}),
       store: false,
-      text: {
-        format: {
-          name: "receipt_parse",
-          schema: parseResponseSchema,
-          strict: true,
-          type: "json_schema",
-        },
-      },
     }),
     headers: {
       Authorization: `Bearer ${apiKey}`,
@@ -119,32 +134,11 @@ export async function parseEvidenceWithOpenAI(
     throw new RouteError(
       response.status === 401 ? 401 : 502,
       response.status === 401 ? "invalid_openai_key" : "openai_request_failed",
-      providerMessage ?? "OpenAI parsing request failed.",
+      providerMessage ?? "OpenAI request failed.",
     );
   }
 
-  const outputText = extractOutputText(payload);
-
-  if (!outputText) {
-    throw new RouteError(502, "invalid_openai_response", "OpenAI returned no parseable output text.");
-  }
-
-  let parsedOutput: unknown;
-
-  try {
-    parsedOutput = JSON.parse(outputText);
-  } catch {
-    throw new RouteError(502, "invalid_openai_json", "OpenAI returned invalid JSON for the parse response.");
-  }
-
-  return {
-    fields: sanitizeFields(parsedOutput),
-    model: typeof payload.model === "string" && payload.model ? payload.model : parseModel,
-    parser: "openai_gpt",
-    rawSummary: readString(parsedOutput, "rawSummary"),
-    rawText: readString(parsedOutput, "rawText"),
-    warnings: readStringArray(parsedOutput, "warnings"),
-  };
+  return payload;
 }
 
 function extractProviderMessage(payload: Record<string, unknown>): string | null {
@@ -162,6 +156,14 @@ function extractOutputText(payload: Record<string, unknown>): string {
     return payload.output_text;
   }
 
+  if (Array.isArray(payload.output_text)) {
+    const joined = payload.output_text.filter((item): item is string => typeof item === "string").join("\n").trim();
+
+    if (joined) {
+      return joined;
+    }
+  }
+
   const output = Array.isArray(payload.output) ? payload.output : [];
   const textParts: string[] = [];
 
@@ -174,6 +176,11 @@ function extractOutputText(payload: Record<string, unknown>): string {
     for (const part of content) {
       if (part && typeof part === "object" && "text" in part && typeof part.text === "string") {
         textParts.push(part.text);
+        continue;
+      }
+
+      if (part && typeof part === "object" && "json" in part && part.json !== undefined) {
+        textParts.push(JSON.stringify(part.json));
       }
     }
   }
@@ -181,92 +188,154 @@ function extractOutputText(payload: Record<string, unknown>): string {
   return textParts.join("\n").trim();
 }
 
-function sanitizeFields(payload: unknown): EvidenceFieldCandidates {
-  const fields =
-    payload && typeof payload === "object" && "fields" in payload && payload.fields && typeof payload.fields === "object"
-      ? payload.fields
-      : {};
+function tryParseStructuredOutput(outputText: string): JsonValue | null {
+  const candidates = [normalizeJsonText(outputText), ...extractBalancedJsonCandidates(outputText)];
+  const seen = new Set<string>();
 
-  return {
-    amountCents: readNullableInteger(fields, "amountCents"),
-    category: readNullableString(fields, "category"),
-    date: normalizeIsoDate(readNullableString(fields, "date")),
-    description: readNullableString(fields, "description"),
-    notes: readNullableString(fields, "notes"),
-    source: readNullableString(fields, "source"),
-    target: readNullableString(fields, "target"),
-    taxCategory: readNullableString(fields, "taxCategory"),
+  for (const candidate of candidates) {
+    const normalized = candidate.trim();
+
+    if (!normalized || seen.has(normalized)) {
+      continue;
+    }
+
+    seen.add(normalized);
+
+    try {
+      return JSON.parse(normalized) as JsonValue;
+    } catch {
+      continue;
+    }
+  }
+
+  return null;
+}
+
+function normalizeJsonText(value: string): string {
+  const trimmed = value.trim();
+
+  if (!trimmed) {
+    return "";
+  }
+
+  const fencedMatch = /^```(?:json)?\s*([\s\S]*?)\s*```$/i.exec(trimmed);
+
+  if (fencedMatch?.[1]) {
+    return fencedMatch[1].trim();
+  }
+
+  const firstBrace = trimmed.indexOf("{");
+  const lastBrace = trimmed.lastIndexOf("}");
+
+  if (firstBrace >= 0 && lastBrace > firstBrace) {
+    return trimmed.slice(firstBrace, lastBrace + 1).trim();
+  }
+
+  return trimmed;
+}
+
+function extractBalancedJsonCandidates(value: string): string[] {
+  return [...extractBalancedCandidates(value, "{", "}"), ...extractBalancedCandidates(value, "[", "]")];
+}
+
+function extractBalancedCandidates(value: string, open: "{" | "[", close: "}" | "]"): string[] {
+  const candidates: string[] = [];
+  let depth = 0;
+  let startIndex = -1;
+  let inString = false;
+  let isEscaped = false;
+
+  for (let index = 0; index < value.length; index += 1) {
+    const character = value[index];
+
+    if (!character) {
+      continue;
+    }
+
+    if (inString) {
+      if (isEscaped) {
+        isEscaped = false;
+        continue;
+      }
+
+      if (character === "\\") {
+        isEscaped = true;
+        continue;
+      }
+
+      if (character === "\"") {
+        inString = false;
+      }
+
+      continue;
+    }
+
+    if (character === "\"") {
+      inString = true;
+      continue;
+    }
+
+    if (character === open) {
+      if (depth === 0) {
+        startIndex = index;
+      }
+
+      depth += 1;
+      continue;
+    }
+
+    if (character === close) {
+      if (depth === 0) {
+        continue;
+      }
+
+      depth -= 1;
+
+      if (depth === 0 && startIndex >= 0) {
+        candidates.push(value.slice(startIndex, index + 1));
+        startIndex = -1;
+      }
+    }
+  }
+
+  return candidates.reverse();
+}
+
+function logOpenAIFailure(code: "invalid_openai_json" | "invalid_openai_response", payload: Record<string, unknown>, outputText?: string) {
+  const debugSummary = {
+    code,
+    model: typeof payload.model === "string" ? payload.model : null,
+    outputTextPreview: outputText ? outputText.slice(0, 1200) : null,
+    outputTextType: Array.isArray(payload.output_text) ? "array" : typeof payload.output_text,
+    outputTypes: summarizeOutputTypes(payload),
   };
+
+  console.error("parse api OpenAI parse failure", JSON.stringify(debugSummary));
 }
 
-function readString(payload: unknown, key: string): string {
-  const record = isRecord(payload) ? payload : null;
+function summarizeOutputTypes(payload: Record<string, unknown>) {
+  const output = Array.isArray(payload.output) ? payload.output : [];
 
-  if (record && typeof record[key] === "string") {
-    return record[key].trim();
-  }
+  return output.map((item) => {
+    const record = asUnknownObject(item);
+    const content = record && Array.isArray(record.content) ? record.content : [];
 
-  return "";
+    return content.map((part) => {
+      const partRecord = asUnknownObject(part);
+
+      return {
+        hasJson: partRecord?.json !== undefined,
+        hasText: typeof partRecord?.text === "string",
+        type: typeof partRecord?.type === "string" ? partRecord.type : "unknown",
+      };
+    });
+  });
 }
 
-function readNullableString(payload: unknown, key: string): string | null {
-  const record = isRecord(payload) ? payload : null;
-
-  if (record) {
-    const value = record[key];
-
-    if (typeof value === "string") {
-      const normalized = value.trim();
-      return normalized || null;
-    }
-  }
-
-  return null;
-}
-
-function readNullableInteger(payload: unknown, key: string): number | null {
-  const record = isRecord(payload) ? payload : null;
-
-  if (record) {
-    const value = record[key];
-
-    if (typeof value === "number" && Number.isInteger(value)) {
-      return value;
-    }
-
-    if (typeof value === "string" && /^-?\d+$/.test(value.trim())) {
-      return Number.parseInt(value.trim(), 10);
-    }
-  }
-
-  return null;
-}
-
-function readStringArray(payload: unknown, key: string): string[] {
-  const record = isRecord(payload) ? payload : null;
-
-  if (record) {
-    const value = record[key];
-
-    if (Array.isArray(value)) {
-      return value
-        .filter((item): item is string => typeof item === "string")
-        .map((item) => item.trim())
-        .filter((item) => item.length > 0);
-    }
-  }
-
-  return [];
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return Boolean(value) && typeof value === "object";
-}
-
-function normalizeIsoDate(value: string | null): string | null {
-  if (!value) {
+function asUnknownObject(value: unknown): Record<string, unknown> | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
     return null;
   }
 
-  return /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : null;
+  return value as Record<string, unknown>;
 }

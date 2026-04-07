@@ -7,8 +7,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { BackHeaderBar } from "../../components/back-header-bar";
 import { CfoAvatar } from "../../components/cfo-avatar";
 import {
-  importUploadCandidates,
-  parseEvidence,
+  parseFile,
   pickDocumentUploadCandidates,
   pickPhotoUploadCandidates,
 } from "./ledger-runtime";
@@ -19,7 +18,7 @@ export function LedgerUploadScreen() {
   const { copy, palette } = useAppShell();
   const [error, setError] = useState<string | null>(null);
   const [isBusy, setIsBusy] = useState(false);
-  const [status, setStatus] = useState("Select files or photos to create a local parse queue.");
+  const [status, setStatus] = useState("Select files or photos to upload for OpenAI parsing.");
 
   async function handleImport(source: "documents" | "photos"): Promise<void> {
     setIsBusy(true);
@@ -36,10 +35,21 @@ export function LedgerUploadScreen() {
         return;
       }
 
-      const evidenceIds = await importUploadCandidates(candidates);
-      await Promise.all(evidenceIds.map((evidenceId) => parseEvidence(evidenceId)));
-      setStatus(`${evidenceIds.length} item(s) added to the local review queue.`);
-      router.push("/ledger/parse");
+      const first = candidates[0]!;
+      setStatus(`Parsing ${first.originalFileName}...`);
+
+      const result = await parseFile(first.uri, first.originalFileName, first.mimeType);
+
+      router.push({
+        params: {
+          fileName: first.originalFileName,
+          rawJson: result.rawJson != null ? JSON.stringify(result.rawJson) : "",
+          rawText: result.rawText,
+          model: result.model,
+          parseError: result.error ?? "",
+        },
+        pathname: "/ledger/parse",
+      });
     } catch (nextError: unknown) {
       setError(nextError instanceof Error ? nextError.message : "Upload import failed.");
     } finally {
@@ -74,9 +84,8 @@ export function LedgerUploadScreen() {
           <Text style={[styles.eyebrow, { color: palette.inkMuted }]}>Upload center</Text>
           <Text style={[styles.heroTitle, { color: palette.ink }]}>{copy.ledger.upload.title}</Text>
           <Text style={[styles.heroSummary, { color: palette.inkMuted }]}>
-            Upload receipts, PDFs, or Live Photos into the local vault. The app sends each file to
-            your Vercel parse API using the OpenAI key you saved in Settings, then keeps the parsed
-            result local for review.
+            Upload receipts, PDFs, or photos. The file is sent to OpenAI for parsing and the raw
+            JSON result is displayed on the next screen.
           </Text>
         </View>
 
@@ -93,10 +102,9 @@ export function LedgerUploadScreen() {
           <View style={[styles.uploadGlyph, { backgroundColor: palette.accentSoft }]}>
             <Feather color={palette.accent} name="upload-cloud" size={26} />
           </View>
-          <Text style={[styles.dropTitle, { color: palette.ink }]}>Send files into your local vault</Text>
+          <Text style={[styles.dropTitle, { color: palette.ink }]}>Upload & Parse</Text>
           <Text style={[styles.dropSummary, { color: palette.inkMuted }]}>
-            The queue writes into `entity-main`, stores renamed files locally, and prepares every
-            item for GPT-assisted review.
+            Select a file, send it to OpenAI, and view the raw JSON response.
           </Text>
 
           <View style={styles.buttonStack}>
@@ -117,7 +125,7 @@ export function LedgerUploadScreen() {
               <View style={styles.primaryButtonContent}>
                 <MaterialCommunityIcons color={palette.inkOnAccent} name="image-multiple-outline" size={18} />
                 <Text style={[styles.primaryButtonLabel, { color: palette.inkOnAccent }]}>
-                  {isBusy ? "Importing..." : "Select Photos"}
+                  {isBusy ? "Parsing..." : "Select Photos"}
                 </Text>
               </View>
             </Pressable>
@@ -147,20 +155,6 @@ export function LedgerUploadScreen() {
             {error ?? status}
           </Text>
         </View>
-
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => router.push("/ledger/parse")}
-          style={({ pressed }) => [
-            styles.footerButton,
-            {
-              backgroundColor: pressed ? palette.heroEnd : palette.ink,
-            },
-          ]}
-          testID="ledger-upload-continue-button"
-        >
-          <Text style={[styles.footerButtonLabel, { color: palette.inkOnAccent }]}>Review Queue</Text>
-        </Pressable>
       </ScrollView>
     </SafeAreaView>
   );
@@ -208,17 +202,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: 1.1,
     textTransform: "uppercase",
-  },
-  footerButton: {
-    alignItems: "center",
-    borderRadius: 999,
-    height: 54,
-    justifyContent: "center",
-    marginTop: 4,
-  },
-  footerButtonLabel: {
-    fontSize: 16,
-    fontWeight: "700",
   },
   heroBlock: {
     gap: 10,

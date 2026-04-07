@@ -1,5 +1,11 @@
 {
   "functions": {
+    "api/map-evidence-scheme.ts": {
+      "maxDuration": 60
+    },
+    "api/parse-origin-data.ts": {
+      "maxDuration": 60
+    },
     "api/parse-evidence.ts": {
       "maxDuration": 60
     }

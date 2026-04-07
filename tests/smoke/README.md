@@ -55,18 +55,20 @@ pnpm smoke
    - 登录页不再出现「Open database demo」之类的 CTA
    - 首页不再出现数据库 CRUD、字段选择 chip、记录选中态或报告卡片等 demo 区块
    - 主壳层三个 Tab 内不存在通往 database demo / database hooks demo 的入口
-10. 在 iOS development build、Android 或 Web 打开 Ledger 上传与解析子流程，确认 Vercel API + OpenAI 主路径可用：
+10. 在启动移动端前设置环境变量，再打开 Ledger 上传与解析子流程，确认前端直连 OpenAI 主路径可用：
+   - 运行前提供 `EXPO_PUBLIC_OPENAI_BASE_URL`（可省略，默认 `https://api.openai.com/v1`）
+   - 如需覆盖模型，提供 `EXPO_PUBLIC_OPENAI_MODEL`
+   - 在应用 Settings 中填写 OpenAI API key
    - Upload workspace 支持 `Select Photos` 与 `Select Files`
-   - 先在「设置」中填入 `Vercel API Base URL` 与 `OpenAI API Key`
    - 选择一张清晰收据图片或一个小 PDF 后，会进入 Parse Review
-   - Parse Review 顶部标识显示 `OPENAI GPT`
-   - 字段进入编辑后，保存会弹出“是否确认编辑？”对话框
-   - 填完整 `date`、`amount`、`description` 后可提交
-   - 提交最后一项后会返回 Ledger
-11. 在大文件或对象存储联调场景下，确认 `fileUrl` 入口可用：
-   - `POST /api/parse-evidence` 支持 JSON body + `fileUrl`
-   - 缺少 `Authorization` 会返回 `401`
-   - 超出 multipart 体积限制时，接口会提示改用 `fileUrl`
+   - Parse Review 可见 batch state、raw parse JSON、planner summary、write proposals、candidate record
+   - `Amount`、`Date`、`Source`、`Target` 可编辑
+   - 若存在 `create_counterparty` proposal，先审批该 proposal，再审批 `persist_candidate_record`
+   - 最终审批通过后会写入本地 `records`，Home 指标会刷新
+11. 在对象存储联调场景下，确认 `fileUrl` 入口可用：
+   - 客户端可先拉取 `fileUrl` 内容，再直连 OpenAI 解析
+   - 缺少 OpenAI API key 会有明确错误提示
+   - OpenAI `429`、`5xx`、响应 JSON 异常均会有明确错误提示
 12. 在任一客户端完成保存后，确认本地数据展示仍正确：
    - 可手动补全必填字段并成功保存
    - 保存后 Home 的月度指标、趋势图与 Recent Activity 会刷新到最新本地数据

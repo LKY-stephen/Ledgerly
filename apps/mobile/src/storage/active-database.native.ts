@@ -30,6 +30,7 @@ export async function initializeActivePackageDatabase(database: SQLiteDatabase):
 
   await initializeLocalDatabase(database);
   await ensureEvidenceColumns(database);
+  await cleanupOrphanedEvidenceFilePaths(database);
   await validateDatabasePackageOrThrow({
     database: createReadableDatabaseView(database),
     packageRoot: getActivePackageRootDirectory(),
@@ -49,6 +50,19 @@ function createReadableDatabaseView(database: SQLiteDatabase) {
       return database.getFirstAsync<Row>(source, ...(params as []));
     },
   });
+}
+
+async function cleanupOrphanedEvidenceFilePaths(database: SQLiteDatabase): Promise<void> {
+  await database.execAsync(
+    `UPDATE evidences SET file_path = ''
+     WHERE LENGTH(TRIM(COALESCE(file_path, ''))) > 0
+       AND INSTR(file_path, '/') = 0;`,
+  );
+  await database.execAsync(
+    `UPDATE evidence_files SET relative_path = ''
+     WHERE LENGTH(TRIM(COALESCE(relative_path, ''))) > 0
+       AND INSTR(relative_path, '/') = 0;`,
+  );
 }
 
 export async function ensureEvidenceColumns(database: SQLiteDatabase): Promise<void> {

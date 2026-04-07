@@ -44,12 +44,24 @@ export async function resetLocalStorageRuntime(): Promise<void> {
   await activeDatabase?.closeAsync();
 }
 
+async function ensurePlannerRunColumns(database: SQLiteDatabase): Promise<void> {
+  const tableInfo = await database.getAllAsync<{ name: string }>(
+    "PRAGMA table_info(planner_runs);",
+  );
+  const columns = new Set(tableInfo.map((column) => column.name));
+
+  if (!columns.has("planner_payload_json")) {
+    await database.execAsync("ALTER TABLE planner_runs ADD COLUMN planner_payload_json TEXT;");
+  }
+}
+
 async function createActiveDatabaseConnection(): Promise<SQLiteDatabase> {
   const storagePlan = getLocalStorageBootstrapPlan();
   const database = await openDatabaseAsync(storagePlan.databaseName, undefined, getActiveDatabaseDirectory());
 
   try {
     await initializeActivePackageDatabase(database);
+    await ensurePlannerRunColumns(database);
 
     return database;
   } catch (error) {
