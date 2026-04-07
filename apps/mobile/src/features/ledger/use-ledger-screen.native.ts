@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSQLiteContext } from "expo-sqlite";
 
 import {
   createEmptyLedgerSnapshot,
-  getDefaultLedgerPeriodId,
   loadLedgerSnapshot,
   type LedgerPeriodSegmentId,
+  type LedgerScopeId,
   type LedgerScreenSnapshot,
   type LedgerViewId,
 } from "./ledger-reporting";
@@ -22,11 +22,14 @@ export interface UseLedgerScreenResult {
   isLoaded: boolean;
   isRefreshing: boolean;
   refresh: () => Promise<void>;
+  selectPeriodId: (periodId: string) => void;
   selectPeriodSegment: (segmentId: LedgerPeriodSegmentId) => void;
+  selectScope: (scopeId: LedgerScopeId) => void;
   selectView: (view: LedgerViewId) => void;
   selectYear: (yearId: string) => void;
   selectedPeriodId: string;
   selectedSegmentId: LedgerPeriodSegmentId;
+  selectedScope: LedgerScopeId;
   selectedView: LedgerViewId;
   selectedYearId: string;
   snapshot: LedgerScreenSnapshot;
@@ -34,13 +37,20 @@ export interface UseLedgerScreenResult {
 
 export function useLedgerScreen(): UseLedgerScreenResult {
   const database = useSQLiteContext();
+  const lastDatabaseRef = useRef<LedgerDatabase | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [refreshNonce, setRefreshNonce] = useState(0);
-  const [selectedPeriodId, setSelectedPeriodId] = useState(getDefaultLedgerPeriodId);
+  const [selectedPeriodId, setSelectedPeriodId] = useState<string | null>(null);
+  const [selectedScope, setSelectedScope] = useState<LedgerScopeId>("business");
   const [selectedView, setSelectedView] = useState<LedgerViewId>("general-ledger");
   const [snapshot, setSnapshot] = useState<LedgerScreenSnapshot>(createEmptyLedgerSnapshot);
+  const forceDefaultSelection = lastDatabaseRef.current !== database;
+
+  if (forceDefaultSelection) {
+    lastDatabaseRef.current = database;
+  }
 
   useEffect(() => {
     let isMounted = true;
@@ -48,7 +58,12 @@ export function useLedgerScreen(): UseLedgerScreenResult {
     setIsRefreshing(true);
     setError(null);
 
-    loadSnapshot(database, selectedPeriodId)
+    loadSnapshot(
+      database,
+      forceDefaultSelection ? null : selectedPeriodId,
+      selectedScope,
+      forceDefaultSelection,
+    )
       .then((nextSnapshot) => {
         if (!isMounted) {
           return;
@@ -75,7 +90,7 @@ export function useLedgerScreen(): UseLedgerScreenResult {
     return () => {
       isMounted = false;
     };
-  }, [database, refreshNonce, selectedPeriodId]);
+  }, [database, forceDefaultSelection, refreshNonce, selectedPeriodId, selectedScope]);
 
   return {
     error,
@@ -84,9 +99,13 @@ export function useLedgerScreen(): UseLedgerScreenResult {
     refresh: async () => {
       setRefreshNonce((current) => current + 1);
     },
+    selectPeriodId: (periodId) => {
+      setSelectedPeriodId(periodId);
+    },
     selectPeriodSegment: (segmentId) => {
       setSelectedPeriodId(buildLedgerPeriodIdForSegment(snapshot.selectedPeriod.year, segmentId));
     },
+    selectScope: setSelectedScope,
     selectView: setSelectedView,
     selectYear: (yearId) => {
       const nextPeriodId = buildLedgerPeriodIdForYear(yearId, snapshot.selectedPeriod.segmentId);
@@ -97,17 +116,25 @@ export function useLedgerScreen(): UseLedgerScreenResult {
 
       setSelectedPeriodId(nextPeriodId);
     },
-    selectedPeriodId,
+    selectedPeriodId: selectedPeriodId ?? snapshot.selectedPeriod.id,
     selectedSegmentId: snapshot.selectedPeriod.segmentId,
+    selectedScope,
     selectedView,
     selectedYearId: String(snapshot.selectedPeriod.year),
     snapshot,
   };
 }
 
-async function loadSnapshot(database: LedgerDatabase, preferredPeriodId: string) {
+async function loadSnapshot(
+  database: LedgerDatabase,
+  preferredPeriodId: string | null,
+  scopeId: LedgerScopeId,
+  forceDefaultSelection: boolean,
+) {
   return loadLedgerSnapshot(createReadableStorageDatabase(database), {
+    forceDefaultSelection,
     preferredPeriodId,
+    scopeId,
   });
 }
 

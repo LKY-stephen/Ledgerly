@@ -38,8 +38,8 @@ function createContractDatabase(): DatabaseSync {
   return database;
 }
 
-describe("storage contract v3", () => {
-  it("boots the simplified hybrid v3 contract and exposes the expected schema inventory", () => {
+describe("storage contract v4", () => {
+  it("boots the simplified hybrid v4 contract and exposes the expected schema inventory", () => {
     const database = createContractDatabase();
     const tableRows = database
       .prepare(`SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name ASC;`)
@@ -51,7 +51,7 @@ describe("storage contract v3", () => {
       .prepare(`PRAGMA table_info(evidences);`)
       .all() as Array<{ name: string }>;
 
-    expect(structuredStoreContract.version).toBe(3);
+    expect(structuredStoreContract.version).toBe(4);
     expect(accountingPostableRecordStatuses).toEqual(["posted", "reconciled"]);
     expect(tableRows.map((row) => row.name)).toEqual(
       expect.arrayContaining([
@@ -86,14 +86,14 @@ describe("storage contract v3", () => {
     const overview = getLocalStorageOverview();
     const plan = getLocalStorageBootstrapPlan();
 
-    expect(manifest.version).toBe(3);
+    expect(manifest.version).toBe(4);
     expect(manifest.schemaObjects.tables).toEqual(
       structuredStoreContract.tables.map((table) => table.name),
     );
     expect(manifest.schemaObjects.views).toEqual([]);
     expect(overview.tableCount).toBe(structuredStoreContract.tables.length);
     expect(overview.viewCount).toBe(0);
-    expect(plan.version).toBe(3);
+    expect(plan.version).toBe(4);
     expect(plan.schemaStatements.length).toBeGreaterThan(0);
   });
 
@@ -123,16 +123,18 @@ describe("storage contract v3", () => {
     );
   });
 
-  it("documents v3 as the active runtime baseline", () => {
+  it("documents v4 as the active runtime baseline", () => {
     const contractDocPath = fileURLToPath(
       new URL("../../../docs/contracts/local-storage.md", import.meta.url),
     );
     const contractDoc = readFileSync(contractDocPath, "utf8");
 
-    expect(contractDoc).toContain("Current implemented contract version: `3`");
+    expect(contractDoc).toContain("Current implemented contract version: `4`");
     expect(contractDoc).toContain("`records`");
     expect(contractDoc).toContain("`parse_status`");
     expect(contractDoc).toContain("`entity-main`");
+    expect(contractDoc).toContain("active database file: `creator-cfo-vault/creator-cfo-local.db`");
+    expect(contractDoc).toContain("runtime open/import fails closed");
     expect(contractDoc).toContain("repeated uploads of the same binary are allowed");
     expect(contractDoc).toContain("`openai_api_key`");
     expect(contractDoc).toContain("`vercel_api_base_url`");

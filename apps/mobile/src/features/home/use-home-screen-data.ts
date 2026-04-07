@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 
+import { useAppShell } from "../app-shell/provider";
 import { loadHomeScreenSnapshot } from "../ledger/ledger-runtime";
 import type { HomeSnapshot } from "./home-data";
 
@@ -15,6 +16,7 @@ const emptySnapshot: HomeSnapshot = {
 };
 
 export function useHomeScreenData() {
+  const { storageRevision } = useAppShell();
   const [error, setError] = useState<string | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -23,7 +25,7 @@ export function useHomeScreenData() {
 
   useEffect(() => {
     void refresh();
-  }, []);
+  }, [storageRevision]);
 
   async function refresh(): Promise<void> {
     setIsRefreshing(true);

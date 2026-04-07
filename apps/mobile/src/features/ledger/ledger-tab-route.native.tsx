@@ -1,18 +1,10 @@
-import { SQLiteProvider } from "expo-sqlite";
-import { getLocalStorageBootstrapPlan } from "@creator-cfo/storage";
-
-import { initializeLocalDatabase } from "../../storage/database";
+import { LocalStorageProvider } from "../../storage/provider.native";
 import { LedgerScreen } from "./ledger-screen";
-
-const storagePlan = getLocalStorageBootstrapPlan();
 
 export function LedgerTabRoute() {
   return (
-    <SQLiteProvider
-      databaseName={storagePlan.databaseName}
-      onInit={initializeLocalDatabase}
-    >
+    <LocalStorageProvider>
       <LedgerScreen />
-    </SQLiteProvider>
+    </LocalStorageProvider>
   );
 }

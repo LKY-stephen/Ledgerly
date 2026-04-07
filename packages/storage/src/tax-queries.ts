@@ -27,31 +27,6 @@ export interface TaxYearDateRange {
   startOn: string;
 }
 
-const scheduleCCandidateRecordsSql = `SELECT
-  r.record_id AS recordId,
-  r.record_kind AS recordKind,
-  r.record_status AS recordStatus,
-  r.occurred_on AS occurredOn,
-  r.currency,
-  r.description,
-  r.memo,
-  r.category_code AS categoryCode,
-  r.subcategory_code AS subcategoryCode,
-  r.tax_category_code AS taxCategoryCode,
-  CASE
-    WHEN LOWER(TRIM(COALESCE(r.tax_line_code, ''))) = 'line27b' THEN 'line27a'
-    ELSE r.tax_line_code
-  END AS taxLineCode,
-  r.amount_cents AS amountCents,
-  r.business_use_bps AS businessUseBps
-FROM records AS r
-WHERE r.entity_id = ?
-  AND r.record_status IN ('posted', 'reconciled')
-  AND COALESCE(r.tax_line_code, '') <> ''
-  AND r.occurred_on >= ?
-  AND r.occurred_on < ?
-ORDER BY r.occurred_on ASC, r.record_id ASC;`;
-
 export function buildTaxYearDateRange(taxYear: number): TaxYearDateRange {
   const normalizedTaxYear = normalizeTaxYear(taxYear);
 
@@ -85,12 +60,32 @@ export async function loadScheduleCCandidateRecords(
   await assertCashAccountingMethod(database, normalizedScope);
   const dateRange = buildTaxYearDateRange(normalizedScope.taxYear);
 
-  return database.getAllAsync<ScheduleCCandidateRecord>(
-    scheduleCCandidateRecordsSql,
-    normalizedScope.entityId,
-    dateRange.startOn,
-    dateRange.endExclusiveOn,
-  );
+  return database.searchRecordsByDateRangeAsync<ScheduleCCandidateRecord>({
+    dateRange: {
+      endExclusiveOn: dateRange.endExclusiveOn,
+      startOn: dateRange.startOn,
+    },
+    entityId: normalizedScope.entityId,
+    orderBy: "r.occurred_on ASC, r.record_id ASC",
+    recordStatuses: ["posted", "reconciled"],
+    select: `r.record_id AS recordId,
+      r.record_kind AS recordKind,
+      r.record_status AS recordStatus,
+      r.occurred_on AS occurredOn,
+      r.currency,
+      r.description,
+      r.memo,
+      r.category_code AS categoryCode,
+      r.subcategory_code AS subcategoryCode,
+      r.tax_category_code AS taxCategoryCode,
+      CASE
+        WHEN LOWER(TRIM(COALESCE(r.tax_line_code, ''))) = 'line27b' THEN 'line27a'
+        ELSE r.tax_line_code
+      END AS taxLineCode,
+      r.amount_cents AS amountCents,
+      r.business_use_bps AS businessUseBps`,
+    where: "COALESCE(r.tax_line_code, '') <> ''",
+  });
 }
 
 export async function loadScheduleCAggregation(

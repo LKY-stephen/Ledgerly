@@ -1,12 +1,13 @@
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { SectionCard } from "@creator-cfo/ui";
 
 import { localePreferenceOptions, themePreferenceOptions } from "../app-shell/copy";
 import { useAppShell } from "../app-shell/provider";
 import type { LocalePreference, ThemePreference } from "../app-shell/types";
+import { pickAndImportDatabasePackageAsync } from "../../storage/database-import";
 
 function PreferencePill(props: {
   active: boolean;
@@ -44,6 +45,7 @@ function PreferencePill(props: {
 export function ProfileScreen() {
   const router = useRouter();
   const {
+    bumpStorageRevision,
     copy,
     localePreference,
     openAiApiKey,
@@ -51,6 +53,7 @@ export function ProfileScreen() {
     parseApiBaseUrl,
     session,
     sessionDisplayName,
+    setStorageSuspended,
     setLocalePreference,
     setOpenAiApiKey,
     setParseApiBaseUrl,
@@ -60,6 +63,11 @@ export function ProfileScreen() {
   } = useAppShell();
   const [apiKeyDraft, setApiKeyDraft] = useState(openAiApiKey);
   const [baseUrlDraft, setBaseUrlDraft] = useState(parseApiBaseUrl);
+  const [databaseImportMessage, setDatabaseImportMessage] = useState<{
+    tone: "error" | "success";
+    value: string;
+  } | null>(null);
+  const [isImportingDatabase, setIsImportingDatabase] = useState(false);
 
   useEffect(() => {
     setApiKeyDraft(openAiApiKey);
@@ -220,6 +228,84 @@ export function ProfileScreen() {
           </View>
         </SectionCard>
 
+        {Platform.OS !== "web" ? (
+          <SectionCard eyebrow="Storage" palette={palette} title={copy.meScreen.databaseTitle}>
+            <Text style={[styles.sectionHint, { color: palette.inkMuted }]}>
+              {copy.meScreen.databaseDescription}
+            </Text>
+
+            {databaseImportMessage ? (
+              <Text
+                style={[
+                  styles.databaseMessage,
+                  {
+                    color:
+                      databaseImportMessage.tone === "error" ? palette.destructive : palette.accent,
+                  },
+                ]}
+              >
+                {databaseImportMessage.value}
+              </Text>
+            ) : null}
+
+            <Pressable
+              accessibilityRole="button"
+              disabled={isImportingDatabase}
+              onPress={async () => {
+                setIsImportingDatabase(true);
+                setDatabaseImportMessage(null);
+                setStorageSuspended(true);
+                let importSucceeded = false;
+
+                try {
+                  await new Promise((resolve) => {
+                    setTimeout(resolve, 0);
+                  });
+                  const result = await pickAndImportDatabasePackageAsync();
+
+                  if (!result) {
+                    return;
+                  }
+
+                  importSucceeded = true;
+                  setDatabaseImportMessage({
+                    tone: "success",
+                    value: `${copy.meScreen.databaseImportSuccess} ${result.importedDatabaseName} · ${result.checkedPathCount} path(s) checked.`,
+                  });
+                } catch (error) {
+                  const message =
+                    error instanceof Error ? error.message : copy.meScreen.databaseImportFailure;
+                  setDatabaseImportMessage({
+                    tone: "error",
+                    value: `${copy.meScreen.databaseImportFailure} ${message}`,
+                  });
+                } finally {
+                  setStorageSuspended(false);
+
+                  if (importSucceeded) {
+                    bumpStorageRevision();
+                  }
+
+                  setIsImportingDatabase(false);
+                }
+              }}
+              style={[
+                styles.actionButton,
+                {
+                  backgroundColor: palette.ink,
+                  opacity: isImportingDatabase ? 0.7 : 1,
+                },
+              ]}
+            >
+              <Text style={[styles.actionButtonLabel, { color: palette.inkOnAccent }]}>
+                {isImportingDatabase
+                  ? copy.meScreen.databaseImportInProgress
+                  : copy.meScreen.databaseImportAction}
+              </Text>
+            </Pressable>
+          </SectionCard>
+        ) : null}
+
         <SectionCard eyebrow={copy.meScreen.sessionTitle} palette={palette} title={sessionDisplayName}>
           <Text style={[styles.sessionKind, { color: palette.accent }]}>{sessionKindLabel}</Text>
           <Text style={[styles.sectionHint, { color: palette.inkMuted }]}>
@@ -261,6 +347,11 @@ const styles = StyleSheet.create({
     gap: 16,
     padding: 20,
     paddingBottom: 36,
+  },
+  databaseMessage: {
+    fontSize: 13,
+    fontWeight: "600",
+    lineHeight: 20,
   },
   eyebrow: {
     fontSize: 12,

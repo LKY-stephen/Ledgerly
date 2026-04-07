@@ -3,11 +3,13 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildTaxYearDateRange,
+  createReadableStorageDatabase,
   loadEntityLegalName,
   loadScheduleCAggregation,
   loadScheduleCCandidateRecords,
   loadScheduleSEPreview,
   structuredStoreContract,
+  type StorageSqlValue,
 } from "../src/index";
 
 function createStorageDatabase(): DatabaseSync {
@@ -29,14 +31,14 @@ function createStorageDatabase(): DatabaseSync {
 }
 
 function createReadableDatabase(database: DatabaseSync) {
-  return {
-    async getAllAsync<Row>(source: string, ...params: Array<string | number | null>) {
+  return createReadableStorageDatabase({
+    async getAllAsync<Row>(source: string, ...params: StorageSqlValue[]) {
       return database.prepare(source).all({}, ...params) as Row[];
     },
-    async getFirstAsync<Row>(source: string, ...params: Array<string | number | null>) {
+    async getFirstAsync<Row>(source: string, ...params: StorageSqlValue[]) {
       return (database.prepare(source).get({}, ...params) as Row | undefined) ?? null;
     },
-  };
+  });
 }
 
 function seedTaxQueryFixture(

@@ -1,0 +1,11 @@
+{
+  "databaseName": "creator-cfo-local.db",
+  "packageDirectory": "package-a-clean",
+  "packageTitle": "Package A Clean",
+  "recordCount": 24,
+  "evidenceCount": 24,
+  "taxYears": [
+    2025,
+    2026
+  ]
+}

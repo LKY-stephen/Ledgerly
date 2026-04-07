@@ -1,0 +1,9 @@
+{
+  "evidenceId": "pkg-b-record-02-evidence",
+  "evidenceKind": "payout_statement",
+  "originalFileName": "twitch-stream-payout.pdf",
+  "packageDirectory": "package-b-mixed",
+  "recordId": "pkg-b-record-02",
+  "relativePath": "evidence-objects/entity-main/uploads/2024/09/twitch-stream-payout.pdf",
+  "summary": "Twitch stream payout"
+}

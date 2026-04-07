@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 
+import { useAppShell } from "../app-shell/provider";
 import {
   createEmptyReviewValues,
   deriveReviewValues,
@@ -14,6 +15,7 @@ import {
 } from "./ledger-runtime";
 
 export function useLedgerParseQueue() {
+  const { storageRevision } = useAppShell();
   const [error, setError] = useState<string | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isParsing, setIsParsing] = useState(false);
@@ -25,7 +27,7 @@ export function useLedgerParseQueue() {
 
   useEffect(() => {
     void refresh();
-  }, []);
+  }, [storageRevision]);
 
   useEffect(() => {
     if (currentItem) {

@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
+import { createReadableStorageDatabase } from "@creator-cfo/storage";
 
 import {
   createEmptyLedgerSnapshot,
   loadLedgerSnapshot,
   type LedgerPeriodSegmentId,
+  type LedgerScopeId,
   type LedgerScreenSnapshot,
   type LedgerViewId,
 } from "./ledger-reporting";
@@ -17,17 +19,20 @@ export interface UseLedgerScreenResult {
   isLoaded: boolean;
   isRefreshing: boolean;
   refresh: () => Promise<void>;
+  selectPeriodId: (periodId: string) => void;
   selectPeriodSegment: (segmentId: LedgerPeriodSegmentId) => void;
+  selectScope: (scopeId: LedgerScopeId) => void;
   selectView: (view: LedgerViewId) => void;
   selectYear: (yearId: string) => void;
   selectedPeriodId: string;
   selectedSegmentId: LedgerPeriodSegmentId;
+  selectedScope: LedgerScopeId;
   selectedView: LedgerViewId;
   selectedYearId: string;
   snapshot: LedgerScreenSnapshot;
 }
 
-const emptyDatabase = {
+const emptyDatabase = createReadableStorageDatabase({
   async getAllAsync<Row>() {
     return [] as Row[];
   },
@@ -37,16 +42,15 @@ const emptyDatabase = {
       minOccurredOn: null,
     } as Row;
   },
-};
+});
 
 export function useLedgerScreen(): UseLedgerScreenResult {
   const [error, setError] = useState<string | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [refreshNonce, setRefreshNonce] = useState(0);
-  const [selectedPeriodId, setSelectedPeriodId] = useState(
-    createEmptyLedgerSnapshot().selectedPeriod.id,
-  );
+  const [selectedPeriodId, setSelectedPeriodId] = useState<string | null>(null);
+  const [selectedScope, setSelectedScope] = useState<LedgerScopeId>("business");
   const [selectedView, setSelectedView] = useState<LedgerViewId>("general-ledger");
   const [snapshot, setSnapshot] = useState<LedgerScreenSnapshot>(createEmptyLedgerSnapshot);
 
@@ -57,7 +61,9 @@ export function useLedgerScreen(): UseLedgerScreenResult {
     setError(null);
 
     loadLedgerSnapshot(emptyDatabase, {
+      forceDefaultSelection: false,
       preferredPeriodId: selectedPeriodId,
+      scopeId: selectedScope,
     })
       .then((nextSnapshot) => {
         if (!isMounted) {
@@ -85,7 +91,7 @@ export function useLedgerScreen(): UseLedgerScreenResult {
     return () => {
       isMounted = false;
     };
-  }, [refreshNonce, selectedPeriodId]);
+  }, [refreshNonce, selectedPeriodId, selectedScope]);
 
   return {
     error,
@@ -94,9 +100,13 @@ export function useLedgerScreen(): UseLedgerScreenResult {
     refresh: async () => {
       setRefreshNonce((current) => current + 1);
     },
+    selectPeriodId: (periodId) => {
+      setSelectedPeriodId(periodId);
+    },
     selectPeriodSegment: (segmentId) => {
       setSelectedPeriodId(buildLedgerPeriodIdForSegment(snapshot.selectedPeriod.year, segmentId));
     },
+    selectScope: setSelectedScope,
     selectView: setSelectedView,
     selectYear: (yearId) => {
       const nextPeriodId = buildLedgerPeriodIdForYear(yearId, snapshot.selectedPeriod.segmentId);
@@ -107,8 +117,9 @@ export function useLedgerScreen(): UseLedgerScreenResult {
 
       setSelectedPeriodId(nextPeriodId);
     },
-    selectedPeriodId,
+    selectedPeriodId: selectedPeriodId ?? snapshot.selectedPeriod.id,
     selectedSegmentId: snapshot.selectedPeriod.segmentId,
+    selectedScope,
     selectedView,
     selectedYearId: String(snapshot.selectedPeriod.year),
     snapshot,

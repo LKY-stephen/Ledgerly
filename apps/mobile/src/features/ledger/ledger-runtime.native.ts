@@ -3,7 +3,7 @@ import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system/legacy";
 import * as ImagePicker from "expo-image-picker";
 import { Platform } from "react-native";
-import { buildEvidenceUploadPath, getLocalStorageBootstrapPlan } from "@creator-cfo/storage";
+import { buildEvidenceUploadPath } from "@creator-cfo/storage";
 import type { EvidenceExtractedData } from "@creator-cfo/schemas";
 
 import {
@@ -26,6 +26,8 @@ import {
 } from "./ledger-store";
 import { parseEvidenceMultipartFromNative } from "./remote-parse";
 import { loadHomeSnapshot, type HomeSnapshot } from "../home/home-data";
+import { getActivePackageRootDirectory } from "../../storage/package-environment.native";
+import { buildPackageAbsolutePath } from "../../storage/package-paths";
 import { withWritableLocalDatabase } from "../../storage/runtime";
 
 interface UploadCandidate {
@@ -340,13 +342,7 @@ async function extractEvidenceData(evidence: EvidenceQueueItem): Promise<Evidenc
 }
 
 async function buildAbsoluteVaultPath(relativePath: string): Promise<string> {
-  const documentDirectory = FileSystem.documentDirectory;
-
-  if (!documentDirectory) {
-    throw new Error("Expo document directory is unavailable.");
-  }
-
-  return `${documentDirectory}${getLocalStorageBootstrapPlan().fileVaultRoot}/${relativePath}`;
+  return buildPackageAbsolutePath(getActivePackageRootDirectory(), relativePath);
 }
 
 async function ensureParentDirectory(path: string): Promise<void> {

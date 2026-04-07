@@ -27,8 +27,10 @@ import type {
 } from "./types";
 
 interface AppShellContextValue {
+  bumpStorageRevision: () => void;
   continueAsGuest: () => Promise<void>;
   copy: ReturnType<typeof getAppCopy>;
+  isStorageSuspended: boolean;
   isHydrated: boolean;
   localePreference: LocalePreference;
   openAiApiKey: string;
@@ -36,6 +38,7 @@ interface AppShellContextValue {
   parseApiBaseUrl: string;
   session: AppSession | null;
   sessionDisplayName: string;
+  setStorageSuspended: (value: boolean) => void;
   setLocalePreference: (value: LocalePreference) => Promise<void>;
   setOpenAiApiKey: (value: string) => Promise<void>;
   setParseApiBaseUrl: (value: string) => Promise<void>;
@@ -47,6 +50,7 @@ interface AppShellContextValue {
     givenName?: string | null;
     user: string;
   }) => Promise<void>;
+  storageRevision: number;
   themePreference: ThemePreference;
 }
 
@@ -65,6 +69,8 @@ export function AppShellProvider({ children }: PropsWithChildren) {
   const deviceLanguageTag = getLocales()[0]?.languageTag;
   const [state, setState] = useState<PersistedAppState>(initialState);
   const [isHydrated, setIsHydrated] = useState(false);
+  const [isStorageSuspended, setStorageSuspended] = useState(false);
+  const [storageRevision, setStorageRevision] = useState(0);
 
   useEffect(() => {
     let isMounted = true;
@@ -119,10 +125,14 @@ export function AppShellProvider({ children }: PropsWithChildren) {
   };
 
   const contextValue: AppShellContextValue = {
+    bumpStorageRevision: () => {
+      setStorageRevision((current) => current + 1);
+    },
     continueAsGuest: async () => {
       await setSession(createGuestSession());
     },
     copy,
+    isStorageSuspended,
     isHydrated,
     localePreference: state.localePreference,
     openAiApiKey: state.openAiApiKey,
@@ -130,6 +140,7 @@ export function AppShellProvider({ children }: PropsWithChildren) {
     parseApiBaseUrl: state.parseApiBaseUrl,
     session: state.session,
     sessionDisplayName: getSessionDisplayName(state.session),
+    setStorageSuspended,
     setLocalePreference,
     setOpenAiApiKey,
     setParseApiBaseUrl,
@@ -140,6 +151,7 @@ export function AppShellProvider({ children }: PropsWithChildren) {
     signInWithApple: async (input) => {
       await setSession(createAppleSession(input));
     },
+    storageRevision,
     themePreference: state.themePreference,
   };
 

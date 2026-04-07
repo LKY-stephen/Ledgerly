@@ -2,13 +2,13 @@
 
 This document is the canonical local-storage contract for the current Expo, local-first runtime.
 
-- Current implemented contract version: `3`
+- Current implemented contract version: `4`
 - Database file: `creator-cfo-local.db`
 - Architecture phase: mobile-first, local-first, no standalone backend
 
 ## Runtime Baseline
 
-The active runtime baseline is a hybrid `v3` contract:
+The active runtime baseline is a hybrid `v4` contract:
 
 - intake is optimized for sparse evidence capture
 - the canonical persisted transaction surface is `records`
@@ -72,24 +72,26 @@ This runtime baseline intentionally does not expose the older ledger-first or ta
 
 The supported tax-query path reads directly from `records` plus `tax_year_profiles`.
 
-## File Vault
+## Storage Package
 
-The contract still uses the local file vault for evidence and exports. The structured collections remain defined in `packages/storage/src/contracts.ts`.
+The active runtime now treats the previous vault root as the package root for both the SQLite database and evidence collections. The structured collections remain defined in `packages/storage/src/contracts.ts`.
 
-Uploaded evidence binaries are normalized into the local vault root:
-
-- root: `creator-cfo-vault/`
+- package root: `creator-cfo-vault/`
+- active database file: `creator-cfo-vault/creator-cfo-local.db`
 - evidence uploads: `creator-cfo-vault/evidence-objects/{entity_id}/uploads/{yyyy}/{mm}/{entity_id}_{timestamp}_{hash}.{ext}`
 - evidence manifests: `creator-cfo-vault/evidence-manifests/{evidence_id}.json`
 
 Expected upload-state rules:
 
 - upload always ensures the default local entity `entity-main` exists before persistence
+- upload writes new evidence into the active package root beside the active database file
 - repeated uploads of the same binary are allowed; hash and size are indexed for lookup only and no longer enforced as a global uniqueness constraint
 - newly ingested evidence starts at `parse_status = pending`
 - parser success keeps the evidence in `pending` until the user confirms and persists a `record`
 - confirmed evidence becomes `parse_status = parsed`
 - parser failures become `parse_status = failed` and must remain retryable
+- runtime readers resolve `evidence_files.relative_path` and `evidences.file_path` from the active package root, not from a detached global storage location
+- runtime open/import fails closed when a tracked evidence path is absolute, escapes the package root, or points to a missing required file
 
 Expected `extracted_data` JSON fields:
 

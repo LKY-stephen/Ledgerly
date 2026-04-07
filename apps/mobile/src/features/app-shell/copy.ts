@@ -189,6 +189,12 @@ export interface AppCopy {
     title: string;
   };
   meScreen: {
+    databaseDescription: string;
+    databaseImportAction: string;
+    databaseImportFailure: string;
+    databaseImportInProgress: string;
+    databaseImportSuccess: string;
+    databaseTitle: string;
     localeDescription: string;
     logoutDescription: string;
     sessionDescription: string;
@@ -451,6 +457,13 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
       title: "One calm place for creator cash.",
     },
     meScreen: {
+      databaseDescription:
+        "Import a CFO database package from Files or iCloud Drive. The selected database must keep its evidence files beside it under package-relative paths. On iPhone and iPad, choose the creator-cfo-vault folder, or a folder that contains it, in the folder picker.",
+      databaseImportAction: "Import Database",
+      databaseImportFailure: "Database import failed.",
+      databaseImportInProgress: "Importing database package...",
+      databaseImportSuccess: "Imported database package successfully.",
+      databaseTitle: "Local database package",
       localeDescription: "Switch shell copy instantly and keep the choice on device.",
       logoutDescription: "Clear the local session summary and return to the login gate.",
       sessionDescription: "Session state is stored locally for guest mode or Apple sign-in preview.",
@@ -707,6 +720,13 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
       title: "先给创作者现金流一个安静入口。",
     },
     meScreen: {
+      databaseDescription:
+        "从文件或 iCloud Drive 导入一个 CFO 数据库包。所选数据库必须把凭证文件按相对路径放在数据库旁边。在 iPhone 和 iPad 上，请在文件夹选择器里选择 creator-cfo-vault 文件夹，或选择包含它的上级文件夹。",
+      databaseImportAction: "导入数据库",
+      databaseImportFailure: "数据库导入失败。",
+      databaseImportInProgress: "正在导入数据库包...",
+      databaseImportSuccess: "数据库包导入成功。",
+      databaseTitle: "本地数据库包",
       localeDescription: "立即切换界面语言，并把选择保存在设备本地。",
       logoutDescription: "清除本地会话摘要，并返回登录入口。",
       sessionDescription: "游客态和 Apple 登录态都只保存在本机，方便本地优先阶段验证体验。",

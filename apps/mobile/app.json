@@ -32,6 +32,13 @@
     "plugins": [
       "expo-router",
       "expo-apple-authentication",
+      [
+        "expo-file-system",
+        {
+          "enableFileSharing": true,
+          "supportsOpeningDocumentsInPlace": true
+        }
+      ],
       "expo-sqlite",
       "expo-localization"
     ],

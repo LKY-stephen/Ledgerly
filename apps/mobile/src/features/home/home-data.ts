@@ -52,34 +52,33 @@ export async function loadHomeSnapshot(
     offset,
   );
   const metricRow =
-    (await database.getFirstAsync<{
+    (await database.searchFirstRecordsByDateRangeAsync<{
       incomeCents: number | null;
       outflowCents: number | null;
-    }>(
-      `SELECT
-        COALESCE(SUM(CASE WHEN record_kind = 'income' THEN amount_cents ELSE 0 END), 0) AS incomeCents,
-        COALESCE(SUM(CASE WHEN record_kind IN ('expense', 'personal_spending') THEN amount_cents ELSE 0 END), 0) AS outflowCents
-      FROM records
-      WHERE entity_id = ?
-        AND occurred_on BETWEEN ? AND ?;`,
+    }>({
+      dateRange: {
+        endOn: monthEnd,
+        startOn: monthStart,
+      },
       entityId,
-      monthStart,
-      monthEnd,
-    )) ?? { incomeCents: 0, outflowCents: 0 };
-  const trendRows = await database.getAllAsync<{ amountCents: number; occurredOn: string }>(
-    `SELECT
-      occurred_on AS occurredOn,
-      COALESCE(SUM(amount_cents), 0) AS amountCents
-    FROM records
-    WHERE entity_id = ?
-      AND record_kind = 'income'
-      AND occurred_on BETWEEN ? AND ?
-    GROUP BY occurred_on
-    ORDER BY occurred_on ASC;`,
+      select: `COALESCE(SUM(CASE WHEN r.record_kind = 'income' THEN r.amount_cents ELSE 0 END), 0) AS incomeCents,
+        COALESCE(SUM(CASE WHEN r.record_kind IN ('expense', 'personal_spending') THEN r.amount_cents ELSE 0 END), 0) AS outflowCents`,
+    })) ?? { incomeCents: 0, outflowCents: 0 };
+  const trendRows = await database.searchRecordsByDateRangeAsync<{
+    amountCents: number;
+    occurredOn: string;
+  }>({
+    dateRange: {
+      endOn: now,
+      startOn: trendStart,
+    },
     entityId,
-    trendStart,
-    now,
-  );
+    groupBy: "r.occurred_on",
+    orderBy: "r.occurred_on ASC",
+    recordKinds: ["income"],
+    select: `r.occurred_on AS occurredOn,
+      COALESCE(SUM(r.amount_cents), 0) AS amountCents`,
+  });
   const totalsByDate = Object.fromEntries(trendRows.map((row) => [row.occurredOn, row.amountCents]));
   const incomeCents = metricRow.incomeCents ?? 0;
   const outflowCents = metricRow.outflowCents ?? 0;

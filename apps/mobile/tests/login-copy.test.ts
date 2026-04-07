@@ -15,4 +15,13 @@ describe("login copy", () => {
     expect(englishLogin.body.length).toBeLessThan(100);
     expect(chineseLogin.body.length).toBeLessThan(60);
   });
+
+  it("keeps settings copy aligned for the database import controls", () => {
+    const englishSettings = appCopy.en.meScreen;
+    const chineseSettings = appCopy["zh-CN"].meScreen;
+
+    expect(Object.keys(englishSettings).sort()).toEqual(Object.keys(chineseSettings).sort());
+    expect(englishSettings.databaseImportAction.length).toBeGreaterThan(0);
+    expect(chineseSettings.databaseImportAction.length).toBeGreaterThan(0);
+  });
 });

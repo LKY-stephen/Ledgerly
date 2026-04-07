@@ -1,10 +1,8 @@
-import { SQLiteProvider } from "expo-sqlite";
 import type { ReactNode } from "react";
-import { getLocalStorageBootstrapPlan } from "@creator-cfo/storage";
 import type { SurfaceTokens } from "@creator-cfo/ui";
 
 import type { AppCopy } from "../app-shell/copy";
-import { initializeLocalDatabase } from "../../storage/database";
+import { LocalStorageProvider } from "../../storage/provider.native";
 import { Form1099NecPreview } from "./form-1099-nec-preview";
 import { useForm1099Nec } from "./use-form-1099-nec.native";
 
@@ -15,13 +13,11 @@ interface Form1099NecSectionProps {
   renderLauncher?: (openPreview: () => void) => ReactNode;
 }
 
-const storagePlan = getLocalStorageBootstrapPlan();
-
 export function Form1099NecSection(props: Form1099NecSectionProps) {
   return (
-    <SQLiteProvider databaseName={storagePlan.databaseName} onInit={initializeLocalDatabase}>
+    <LocalStorageProvider>
       <Form1099NecNativeSection {...props} />
-    </SQLiteProvider>
+    </LocalStorageProvider>
   );
 }
 

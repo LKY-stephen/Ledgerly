@@ -1,11 +1,9 @@
 import { useState } from "react";
-import { SQLiteProvider } from "expo-sqlite";
 import type { ReactNode } from "react";
-import { getLocalStorageBootstrapPlan } from "@creator-cfo/storage";
 import type { SurfaceTokens } from "@creator-cfo/ui";
 
 import type { AppCopy } from "../app-shell/copy";
-import { initializeLocalDatabase } from "../../storage/database";
+import { LocalStorageProvider } from "../../storage/provider.native";
 import { FormScheduleSEPreview } from "./form-schedule-se-preview";
 import { useFormScheduleSE } from "./use-form-schedule-se.native";
 
@@ -17,13 +15,11 @@ interface FormScheduleSESectionProps {
   renderLauncher?: (openPreview: () => void) => ReactNode;
 }
 
-const storagePlan = getLocalStorageBootstrapPlan();
-
 export function FormScheduleSESection(props: FormScheduleSESectionProps) {
   return (
-    <SQLiteProvider databaseName={storagePlan.databaseName} onInit={initializeLocalDatabase}>
+    <LocalStorageProvider>
       <FormScheduleSENativeSection {...props} />
-    </SQLiteProvider>
+    </LocalStorageProvider>
   );
 }
 

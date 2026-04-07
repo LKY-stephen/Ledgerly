@@ -295,7 +295,7 @@ const structuredSchemaStatements = [
 export const structuredStoreContract = {
   databaseName: "creator-cfo-local.db",
   maintenanceStatements: structuredMaintenanceStatements,
-  version: 3,
+  version: 4,
   pragmas: structuredStorePragmas,
   tables: structuredTables,
   views: structuredViews,

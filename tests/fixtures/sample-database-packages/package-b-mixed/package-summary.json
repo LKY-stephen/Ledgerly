@@ -1,0 +1,12 @@
+{
+  "databaseName": "creator-cfo-local.db",
+  "packageDirectory": "package-b-mixed",
+  "packageTitle": "Package B Mixed",
+  "recordCount": 24,
+  "evidenceCount": 24,
+  "taxYears": [
+    2024,
+    2025,
+    2026
+  ]
+}

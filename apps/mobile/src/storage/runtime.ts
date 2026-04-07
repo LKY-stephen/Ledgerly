@@ -2,8 +2,9 @@ import { openDatabaseAsync, type SQLiteDatabase } from "expo-sqlite";
 
 import { getLocalStorageBootstrapPlan } from "@creator-cfo/storage";
 
+import { initializeActivePackageDatabase } from "./active-database.native";
 import { bootstrapLocalStorage } from "./bootstrap";
-import { initializeLocalDatabase } from "./database";
+import { getActiveDatabaseDirectory } from "./package-environment.native";
 import { createWritableStorageDatabase } from "./storage-adapter";
 
 let databasePromise: Promise<SQLiteDatabase> | null = null;
@@ -17,13 +18,7 @@ export async function ensureLocalStorageReady(): Promise<void> {
 export async function getSQLiteDatabase(): Promise<SQLiteDatabase> {
   await ensureLocalStorageReady();
 
-  databasePromise ??= openDatabaseAsync(getLocalStorageBootstrapPlan().databaseName).then(
-    async (database) => {
-      await initializeLocalDatabase(database);
-      await ensureEvidenceColumns(database);
-      return database;
-    },
-  );
+  databasePromise ??= createActiveDatabaseConnection();
 
   return databasePromise;
 }
@@ -36,21 +31,30 @@ export async function withWritableLocalDatabase<T>(
   return runner({ database, writableDatabase });
 }
 
-async function ensureEvidenceColumns(database: SQLiteDatabase): Promise<void> {
-  const tableInfo = await database.getAllAsync<{ name: string }>("PRAGMA table_info(evidences);");
-  const columns = new Set(tableInfo.map((column) => column.name));
+export async function resetLocalStorageRuntime(): Promise<void> {
+  const activeDatabasePromise = databasePromise;
+  databasePromise = null;
+  bootstrapPromise = null;
 
-  if (!columns.has("file_path")) {
-    await database.execAsync("ALTER TABLE evidences ADD COLUMN file_path TEXT NOT NULL DEFAULT '';");
+  if (!activeDatabasePromise) {
+    return;
   }
 
-  if (!columns.has("parse_status")) {
-    await database.execAsync(
-      "ALTER TABLE evidences ADD COLUMN parse_status TEXT NOT NULL DEFAULT 'pending';",
-    );
-  }
+  const activeDatabase = await activeDatabasePromise.catch(() => null);
+  await activeDatabase?.closeAsync();
+}
 
-  if (!columns.has("extracted_data")) {
-    await database.execAsync("ALTER TABLE evidences ADD COLUMN extracted_data TEXT;");
+async function createActiveDatabaseConnection(): Promise<SQLiteDatabase> {
+  const storagePlan = getLocalStorageBootstrapPlan();
+  const database = await openDatabaseAsync(storagePlan.databaseName, undefined, getActiveDatabaseDirectory());
+
+  try {
+    await initializeActivePackageDatabase(database);
+
+    return database;
+  } catch (error) {
+    await database.closeAsync().catch(() => undefined);
+    databasePromise = null;
+    throw error;
   }
 }

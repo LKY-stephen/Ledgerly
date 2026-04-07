@@ -2,6 +2,7 @@ import { DatabaseSync } from "node:sqlite";
 import { describe, expect, it } from "vitest";
 
 import {
+  createWritableStorageDatabase,
   loadScheduleCAggregation,
   loadScheduleSEPreview,
   persistResolvedStandardReceiptEntry,
@@ -29,7 +30,7 @@ function createStorageDatabase(): DatabaseSync {
 }
 
 function createWritableDatabase(database: DatabaseSync) {
-  return {
+  return createWritableStorageDatabase({
     async getAllAsync<Row>(source: string, ...params: StorageSqlValue[]) {
       return database.prepare(source).all({}, ...params) as Row[];
     },
@@ -39,7 +40,7 @@ function createWritableDatabase(database: DatabaseSync) {
     async runAsync(source: string, ...params: StorageSqlValue[]) {
       return database.prepare(source).run(...params);
     },
-  };
+  });
 }
 
 async function createPopulatedV1Database() {
