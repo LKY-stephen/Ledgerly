@@ -1,17 +1,20 @@
 import { DatabaseSync } from "node:sqlite";
-import { existsSync } from "node:fs";
+import { cpSync, existsSync, mkdtempSync, rmSync } from "node:fs";
 import { dirname, join } from "node:path";
+import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 import {
   createReadableStorageDatabase,
+  structuredStoreContract,
   loadScheduleCAggregation,
   loadScheduleSEPreview,
   scheduleCSupportedLineDefinitions,
   type StorageSqlValue,
 } from "@creator-cfo/storage";
 
+import { initializeLocalDatabase } from "../src/storage/database";
 import { validateDatabasePackageOrThrow } from "../src/storage/storage-package-integrity";
 
 const fixturesRoot = join(
@@ -51,7 +54,7 @@ async function loadCounts(database: DatabaseSync) {
 }
 
 describe("sample database packages", () => {
-  it("keeps both portable packages valid under the real integrity validator", async () => {
+  it("keeps both portable packages valid as supported legacy inputs", async () => {
     for (const packageRoot of [packageARoot, packageBRoot]) {
       const database = openDatabase(packageRoot);
 
@@ -60,12 +63,14 @@ describe("sample database packages", () => {
           database: createReadableDatabase(database),
           packageRoot,
           pathExists: async (absolutePath) => existsSync(absolutePath),
+          tableCompatibility: "current_or_legacy",
         });
         const counts = await loadCounts(database);
 
         expect(validation).toEqual({
           checkedPathCount: 24,
-          requiredTableCount: 8,
+          requiredTableCount: structuredStoreContract.tables.length,
+          tableCompatibility: "legacy",
         });
         expect(counts).toEqual({
           evidenceFileCount: 24,
@@ -78,6 +83,44 @@ describe("sample database packages", () => {
           database.close();
         }
       }
+    }
+  });
+
+  it("can upgrade a legacy portable package copy to the current schema contract", async () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), "creator-cfo-sample-package-"));
+    const packageRoot = join(tempRoot, "creator-cfo-vault");
+
+    cpSync(packageARoot, packageRoot, { recursive: true });
+
+    const database = openDatabase(packageRoot);
+
+    try {
+      await initializeLocalDatabase({
+        async execAsync(source: string) {
+          database.exec(source);
+        },
+      });
+
+      const validation = await validateDatabasePackageOrThrow({
+        database: createReadableDatabase(database),
+        packageRoot,
+        pathExists: async (absolutePath) => existsSync(absolutePath),
+        tableCompatibility: "current_only",
+      });
+      const versionRow = database.prepare("PRAGMA user_version;").get() as { user_version: number };
+
+      expect(validation).toEqual({
+        checkedPathCount: 24,
+        requiredTableCount: structuredStoreContract.tables.length,
+        tableCompatibility: "current",
+      });
+      expect(versionRow.user_version).toBe(structuredStoreContract.version);
+    } finally {
+      if (typeof database.close === "function") {
+        database.close();
+      }
+
+      rmSync(tempRoot, { force: true, recursive: true });
     }
   });
 

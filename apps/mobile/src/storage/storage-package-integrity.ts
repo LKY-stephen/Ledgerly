@@ -18,28 +18,85 @@ export interface DatabasePackageValidationInput {
   database: ReadableStorageDatabase;
   packageRoot: string;
   pathExists: (absolutePath: string) => Promise<boolean>;
+  tableCompatibility?: "current_only" | "current_or_legacy";
 }
 
 export interface DatabasePackageValidationResult {
   checkedPathCount: number;
   requiredTableCount: number;
+  tableCompatibility: DatabaseTableCompatibility;
+}
+
+export type DatabaseTableCompatibility = "current" | "legacy" | "unsupported";
+
+export interface DatabaseTableCompatibilityResult {
+  missingCurrentTables: string[];
+  missingLegacyTables: string[];
+  tableCompatibility: DatabaseTableCompatibility;
+}
+
+export const legacyStructuredTableNames = [
+  "entities",
+  "counterparties",
+  "records",
+  "record_entry_classifications",
+  "tax_year_profiles",
+  "evidences",
+  "evidence_files",
+  "record_evidence_links",
+] as const;
+
+export function classifyDatabaseTableCompatibility(
+  tableNames: Iterable<string>,
+): DatabaseTableCompatibilityResult {
+  const normalizedTableNames = new Set(tableNames);
+  const missingCurrentTables = structuredStoreContract.tables
+    .map((table) => table.name)
+    .filter((name) => !normalizedTableNames.has(name));
+  const missingLegacyTables = legacyStructuredTableNames.filter(
+    (name) => !normalizedTableNames.has(name),
+  );
+  const tableCompatibility: DatabaseTableCompatibility =
+    missingCurrentTables.length === 0
+      ? "current"
+      : missingLegacyTables.length === 0
+        ? "legacy"
+        : "unsupported";
+
+  return {
+    missingCurrentTables,
+    missingLegacyTables: [...missingLegacyTables],
+    tableCompatibility,
+  };
 }
 
 export async function validateDatabasePackageOrThrow(
   input: DatabasePackageValidationInput,
 ): Promise<DatabasePackageValidationResult> {
-  const { database, packageRoot, pathExists } = input;
+  const {
+    database,
+    packageRoot,
+    pathExists,
+    tableCompatibility: requestedTableCompatibility = "current_only",
+  } = input;
   const tableRows = await database.getAllAsync<SqliteMasterRow>(
     "SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name ASC;",
   );
   const tableNames = new Set(tableRows.map((row) => row.name));
-  const missingTables = structuredStoreContract.tables
-    .map((table) => table.name)
-    .filter((name) => !tableNames.has(name));
+  const compatibility = classifyDatabaseTableCompatibility(tableNames);
+  const acceptsLegacy =
+    requestedTableCompatibility === "current_or_legacy" &&
+    compatibility.tableCompatibility === "legacy";
 
-  if (missingTables.length > 0) {
+  if (compatibility.tableCompatibility === "unsupported") {
     throw new Error(
-      `The selected database is missing required CFO tables: ${missingTables.join(", ")}.`,
+      `The selected database is missing required CFO tables: ${compatibility.missingLegacyTables.join(", ")}.`,
+    );
+  }
+
+  if (compatibility.tableCompatibility === "legacy" && !acceptsLegacy) {
+    throw new Error(
+      `The selected database is missing required CFO tables: ${compatibility.missingCurrentTables.join(", ")}.`,
     );
   }
 
@@ -77,5 +134,6 @@ export async function validateDatabasePackageOrThrow(
   return {
     checkedPathCount: relativePaths.size,
     requiredTableCount: structuredStoreContract.tables.length,
+    tableCompatibility: compatibility.tableCompatibility,
   };
 }

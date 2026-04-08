@@ -1,7 +1,14 @@
-import type { SQLiteDatabase } from "expo-sqlite";
 import { getLocalStorageBootstrapPlan } from "@creator-cfo/storage";
 
-export async function initializeLocalDatabase(database: SQLiteDatabase): Promise<void> {
+export interface StorageSqlExecDatabase {
+  execAsync(source: string): Promise<void>;
+}
+
+export interface StorageSqlTableReader {
+  getAllAsync<Row>(source: string): Promise<Row[]>;
+}
+
+export async function initializeLocalDatabase(database: StorageSqlExecDatabase): Promise<void> {
   const storagePlan = getLocalStorageBootstrapPlan();
 
   for (const pragma of storagePlan.pragmas) {
@@ -19,7 +26,7 @@ export async function initializeLocalDatabase(database: SQLiteDatabase): Promise
   await database.execAsync(`PRAGMA user_version = ${storagePlan.version};`);
 }
 
-export async function countStructuredTables(database: SQLiteDatabase): Promise<number> {
+export async function countStructuredTables(database: StorageSqlTableReader): Promise<number> {
   const storagePlan = getLocalStorageBootstrapPlan();
   const tables = await database.getAllAsync<{ name: string }>(
     "SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name;",

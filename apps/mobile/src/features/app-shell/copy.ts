@@ -202,6 +202,17 @@ export interface AppCopy {
     themeDescription: string;
     title: string;
   };
+  storageSetup: {
+    eyebrow: string;
+    importAction: string;
+    importInProgress: string;
+    initializeAction: string;
+    initializeInProgress: string;
+    missingSummary: string;
+    missingTitle: string;
+    recoverySummary: string;
+    recoveryTitle: string;
+  };
   tabs: {
     discover: string;
     home: string;
@@ -471,6 +482,19 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
       themeDescription: "Move between light, dark, or system appearance without leaving the app.",
       title: "Preferences and session controls",
     },
+    storageSetup: {
+      eyebrow: "Storage setup",
+      importAction: "Import Database",
+      importInProgress: "Importing database package...",
+      initializeAction: "Initialize Empty Database",
+      initializeInProgress: "Initializing empty database...",
+      missingSummary:
+        "This device does not have an active CFO database package yet. Import an existing portable package or create a new empty local database to continue.",
+      missingTitle: "Choose how to start local storage",
+      recoverySummary:
+        "The current active package could not be opened safely. Import another package or replace it with a new empty database after review.",
+      recoveryTitle: "Active database needs recovery",
+    },
     tabs: {
       discover: "Discover",
       home: "Home",
@@ -733,6 +757,19 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
       sessionTitle: "当前会话",
       themeDescription: "在应用内切换白天、黑夜或跟随系统，不打断当前流程。",
       title: "偏好设置与会话控制",
+    },
+    storageSetup: {
+      eyebrow: "存储设置",
+      importAction: "导入数据库",
+      importInProgress: "正在导入数据库包...",
+      initializeAction: "初始化空数据库",
+      initializeInProgress: "正在初始化空数据库...",
+      missingSummary:
+        "当前设备还没有可用的 CFO 数据库包。你可以导入一个现有的可携带数据库包，或新建一个空的本地数据库后继续。",
+      missingTitle: "选择本地存储的开始方式",
+      recoverySummary:
+        "当前激活的数据库包无法安全打开。请导入另一个数据库包，或在确认后用一个新的空数据库替换它。",
+      recoveryTitle: "当前数据库需要恢复",
     },
     tabs: {
       discover: "发现",

@@ -460,6 +460,7 @@ describe("database import", () => {
     expect(mocks.validateDatabasePackageDirectoryOrThrow).toHaveBeenNthCalledWith(1, {
       databaseDirectory: "file:///cache/creator-cfo-directory-import-stage/selected-package",
       databaseName: "creator-cfo-local.db",
+      tableCompatibility: "current_or_legacy",
     });
     expect(files.has("file:///active/creator-cfo-local.db")).toBe(true);
     expect(directories.has("file:///cache/creator-cfo-directory-import-stage")).toBe(false);
@@ -491,6 +492,7 @@ describe("database import", () => {
     expect(mocks.validateDatabasePackageDirectoryOrThrow).toHaveBeenNthCalledWith(1, {
       databaseDirectory: "file:///cache/creator-cfo-directory-import-stage/creator-cfo-vault",
       databaseName: "creator-cfo-local.db",
+      tableCompatibility: "current_or_legacy",
     });
   });
 

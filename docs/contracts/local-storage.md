@@ -14,6 +14,7 @@ The active runtime baseline is a hybrid `v5` contract:
 - the canonical persisted transaction surface is `records`
 - Schedule C and Schedule SE previews remain supported
 - extra information that cannot be derived from evidence must be supplied manually by the caller or user flow
+- native startup no longer auto-creates a brand-new empty database when no active package exists; the user must explicitly import a package or initialize an empty one
 
 Direct evidence capture is intentionally limited to:
 
@@ -110,6 +111,7 @@ Expected upload-state rules:
 - parser failures become `parse_status = failed` and must remain retryable
 - runtime readers resolve `evidence_files.relative_path` and `evidences.file_path` from the active package root, not from a detached global storage location
 - runtime open/import fails closed when a tracked evidence path is absolute, escapes the package root, or points to a missing required file
+- known legacy portable CFO packages that still match the older core 8-table baseline remain acceptable migration inputs; activation upgrades them to the current contract before normal runtime reads and writes proceed
 - the authoritative workflow state now lives on `upload_batches.state` plus per-row `candidate_records.state`; `evidences.parse_status` remains a compatibility summary for queue screens
 
 Expected write-policy rules:

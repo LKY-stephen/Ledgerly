@@ -2,30 +2,24 @@ import * as FileSystem from "expo-file-system/legacy";
 import type { SQLiteDatabase } from "expo-sqlite";
 import {
   createReadableStorageDatabase,
-  structuredStoreContract,
   type StorageSqlValue,
 } from "@creator-cfo/storage";
 
 import { initializeLocalDatabase } from "./database";
-import { validateDatabasePackageOrThrow } from "./storage-package-integrity";
+import {
+  classifyDatabaseTableCompatibility,
+  validateDatabasePackageOrThrow,
+  type DatabaseTableCompatibilityResult,
+} from "./storage-package-integrity";
 import { getActivePackageRootDirectory } from "./package-environment.native";
 
 export async function initializeActivePackageDatabase(database: SQLiteDatabase): Promise<void> {
-  const tableRows = await database.getAllAsync<{ name: string }>(
-    "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name ASC;",
-  );
-  const tableNames = new Set(tableRows.map((row) => row.name));
+  const compatibility = await loadDatabaseTableCompatibility(database);
 
-  if (tableNames.size > 0) {
-    const missingTables = structuredStoreContract.tables
-      .map((table) => table.name)
-      .filter((name) => !tableNames.has(name));
-
-    if (missingTables.length > 0) {
-      throw new Error(
-        `The active database package is missing required CFO tables: ${missingTables.join(", ")}.`,
-      );
-    }
+  if (compatibility.tableCompatibility === "unsupported") {
+    throw new Error(
+      `The active database package is missing required CFO tables: ${compatibility.missingLegacyTables.join(", ")}.`,
+    );
   }
 
   await initializeLocalDatabase(database);
@@ -38,7 +32,18 @@ export async function initializeActivePackageDatabase(database: SQLiteDatabase):
       const info = await FileSystem.getInfoAsync(absolutePath);
       return info.exists;
     },
+    tableCompatibility: "current_only",
   });
+}
+
+export async function loadDatabaseTableCompatibility(
+  database: SQLiteDatabase,
+): Promise<DatabaseTableCompatibilityResult> {
+  const tableRows = await database.getAllAsync<{ name: string }>(
+    "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name ASC;",
+  );
+
+  return classifyDatabaseTableCompatibility(tableRows.map((row) => row.name));
 }
 
 function createReadableDatabaseView(database: SQLiteDatabase) {

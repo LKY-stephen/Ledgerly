@@ -130,6 +130,7 @@ export async function importDatabasePackageFromFileUri(input: {
     const validation = await validateDatabasePackageDirectoryOrThrow({
       databaseDirectory: activePackageRoot,
       databaseName: storagePlan.databaseName,
+      tableCompatibility: "current_only",
     });
 
     await resetLocalStorageRuntime();
@@ -182,6 +183,7 @@ export async function importDatabasePackageFromFileUri(input: {
     await validateDatabasePackageDirectoryOrThrow({
       databaseDirectory: activePackageRoot,
       databaseName: storagePlan.databaseName,
+      tableCompatibility: "current_or_legacy",
     });
     await getSQLiteDatabase();
     console.info(
@@ -224,6 +226,7 @@ async function validateSourcePackageOrThrow(input: {
     return await validateDatabasePackageDirectoryOrThrow({
       databaseDirectory: input.databaseDirectory,
       databaseName: input.databaseName,
+      tableCompatibility: "current_or_legacy",
     });
   } catch (error) {
     const wrappedError = wrapSourceAccessError(

@@ -4,19 +4,25 @@ import { Text } from "react-native";
 import { LaunchScreen } from "../../src/features/app-shell/launch-screen";
 import { AppIcon } from "../../src/components/app-icon";
 import { useAppShell } from "../../src/features/app-shell/provider";
+import { resolveProtectedRouteRedirect } from "../../src/features/app-shell/storage-entry";
 import { TabBarIcon } from "../../src/features/navigation/tab-bar-icon";
 import { buildTabScreenSpecs } from "../../src/features/navigation/tab-config";
 
 export default function TabLayout() {
-  const { copy, isHydrated, session } = useAppShell();
+  const { copy, isHydrated, session, storageGateState } = useAppShell();
   const tabScreens = buildTabScreenSpecs(copy);
+  const redirectHref = resolveProtectedRouteRedirect({
+    isHydrated,
+    session: Boolean(session),
+    storageGateState,
+  });
 
-  if (!isHydrated) {
+  if (!isHydrated || storageGateState.kind === "checking") {
     return <LaunchScreen />;
   }
 
-  if (!session) {
-    return <Redirect href="/login" />;
+  if (redirectHref) {
+    return <Redirect href={redirectHref} />;
   }
 
   return (

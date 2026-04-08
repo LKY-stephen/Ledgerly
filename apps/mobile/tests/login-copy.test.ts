@@ -24,4 +24,17 @@ describe("login copy", () => {
     expect(englishSettings.databaseImportAction.length).toBeGreaterThan(0);
     expect(chineseSettings.databaseImportAction.length).toBeGreaterThan(0);
   });
+
+  it("keeps startup storage-setup copy aligned across locales", () => {
+    const englishStorageSetup = appCopy.en.storageSetup;
+    const chineseStorageSetup = appCopy["zh-CN"].storageSetup;
+
+    expect(Object.keys(englishStorageSetup).sort()).toEqual(
+      Object.keys(chineseStorageSetup).sort(),
+    );
+    expect(englishStorageSetup.importAction.length).toBeGreaterThan(0);
+    expect(englishStorageSetup.initializeAction.length).toBeGreaterThan(0);
+    expect(chineseStorageSetup.importAction.length).toBeGreaterThan(0);
+    expect(chineseStorageSetup.initializeAction.length).toBeGreaterThan(0);
+  });
 });

@@ -51,6 +51,7 @@ export function ProfileScreen() {
     openAiApiKey,
     palette,
     parseApiBaseUrl,
+    refreshStorageGateState,
     session,
     sessionDisplayName,
     setStorageSuspended,
@@ -255,7 +256,6 @@ export function ProfileScreen() {
                 setIsImportingDatabase(true);
                 setDatabaseImportMessage(null);
                 setStorageSuspended(true);
-                let importSucceeded = false;
 
                 try {
                   await new Promise((resolve) => {
@@ -267,7 +267,8 @@ export function ProfileScreen() {
                     return;
                   }
 
-                  importSucceeded = true;
+                  bumpStorageRevision();
+                  await refreshStorageGateState();
                   setDatabaseImportMessage({
                     tone: "success",
                     value: `${copy.meScreen.databaseImportSuccess} ${result.importedDatabaseName} · ${result.checkedPathCount} path(s) checked.`,
@@ -281,11 +282,6 @@ export function ProfileScreen() {
                   });
                 } finally {
                   setStorageSuspended(false);
-
-                  if (importSucceeded) {
-                    bumpStorageRevision();
-                  }
-
                   setIsImportingDatabase(false);
                 }
               }}

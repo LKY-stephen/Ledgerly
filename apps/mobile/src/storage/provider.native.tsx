@@ -7,10 +7,10 @@ import { initializeActivePackageDatabase } from "./active-database.native";
 import { getActiveDatabaseDirectory } from "./package-environment.native";
 
 export function LocalStorageProvider({ children }: PropsWithChildren) {
-  const { isStorageSuspended, storageRevision } = useAppShell();
+  const { isStorageSuspended, storageGateState, storageRevision } = useAppShell();
   const storagePlan = getLocalStorageBootstrapPlan();
 
-  if (isStorageSuspended) {
+  if (isStorageSuspended || storageGateState.kind !== "ready") {
     return null;
   }
 

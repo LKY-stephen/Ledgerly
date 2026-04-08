@@ -1,8 +1,13 @@
 import { getLocales } from "expo-localization";
 import { createContext, useContext, useEffect, useState, type PropsWithChildren } from "react";
-import { useColorScheme } from "react-native";
+import { Platform, useColorScheme } from "react-native";
 import { surfaceThemes } from "@creator-cfo/ui";
 
+import {
+  initializeEmptyStorageFromSetup,
+  inspectStorageGateState,
+  type StorageGateState,
+} from "../../storage/startup";
 import { getAppCopy } from "./copy";
 import {
   createAppleSession,
@@ -30,6 +35,7 @@ interface AppShellContextValue {
   bumpStorageRevision: () => void;
   continueAsGuest: () => Promise<void>;
   copy: ReturnType<typeof getAppCopy>;
+  initializeEmptyStorage: () => Promise<void>;
   isStorageSuspended: boolean;
   isHydrated: boolean;
   localePreference: LocalePreference;
@@ -38,6 +44,7 @@ interface AppShellContextValue {
   parseApiBaseUrl: string;
   session: AppSession | null;
   sessionDisplayName: string;
+  refreshStorageGateState: () => Promise<StorageGateState>;
   setStorageSuspended: (value: boolean) => void;
   setLocalePreference: (value: LocalePreference) => Promise<void>;
   setOpenAiApiKey: (value: string) => Promise<void>;
@@ -50,6 +57,7 @@ interface AppShellContextValue {
     givenName?: string | null;
     user: string;
   }) => Promise<void>;
+  storageGateState: StorageGateState | { kind: "checking" };
   storageRevision: number;
   themePreference: ThemePreference;
 }
@@ -71,6 +79,9 @@ export function AppShellProvider({ children }: PropsWithChildren) {
   const [isHydrated, setIsHydrated] = useState(false);
   const [isStorageSuspended, setStorageSuspended] = useState(false);
   const [storageRevision, setStorageRevision] = useState(0);
+  const [storageGateState, setStorageGateState] = useState<StorageGateState | { kind: "checking" }>(
+    Platform.OS === "web" ? { kind: "ready" } : { kind: "checking" },
+  );
 
   useEffect(() => {
     let isMounted = true;
@@ -92,10 +103,31 @@ export function AppShellProvider({ children }: PropsWithChildren) {
     };
   }, []);
 
+  useEffect(() => {
+    if (!isHydrated) {
+      return;
+    }
+
+    void refreshStorageGateState();
+  }, [isHydrated]);
+
   const resolvedTheme = resolveThemeName(state.themePreference, systemTheme);
   const resolvedLocale = resolveLocale(state.localePreference, deviceLanguageTag);
   const palette = surfaceThemes[resolvedTheme];
   const copy = getAppCopy(resolvedLocale);
+
+  const refreshStorageGateState = async (): Promise<StorageGateState> => {
+    if (Platform.OS === "web") {
+      const readyState: StorageGateState = { kind: "ready" };
+      setStorageGateState(readyState);
+      return readyState;
+    }
+
+    setStorageGateState({ kind: "checking" });
+    const nextState = await inspectStorageGateState();
+    setStorageGateState(nextState);
+    return nextState;
+  };
 
   const setThemePreference = async (value: ThemePreference) => {
     setState((current) => ({ ...current, themePreference: value }));
@@ -132,6 +164,12 @@ export function AppShellProvider({ children }: PropsWithChildren) {
       await setSession(createGuestSession());
     },
     copy,
+    initializeEmptyStorage: async () => {
+      setStorageGateState({ kind: "checking" });
+      await initializeEmptyStorageFromSetup();
+      setStorageRevision((current) => current + 1);
+      await refreshStorageGateState();
+    },
     isStorageSuspended,
     isHydrated,
     localePreference: state.localePreference,
@@ -140,6 +178,7 @@ export function AppShellProvider({ children }: PropsWithChildren) {
     parseApiBaseUrl: state.parseApiBaseUrl,
     session: state.session,
     sessionDisplayName: getSessionDisplayName(state.session),
+    refreshStorageGateState,
     setStorageSuspended,
     setLocalePreference,
     setOpenAiApiKey,
@@ -151,6 +190,7 @@ export function AppShellProvider({ children }: PropsWithChildren) {
     signInWithApple: async (input) => {
       await setSession(createAppleSession(input));
     },
+    storageGateState,
     storageRevision,
     themePreference: state.themePreference,
   };

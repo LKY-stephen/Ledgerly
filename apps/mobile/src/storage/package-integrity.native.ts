@@ -13,6 +13,7 @@ import {
 export async function validateDatabasePackageDirectoryOrThrow(input: {
   databaseDirectory: string;
   databaseName: string;
+  tableCompatibility?: "current_only" | "current_or_legacy";
 }): Promise<DatabasePackageValidationResult> {
   const database = await openDatabaseAsync(input.databaseName, { useNewConnection: true }, input.databaseDirectory);
 
@@ -24,6 +25,7 @@ export async function validateDatabasePackageDirectoryOrThrow(input: {
         const info = await FileSystem.getInfoAsync(absolutePath);
         return info.exists;
       },
+      tableCompatibility: input.tableCompatibility,
     });
   } finally {
     await database.closeAsync().catch(() => undefined);

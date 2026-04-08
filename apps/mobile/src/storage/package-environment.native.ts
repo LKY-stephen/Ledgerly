@@ -47,3 +47,8 @@ export function getPackageBackupDirectory(): string {
   const storagePlan = getLocalStorageBootstrapPlan();
   return joinPathSegments(getDocumentDirectoryOrThrow(), `${storagePlan.fileVaultRoot}-backup`);
 }
+
+export function getPackageMigrationBackupDirectory(): string {
+  const storagePlan = getLocalStorageBootstrapPlan();
+  return joinPathSegments(getDocumentDirectoryOrThrow(), `${storagePlan.fileVaultRoot}-migration-backup`);
+}
