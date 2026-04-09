@@ -2,9 +2,11 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { buildDeviceStateStorageKey } from "@creator-cfo/storage";
 
 import { coerceLocalePreference, coerceThemePreference, parseSession } from "./model";
-import type { AppSession, PersistedAppState, ProfileInfo } from "./types";
+import type { AiProvider, AppSession, PersistedAppState, ProfileInfo } from "./types";
 
 const STORAGE_KEYS = {
+  aiProvider: buildDeviceStateStorageKey("ai_provider"),
+  geminiApiKey: buildDeviceStateStorageKey("gemini_api_key"),
   localePreference: buildDeviceStateStorageKey("locale_preference"),
   openAiApiKey: buildDeviceStateStorageKey("openai_api_key"),
   profileEmail: buildDeviceStateStorageKey("profile_email"),
@@ -24,7 +26,11 @@ export async function loadPersistedAppState(): Promise<PersistedAppState> {
   const entries = await AsyncStorage.multiGet(Object.values(STORAGE_KEYS));
   const values = Object.fromEntries(entries);
 
+  const rawAiProvider = String(values[STORAGE_KEYS.aiProvider] ?? "").trim();
+
   return {
+    aiProvider: rawAiProvider === "gemini" ? "gemini" : "openai",
+    geminiApiKey: String(values[STORAGE_KEYS.geminiApiKey] ?? "").trim(),
     localePreference: coerceLocalePreference(values[STORAGE_KEYS.localePreference]),
     openAiApiKey: String(values[STORAGE_KEYS.openAiApiKey] ?? "").trim(),
     profileInfo: {
@@ -52,6 +58,21 @@ export async function persistSession(session: AppSession | null) {
   }
 
   await AsyncStorage.removeItem(STORAGE_KEYS.session);
+}
+
+export async function persistAiProvider(value: AiProvider) {
+  await AsyncStorage.setItem(STORAGE_KEYS.aiProvider, value);
+}
+
+export async function persistGeminiApiKey(value: string) {
+  const normalized = value.trim();
+
+  if (normalized) {
+    await AsyncStorage.setItem(STORAGE_KEYS.geminiApiKey, normalized);
+    return;
+  }
+
+  await AsyncStorage.removeItem(STORAGE_KEYS.geminiApiKey);
 }
 
 export async function persistOpenAiApiKey(value: string) {
@@ -88,6 +109,15 @@ export async function loadPersistedProfileInfo(): Promise<ProfileInfo> {
     name: String(values[STORAGE_KEYS.profileName] ?? "").trim(),
     phone: String(values[STORAGE_KEYS.profilePhone] ?? "").trim(),
   };
+}
+
+export async function loadPersistedAiProvider(): Promise<AiProvider> {
+  const raw = String((await AsyncStorage.getItem(STORAGE_KEYS.aiProvider)) ?? "").trim();
+  return raw === "gemini" ? "gemini" : "openai";
+}
+
+export async function loadPersistedGeminiApiKey(): Promise<string> {
+  return String((await AsyncStorage.getItem(STORAGE_KEYS.geminiApiKey)) ?? "").trim();
 }
 
 export async function loadPersistedOpenAiApiKey(): Promise<string> {

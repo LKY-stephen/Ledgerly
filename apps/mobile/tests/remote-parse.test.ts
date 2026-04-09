@@ -1,5 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("../src/features/app-shell/storage", () => ({
+  loadPersistedAiProvider: vi.fn(async () => "openai"),
+  loadPersistedGeminiApiKey: vi.fn(async () => ""),
+  loadPersistedOpenAiApiKey: vi.fn(async () => ""),
+}));
+
 import {
   parseFileWithOpenAiFromBlob,
 } from "../src/features/ledger/remote-parse";

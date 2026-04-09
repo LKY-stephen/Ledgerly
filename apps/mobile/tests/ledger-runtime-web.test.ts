@@ -8,6 +8,12 @@ vi.mock("expo-image-picker", () => ({
   launchImageLibraryAsync: vi.fn(),
 }));
 
+vi.mock("../src/features/app-shell/storage", () => ({
+  loadPersistedAiProvider: vi.fn(async () => "openai"),
+  loadPersistedGeminiApiKey: vi.fn(async () => ""),
+  loadPersistedOpenAiApiKey: vi.fn(async () => ""),
+}));
+
 import * as ImagePicker from "expo-image-picker";
 
 import {

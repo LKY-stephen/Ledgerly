@@ -1,7 +1,7 @@
 import * as DocumentPicker from "expo-document-picker";
 import * as ImagePicker from "expo-image-picker";
 
-import type { JsonValue, PlannerSummary } from "@creator-cfo/schemas";
+import type { EvidenceParserKind, JsonValue, PlannerSummary } from "@creator-cfo/schemas";
 
 import { parseFileWithOpenAiFromBlob, planEvidenceDbUpdates, type ParseResult } from "./remote-parse";
 import {
@@ -96,6 +96,7 @@ export async function parseFile(
       rawText: "",
       model: "",
       error: `Unable to read selected file: ${response.status}`,
+      parserKind: "openai_gpt",
     };
   }
 
@@ -135,6 +136,7 @@ export async function runPlanner(input: {
   fileName: string;
   mimeType: string | null;
   model: string;
+  parserKind?: string;
   profileInfo?: { name: string; email: string; phone: string };
   rawJson: unknown;
   rawText: string;
@@ -157,10 +159,10 @@ export async function runPlanner(input: {
   const extractedData = buildExtractedData({
     fallbackDate: now.slice(0, 10),
     fileName: input.fileName,
-    parser: "openai_gpt",
+    parser: (input.parserKind ?? "openai_gpt") as EvidenceParserKind,
     rawLines: input.rawText.split("\n").filter((l) => l.trim()),
     rawText: input.rawText,
-    sourceLabel: "openai_upload",
+    sourceLabel: input.parserKind === "gemini" ? "gemini_upload" : "openai_upload",
   });
   extractedData.model = input.model;
   extractedData.originData = input.rawJson as JsonValue;

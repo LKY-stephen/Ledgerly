@@ -123,7 +123,7 @@ Expected write-policy rules:
 
 Expected `extracted_data` JSON fields:
 
-- `parser`: `openai_gpt` or `rule_fallback`
+- `parser`: `openai_gpt`, `gemini`, or `rule_fallback`
 - `model`: parsed model identifier when remote GPT parsing succeeds
 - `sourceLabel`: human-readable parse source
 - `originData`: validated parser DTO snapshot returned by the parser request and cached for testing plus review visibility
@@ -155,14 +155,16 @@ Compatibility notes:
 
 ## Device State
 
-The device-state contract is now at version `4`. In addition to theme, locale, and session, the app persists:
+The device-state contract is now at version `5`. In addition to theme, locale, and session, the app persists:
 
 - `openai_api_key`: the user-provided OpenAI API key used only for outbound parse requests
+- `ai_provider`: the user's selected AI provider for document parsing and planning (`"openai"` or `"gemini"`, default `"openai"`)
+- `gemini_api_key`: the user-provided Gemini API key for direct Gemini parse requests
 - `profile_name`: profile name used as mapping source context
 - `profile_email`: profile email used as mapping source context
 - `profile_phone`: profile phone used as mapping source context
 
-The OpenAI base URL and model now come from the runtime env (`EXPO_PUBLIC_OPENAI_BASE_URL`, `EXPO_PUBLIC_OPENAI_MODEL`) rather than local device state.
+The OpenAI base URL and model now come from the runtime env (`EXPO_PUBLIC_OPENAI_BASE_URL`, `EXPO_PUBLIC_OPENAI_MODEL`) rather than local device state. Gemini base URL and model come from `EXPO_PUBLIC_GEMINI_BASE_URL` and `EXPO_PUBLIC_GEMINI_MODEL` respectively.
 
 ## Contract Source Of Truth
 

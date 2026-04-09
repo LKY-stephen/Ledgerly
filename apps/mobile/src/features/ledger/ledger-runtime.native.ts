@@ -3,7 +3,7 @@ import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system/legacy";
 import * as ImagePicker from "expo-image-picker";
 import { buildEvidenceUploadPath } from "@creator-cfo/storage";
-import type { EvidenceExtractedData } from "@creator-cfo/schemas";
+import type { EvidenceExtractedData, EvidenceParserKind } from "@creator-cfo/schemas";
 
 import {
   buildExtractedData,
@@ -274,6 +274,7 @@ export async function runPlanner(input: {
   fileName: string;
   mimeType: string | null;
   model: string;
+  parserKind?: string;
   profileInfo?: { name: string; email: string; phone: string };
   rawJson: unknown;
   rawText: string;
@@ -370,10 +371,10 @@ export async function runPlanner(input: {
     const extractedData = buildExtractedData({
       fallbackDate: now.slice(0, 10),
       fileName: input.fileName,
-      parser: "openai_gpt",
+      parser: (input.parserKind ?? "openai_gpt") as EvidenceParserKind,
       rawLines: input.rawText.split("\n").filter((l: string) => l.trim()),
       rawText: input.rawText,
-      sourceLabel: "openai_upload",
+      sourceLabel: input.parserKind === "gemini" ? "gemini_upload" : "openai_upload",
     });
     extractedData.model = input.model;
     extractedData.originData = input.rawJson as never;

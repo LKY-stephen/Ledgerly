@@ -12,7 +12,7 @@ export interface WorkflowPrinciple {
 export const evidenceParseStatuses = ["pending", "parsed", "failed"] as const;
 export type EvidenceParseStatus = (typeof evidenceParseStatuses)[number];
 
-export const evidenceParserKinds = ["openai_gpt", "rule_fallback"] as const;
+export const evidenceParserKinds = ["openai_gpt", "gemini", "rule_fallback"] as const;
 export type EvidenceParserKind = (typeof evidenceParserKinds)[number];
 
 export const parseSourcePlatforms = ["ios", "android", "web"] as const;
@@ -563,7 +563,7 @@ function normalizeDuplicateKinds(value: JsonValue | undefined): DuplicateKind[] 
 }
 
 function normalizeEvidenceParserKind(value: JsonValue | undefined, fallback: EvidenceParserKind): EvidenceParserKind {
-  return value === "openai_gpt" || value === "rule_fallback" ? value : fallback;
+  return value === "openai_gpt" || value === "gemini" || value === "rule_fallback" ? value : fallback;
 }
 
 function normalizeConfidence(value: JsonValue | undefined): ClassifiedParseField["confidence"] | null {

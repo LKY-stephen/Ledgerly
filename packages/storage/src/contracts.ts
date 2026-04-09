@@ -527,7 +527,7 @@ export const fileVaultContract = {
 export const deviceStateContract = {
   storageEngine: "AsyncStorage",
   namespace: "@creator-cfo/mobile",
-  version: 4,
+  version: 5,
   records: [
     {
       key: "theme_preference",
@@ -550,6 +550,18 @@ export const deviceStateContract = {
       key: "openai_api_key",
       summary:
         "Persist the user-provided OpenAI API key locally on-device for direct OpenAI parse requests.",
+      valueShape: "string",
+    },
+    {
+      key: "ai_provider",
+      summary:
+        "Persist the user's selected AI provider for document parsing and planning.",
+      valueShape: '"openai" | "gemini"',
+    },
+    {
+      key: "gemini_api_key",
+      summary:
+        "Persist the user-provided Gemini API key locally on-device for direct Gemini parse requests.",
       valueShape: "string",
     },
     {

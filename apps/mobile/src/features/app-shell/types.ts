@@ -1,3 +1,4 @@
+export type AiProvider = "openai" | "gemini";
 export type ThemePreference = "system" | "light" | "dark";
 export type LocalePreference = "system" | "en" | "zh-CN";
 export type ResolvedLocale = "en" | "zh-CN";
@@ -25,6 +26,8 @@ export interface AppleSession {
 export type AppSession = GuestSession | AppleSession;
 
 export interface PersistedAppState {
+  aiProvider: AiProvider;
+  geminiApiKey: string;
   localePreference: LocalePreference;
   openAiApiKey: string;
   profileInfo: ProfileInfo;

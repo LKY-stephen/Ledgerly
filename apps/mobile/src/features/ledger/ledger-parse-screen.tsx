@@ -18,6 +18,7 @@ export function LedgerParseScreen() {
     model?: string;
     parseError?: string;
     mimeType?: string;
+    parserKind?: string;
   }>();
 
   const fileName = params.fileName ?? "Unknown file";
@@ -26,9 +27,11 @@ export function LedgerParseScreen() {
   const model = params.model ?? "";
   const parseError = params.parseError ?? "";
   const mimeType = params.mimeType ?? null;
+  const parserKind = params.parserKind || undefined;
 
   const hasData = rawJson || rawText;
   const formattedJson = formatJson(rawJson);
+  const providerLabel = parserKind === "gemini" ? "Gemini" : "OpenAI";
 
   const parsedRawJson = rawJson ? tryParse(rawJson) : null;
 
@@ -46,6 +49,7 @@ export function LedgerParseScreen() {
     fileName,
     mimeType,
     model,
+    parserKind,
     profileInfo,
     rawJson: parsedRawJson,
     rawText,
@@ -80,7 +84,7 @@ export function LedgerParseScreen() {
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.heroBlock}>
           <Text style={[styles.eyebrow, { color: palette.inkMuted }]}>Parse result</Text>
-          <Text style={[styles.heroTitle, { color: palette.ink }]}>OpenAI Response</Text>
+          <Text style={[styles.heroTitle, { color: palette.ink }]}>{providerLabel} Response</Text>
         </View>
 
         <View style={[styles.card, { backgroundColor: palette.paper, borderColor: palette.border }]}>
@@ -117,7 +121,7 @@ export function LedgerParseScreen() {
           <View style={[styles.emptyState]}>
             <Text style={[styles.emptyTitle, { color: palette.ink }]}>No parse result</Text>
             <Text style={[styles.emptySub, { color: palette.inkMuted }]}>
-              Upload a file from the upload screen to see the OpenAI response here.
+              Upload a file from the upload screen to see the AI response here.
             </Text>
           </View>
         ) : null}

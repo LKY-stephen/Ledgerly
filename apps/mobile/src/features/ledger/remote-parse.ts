@@ -1,18 +1,20 @@
 import type { JsonValue, ReceiptPlannerPayload } from "@creator-cfo/schemas";
 
-import { loadPersistedOpenAiApiKey } from "../app-shell/storage";
+import { loadPersistedAiProvider, loadPersistedGeminiApiKey, loadPersistedOpenAiApiKey } from "../app-shell/storage";
+import type { AiProvider } from "../app-shell/types";
 
 export interface ParseResult {
   rawJson: unknown;
   rawText: string;
   model: string;
+  parserKind: string;
   error: string | null;
 }
 
 export class ParseEvidenceClientError extends Error {
   constructor(
     message: string,
-    public readonly code: "invalid_planner_response" | "missing_config" | "network" | "openai_error",
+    public readonly code: "gemini_error" | "invalid_planner_response" | "missing_config" | "network" | "openai_error",
   ) {
     super(message);
     this.name = "ParseEvidenceClientError";
@@ -26,10 +28,10 @@ export async function planEvidenceDbUpdates(input: {
   profileInfo?: { name: string; email: string; phone: string };
   rawJson: unknown;
 }): Promise<ReceiptPlannerPayload> {
-  const { normalizeReceiptPlannerPayload } = await import("@creator-cfo/schemas");
-  const { receiptDbUpdatePlannerSkill } = await import("./prompt-skills");
+  const { normalizeReceiptPlannerPayload } = require("@creator-cfo/schemas") as typeof import("@creator-cfo/schemas");
+  const { receiptDbUpdatePlannerSkill } = require("./prompt-skills") as typeof import("./prompt-skills");
 
-  const settings = await loadRequiredOpenAiSettings();
+  const aiProvider = await loadPersistedAiProvider();
 
   const exampleOutput = JSON.stringify({
     businessEvents: ["Receipt payment for subscription service"],
@@ -112,26 +114,7 @@ export async function planEvidenceDbUpdates(input: {
     sourceProfileInfo: hasProfileInfo ? input.profileInfo : null,
   });
 
-  const apiInput = [
-    {
-      content: [{ text: systemPrompt, type: "input_text" }],
-      role: "system",
-    },
-    {
-      content: [{ text: userPrompt, type: "input_text" }],
-      role: "user",
-    },
-  ];
-
-  const payload = await callOpenAi(settings, apiInput);
-  const outputText = extractOutputText(payload);
-
-  if (!outputText) {
-    throw new ParseEvidenceClientError(
-      `Planner returned no text. Keys: [${Object.keys(payload).join(", ")}]`,
-      "openai_error",
-    );
-  }
+  const outputText = await callAiText(aiProvider, systemPrompt, userPrompt);
 
   const parsed = tryParseStructuredOutput(outputText);
 
@@ -227,6 +210,17 @@ function buildFallbackPlannerPayload(
   };
 }
 
+interface GeminiSettings {
+  baseUrl: string;
+  geminiApiKey: string;
+  model: string;
+}
+
+interface GeminiPart {
+  inlineData?: { data: string; mimeType: string };
+  text?: string;
+}
+
 interface OpenAiSettings {
   baseUrl: string;
   model: string;
@@ -244,6 +238,8 @@ interface OpenAiFilePart {
 const openAiRequestTimeoutMs = 60_000;
 const defaultOpenAiBaseUrl = "https://api.openai.com/v1";
 const defaultOpenAiModel = "gpt-4o";
+const defaultGeminiBaseUrl = "https://generativelanguage.googleapis.com/v1beta";
+const defaultGeminiModel = "gemini-2.5-flash";
 
 export async function parseFileWithOpenAi(input: {
   fileName: string;
@@ -251,16 +247,24 @@ export async function parseFileWithOpenAi(input: {
   mimeType: string | null;
 }): Promise<ParseResult> {
   try {
-    const settings = await loadRequiredOpenAiSettings();
+    const aiProvider = await loadPersistedAiProvider();
     const mimeType = input.mimeType ?? inferMimeType(input.fileName);
     const base64 = await readNativeFileAsBase64(input.fileUri);
+
+    if (aiProvider === "gemini") {
+      return await callGeminiParseApi(base64, input.fileName, mimeType);
+    }
+
+    const settings = await loadRequiredOpenAiSettings();
     const filePart = createInputFilePart({ base64, fileName: input.fileName, mimeType });
-    return await callParseApi(settings, filePart, input.fileName, mimeType);
+    return await callOpenAiParseApi(settings, filePart, input.fileName, mimeType);
   } catch (error) {
+    const aiProvider = await loadPersistedAiProvider().catch(() => "openai" as AiProvider);
     return {
       rawJson: null,
       rawText: "",
       model: "",
+      parserKind: aiProvider === "gemini" ? "gemini" : "openai_gpt",
       error: error instanceof Error ? error.message : "Unknown parse error",
     };
   }
@@ -272,22 +276,30 @@ export async function parseFileWithOpenAiFromBlob(input: {
   mimeType: string | null;
 }): Promise<ParseResult> {
   try {
-    const settings = await loadRequiredOpenAiSettings();
+    const aiProvider = await loadPersistedAiProvider();
     const mimeType = input.mimeType ?? input.blob.type ?? inferMimeType(input.fileName);
     const base64 = await blobToBase64(input.blob);
+
+    if (aiProvider === "gemini") {
+      return await callGeminiParseApi(base64, input.fileName, mimeType);
+    }
+
+    const settings = await loadRequiredOpenAiSettings();
     const filePart = createInputFilePart({ base64, fileName: input.fileName, mimeType });
-    return await callParseApi(settings, filePart, input.fileName, mimeType);
+    return await callOpenAiParseApi(settings, filePart, input.fileName, mimeType);
   } catch (error) {
+    const aiProvider = await loadPersistedAiProvider().catch(() => "openai" as AiProvider);
     return {
       rawJson: null,
       rawText: "",
       model: "",
+      parserKind: aiProvider === "gemini" ? "gemini" : "openai_gpt",
       error: error instanceof Error ? error.message : "Unknown parse error",
     };
   }
 }
 
-async function callParseApi(
+async function callOpenAiParseApi(
   settings: OpenAiSettings,
   filePart: OpenAiFilePart,
   fileName: string,
@@ -317,13 +329,14 @@ async function callParseApi(
   ];
 
   const payload = await callOpenAi(settings, input);
-  const outputText = extractOutputText(payload);
+  const outputText = extractOpenAiOutputText(payload);
 
   if (!outputText) {
     return {
       rawJson: null,
       rawText: "",
       model: settings.model,
+      parserKind: "openai_gpt",
       error: `OpenAI returned no text. Keys: [${Object.keys(payload).join(", ")}]`,
     };
   }
@@ -334,7 +347,50 @@ async function callParseApi(
     rawJson: parsed,
     rawText: outputText,
     model: settings.model,
+    parserKind: "openai_gpt",
     error: parsed === null ? "OpenAI response is not valid JSON" : null,
+  };
+}
+
+async function callGeminiParseApi(
+  base64: string,
+  fileName: string,
+  mimeType: string,
+): Promise<ParseResult> {
+  const settings = await loadRequiredGeminiSettings();
+  const systemText = [
+    "You are a document parser. Extract ALL structured data from the uploaded file.",
+    "Return a single JSON object containing every piece of data you can find.",
+    "Do not return markdown, explanations, or code blocks — only raw JSON.",
+  ].join("\n");
+
+  const userText = `filename: ${fileName}\nmimeType: ${mimeType}`;
+
+  const payload = await callGemini(settings, systemText, [
+    { text: userText },
+    { inlineData: { data: base64, mimeType } },
+  ]);
+
+  const outputText = extractGeminiOutputText(payload);
+
+  if (!outputText) {
+    return {
+      rawJson: null,
+      rawText: "",
+      model: settings.model,
+      parserKind: "gemini",
+      error: `Gemini returned no text. Keys: [${Object.keys(payload).join(", ")}]`,
+    };
+  }
+
+  const parsed = tryParseStructuredOutput(outputText);
+
+  return {
+    rawJson: parsed,
+    rawText: outputText,
+    model: settings.model,
+    parserKind: "gemini",
+    error: parsed === null ? "Gemini response is not valid JSON" : null,
   };
 }
 
@@ -343,7 +399,10 @@ async function loadRequiredOpenAiSettings(): Promise<OpenAiSettings> {
   const openAiApiKey = persistedApiKey || (process.env.EXPO_PUBLIC_OPENAI_API_KEY ?? "").trim();
 
   if (!openAiApiKey) {
-    throw new Error("Missing OpenAI API key. Add it from Settings or EXPO_PUBLIC_OPENAI_API_KEY.");
+    throw new ParseEvidenceClientError(
+      "Missing OpenAI API key. Add it from Settings or EXPO_PUBLIC_OPENAI_API_KEY.",
+      "missing_config",
+    );
   }
 
   return {
@@ -381,6 +440,114 @@ async function resolveOpenAiModel(): Promise<string> {
   } catch {
     return defaultOpenAiModel;
   }
+}
+
+async function callAiText(
+  aiProvider: AiProvider,
+  systemPrompt: string,
+  userPrompt: string,
+): Promise<string> {
+  if (aiProvider === "gemini") {
+    const settings = await loadRequiredGeminiSettings();
+    const payload = await callGemini(settings, systemPrompt, [{ text: userPrompt }]);
+    const text = extractGeminiOutputText(payload);
+    if (!text) {
+      throw new ParseEvidenceClientError(
+        `Gemini planner returned no text. Keys: [${Object.keys(payload).join(", ")}]`,
+        "gemini_error",
+      );
+    }
+    return text;
+  }
+
+  const settings = await loadRequiredOpenAiSettings();
+  const apiInput = [
+    { content: [{ text: systemPrompt, type: "input_text" }], role: "system" },
+    { content: [{ text: userPrompt, type: "input_text" }], role: "user" },
+  ];
+  const payload = await callOpenAi(settings, apiInput);
+  const text = extractOpenAiOutputText(payload);
+  if (!text) {
+    throw new ParseEvidenceClientError(
+      `Planner returned no text. Keys: [${Object.keys(payload).join(", ")}]`,
+      "openai_error",
+    );
+  }
+  return text;
+}
+
+async function loadRequiredGeminiSettings(): Promise<GeminiSettings> {
+  const persistedApiKey = await loadPersistedGeminiApiKey().catch(() => "");
+  const geminiApiKey = persistedApiKey || (process.env.EXPO_PUBLIC_GEMINI_API_KEY ?? "").trim();
+
+  if (!geminiApiKey) {
+    throw new ParseEvidenceClientError(
+      "Missing Gemini API key. Add it from Settings or EXPO_PUBLIC_GEMINI_API_KEY.",
+      "missing_config",
+    );
+  }
+
+  const baseUrl = normalizeBaseUrl(
+    (process.env.EXPO_PUBLIC_GEMINI_BASE_URL ?? "").trim() || defaultGeminiBaseUrl,
+  );
+  const model = (process.env.EXPO_PUBLIC_GEMINI_MODEL ?? "").trim() || defaultGeminiModel;
+
+  return { baseUrl, geminiApiKey, model };
+}
+
+async function callGemini(
+  settings: GeminiSettings,
+  systemText: string,
+  userParts: GeminiPart[],
+): Promise<Record<string, unknown>> {
+  const controller = typeof AbortController === "function" ? new AbortController() : null;
+  const timeoutId = setTimeout(() => controller?.abort(), openAiRequestTimeoutMs);
+
+  try {
+    const url = `${settings.baseUrl}/models/${settings.model}:generateContent?key=${settings.geminiApiKey}`;
+    const response = await fetch(url, {
+      body: JSON.stringify({
+        contents: [{ parts: userParts, role: "user" }],
+        generationConfig: { maxOutputTokens: 4000 },
+        systemInstruction: { parts: [{ text: systemText }] },
+      }),
+      cache: "no-store",
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+      signal: controller?.signal,
+    });
+
+    const payload = await response.json() as Record<string, unknown>;
+
+    if (!response.ok) {
+      const errDetail = payload?.error as { message?: string } | undefined;
+      throw new ParseEvidenceClientError(
+        errDetail?.message ?? `Gemini request failed: ${response.status}`,
+        "gemini_error",
+      );
+    }
+
+    return payload;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+function extractGeminiOutputText(payload: Record<string, unknown>): string {
+  const candidates = Array.isArray(payload.candidates) ? payload.candidates : [];
+  const parts: string[] = [];
+
+  for (const candidate of candidates) {
+    const content = candidate?.content as { parts?: Array<{ text?: string }> } | undefined;
+    if (!content?.parts) continue;
+    for (const part of content.parts) {
+      if (typeof part.text === "string") {
+        parts.push(part.text);
+      }
+    }
+  }
+
+  return parts.join("\n").trim();
 }
 
 async function callOpenAi(settings: OpenAiSettings, input: unknown): Promise<Record<string, unknown>> {
@@ -438,7 +605,7 @@ function createInputFilePart(input: {
   };
 }
 
-function extractOutputText(payload: Record<string, unknown>): string {
+function extractOpenAiOutputText(payload: Record<string, unknown>): string {
   if (typeof payload.output_text === "string" && payload.output_text.trim()) {
     return payload.output_text;
   }
@@ -490,7 +657,12 @@ async function blobToBase64(blob: Blob): Promise<string> {
 }
 
 async function readNativeFileAsBase64(uri: string): Promise<string> {
-  const fileSystemModule = await import("expo-file-system/legacy");
+  // Use require() instead of dynamic import() to avoid Metro code-splitting
+  // which fails on native with "global location variable is not defined".
+  const fileSystemModule = require("expo-file-system/legacy") as {
+    EncodingType: { Base64: string };
+    readAsStringAsync: (uri: string, options: { encoding: string }) => Promise<string>;
+  };
   return fileSystemModule.readAsStringAsync(uri, {
     encoding: fileSystemModule.EncodingType.Base64,
   });
@@ -513,7 +685,9 @@ function bytesToBase64(bytes: Uint8Array): string {
 }
 
 async function readExpoExtra(): Promise<{ openAiBaseUrl?: unknown; openAiModel?: unknown } | null> {
-  const constantsModule = await import("expo-constants");
+  // Use require() instead of dynamic import() to avoid Metro code-splitting
+  // which fails on native with "global location variable is not defined".
+  const constantsModule = require("expo-constants") as { default: Record<string, unknown> };
   const constants = constantsModule.default;
   const expoConfigExtra = constants?.expoConfig?.extra;
 

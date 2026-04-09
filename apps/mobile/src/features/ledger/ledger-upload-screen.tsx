@@ -15,10 +15,11 @@ import { useAppShell } from "../app-shell/provider";
 
 export function LedgerUploadScreen() {
   const router = useRouter();
-  const { copy, palette } = useAppShell();
+  const { aiProvider, copy, palette } = useAppShell();
   const [error, setError] = useState<string | null>(null);
   const [isBusy, setIsBusy] = useState(false);
-  const [status, setStatus] = useState("Select files or photos to upload for OpenAI parsing.");
+  const providerLabel = aiProvider === "gemini" ? "Gemini" : "OpenAI";
+  const [status, setStatus] = useState(`Select files or photos to upload for ${providerLabel} parsing.`);
 
   async function handleImport(source: "documents" | "photos"): Promise<void> {
     setIsBusy(true);
@@ -47,6 +48,7 @@ export function LedgerUploadScreen() {
           rawText: result.rawText,
           model: result.model,
           parseError: result.error ?? "",
+          parserKind: result.parserKind ?? "",
         },
         pathname: "/ledger/parse",
       });
@@ -84,7 +86,7 @@ export function LedgerUploadScreen() {
           <Text style={[styles.eyebrow, { color: palette.inkMuted }]}>Upload center</Text>
           <Text style={[styles.heroTitle, { color: palette.ink }]}>{copy.ledger.upload.title}</Text>
           <Text style={[styles.heroSummary, { color: palette.inkMuted }]}>
-            Upload receipts, PDFs, or photos. The file is sent to OpenAI for parsing and the raw
+            Upload receipts, PDFs, or photos. The file is sent to {providerLabel} for parsing and the raw
             JSON result is displayed on the next screen.
           </Text>
         </View>
@@ -104,7 +106,7 @@ export function LedgerUploadScreen() {
           </View>
           <Text style={[styles.dropTitle, { color: palette.ink }]}>Upload & Parse</Text>
           <Text style={[styles.dropSummary, { color: palette.inkMuted }]}>
-            Select a file, send it to OpenAI, and view the raw JSON response.
+            Select a file, send it to {providerLabel}, and view the raw JSON response.
           </Text>
 
           <View style={styles.buttonStack}>
