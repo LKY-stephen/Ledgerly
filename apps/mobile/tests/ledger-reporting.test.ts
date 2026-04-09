@@ -30,7 +30,7 @@ interface FakeLedgerRecordRow {
 }
 
 describe("ledger reporting", () => {
-  it("loads business-only reporting rows for the selected range and excludes personal spending", async () => {
+  it("keeps business P&L slice-based while business balance sheet carries opening balance plus year-to-date business profit", async () => {
     const database = createFakeLedgerDatabase([
       {
         amountCents: 120_000,
@@ -134,9 +134,20 @@ describe("ledger reporting", () => {
     expect(snapshot.profitAndLoss.netIncomeLabel).toBe("$950.00");
     expect(snapshot.profitAndLoss.expenseRows[0]?.label).toBe("Adobe");
     expect(snapshot.balanceSheet.metricCards.map((card) => card.value)).toEqual([
-      "$950.00",
+      "$1,750.00",
       "$0.00",
     ]);
+    expect(snapshot.balanceSheet.carryForwardRows.map((row) => row.amount)).toEqual([
+      "$0.00",
+      "$1,750.00",
+      "$1,750.00",
+    ]);
+    expect(snapshot.balanceSheet.equationSummary).toBe(
+      "Opening $0.00 + business movement $1,750.00 = closing business asset $1,750.00",
+    );
+    expect(snapshot.balanceSheet.netPositionLabel).toBe(
+      "Closing business asset as of the selected period end before current-year personal-spending deductions.",
+    );
     expect(snapshot.yearOptions.map((option) => option.id)).toEqual(["2026"]);
     expect(snapshot.segmentOptions.map((option) => option.id)).toEqual([
       "full-year",
@@ -148,7 +159,7 @@ describe("ledger reporting", () => {
     expect(snapshot.selectedScope).toBe("business");
   });
 
-  it("loads personal spending separately when the ledger scope switches to personal", async () => {
+  it("keeps business and personal closing assets aligned when current-year personal spending is zero", async () => {
     const database = createFakeLedgerDatabase([
       {
         amountCents: 120_000,
@@ -167,6 +178,111 @@ describe("ledger reporting", () => {
         taxLineCode: "line1",
       },
       {
+        amountCents: 25_000,
+        businessUseBps: 10_000,
+        createdAt: "2026-04-01T12:00:00Z",
+        currency: "USD",
+        description: "Editing subscription",
+        entityId: "entity-main",
+        memo: null,
+        occurredOn: "2026-04-01",
+        recordId: "record-expense-april",
+        recordKind: "expense",
+        recordStatus: "reconciled",
+        sourceLabel: "Creator CFO",
+        targetLabel: "Adobe",
+        taxLineCode: "line27a",
+      },
+      {
+        amountCents: 80_000,
+        businessUseBps: 10_000,
+        createdAt: "2026-03-20T12:00:00Z",
+        currency: "USD",
+        description: "March consulting",
+        entityId: "entity-main",
+        memo: null,
+        occurredOn: "2026-03-20",
+        recordId: "record-income-march",
+        recordKind: "income",
+        recordStatus: "posted",
+        sourceLabel: "Launch Labs",
+        targetLabel: "Creator CFO",
+        taxLineCode: "line1",
+      },
+    ]);
+
+    const businessSnapshot = await loadLedgerSnapshot(database, {
+      now: "2026-04-03",
+      preferredPeriodId: buildLedgerPeriodId(2026, "m04"),
+    });
+    const personalSnapshot = await loadLedgerSnapshot(database, {
+      now: "2026-04-03",
+      preferredPeriodId: buildLedgerPeriodId(2026, "m04"),
+      scopeId: "personal",
+    });
+
+    expect(businessSnapshot.balanceSheet.metricCards.map((card) => card.value)).toEqual([
+      "$1,750.00",
+      "$0.00",
+    ]);
+    expect(personalSnapshot.balanceSheet.metricCards.map((card) => card.value)).toEqual([
+      "$1,750.00",
+      "$0.00",
+    ]);
+    expect(businessSnapshot.balanceSheet.carryForwardRows.map((row) => row.amount)).toEqual([
+      "$0.00",
+      "$1,750.00",
+      "$1,750.00",
+    ]);
+    expect(personalSnapshot.balanceSheet.carryForwardRows.map((row) => row.amount)).toEqual([
+      "$0.00",
+      "$1,750.00",
+      "$0.00",
+      "$1,750.00",
+    ]);
+    expect(personalSnapshot.generalLedger.entries).toEqual([]);
+    expect(personalSnapshot.profitAndLoss.metricCards.map((card) => card.value)).toEqual([
+      "$950.00",
+      "$0.00",
+    ]);
+    expect(personalSnapshot.profitAndLoss.netIncomeLabel).toBe("$950.00");
+  });
+
+  it("separates business and personal closing asset totals when current-year personal spending exists", async () => {
+    const database = createFakeLedgerDatabase([
+      {
+        amountCents: 120_000,
+        businessUseBps: 10_000,
+        createdAt: "2026-04-02T10:00:00Z",
+        currency: "USD",
+        description: "Brand sponsorship",
+        entityId: "entity-main",
+        memo: null,
+        occurredOn: "2026-04-02",
+        recordId: "record-income-april",
+        recordKind: "income",
+        recordStatus: "posted",
+        sourceLabel: "TechDaily",
+        targetLabel: "Creator CFO",
+        taxLineCode: "line1",
+      },
+      {
+        amountCents: 25_000,
+        businessUseBps: 10_000,
+        createdAt: "2026-04-01T12:00:00Z",
+        currency: "USD",
+        description: "Editing subscription",
+        entityId: "entity-main",
+        memo: null,
+        occurredOn: "2026-04-01",
+        recordId: "record-expense-april",
+        recordKind: "expense",
+        recordStatus: "reconciled",
+        sourceLabel: "Creator CFO",
+        targetLabel: "Adobe",
+        taxLineCode: "line27a",
+      },
+      {
         amountCents: 6_000,
         businessUseBps: 2_500,
         createdAt: "2026-04-01T13:00:00Z",
@@ -182,30 +298,379 @@ describe("ledger reporting", () => {
         targetLabel: "Cafe",
         taxLineCode: null,
       },
+      {
+        amountCents: 3_000,
+        businessUseBps: 10_000,
+        createdAt: "2026-03-14T13:00:00Z",
+        currency: "USD",
+        description: "Personal snack",
+        entityId: "entity-main",
+        memo: null,
+        occurredOn: "2026-03-14",
+        recordId: "record-personal-march",
+        recordKind: "personal_spending",
+        recordStatus: "posted",
+        sourceLabel: "Creator CFO",
+        targetLabel: "Cafe",
+        taxLineCode: null,
+      },
+      {
+        amountCents: 80_000,
+        businessUseBps: 10_000,
+        createdAt: "2026-03-20T12:00:00Z",
+        currency: "USD",
+        description: "March consulting",
+        entityId: "entity-main",
+        memo: null,
+        occurredOn: "2026-03-20",
+        recordId: "record-income-march",
+        recordKind: "income",
+        recordStatus: "posted",
+        sourceLabel: "Launch Labs",
+        targetLabel: "Creator CFO",
+        taxLineCode: "line1",
+      },
     ]);
 
-    const snapshot = await loadLedgerSnapshot(database, {
+    const businessSnapshot = await loadLedgerSnapshot(database, {
+      now: "2026-04-03",
+      preferredPeriodId: buildLedgerPeriodId(2026, "m04"),
+    });
+    const personalSnapshot = await loadLedgerSnapshot(database, {
       now: "2026-04-03",
       preferredPeriodId: buildLedgerPeriodId(2026, "m04"),
       scopeId: "personal",
     });
 
-    expect(snapshot.selectedScope).toBe("personal");
-    expect(snapshot.generalLedger.entries).toHaveLength(1);
-    expect(snapshot.generalLedger.entries[0]?.title).toBe("Personal lunch");
-    expect(snapshot.generalLedger.entries[0]?.kindLabel).toBe("Personal");
-    expect(snapshot.generalLedger.metricCards.map((card) => card.value)).toEqual([
+    expect(businessSnapshot.balanceSheet.metricCards.map((card) => card.value)).toEqual([
+      "$1,750.00",
+      "$0.00",
+    ]);
+    expect(businessSnapshot.balanceSheet.carryForwardRows.map((row) => row.amount)).toEqual([
+      "$0.00",
+      "$1,750.00",
+      "$1,750.00",
+    ]);
+    expect(personalSnapshot.balanceSheet.metricCards.map((card) => card.value)).toEqual([
+      "$1,660.00",
+      "$0.00",
+    ]);
+    expect(personalSnapshot.balanceSheet.carryForwardRows.map((row) => row.amount)).toEqual([
+      "$0.00",
+      "$1,750.00",
+      "-$90.00",
+      "$1,660.00",
+    ]);
+    expect(personalSnapshot.selectedScope).toBe("personal");
+    expect(personalSnapshot.generalLedger.entries).toHaveLength(1);
+    expect(personalSnapshot.generalLedger.entries[0]?.title).toBe("Personal lunch");
+    expect(personalSnapshot.generalLedger.entries[0]?.kindLabel).toBe("Personal");
+    expect(personalSnapshot.generalLedger.metricCards.map((card) => card.value)).toEqual([
       "$60.00",
       "1",
     ]);
-    expect(snapshot.profitAndLoss.metricCards.map((card) => card.value)).toEqual([
-      "$0.00",
+    expect(personalSnapshot.profitAndLoss.metricCards.map((card) => card.value)).toEqual([
+      "$950.00",
       "$60.00",
     ]);
-    expect(snapshot.balanceSheet.metricCards.map((card) => card.value)).toEqual([
+    expect(personalSnapshot.profitAndLoss.netIncomeLabel).toBe("$890.00");
+    expect(personalSnapshot.balanceSheet.netPositionLabel).toContain(
+      "limited derived personal view rather than a full asset and debt statement",
+    );
+  });
+
+  it("carries prior business activity into a later business balance sheet without changing the later period slice", async () => {
+    const aprilOnlyRows: FakeLedgerRecordRow[] = [
+      {
+        amountCents: 120_000,
+        businessUseBps: 10_000,
+        createdAt: "2026-04-02T10:00:00Z",
+        currency: "USD",
+        description: "Brand sponsorship",
+        entityId: "entity-main",
+        memo: null,
+        occurredOn: "2026-04-02",
+        recordId: "record-income-april",
+        recordKind: "income",
+        recordStatus: "posted",
+        sourceLabel: "TechDaily",
+        targetLabel: "Creator CFO",
+        taxLineCode: "line1",
+      },
+      {
+        amountCents: 25_000,
+        businessUseBps: 10_000,
+        createdAt: "2026-04-01T12:00:00Z",
+        currency: "USD",
+        description: "Editing subscription",
+        entityId: "entity-main",
+        memo: null,
+        occurredOn: "2026-04-01",
+        recordId: "record-expense-april",
+        recordKind: "expense",
+        recordStatus: "reconciled",
+        sourceLabel: "Creator CFO",
+        targetLabel: "Adobe",
+        taxLineCode: "line27a",
+      },
+    ];
+    const withPriorActivityRows: FakeLedgerRecordRow[] = [
+      ...aprilOnlyRows,
+      {
+        amountCents: 80_000,
+        businessUseBps: 10_000,
+        createdAt: "2026-03-20T12:00:00Z",
+        currency: "USD",
+        description: "March consulting",
+        entityId: "entity-main",
+        memo: null,
+        occurredOn: "2026-03-20",
+        recordId: "record-income-march",
+        recordKind: "income",
+        recordStatus: "posted",
+        sourceLabel: "Launch Labs",
+        targetLabel: "Creator CFO",
+        taxLineCode: "line1",
+      },
+    ];
+
+    const snapshotWithoutPriorActivity = await loadLedgerSnapshot(
+      createFakeLedgerDatabase(aprilOnlyRows),
+      {
+        now: "2026-04-03",
+        preferredPeriodId: buildLedgerPeriodId(2026, "m04"),
+      },
+    );
+    const snapshotWithPriorActivity = await loadLedgerSnapshot(
+      createFakeLedgerDatabase(withPriorActivityRows),
+      {
+        now: "2026-04-03",
+        preferredPeriodId: buildLedgerPeriodId(2026, "m04"),
+      },
+    );
+
+    expect(snapshotWithPriorActivity.profitAndLoss.netIncomeLabel).toBe("$950.00");
+    expect(snapshotWithoutPriorActivity.profitAndLoss.netIncomeLabel).toBe("$950.00");
+    expect(snapshotWithPriorActivity.generalLedger.recordCountLabel).toBe("2 records");
+    expect(snapshotWithoutPriorActivity.generalLedger.recordCountLabel).toBe("2 records");
+    expect(snapshotWithPriorActivity.generalLedger.entries.map((entry) => entry.title)).toEqual([
+      "Brand sponsorship",
+      "Editing subscription",
+    ]);
+    expect(snapshotWithoutPriorActivity.generalLedger.entries.map((entry) => entry.title)).toEqual([
+      "Brand sponsorship",
+      "Editing subscription",
+    ]);
+    expect(snapshotWithoutPriorActivity.balanceSheet.metricCards.map((card) => card.value)).toEqual([
+      "$950.00",
+      "$0.00",
+    ]);
+    expect(snapshotWithPriorActivity.balanceSheet.metricCards.map((card) => card.value)).toEqual([
+      "$1,750.00",
+      "$0.00",
+    ]);
+    expect(snapshotWithPriorActivity.balanceSheet.carryForwardRows.map((row) => row.amount)).toEqual([
+      "$0.00",
+      "$1,750.00",
+      "$1,750.00",
+    ]);
+  });
+
+  it("uses the prior-year personal closing asset as next-year opening balance while business view ignores current-year personal deductions", async () => {
+    const database = createFakeLedgerDatabase([
+      {
+        amountCents: 100_000,
+        businessUseBps: 10_000,
+        createdAt: "2026-12-20T10:00:00Z",
+        currency: "USD",
+        description: "Year-end payout",
+        entityId: "entity-main",
+        memo: null,
+        occurredOn: "2026-12-20",
+        recordId: "record-income-2026",
+        recordKind: "income",
+        recordStatus: "posted",
+        sourceLabel: "Platform",
+        targetLabel: "Creator CFO",
+        taxLineCode: "line1",
+      },
+      {
+        amountCents: 20_000,
+        businessUseBps: 10_000,
+        createdAt: "2026-12-21T13:00:00Z",
+        currency: "USD",
+        description: "Owner draw",
+        entityId: "entity-main",
+        memo: null,
+        occurredOn: "2026-12-21",
+        recordId: "record-personal-2026",
+        recordKind: "personal_spending",
+        recordStatus: "posted",
+        sourceLabel: "Creator CFO",
+        targetLabel: "Transfer",
+        taxLineCode: null,
+      },
+      {
+        amountCents: 5_000,
+        businessUseBps: 10_000,
+        createdAt: "2027-02-10T13:00:00Z",
+        currency: "USD",
+        description: "Personal groceries",
+        entityId: "entity-main",
+        memo: null,
+        occurredOn: "2027-02-10",
+        recordId: "record-personal-2027",
+        recordKind: "personal_spending",
+        recordStatus: "posted",
+        sourceLabel: "Creator CFO",
+        targetLabel: "Market",
+        taxLineCode: null,
+      },
+    ]);
+
+    const businessSnapshot = await loadLedgerSnapshot(database, {
+      now: "2027-02-11",
+      preferredPeriodId: buildLedgerPeriodId(2027, "m02"),
+    });
+    const personalSnapshot = await loadLedgerSnapshot(database, {
+      now: "2027-02-11",
+      preferredPeriodId: buildLedgerPeriodId(2027, "m02"),
+      scopeId: "personal",
+    });
+
+    expect(businessSnapshot.selectedPeriod.id).toBe("2027:m02");
+    expect(businessSnapshot.isEmpty).toBe(false);
+    expect(businessSnapshot.generalLedger.entries).toEqual([]);
+    expect(businessSnapshot.profitAndLoss.metricCards.map((card) => card.value)).toEqual([
       "$0.00",
       "$0.00",
     ]);
+    expect(businessSnapshot.balanceSheet.metricCards.map((card) => card.value)).toEqual([
+      "$800.00",
+      "$0.00",
+    ]);
+    expect(businessSnapshot.balanceSheet.carryForwardRows.map((row) => row.amount)).toEqual([
+      "$800.00",
+      "$0.00",
+      "$800.00",
+    ]);
+    expect(personalSnapshot.balanceSheet.metricCards.map((card) => card.value)).toEqual([
+      "$750.00",
+      "$0.00",
+    ]);
+    expect(personalSnapshot.balanceSheet.carryForwardRows.map((row) => row.amount)).toEqual([
+      "$800.00",
+      "$0.00",
+      "-$50.00",
+      "$750.00",
+    ]);
+  });
+
+  it("exposes business-backed periods in personal scope and derives personal P&L from business profit even without same-slice personal spending", async () => {
+    const database = createFakeLedgerDatabase([
+      {
+        amountCents: 100_000,
+        businessUseBps: 10_000,
+        createdAt: "2026-12-20T10:00:00Z",
+        currency: "USD",
+        description: "Year-end payout",
+        entityId: "entity-main",
+        memo: null,
+        occurredOn: "2026-12-20",
+        recordId: "record-income-2026",
+        recordKind: "income",
+        recordStatus: "posted",
+        sourceLabel: "Platform",
+        targetLabel: "Creator CFO",
+        taxLineCode: "line1",
+      },
+      {
+        amountCents: 10_000,
+        businessUseBps: 10_000,
+        createdAt: "2026-12-21T10:00:00Z",
+        currency: "USD",
+        description: "Year-end tools",
+        entityId: "entity-main",
+        memo: null,
+        occurredOn: "2026-12-21",
+        recordId: "record-expense-2026",
+        recordKind: "expense",
+        recordStatus: "posted",
+        sourceLabel: "Creator CFO",
+        targetLabel: "Vendor",
+        taxLineCode: "line27a",
+      },
+      {
+        amountCents: 20_000,
+        businessUseBps: 10_000,
+        createdAt: "2026-12-22T13:00:00Z",
+        currency: "USD",
+        description: "Owner draw",
+        entityId: "entity-main",
+        memo: null,
+        occurredOn: "2026-12-22",
+        recordId: "record-personal-2026",
+        recordKind: "personal_spending",
+        recordStatus: "posted",
+        sourceLabel: "Creator CFO",
+        targetLabel: "Transfer",
+        taxLineCode: null,
+      },
+      {
+        amountCents: 30_000,
+        businessUseBps: 10_000,
+        createdAt: "2027-02-10T10:00:00Z",
+        currency: "USD",
+        description: "February payout",
+        entityId: "entity-main",
+        memo: null,
+        occurredOn: "2027-02-10",
+        recordId: "record-income-2027",
+        recordKind: "income",
+        recordStatus: "posted",
+        sourceLabel: "Platform",
+        targetLabel: "Creator CFO",
+        taxLineCode: "line1",
+      },
+    ]);
+
+    const businessSnapshot = await loadLedgerSnapshot(database, {
+      now: "2027-02-11",
+      preferredPeriodId: buildLedgerPeriodId(2027, "m02"),
+    });
+    const personalSnapshot = await loadLedgerSnapshot(database, {
+      now: "2027-02-11",
+      preferredPeriodId: buildLedgerPeriodId(2027, "m02"),
+      scopeId: "personal",
+    });
+
+    expect(personalSnapshot.selectedPeriod.id).toBe("2027:m02");
+    expect(personalSnapshot.yearOptions.map((option) => option.id)).toEqual(["2027", "2026"]);
+    expect(personalSnapshot.isEmpty).toBe(false);
+    expect(personalSnapshot.generalLedger.entries).toEqual([]);
+    expect(personalSnapshot.profitAndLoss.metricCards.map((card) => card.value)).toEqual([
+      "$300.00",
+      "$0.00",
+    ]);
+    expect(personalSnapshot.profitAndLoss.netIncomeLabel).toBe("$300.00");
+    expect(personalSnapshot.balanceSheet.carryForwardRows.map((row) => row.amount)).toEqual([
+      "$700.00",
+      "$300.00",
+      "$0.00",
+      "$1,000.00",
+    ]);
+    expect(personalSnapshot.balanceSheet.metricCards.map((card) => card.value)).toEqual([
+      "$1,000.00",
+      "$0.00",
+    ]);
+    expect(businessSnapshot.profitAndLoss.netIncomeLabel).toBe("$300.00");
+    expect(businessSnapshot.balanceSheet.metricCards.map((card) => card.value)).toEqual([
+      "$1,000.00",
+      "$0.00",
+    ]);
+    expect(personalSnapshot.balanceSheet.netPositionLabel).toContain(
+      "limited derived personal view rather than a full asset and debt statement",
+    );
   });
 
   it("narrows selectable years and segments to record-backed ranges and defaults to the latest full year", async () => {
@@ -290,10 +755,26 @@ describe("ledger reporting", () => {
     expect(getDefaultLedgerPeriodId(snapshot.yearOptions)).toBe("2026:full-year");
   });
 
-  it("derives a funding gap on the balance sheet when expenses exceed income", async () => {
+  it("derives a cumulative funding gap on the balance sheet when prior income still leaves a negative position", async () => {
     const database = createFakeLedgerDatabase([
       {
-        amountCents: 15_000,
+        amountCents: 20_000,
+        businessUseBps: 10_000,
+        createdAt: "2026-06-28T10:00:00Z",
+        currency: "USD",
+        description: "June payout",
+        entityId: "entity-main",
+        memo: null,
+        occurredOn: "2026-06-28",
+        recordId: "record-income-june",
+        recordKind: "income",
+        recordStatus: "posted",
+        sourceLabel: "Platform",
+        targetLabel: "Creator CFO",
+        taxLineCode: "line1",
+      },
+      {
+        amountCents: 35_000,
         businessUseBps: 10_000,
         createdAt: "2026-07-03T10:00:00Z",
         currency: "USD",
@@ -319,7 +800,15 @@ describe("ledger reporting", () => {
       "$0.00",
       "$150.00",
     ]);
-    expect(snapshot.balanceSheet.liabilityRows[0]?.label).toBe("Owner funding gap (derived)");
+    expect(snapshot.profitAndLoss.metricCards.map((card) => card.value)).toEqual([
+      "$0.00",
+      "$350.00",
+    ]);
+    expect(snapshot.profitAndLoss.netIncomeLabel).toBe("-$350.00");
+    expect(snapshot.balanceSheet.equationSummary).toBe(
+      "Opening $0.00 + business movement -$150.00 = closing business asset -$150.00",
+    );
+    expect(snapshot.balanceSheet.liabilityRows[0]?.label).toBe("Funding gap (derived)");
     expect(snapshot.balanceSheet.equityRows[0]?.amount).toBe("-$150.00");
   });
 
@@ -545,6 +1034,10 @@ function createFakeLedgerDatabase(
 }
 
 function getAllowedKindsFromLiteralQuery(source: string): FakeLedgerRecordRow["recordKind"][] {
+  if (source.includes("('income', 'expense', 'personal_spending')")) {
+    return ["income", "expense", "personal_spending"];
+  }
+
   if (source.includes("('personal_spending')")) {
     return ["personal_spending"];
   }
