@@ -929,7 +929,7 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: "#F9F9F7",
     gap: 16,
-    paddingBottom: 32,
+    paddingBottom: 120,
     paddingHorizontal: 24,
     paddingTop: 16,
   },

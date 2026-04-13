@@ -5,6 +5,7 @@ vi.mock("expo-document-picker", () => ({
 }));
 
 vi.mock("expo-image-picker", () => ({
+  launchCameraAsync: vi.fn(),
   launchImageLibraryAsync: vi.fn(),
 }));
 
@@ -25,6 +26,7 @@ import {
   rejectWriteProposal,
   resetLedgerWebRuntimeStateForTests,
   runPlanner,
+  takeCameraPhoto,
 } from "../src/features/ledger/ledger-runtime.web";
 
 const originalBaseUrl = process.env.EXPO_PUBLIC_OPENAI_BASE_URL;
@@ -323,5 +325,41 @@ describe("ledger web upload runtime", () => {
     const reloadedState = await loadPlannerState(plannerResult.batchId);
     expect(reloadedState?.batchState).toBe("approved");
     expect(reloadedState?.writeProposals.find((proposal) => proposal.writeProposalId === createProposal!.writeProposalId)?.state).toBe("rejected");
+  });
+
+  it("takes a camera photo and returns an upload candidate", async () => {
+    vi.mocked(ImagePicker.launchCameraAsync).mockResolvedValueOnce({
+      assets: [
+        {
+          assetId: "camera-asset-1",
+          fileName: "camera-photo.jpg",
+          fileSize: 1024,
+          mimeType: "image/jpeg",
+          uri: "blob:camera-asset-1",
+        },
+      ],
+      canceled: false,
+    } as never);
+
+    const candidates = await takeCameraPhoto();
+
+    expect(candidates).toHaveLength(1);
+    expect(candidates[0]).toMatchObject({
+      kind: "image",
+      mimeType: "image/jpeg",
+      originalFileName: "camera-photo.jpg",
+      uri: "blob:camera-asset-1",
+    });
+  });
+
+  it("returns empty array when camera is canceled", async () => {
+    vi.mocked(ImagePicker.launchCameraAsync).mockResolvedValueOnce({
+      assets: [],
+      canceled: true,
+    } as never);
+
+    const candidates = await takeCameraPhoto();
+
+    expect(candidates).toHaveLength(0);
   });
 });

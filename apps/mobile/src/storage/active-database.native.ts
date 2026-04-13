@@ -14,6 +14,8 @@ import {
 import { getActivePackageRootDirectory } from "./package-environment.native";
 
 export async function initializeActivePackageDatabase(database: SQLiteDatabase): Promise<void> {
+  await initializeLocalDatabase(database);
+
   const compatibility = await loadDatabaseTableCompatibility(database);
 
   if (compatibility.tableCompatibility === "unsupported") {
@@ -22,7 +24,6 @@ export async function initializeActivePackageDatabase(database: SQLiteDatabase):
     );
   }
 
-  await initializeLocalDatabase(database);
   await ensureEvidenceColumns(database);
   await cleanupOrphanedEvidenceFilePaths(database);
   await validateDatabasePackageOrThrow({

@@ -134,7 +134,15 @@ export function AppShellProvider({ children }: PropsWithChildren) {
       return;
     }
 
-    void refreshStorageGateState();
+    const timeout = setTimeout(() => {
+      setStorageGateState((current) =>
+        current.kind === "checking"
+          ? { kind: "recovery_required", message: "Storage inspection timed out." }
+          : current,
+      );
+    }, 10_000);
+
+    void refreshStorageGateState().finally(() => clearTimeout(timeout));
   }, [isHydrated]);
 
   const resolvedTheme = resolveThemeName(state.themePreference, systemTheme);
@@ -153,9 +161,19 @@ export function AppShellProvider({ children }: PropsWithChildren) {
     }
 
     setStorageGateState({ kind: "checking" });
-    const nextState = await inspectStorageGateState();
-    setStorageGateState(nextState);
-    return nextState;
+
+    try {
+      const nextState = await inspectStorageGateState();
+      setStorageGateState(nextState);
+      return nextState;
+    } catch (error) {
+      const fallback: StorageGateState = {
+        kind: "recovery_required",
+        message: error instanceof Error ? error.message : "Storage inspection failed.",
+      };
+      setStorageGateState(fallback);
+      return fallback;
+    }
   };
 
   const setThemePreference = async (value: ThemePreference) => {
@@ -210,7 +228,6 @@ export function AppShellProvider({ children }: PropsWithChildren) {
     },
     copy,
     initializeEmptyStorage: async () => {
-      setStorageGateState({ kind: "checking" });
       await initializeEmptyStorageFromSetup();
       setStorageRevision((current) => current + 1);
       await refreshStorageGateState();

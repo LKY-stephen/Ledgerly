@@ -245,6 +245,7 @@ export interface AppCopy {
     summary: string;
     title: string;
     upload: {
+      cameraPermissionDenied: string;
       continue: string;
       emptySelection: string;
       eyebrow: string;
@@ -256,6 +257,7 @@ export interface AppCopy {
       selectPhotos: string;
       sourceTitle: string;
       summary: string;
+      takePhoto: string;
       title: string;
       uploadCardSummary: string;
       uploadCardTitle: string;
@@ -738,6 +740,8 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
       title:
         "The accounting shell is ready for the first local-first workflows.",
       upload: {
+        cameraPermissionDenied:
+          "Camera access is required to take a photo. Please enable it in Settings.",
         continue: "Continue to parser",
         emptySelection: "No files were selected.",
         eyebrow: "Upload center",
@@ -750,6 +754,7 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
         sourceTitle: "Upload source",
         summary:
           "Upload receipts, PDFs, or photos. The file is sent to OpenAI for parsing and the raw JSON result is displayed on the next screen.",
+        takePhoto: "Take Photo",
         title: "Upload workspace",
         uploadCardSummary:
           "Select a file, send it to OpenAI, and view the raw JSON response.",
@@ -1228,6 +1233,8 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
         "这个页面先验证导航、视觉节奏和模块边界，后续再接入更深的表单与数据流。",
       title: "记账壳层已经为首批本地流程预留好位置。",
       upload: {
+        cameraPermissionDenied:
+          "需要开启相机权限后才能拍照，请前往系统设置开启。",
         continue: "继续到解析页",
         emptySelection: "未选择任何文件。",
         eyebrow: "上传中心",
@@ -1240,6 +1247,7 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
         sourceTitle: "上传来源",
         summary:
           "上传票据、PDF 或照片后，文件会被发送给 OpenAI 解析，原始 JSON 结果会在下一页展示。",
+        takePhoto: "拍照",
         title: "上传工作台",
         uploadCardSummary:
           "选择一个文件，发送给 OpenAI，并查看返回的原始 JSON 结果。",

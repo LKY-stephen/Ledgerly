@@ -85,6 +85,31 @@ export async function pickPhotoUploadCandidates(
   }));
 }
 
+export async function takeCameraPhoto(
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/consistent-type-imports
+  _locale?: import("../app-shell/types").ResolvedLocale,
+): Promise<UploadCandidate[]> {
+  const result = await ImagePicker.launchCameraAsync({
+    allowsEditing: false,
+    mediaTypes: ["images"] as never,
+    quality: 1,
+  });
+
+  if (result.canceled) {
+    return [];
+  }
+
+  return result.assets.map((asset, index) => ({
+    evidenceGroupKey: asset.assetId || asset.fileName || `${asset.uri}-${index}`,
+    isPrimary: true,
+    kind: "image" as const,
+    mimeType: asset.mimeType ?? "image/jpeg",
+    originalFileName: asset.fileName ?? `camera-${Date.now()}.jpg`,
+    sizeBytes: asset.fileSize ?? null,
+    uri: asset.uri,
+  }));
+}
+
 export async function parseFile(
   fileUri: string,
   fileName: string,

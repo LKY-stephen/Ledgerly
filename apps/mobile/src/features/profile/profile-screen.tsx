@@ -206,7 +206,7 @@ export function ProfileScreen() {
         : copy.meScreen.sessionNone;
   const sessionTitle =
     session?.kind === "apple"
-      ? (sessionDisplayName || session.displayName ?? session.email ?? copy.meScreen.sessionApple)
+      ? (sessionDisplayName || (session.displayName ?? session.email ?? copy.meScreen.sessionApple))
       : session?.kind === "guest"
         ? copy.meScreen.sessionGuest
         : copy.meScreen.sessionNone;

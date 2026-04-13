@@ -10,6 +10,7 @@ import {
   parseFile,
   pickDocumentUploadCandidates,
   pickPhotoUploadCandidates,
+  takeCameraPhoto,
 } from "./ledger-runtime";
 import { useAppShell } from "../app-shell/provider";
 
@@ -26,15 +27,19 @@ export function LedgerUploadScreen() {
     kind: "idle",
   });
 
-  async function handleImport(source: "documents" | "photos"): Promise<void> {
+  async function handleImport(
+    source: "camera" | "documents" | "photos",
+  ): Promise<void> {
     setIsBusy(true);
     setError(null);
 
     try {
       const candidates =
-        source === "photos"
-          ? await pickPhotoUploadCandidates(resolvedLocale)
-          : await pickDocumentUploadCandidates();
+        source === "camera"
+          ? await takeCameraPhoto(resolvedLocale)
+          : source === "photos"
+            ? await pickPhotoUploadCandidates(resolvedLocale)
+            : await pickDocumentUploadCandidates();
 
       if (!candidates.length) {
         setStatus({ kind: "empty" });
@@ -166,6 +171,34 @@ export function LedgerUploadScreen() {
                   ]}
                 >
                   {isBusy ? uploadCopy.parsing : uploadCopy.selectPhotos}
+                </Text>
+              </View>
+            </Pressable>
+
+            <Pressable
+              accessibilityRole="button"
+              disabled={isBusy}
+              onPress={() => handleImport("camera")}
+              style={({ pressed }) => [
+                styles.secondaryButton,
+                {
+                  backgroundColor: pressed ? palette.paperMuted : palette.paper,
+                  borderColor: palette.border,
+                  opacity: isBusy ? 0.7 : 1,
+                },
+              ]}
+              testID="ledger-upload-camera-button"
+            >
+              <View style={styles.primaryButtonContent}>
+                <MaterialCommunityIcons
+                  color={palette.ink}
+                  name="camera-outline"
+                  size={18}
+                />
+                <Text
+                  style={[styles.secondaryButtonLabel, { color: palette.ink }]}
+                >
+                  {uploadCopy.takePhoto}
                 </Text>
               </View>
             </Pressable>
