@@ -1,11 +1,11 @@
 import * as DocumentPicker from "expo-document-picker";
 import * as ImagePicker from "expo-image-picker";
 
-import type { EvidenceParserKind, JsonValue, PlannerSummary } from "@creator-cfo/schemas";
+import type { PlannerSummary, ReceiptParsePayload } from "@creator-cfo/schemas";
 
 import { parseFileWithOpenAiFromBlob, planEvidenceDbUpdates, type ParseResult } from "./remote-parse";
 import {
-  buildExtractedData,
+  buildRemoteExtractedData,
   type LedgerReviewValues,
   type WorkflowCandidateRecord,
   type WorkflowWriteProposalItem,
@@ -156,22 +156,21 @@ export async function runPlanner(input: {
   });
 
   // Build extracted data for planner summary
-  const extractedData = buildExtractedData({
-    fallbackDate: now.slice(0, 10),
+  const extractedData = buildRemoteExtractedData({
     fileName: input.fileName,
-    parser: (input.parserKind ?? "openai_gpt") as EvidenceParserKind,
-    rawLines: input.rawText.split("\n").filter((l) => l.trim()),
-    rawText: input.rawText,
+    parsePayload: input.rawJson as ReceiptParsePayload,
+    scheme: {},
     sourceLabel: input.parserKind === "gemini" ? "gemini_upload" : "openai_upload",
   });
-  extractedData.model = input.model;
-  extractedData.originData = input.rawJson as JsonValue;
 
   // Build read results (empty for web - no local DB)
   const readResults: PlannerReadResults = {
     duplicateRecordIds: [],
+    duplicateReceiptMatches: [],
     sourceCounterpartyMatches: [],
+    sourceCounterpartySuggestions: [],
     targetCounterpartyMatches: [],
+    targetCounterpartySuggestions: [],
   };
 
   const evidence = {
@@ -212,32 +211,12 @@ export async function runPlanner(input: {
     };
   });
 
-  const counterpartyProposalIds: string[] = [];
-  const writeProposals: WorkflowWriteProposalItem[] = summary.writeProposals.map((proposal, index) => {
-    const writeProposalId = `${plannerRunId}-proposal-${index + 1}`;
-    const isCounterparty = proposal.proposalType === "create_counterparty";
-
-    if (isCounterparty) {
-      counterpartyProposalIds.push(writeProposalId);
-    }
-
-    const isPersist = proposal.proposalType === "persist_candidate_record";
-    const isBlocked = isPersist && counterpartyProposalIds.length > 0;
-
-    return {
-      approvalRequired: true,
-      candidateId: candidateRecords[0]?.candidateId ?? null,
-      createdAt: now,
-      dependencyIds: isPersist ? [...counterpartyProposalIds.slice(0, -1)] : [],
-      payload: proposal.values,
-      proposalType: proposal.proposalType,
-      rationale: isCounterparty
-        ? "Parsed label does not match an existing local counterparty, so creation requires approval."
-        : "Candidate record is ready for final persistence after approval and local validation.",
-      state: isBlocked ? "blocked" : "pending_approval",
-      updatedAt: now,
-      writeProposalId,
-    };
+  const writeProposals = buildWebWriteProposals({
+    candidateId: candidateRecords[0]?.candidateId ?? null,
+    candidateState: candidateRecords[0]?.state ?? "candidate",
+    createdAt: now,
+    plannerRunId,
+    proposals: summary.writeProposals,
   });
 
   const primaryCandidate = candidateRecords[0];
@@ -277,31 +256,51 @@ export async function approveWriteProposal(
     throw new Error("Planner state not found for batch.");
   }
 
-  const proposalIndex = state.writeProposals.findIndex((p) => p.writeProposalId === writeProposalId);
-  const proposal = state.writeProposals[proposalIndex];
+  const proposal = state.writeProposals.find((p) => p.writeProposalId === writeProposalId);
 
   if (!proposal) {
     throw new Error("Write proposal not found.");
   }
 
-  // Mark proposal as executed
   proposal.state = "executed";
   proposal.updatedAt = new Date().toISOString();
 
   if (proposal.proposalType === "create_counterparty") {
-    // Unblock dependent proposals
-    for (const p of state.writeProposals) {
-      if (p.dependencyIds.includes(writeProposalId) && p.state === "blocked") {
-        const allDepsExecuted = p.dependencyIds.every(
-          (depId) => state.writeProposals.find((wp) => wp.writeProposalId === depId)?.state === "executed",
-        );
+    applyWebCounterpartySelection(state, proposal, {
+      displayName: readFirstString(proposal.payload.displayName, proposal.payload.parsedDisplayName),
+      counterpartyId: `counterparty-web-${proposal.writeProposalId}`,
+    });
+    releaseResolvedWebDependencies(state);
+    state.batchState = "review_required";
+    return state;
+  }
 
-        if (allDepsExecuted) {
-          p.state = "pending_approval";
-          p.updatedAt = new Date().toISOString();
-        }
+  if (proposal.proposalType === "merge_counterparty") {
+    applyWebCounterpartySelection(state, proposal, {
+      displayName: readFirstString(proposal.payload.existingDisplayName, proposal.payload.displayName),
+      counterpartyId: readFirstString(proposal.payload.existingCounterpartyId) ?? `counterparty-web-${proposal.writeProposalId}`,
+    });
+    rejectSiblingWebCounterpartyCreate(state, proposal);
+    releaseResolvedWebDependencies(state);
+    state.batchState = "review_required";
+    return state;
+  }
+
+  if (proposal.proposalType === "resolve_duplicate_receipt") {
+    if (state.candidateRecords[0]) {
+      state.candidateRecords[0].state = "approved";
+      state.candidateRecords[0].updatedAt = proposal.updatedAt;
+    }
+
+    for (const item of state.writeProposals) {
+      if (item.writeProposalId !== writeProposalId && (item.state === "pending_approval" || item.state === "blocked")) {
+        item.state = "rejected";
+        item.updatedAt = proposal.updatedAt;
       }
     }
+
+    state.batchState = "approved";
+    return state;
   }
 
   if (proposal.proposalType === "persist_candidate_record" && state.candidateRecords[0]) {
@@ -345,10 +344,20 @@ export async function rejectWriteProposal(
         p.updatedAt = new Date().toISOString();
       }
     }
+
+    state.batchState = "rejected";
+    return state;
+  }
+
+  if (proposal.proposalType === "merge_counterparty" || proposal.proposalType === "resolve_duplicate_receipt") {
+    releaseResolvedWebDependencies(state);
+    state.batchState = "review_required";
+    return state;
   }
 
   if (proposal.proposalType === "persist_candidate_record" && state.candidateRecords[0]) {
     state.candidateRecords[0].state = "rejected";
+    state.candidateRecords[0].updatedAt = proposal.updatedAt;
   }
 
   state.batchState = "rejected";
@@ -357,6 +366,184 @@ export async function rejectWriteProposal(
 
 export async function loadPlannerState(batchId: string): Promise<PlannerResult | null> {
   return plannerStateStore.get(batchId) ?? null;
+}
+
+function buildWebWriteProposals(input: {
+  candidateId: string | null;
+  candidateState: WorkflowCandidateRecord["state"];
+  createdAt: string;
+  plannerRunId: string;
+  proposals: PlannerSummary["writeProposals"];
+}): WorkflowWriteProposalItem[] {
+  const inserted: Array<{
+    proposal: PlannerSummary["writeProposals"][number];
+    writeProposalId: string;
+  }> = [];
+
+  return input.proposals.map((proposal, index) => {
+    const writeProposalId = `${input.plannerRunId}-proposal-${index + 1}`;
+    const dependencyIds = resolveWebProposalDependencies(inserted, proposal);
+    const state = dependencyIds.length > 0 ||
+        (proposal.proposalType === "persist_candidate_record" &&
+          input.candidateState !== "validated" &&
+          input.candidateState !== "needs_review")
+      ? "blocked"
+      : "pending_approval";
+
+    inserted.push({ proposal, writeProposalId });
+
+    return {
+      approvalRequired: true,
+      candidateId: input.candidateId,
+      createdAt: input.createdAt,
+      dependencyIds,
+      payload: proposal.values,
+      proposalType: proposal.proposalType,
+      rationale: buildWebProposalRationale(proposal),
+      state,
+      updatedAt: input.createdAt,
+      writeProposalId,
+    };
+  });
+}
+
+function resolveWebProposalDependencies(
+  inserted: Array<{
+    proposal: PlannerSummary["writeProposals"][number];
+    writeProposalId: string;
+  }>,
+  proposal: PlannerSummary["writeProposals"][number],
+): string[] {
+  if (proposal.proposalType === "create_counterparty") {
+    const role = readFirstString(proposal.values.role, proposal.role);
+
+    return inserted
+      .filter((item) =>
+        item.proposal.proposalType === "merge_counterparty" &&
+        readFirstString(item.proposal.values.role, item.proposal.role) === role,
+      )
+      .map((item) => item.writeProposalId);
+  }
+
+  if (proposal.proposalType === "persist_candidate_record") {
+    return inserted
+      .filter((item) =>
+        item.proposal.proposalType === "create_counterparty" ||
+        item.proposal.proposalType === "merge_counterparty" ||
+        item.proposal.proposalType === "resolve_duplicate_receipt",
+      )
+      .map((item) => item.writeProposalId);
+  }
+
+  return [];
+}
+
+function buildWebProposalRationale(proposal: PlannerSummary["writeProposals"][number]): string {
+  if (proposal.proposalType === "create_counterparty") {
+    return "Parsed label does not match an existing local counterparty, so creation requires approval.";
+  }
+
+  if (proposal.proposalType === "merge_counterparty") {
+    return "A likely existing local counterparty was found, so the operator must decide whether to merge it or keep a new counterparty.";
+  }
+
+  if (proposal.proposalType === "resolve_duplicate_receipt") {
+    return "A likely duplicate receipt was found, so the operator must decide whether to merge the evidence or keep the uploads separate.";
+  }
+
+  return "Candidate record is ready for final persistence after approval and local validation.";
+}
+
+function applyWebCounterpartySelection(
+  state: PlannerResult,
+  proposal: WorkflowWriteProposalItem,
+  input: {
+    counterpartyId: string;
+    displayName: string | null;
+  },
+): void {
+  const role = readFirstString(proposal.payload.role) === "target" ? "target" : "source";
+  const displayName = input.displayName ?? "";
+  const candidate = state.candidateRecords[0];
+
+  if (!candidate) {
+    return;
+  }
+
+  candidate.payload = {
+    ...candidate.payload,
+    ...(role === "source"
+      ? { sourceCounterpartyId: input.counterpartyId, sourceLabel: displayName }
+      : { targetCounterpartyId: input.counterpartyId, targetLabel: displayName }),
+  };
+  candidate.reviewValues = buildReviewValuesFromPayload(candidate.payload);
+  candidate.state = "validated";
+  candidate.updatedAt = proposal.updatedAt;
+  state.reviewValues = candidate.reviewValues;
+}
+
+function rejectSiblingWebCounterpartyCreate(
+  state: PlannerResult,
+  mergeProposal: WorkflowWriteProposalItem,
+): void {
+  const role = readFirstString(mergeProposal.payload.role);
+
+  for (const proposal of state.writeProposals) {
+    if (
+      proposal.proposalType === "create_counterparty" &&
+      proposal.writeProposalId !== mergeProposal.writeProposalId &&
+      readFirstString(proposal.payload.role) === role &&
+      proposal.state !== "executed"
+    ) {
+      proposal.state = "rejected";
+      proposal.updatedAt = mergeProposal.updatedAt;
+      removeWebProposalDependency(state, proposal.writeProposalId);
+    }
+  }
+}
+
+function releaseResolvedWebDependencies(state: PlannerResult): void {
+  for (const proposal of state.writeProposals) {
+    if (proposal.state !== "blocked" || proposal.dependencyIds.length === 0) {
+      continue;
+    }
+
+    const dependencyStates = proposal.dependencyIds
+      .map((dependencyId) => state.writeProposals.find((item) => item.writeProposalId === dependencyId))
+      .filter((item): item is WorkflowWriteProposalItem => Boolean(item));
+    const allResolved = dependencyStates.every((dependency) =>
+      dependency.state === "executed" || dependency.state === "rejected",
+    );
+    const rejectedCreateDependency = dependencyStates.some((dependency) =>
+      dependency.proposalType === "create_counterparty" && dependency.state === "rejected",
+    );
+
+    if (allResolved && !rejectedCreateDependency) {
+      proposal.state = "pending_approval";
+      proposal.updatedAt = new Date().toISOString();
+    }
+  }
+}
+
+function removeWebProposalDependency(state: PlannerResult, dependencyProposalId: string): void {
+  for (const proposal of state.writeProposals) {
+    if (!proposal.dependencyIds.includes(dependencyProposalId)) {
+      continue;
+    }
+
+    proposal.dependencyIds = proposal.dependencyIds.filter((dependencyId) => dependencyId !== dependencyProposalId);
+    proposal.updatedAt = new Date().toISOString();
+  }
+}
+
+function readFirstString(...values: unknown[]): string | null {
+  for (const value of values) {
+    if (typeof value === "string" && value.trim()) {
+      return value.trim();
+    }
+  }
+
+  return null;
 }
 
 function inferUploadKind(mimeType: string | null, fileName: string): UploadCandidate["kind"] {

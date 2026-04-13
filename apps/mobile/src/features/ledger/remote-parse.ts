@@ -1,10 +1,17 @@
-import type { JsonValue, ReceiptPlannerPayload } from "@creator-cfo/schemas";
+import {
+  normalizeReceiptParsePayload,
+  normalizeReceiptPlannerPayload,
+  type JsonValue,
+  type ReceiptParsePayload,
+  type ReceiptPlannerPayload,
+} from "@creator-cfo/schemas";
 
 import { loadPersistedAiProvider, loadPersistedGeminiApiKey, loadPersistedOpenAiApiKey } from "../app-shell/storage";
 import type { AiProvider } from "../app-shell/types";
+import { receiptDbUpdatePlannerSkill, receiptParseSkill } from "./prompt-skills";
 
 export interface ParseResult {
-  rawJson: unknown;
+  rawJson: ReceiptParsePayload | null;
   rawText: string;
   model: string;
   parserKind: string;
@@ -28,9 +35,6 @@ export async function planEvidenceDbUpdates(input: {
   profileInfo?: { name: string; email: string; phone: string };
   rawJson: unknown;
 }): Promise<ReceiptPlannerPayload> {
-  const { normalizeReceiptPlannerPayload } = require("@creator-cfo/schemas") as typeof import("@creator-cfo/schemas");
-  const { receiptDbUpdatePlannerSkill } = require("./prompt-skills") as typeof import("./prompt-skills");
-
   const aiProvider = await loadPersistedAiProvider();
 
   const exampleOutput = JSON.stringify({
@@ -140,9 +144,19 @@ function buildFallbackPlannerPayload(
   input: { evidenceId: string; rawJson: unknown },
 ): ReceiptPlannerPayload {
   const raw = (input.rawJson && typeof input.rawJson === "object" ? input.rawJson : {}) as Record<string, unknown>;
+  const rawFields =
+    raw.fields && typeof raw.fields === "object" && !Array.isArray(raw.fields)
+      ? (raw.fields as Record<string, unknown>)
+      : {};
 
   // Try to extract amounts — look for common keys
-  const rawAmount = partial.amountCents ?? partial.amount_cents ?? raw.amount_paid ?? raw.total ?? raw.amountCents;
+  const rawAmount =
+    partial.amountCents ??
+    partial.amount_cents ??
+    raw.amount_paid ??
+    raw.total ??
+    raw.amountCents ??
+    rawFields.amountCents;
   let amountCents: number | null = null;
   if (typeof rawAmount === "number") {
     amountCents = rawAmount > 500 ? rawAmount : Math.round(rawAmount * 100);
@@ -156,8 +170,15 @@ function buildFallbackPlannerPayload(
 
   const getString = (keys: string[]): string | null => {
     for (const key of keys) {
-      const v = partial[key] ?? raw[key];
-      if (typeof v === "string" && v.trim()) return v.trim();
+      const sources = [partial, raw, rawFields];
+
+      for (const source of sources) {
+        const v = source[key];
+
+        if (typeof v === "string" && v.trim()) {
+          return v.trim();
+        }
+      }
     }
     return null;
   };
@@ -192,8 +213,8 @@ function buildFallbackPlannerPayload(
       { field: "target", value: (target ?? null) as never, confidence: target ? "high" : "low", status: target ? "confirmed" : "missing", reason: "Extracted from document" },
     ],
     counterpartyResolutions: [
-      { confidence: "medium", displayName: source ?? "", matchedCounterpartyIds: [], role: "source", status: "proposed_new" },
-      { confidence: "medium", displayName: target ?? "", matchedCounterpartyIds: [], role: "target", status: "proposed_new" },
+      { confidence: "medium", displayName: source ?? "", matchedDisplayNames: [], matchedCounterpartyIds: [], role: "source", status: "proposed_new" },
+      { confidence: "medium", displayName: target ?? "", matchedDisplayNames: [], matchedCounterpartyIds: [], role: "target", status: "proposed_new" },
     ],
     duplicateHints: [],
     readTasks: [
@@ -227,6 +248,22 @@ interface OpenAiSettings {
   openAiApiKey: string;
 }
 
+interface ProviderCallResult {
+  model: string;
+  payload: Record<string, unknown>;
+}
+
+class ProviderRequestError extends Error {
+  constructor(
+    message: string,
+    public readonly provider: AiProvider,
+    public readonly status: number | null,
+  ) {
+    super(message);
+    this.name = "ProviderRequestError";
+  }
+}
+
 interface OpenAiFilePart {
   detail?: "high";
   file_data?: string;
@@ -240,6 +277,45 @@ const defaultOpenAiBaseUrl = "https://api.openai.com/v1";
 const defaultOpenAiModel = "gpt-4o";
 const defaultGeminiBaseUrl = "https://generativelanguage.googleapis.com/v1beta";
 const defaultGeminiModel = "gemini-2.5-flash";
+const runtimeModelOverrides: Partial<Record<AiProvider, string>> = {};
+const parseSystemPrompt = [
+  "你是 receipt parser。",
+  receiptParseSkill,
+  "The top-level object must contain parser, model, rawText, rawSummary, warnings, fields, and candidates.",
+  "fields and candidates must both include amountCents, category, date, description, notes, source, target, and taxCategory.",
+  "amountCents must be an integer in cents or null.",
+  "date must be YYYY-MM-DD when known or null.",
+  "Return JSON only. No markdown, no code blocks, no explanations.",
+].join("\n");
+
+const openAiFallbackModelMap: Record<string, string[]> = {
+  "gpt-4.1": ["gpt-4o"],
+  "gpt-4.1-mini": ["gpt-4o-mini"],
+  "gpt-4o": ["gpt-4.1"],
+  "gpt-4o-mini": ["gpt-4.1-mini"],
+  "gpt-5": ["gpt-5-mini", "gpt-4.1"],
+  "gpt-5-mini": ["gpt-4.1-mini", "gpt-4o-mini"],
+  "o1": ["o4-mini", "gpt-4.1"],
+  "o3": ["o4-mini", "gpt-4.1"],
+  "o4-mini": ["gpt-4.1-mini"],
+};
+
+const geminiFallbackModelMap: Record<string, string[]> = {
+  "gemini-2.5-flash": ["gemini-3-flash-preview", "gemini-2.5-flash-lite"],
+  "gemini-2.5-flash-lite": ["gemini-2.5-flash", "gemini-3-flash-preview"],
+  "gemini-2.5-pro": ["gemini-3-pro-preview", "gemini-2.5-flash"],
+  "gemini-3-flash-preview": ["gemini-2.5-flash", "gemini-2.5-flash-lite"],
+  "gemini-3-pro-preview": ["gemini-2.5-pro", "gemini-3-flash-preview"],
+};
+
+export function resetRemoteParseRuntimeStateForTests() {
+  delete runtimeModelOverrides.openai;
+  delete runtimeModelOverrides.gemini;
+}
+
+export function buildFallbackModelListForTests(provider: AiProvider, model: string): string[] {
+  return getFallbackModels(provider, model);
+}
 
 export async function parseFileWithOpenAi(input: {
   fileName: string;
@@ -309,11 +385,7 @@ async function callOpenAiParseApi(
     {
       content: [
         {
-          text: [
-            "You are a document parser. Extract ALL structured data from the uploaded file.",
-            "Return a single JSON object containing every piece of data you can find.",
-            "Do not return markdown, explanations, or code blocks — only raw JSON.",
-          ].join("\n"),
+          text: parseSystemPrompt,
           type: "input_text",
         },
       ],
@@ -328,14 +400,14 @@ async function callOpenAiParseApi(
     },
   ];
 
-  const payload = await callOpenAi(settings, input);
+  const { model: activeModel, payload } = await callOpenAi(settings, input);
   const outputText = extractOpenAiOutputText(payload);
 
   if (!outputText) {
     return {
       rawJson: null,
       rawText: "",
-      model: settings.model,
+      model: activeModel,
       parserKind: "openai_gpt",
       error: `OpenAI returned no text. Keys: [${Object.keys(payload).join(", ")}]`,
     };
@@ -343,12 +415,37 @@ async function callOpenAiParseApi(
 
   const parsed = tryParseStructuredOutput(outputText);
 
+  if (parsed === null) {
+    return {
+      rawJson: null,
+      rawText: outputText,
+      model: activeModel,
+      parserKind: "openai_gpt",
+      error: "OpenAI response is not valid JSON",
+    };
+  }
+
+  const parsePayload = normalizeReceiptParsePayload(parsed as JsonValue, {
+    defaultModel: activeModel,
+    defaultParser: "openai_gpt",
+  });
+
+  if (!parsePayload) {
+    return {
+      rawJson: null,
+      rawText: outputText,
+      model: activeModel,
+      parserKind: "openai_gpt",
+      error: "OpenAI parser output must include parser, model, rawText, rawSummary, warnings, fields, and candidates.",
+    };
+  }
+
   return {
-    rawJson: parsed,
-    rawText: outputText,
-    model: settings.model,
+    rawJson: parsePayload,
+    rawText: parsePayload.rawText,
+    model: parsePayload.model ?? activeModel,
     parserKind: "openai_gpt",
-    error: parsed === null ? "OpenAI response is not valid JSON" : null,
+    error: null,
   };
 }
 
@@ -358,15 +455,9 @@ async function callGeminiParseApi(
   mimeType: string,
 ): Promise<ParseResult> {
   const settings = await loadRequiredGeminiSettings();
-  const systemText = [
-    "You are a document parser. Extract ALL structured data from the uploaded file.",
-    "Return a single JSON object containing every piece of data you can find.",
-    "Do not return markdown, explanations, or code blocks — only raw JSON.",
-  ].join("\n");
-
   const userText = `filename: ${fileName}\nmimeType: ${mimeType}`;
 
-  const payload = await callGemini(settings, systemText, [
+  const { model: activeModel, payload } = await callGemini(settings, parseSystemPrompt, [
     { text: userText },
     { inlineData: { data: base64, mimeType } },
   ]);
@@ -377,7 +468,7 @@ async function callGeminiParseApi(
     return {
       rawJson: null,
       rawText: "",
-      model: settings.model,
+      model: activeModel,
       parserKind: "gemini",
       error: `Gemini returned no text. Keys: [${Object.keys(payload).join(", ")}]`,
     };
@@ -385,12 +476,37 @@ async function callGeminiParseApi(
 
   const parsed = tryParseStructuredOutput(outputText);
 
+  if (parsed === null) {
+    return {
+      rawJson: null,
+      rawText: outputText,
+      model: activeModel,
+      parserKind: "gemini",
+      error: "Gemini response is not valid JSON",
+    };
+  }
+
+  const parsePayload = normalizeReceiptParsePayload(parsed as JsonValue, {
+    defaultModel: activeModel,
+    defaultParser: "gemini",
+  });
+
+  if (!parsePayload) {
+    return {
+      rawJson: null,
+      rawText: outputText,
+      model: activeModel,
+      parserKind: "gemini",
+      error: "Gemini parser output must include parser, model, rawText, rawSummary, warnings, fields, and candidates.",
+    };
+  }
+
   return {
-    rawJson: parsed,
-    rawText: outputText,
-    model: settings.model,
+    rawJson: parsePayload,
+    rawText: parsePayload.rawText,
+    model: parsePayload.model ?? activeModel,
     parserKind: "gemini",
-    error: parsed === null ? "Gemini response is not valid JSON" : null,
+    error: null,
   };
 }
 
@@ -428,6 +544,10 @@ async function resolveOpenAiBaseUrl(): Promise<string> {
 }
 
 async function resolveOpenAiModel(): Promise<string> {
+  if (runtimeModelOverrides.openai) {
+    return runtimeModelOverrides.openai;
+  }
+
   const envModel = (process.env.EXPO_PUBLIC_OPENAI_MODEL ?? "").trim();
   if (envModel) return envModel;
 
@@ -449,7 +569,7 @@ async function callAiText(
 ): Promise<string> {
   if (aiProvider === "gemini") {
     const settings = await loadRequiredGeminiSettings();
-    const payload = await callGemini(settings, systemPrompt, [{ text: userPrompt }]);
+    const { payload } = await callGemini(settings, systemPrompt, [{ text: userPrompt }]);
     const text = extractGeminiOutputText(payload);
     if (!text) {
       throw new ParseEvidenceClientError(
@@ -465,7 +585,7 @@ async function callAiText(
     { content: [{ text: systemPrompt, type: "input_text" }], role: "system" },
     { content: [{ text: userPrompt, type: "input_text" }], role: "user" },
   ];
-  const payload = await callOpenAi(settings, apiInput);
+  const { payload } = await callOpenAi(settings, apiInput);
   const text = extractOpenAiOutputText(payload);
   if (!text) {
     throw new ParseEvidenceClientError(
@@ -490,7 +610,8 @@ async function loadRequiredGeminiSettings(): Promise<GeminiSettings> {
   const baseUrl = normalizeBaseUrl(
     (process.env.EXPO_PUBLIC_GEMINI_BASE_URL ?? "").trim() || defaultGeminiBaseUrl,
   );
-  const model = (process.env.EXPO_PUBLIC_GEMINI_MODEL ?? "").trim() || defaultGeminiModel;
+  const configuredModel = (process.env.EXPO_PUBLIC_GEMINI_MODEL ?? "").trim() || defaultGeminiModel;
+  const model = runtimeModelOverrides.gemini ?? configuredModel;
 
   return { baseUrl, geminiApiKey, model };
 }
@@ -499,12 +620,42 @@ async function callGemini(
   settings: GeminiSettings,
   systemText: string,
   userParts: GeminiPart[],
+): Promise<ProviderCallResult> {
+  const candidateModels = getFallbackModels("gemini", settings.model);
+  let lastError: unknown = null;
+
+  for (const model of candidateModels) {
+    try {
+      const payload = await performGeminiRequest(settings, systemText, userParts, model);
+      if (model !== settings.model) {
+        runtimeModelOverrides.gemini = model;
+      }
+      return { model, payload };
+    } catch (error) {
+      lastError = error;
+
+      if (isHighDemandModelError(error) && model !== candidateModels[candidateModels.length - 1]) {
+        continue;
+      }
+
+      throw error;
+    }
+  }
+
+  throw lastError instanceof Error ? lastError : new Error("Gemini request failed");
+}
+
+async function performGeminiRequest(
+  settings: GeminiSettings,
+  systemText: string,
+  userParts: GeminiPart[],
+  model: string,
 ): Promise<Record<string, unknown>> {
   const controller = typeof AbortController === "function" ? new AbortController() : null;
   const timeoutId = setTimeout(() => controller?.abort(), openAiRequestTimeoutMs);
 
   try {
-    const url = `${settings.baseUrl}/models/${settings.model}:generateContent?key=${settings.geminiApiKey}`;
+    const url = `${settings.baseUrl}/models/${model}:generateContent?key=${settings.geminiApiKey}`;
     const response = await fetch(url, {
       body: JSON.stringify({
         contents: [{ parts: userParts, role: "user" }],
@@ -521,9 +672,10 @@ async function callGemini(
 
     if (!response.ok) {
       const errDetail = payload?.error as { message?: string } | undefined;
-      throw new ParseEvidenceClientError(
+      throw new ProviderRequestError(
         errDetail?.message ?? `Gemini request failed: ${response.status}`,
-        "gemini_error",
+        "gemini",
+        response.status,
       );
     }
 
@@ -550,7 +702,36 @@ function extractGeminiOutputText(payload: Record<string, unknown>): string {
   return parts.join("\n").trim();
 }
 
-async function callOpenAi(settings: OpenAiSettings, input: unknown): Promise<Record<string, unknown>> {
+async function callOpenAi(settings: OpenAiSettings, input: unknown): Promise<ProviderCallResult> {
+  const candidateModels = getFallbackModels("openai", settings.model);
+  let lastError: unknown = null;
+
+  for (const model of candidateModels) {
+    try {
+      const payload = await performOpenAiRequest(settings, input, model);
+      if (model !== settings.model) {
+        runtimeModelOverrides.openai = model;
+      }
+      return { model, payload };
+    } catch (error) {
+      lastError = error;
+
+      if (isHighDemandModelError(error) && model !== candidateModels[candidateModels.length - 1]) {
+        continue;
+      }
+
+      throw error;
+    }
+  }
+
+  throw lastError instanceof Error ? lastError : new Error("OpenAI request failed");
+}
+
+async function performOpenAiRequest(
+  settings: OpenAiSettings,
+  input: unknown,
+  model: string,
+): Promise<Record<string, unknown>> {
   const controller = typeof AbortController === "function" ? new AbortController() : null;
   const timeoutId = setTimeout(() => controller?.abort(), openAiRequestTimeoutMs);
 
@@ -559,8 +740,8 @@ async function callOpenAi(settings: OpenAiSettings, input: unknown): Promise<Rec
       body: JSON.stringify({
         input,
         max_output_tokens: 4_000,
-        model: settings.model,
-        ...(isReasoningModel(settings.model) ? { reasoning: { effort: "minimal" } } : {}),
+        model,
+        ...(isReasoningModel(model) ? { reasoning: { effort: "minimal" } } : {}),
         store: false,
       }),
       cache: "no-store",
@@ -576,13 +757,67 @@ async function callOpenAi(settings: OpenAiSettings, input: unknown): Promise<Rec
 
     if (!response.ok) {
       const errMsg = (payload?.error as { message?: string })?.message;
-      throw new Error(errMsg ?? `OpenAI request failed: ${response.status}`);
+      throw new ProviderRequestError(
+        errMsg ?? `OpenAI request failed: ${response.status}`,
+        "openai",
+        response.status,
+      );
     }
 
     return payload;
   } finally {
     clearTimeout(timeoutId);
   }
+}
+
+function getFallbackModels(provider: AiProvider, model: string): string[] {
+  const envCandidates = splitCommaSeparatedModels(
+    provider === "openai"
+      ? process.env.EXPO_PUBLIC_OPENAI_FALLBACK_MODELS ?? ""
+      : process.env.EXPO_PUBLIC_GEMINI_FALLBACK_MODELS ?? "",
+  );
+  const normalizedEnvCandidates = provider === "gemini"
+    ? filterAllowedGeminiFallbackModels(envCandidates)
+    : envCandidates;
+  const mappedCandidates = provider === "openai"
+    ? openAiFallbackModelMap[model] ?? []
+    : filterAllowedGeminiFallbackModels(geminiFallbackModelMap[model] ?? []);
+
+  return Array.from(new Set([model, ...normalizedEnvCandidates, ...mappedCandidates].filter((candidate) => candidate.trim())));
+}
+
+function splitCommaSeparatedModels(value: string): string[] {
+  return value
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function filterAllowedGeminiFallbackModels(models: string[]): string[] {
+  return models.filter((model) =>
+    model.startsWith("gemini-2.5-") ||
+    model.startsWith("gemini-3-") ||
+    model.startsWith("gemini-3.1-"),
+  );
+}
+
+function isHighDemandModelError(error: unknown): boolean {
+  if (!(error instanceof ProviderRequestError)) {
+    return false;
+  }
+
+  const message = error.message.toLowerCase();
+  const status = error.status;
+
+  if (status === 503 || status === 529) {
+    return true;
+  }
+
+  if (status === 429) {
+    return /(high demand|overloaded|currently overloaded|too busy|capacity|temporarily unavailable|try again later|service unavailable)/i.test(message);
+  }
+
+  return /(experiencing high demand|high demand|overloaded|currently overloaded|temporarily unavailable|service unavailable|server overloaded|model is overloaded|try again later)/i.test(message);
 }
 
 function createInputFilePart(input: {
@@ -689,7 +924,9 @@ async function readExpoExtra(): Promise<{ openAiBaseUrl?: unknown; openAiModel?:
   // which fails on native with "global location variable is not defined".
   const constantsModule = require("expo-constants") as { default: Record<string, unknown> };
   const constants = constantsModule.default;
-  const expoConfigExtra = constants?.expoConfig?.extra;
+  const expoConfigExtra = (constants as {
+    expoConfig?: { extra?: { openAiBaseUrl?: unknown; openAiModel?: unknown } };
+  }).expoConfig?.extra;
 
   if (expoConfigExtra && typeof expoConfigExtra === "object") {
     return expoConfigExtra as { openAiBaseUrl?: unknown; openAiModel?: unknown };

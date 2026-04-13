@@ -22,13 +22,19 @@ const defaultProfileInfo: ProfileInfo = {
   phone: "",
 };
 
+const runtimeOverrides: Partial<PersistedAppState> = {};
+
+function hasRuntimeOverride<Key extends keyof PersistedAppState>(key: Key): boolean {
+  return Object.prototype.hasOwnProperty.call(runtimeOverrides, key);
+}
+
 export async function loadPersistedAppState(): Promise<PersistedAppState> {
   const entries = await AsyncStorage.multiGet(Object.values(STORAGE_KEYS));
   const values = Object.fromEntries(entries);
 
   const rawAiProvider = String(values[STORAGE_KEYS.aiProvider] ?? "").trim();
 
-  return {
+  const persistedState: PersistedAppState = {
     aiProvider: rawAiProvider === "gemini" ? "gemini" : "openai",
     geminiApiKey: String(values[STORAGE_KEYS.geminiApiKey] ?? "").trim(),
     localePreference: coerceLocalePreference(values[STORAGE_KEYS.localePreference]),
@@ -41,17 +47,26 @@ export async function loadPersistedAppState(): Promise<PersistedAppState> {
     session: parseSession(values[STORAGE_KEYS.session]),
     themePreference: coerceThemePreference(values[STORAGE_KEYS.themePreference]),
   };
+
+  return {
+    ...persistedState,
+    ...runtimeOverrides,
+    profileInfo: runtimeOverrides.profileInfo ?? persistedState.profileInfo,
+  };
 }
 
 export async function persistThemePreference(value: PersistedAppState["themePreference"]) {
+  runtimeOverrides.themePreference = value;
   await AsyncStorage.setItem(STORAGE_KEYS.themePreference, value);
 }
 
 export async function persistLocalePreference(value: PersistedAppState["localePreference"]) {
+  runtimeOverrides.localePreference = value;
   await AsyncStorage.setItem(STORAGE_KEYS.localePreference, value);
 }
 
 export async function persistSession(session: AppSession | null) {
+  runtimeOverrides.session = session;
   if (session) {
     await AsyncStorage.setItem(STORAGE_KEYS.session, JSON.stringify(session));
     return;
@@ -61,11 +76,13 @@ export async function persistSession(session: AppSession | null) {
 }
 
 export async function persistAiProvider(value: AiProvider) {
+  runtimeOverrides.aiProvider = value;
   await AsyncStorage.setItem(STORAGE_KEYS.aiProvider, value);
 }
 
 export async function persistGeminiApiKey(value: string) {
   const normalized = value.trim();
+  runtimeOverrides.geminiApiKey = normalized;
 
   if (normalized) {
     await AsyncStorage.setItem(STORAGE_KEYS.geminiApiKey, normalized);
@@ -77,6 +94,7 @@ export async function persistGeminiApiKey(value: string) {
 
 export async function persistOpenAiApiKey(value: string) {
   const normalized = value.trim();
+  runtimeOverrides.openAiApiKey = normalized;
 
   if (normalized) {
     await AsyncStorage.setItem(STORAGE_KEYS.openAiApiKey, normalized);
@@ -88,6 +106,7 @@ export async function persistOpenAiApiKey(value: string) {
 
 export async function persistProfileInfo(value: ProfileInfo) {
   const normalized = normalizeProfileInfo(value);
+  runtimeOverrides.profileInfo = normalized;
 
   await AsyncStorage.multiSet([
     [STORAGE_KEYS.profileName, normalized.name],
@@ -97,6 +116,10 @@ export async function persistProfileInfo(value: ProfileInfo) {
 }
 
 export async function loadPersistedProfileInfo(): Promise<ProfileInfo> {
+  if (runtimeOverrides.profileInfo) {
+    return runtimeOverrides.profileInfo;
+  }
+
   const entries = await AsyncStorage.multiGet([
     STORAGE_KEYS.profileName,
     STORAGE_KEYS.profileEmail,
@@ -112,15 +135,27 @@ export async function loadPersistedProfileInfo(): Promise<ProfileInfo> {
 }
 
 export async function loadPersistedAiProvider(): Promise<AiProvider> {
+  if (hasRuntimeOverride("aiProvider")) {
+    return runtimeOverrides.aiProvider ?? "openai";
+  }
+
   const raw = String((await AsyncStorage.getItem(STORAGE_KEYS.aiProvider)) ?? "").trim();
   return raw === "gemini" ? "gemini" : "openai";
 }
 
 export async function loadPersistedGeminiApiKey(): Promise<string> {
+  if (hasRuntimeOverride("geminiApiKey")) {
+    return runtimeOverrides.geminiApiKey ?? "";
+  }
+
   return String((await AsyncStorage.getItem(STORAGE_KEYS.geminiApiKey)) ?? "").trim();
 }
 
 export async function loadPersistedOpenAiApiKey(): Promise<string> {
+  if (hasRuntimeOverride("openAiApiKey")) {
+    return runtimeOverrides.openAiApiKey ?? "";
+  }
+
   return String((await AsyncStorage.getItem(STORAGE_KEYS.openAiApiKey)) ?? "").trim();
 }
 

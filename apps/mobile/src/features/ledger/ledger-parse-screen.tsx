@@ -6,6 +6,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { BackHeaderBar } from "../../components/back-header-bar";
 import { CfoAvatar } from "../../components/cfo-avatar";
 import { useAppShell } from "../app-shell/provider";
+import { getProposalUiCopy } from "./ledger-ui-copy";
 import { usePlannerWorkflow } from "./use-planner-workflow";
 
 export function LedgerParseScreen() {
@@ -229,58 +230,74 @@ export function LedgerParseScreen() {
         {plannerResult && plannerResult.writeProposals.length > 0 && !allApproved ? (
           <View style={styles.proposalsSection}>
             <Text style={[styles.sectionTitle, { color: palette.ink, marginBottom: 12 }]}>Write Proposals</Text>
-            {plannerResult.writeProposals.map((proposal) => (
-              <View
-                key={proposal.writeProposalId}
-                style={[styles.proposalCard, { backgroundColor: palette.paper, borderColor: palette.border }]}
-              >
-                <View style={styles.proposalHeader}>
-                  <Text style={[styles.proposalType, { color: palette.ink }]}>
-                    {formatProposalType(proposal.proposalType)}
+            {plannerResult.writeProposals.map((proposal) => {
+              const proposalCopy = getProposalUiCopy(proposal.proposalType, proposal.payload);
+
+              return (
+                <View
+                  key={proposal.writeProposalId}
+                  style={[styles.proposalCard, { backgroundColor: palette.paper, borderColor: palette.border }]}
+                >
+                  <View style={styles.proposalHeader}>
+                    <Text style={[styles.proposalType, { color: palette.ink }]}>{proposalCopy.title}</Text>
+                    <View style={[styles.statePill, { backgroundColor: proposalStateColor(proposal.state) }]}>
+                      <Text style={styles.statePillText}>{proposal.state}</Text>
+                    </View>
+                  </View>
+                  {proposalCopy.summary ? (
+                    <Text style={[styles.proposalSummary, { color: palette.ink }]}>
+                      {proposalCopy.summary}
+                    </Text>
+                  ) : null}
+                  <Text style={[styles.proposalRationale, { color: palette.inkMuted }]}>
+                    {proposal.rationale}
                   </Text>
-                  <View style={[styles.statePill, { backgroundColor: proposalStateColor(proposal.state) }]}>
-                    <Text style={styles.statePillText}>{proposal.state}</Text>
-                  </View>
+                  {proposalCopy.detailLines.length > 0 ? (
+                    <View style={styles.proposalDetailList}>
+                      {proposalCopy.detailLines.map((detail) => (
+                        <Text key={`${proposal.writeProposalId}-${detail}`} style={[styles.proposalDetailLine, { color: palette.inkMuted }]}>
+                          {detail}
+                        </Text>
+                      ))}
+                    </View>
+                  ) : null}
+                  {proposal.state === "pending_approval" ? (
+                    <View style={styles.proposalActions}>
+                      <Pressable
+                        accessibilityRole="button"
+                        disabled={isApproving}
+                        onPress={() => approveProposal(proposal.writeProposalId)}
+                        style={({ pressed }) => [
+                          styles.approveButton,
+                          {
+                            backgroundColor: pressed ? "#2E7D32" : "#4CAF50",
+                            opacity: isApproving ? 0.7 : 1,
+                          },
+                        ]}
+                        testID={`approve-${proposal.writeProposalId}`}
+                      >
+                        <Text style={styles.actionButtonLabel}>{proposalCopy.approveLabel}</Text>
+                      </Pressable>
+                      <Pressable
+                        accessibilityRole="button"
+                        disabled={isApproving}
+                        onPress={() => rejectProposal(proposal.writeProposalId)}
+                        style={({ pressed }) => [
+                          styles.rejectButton,
+                          {
+                            backgroundColor: pressed ? "#C62828" : "#EF5350",
+                            opacity: isApproving ? 0.7 : 1,
+                          },
+                        ]}
+                        testID={`reject-${proposal.writeProposalId}`}
+                      >
+                        <Text style={styles.actionButtonLabel}>{proposalCopy.rejectLabel}</Text>
+                      </Pressable>
+                    </View>
+                  ) : null}
                 </View>
-                <Text style={[styles.proposalRationale, { color: palette.inkMuted }]}>
-                  {proposal.rationale}
-                </Text>
-                {proposal.state === "pending_approval" ? (
-                  <View style={styles.proposalActions}>
-                    <Pressable
-                      accessibilityRole="button"
-                      disabled={isApproving}
-                      onPress={() => approveProposal(proposal.writeProposalId)}
-                      style={({ pressed }) => [
-                        styles.approveButton,
-                        {
-                          backgroundColor: pressed ? "#2E7D32" : "#4CAF50",
-                          opacity: isApproving ? 0.7 : 1,
-                        },
-                      ]}
-                      testID={`approve-${proposal.writeProposalId}`}
-                    >
-                      <Text style={styles.actionButtonLabel}>Approve</Text>
-                    </Pressable>
-                    <Pressable
-                      accessibilityRole="button"
-                      disabled={isApproving}
-                      onPress={() => rejectProposal(proposal.writeProposalId)}
-                      style={({ pressed }) => [
-                        styles.rejectButton,
-                        {
-                          backgroundColor: pressed ? "#C62828" : "#EF5350",
-                          opacity: isApproving ? 0.7 : 1,
-                        },
-                      ]}
-                      testID={`reject-${proposal.writeProposalId}`}
-                    >
-                      <Text style={styles.actionButtonLabel}>Reject</Text>
-                    </Pressable>
-                  </View>
-                ) : null}
-              </View>
-            ))}
+              );
+            })}
           </View>
         ) : null}
 
@@ -342,10 +359,6 @@ function StatPill(props: { label: string; palette: Record<string, string>; value
       <Text style={[styles.statPillLabel, { color: props.palette.inkMuted }]}>{props.label}</Text>
     </View>
   );
-}
-
-function formatProposalType(type: string): string {
-  return type.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 function stateColor(state: string): string {
@@ -536,6 +549,13 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     padding: 16,
   },
+  proposalDetailLine: {
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  proposalDetailList: {
+    gap: 4,
+  },
   proposalHeader: {
     alignItems: "center",
     flexDirection: "row",
@@ -544,6 +564,11 @@ const styles = StyleSheet.create({
   proposalRationale: {
     fontSize: 13,
     lineHeight: 18,
+  },
+  proposalSummary: {
+    fontSize: 14,
+    fontWeight: "600",
+    lineHeight: 19,
   },
   proposalType: {
     fontSize: 16,

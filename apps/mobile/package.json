@@ -10,7 +10,7 @@
     "smoke": "pnpm test",
     "start": "expo start",
     "android": "expo run:android",
-    "ios": "expo run:ios",
+    "ios": "node ./scripts/run-ios.mjs",
     "test": "vitest run tests",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "web": "expo start --web"

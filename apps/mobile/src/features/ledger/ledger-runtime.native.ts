@@ -3,11 +3,11 @@ import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system/legacy";
 import * as ImagePicker from "expo-image-picker";
 import { buildEvidenceUploadPath } from "@creator-cfo/storage";
-import type { EvidenceExtractedData, EvidenceParserKind } from "@creator-cfo/schemas";
+import type { EvidenceExtractedData, ReceiptParsePayload } from "@creator-cfo/schemas";
 
 import {
-  buildExtractedData,
   buildFailedExtractedData,
+  buildRemoteExtractedData,
   buildStoredUploadFileName,
   defaultEntityId,
   type EvidenceQueueItem,
@@ -280,7 +280,7 @@ export async function runPlanner(input: {
   rawText: string;
 }): Promise<PlannerResult> {
   const { planEvidenceDbUpdates } = await import("./remote-parse");
-  const { buildExtractedData } = await import("./ledger-domain");
+  const { buildRemoteExtractedData } = await import("./ledger-domain");
   const {
     createExtractionRun,
     createPlannerRun,
@@ -367,17 +367,13 @@ export async function runPlanner(input: {
       updatedAt: now,
     });
 
-    // 7. Build extracted data for the evidence row
-    const extractedData = buildExtractedData({
-      fallbackDate: now.slice(0, 10),
+    // 7. Build extracted data for the evidence row from the validated parse payload
+    const extractedData = buildRemoteExtractedData({
       fileName: input.fileName,
-      parser: (input.parserKind ?? "openai_gpt") as EvidenceParserKind,
-      rawLines: input.rawText.split("\n").filter((l: string) => l.trim()),
-      rawText: input.rawText,
+      parsePayload: input.rawJson as ReceiptParsePayload,
+      scheme: {},
       sourceLabel: input.parserKind === "gemini" ? "gemini_upload" : "openai_upload",
     });
-    extractedData.model = input.model;
-    extractedData.originData = input.rawJson as never;
 
     await writableDatabase.runAsync(
       `UPDATE evidences SET parse_status = 'parsed', extracted_data = ? WHERE evidence_id = ?;`,
@@ -499,7 +495,7 @@ export async function rejectWriteProposal(
   batchId: string,
   writeProposalId: string,
 ): Promise<PlannerResult> {
-  const { rejectWorkflowWriteProposal, updateUploadBatchState } = await import("./ledger-store");
+  const { rejectWorkflowWriteProposal } = await import("./ledger-store");
 
   return withWritableLocalDatabase(async ({ writableDatabase }) => {
     const now = new Date().toISOString();
@@ -516,12 +512,6 @@ export async function rejectWriteProposal(
     await rejectWorkflowWriteProposal(writableDatabase, {
       updatedAt: now,
       writeProposalId,
-    });
-
-    await updateUploadBatchState(writableDatabase, {
-      batchId,
-      state: "rejected",
-      updatedAt: now,
     });
 
     const evidence = await loadEvidenceById(writableDatabase, batch.evidenceId);
@@ -656,16 +646,16 @@ async function extractEvidenceData(evidence: EvidenceQueueItem): Promise<Evidenc
       throw new Error(result.error);
     }
 
-    const extractedData = buildExtractedData({
-      fallbackDate,
+    if (!result.rawJson) {
+      throw new Error("Remote GPT parsing returned no validated parser payload.");
+    }
+
+    const extractedData = buildRemoteExtractedData({
       fileName: evidence.originalFileName,
-      parser: "openai_gpt",
-      rawLines: result.rawText.split(/\r?\n/).filter((line) => line.trim().length > 0),
-      rawText: result.rawText,
+      parsePayload: result.rawJson,
+      scheme: {},
       sourceLabel: "Vercel OpenAI GPT",
     });
-    extractedData.model = result.model;
-    extractedData.originData = (result.rawJson ?? null) as never;
 
     return extractedData;
   } catch (error) {
