@@ -90,7 +90,9 @@ export interface WorkflowWriteProposalItem {
   payload: Record<string, JsonValue>;
   proposalType:
     | "create_counterparty"
+    | "merge_counterparty"
     | "persist_candidate_record"
+    | "resolve_duplicate_receipt"
     | "update_candidate_record"
     | "update_workflow_state";
   rationale: string;

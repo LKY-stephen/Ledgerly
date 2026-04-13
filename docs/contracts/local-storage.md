@@ -74,7 +74,7 @@ The workflow layer is now persisted explicitly instead of only living in transie
 - `planner_runs` stores historical planner payloads plus locally validated summaries derived from extraction output
 - `planner_read_tasks` stores prerequisite reads and their results before approval-gated writes
 - `candidate_records` stores review-layer candidate rows before final books are mutated
-- `workflow_write_proposals` stores approval-gated proposals for `counterparties` and final `records` persistence
+- `workflow_write_proposals` stores approval-gated proposals for `counterparties`, duplicate-receipt decisions, and final `records` persistence
 - `workflow_audit_events` stores durable approval notes, rejection notes, and workflow rationale
 
 ## Runtime Scope
@@ -120,6 +120,9 @@ Expected write-policy rules:
 - `counterparties`, final `records`, and `record_evidence_links` must remain approval-gated
 - planner output must not be treated as final bookkeeping truth without local validation and operator approval
 - rejected write proposals do not roll back already executed approvals; the workflow records a rejection note and may re-plan downstream proposals
+- same-receipt duplicate review is stored as a durable `resolve_duplicate_receipt` proposal with overlap metadata in `workflow_write_proposals.payload_json`
+- counterparty overlap review is stored as a durable `merge_counterparty` proposal, while the fallback `create_counterparty` stays blocked until the operator chooses `Keep New Counterparty`
+- approving `Merge Receipt` suppresses duplicate final writes and links the new evidence onto the existing related records through `record_evidence_links`
 
 Expected `extracted_data` JSON fields:
 
@@ -144,7 +147,7 @@ Expected `extraction_runs.parse_payload` semantics:
 Expected `planner_runs` semantics:
 
 - `planner_payload_json`: the validated remote planner DTO returned by the planner call
-- `summary_json`: the locally enriched planner summary after read-task execution, duplicate checks, counterparty resolution, dependency ordering, and writeability validation
+- `summary_json`: the locally enriched planner summary after read-task execution, duplicate checks, duplicate overlap grouping, counterparty resolution, dependency ordering, and writeability validation
 - planner DTO invalidation or missing required sections marks `planner_runs.state = failed`, `upload_batches.state = failed`, persists `error_message`, and appends `workflow_audit_events`
 
 Compatibility notes:

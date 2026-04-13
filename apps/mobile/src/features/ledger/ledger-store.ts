@@ -29,6 +29,7 @@ import {
   buildPlannerSummary,
   buildReviewValuesFromPayload,
   deriveCandidateState,
+  type DuplicateReceiptMatch,
   type PlannerLookupMatch,
   type PlannerReadResults,
 } from "./workflow-planner";
@@ -76,6 +77,11 @@ interface QueueBaseRow {
   parseStatus: "failed" | "parsed" | "pending";
   plannerRunId: string | null;
   plannerSummaryJson: string | null;
+}
+
+interface CounterpartyLookupResult {
+  exactMatches: PlannerLookupMatch[];
+  suggestedMatches: PlannerLookupMatch[];
 }
 
 export async function ensureDefaultEntity(
@@ -366,19 +372,27 @@ export async function loadPlannerReadResults(
   },
 ): Promise<PlannerReadResults> {
   const entityId = input.entityId ?? defaultEntityId;
-  const sourceCounterpartyMatches = await lookupCounterparties(database, entityId, input.sourceLabel);
-  const targetCounterpartyMatches = await lookupCounterparties(database, entityId, input.targetLabel);
-  const duplicateRecordIds = await lookupDuplicateRecords(database, {
+  const sourceLookup = await lookupCounterparties(database, entityId, input.sourceLabel);
+  const targetLookup = await lookupCounterparties(database, entityId, input.targetLabel);
+  const duplicateReceiptMatches = await lookupDuplicateReceiptMatches(database, {
     amountCents: input.amountCents,
     date: input.date,
     description: input.description,
     entityId,
+    sourceLabel: input.sourceLabel,
+    targetLabel: input.targetLabel,
   });
+  const duplicateRecordIds = dedupeStrings(
+    duplicateReceiptMatches.flatMap((match) => match.matchedRecordIds),
+  );
 
   return {
     duplicateRecordIds,
-    sourceCounterpartyMatches,
-    targetCounterpartyMatches,
+    duplicateReceiptMatches,
+    sourceCounterpartyMatches: sourceLookup.exactMatches,
+    sourceCounterpartySuggestions: sourceLookup.suggestedMatches,
+    targetCounterpartyMatches: targetLookup.exactMatches,
+    targetCounterpartySuggestions: targetLookup.suggestedMatches,
   };
 }
 
@@ -484,19 +498,18 @@ export async function savePlannerArtifacts(
     );
   }
 
-  const counterpartyProposalIds: string[] = [];
-
+  const candidateState = candidateIds.length ? await loadCandidateState(database, candidateIds[0]!) : "candidate";
+  const insertedProposals: Array<{
+    proposal: PlannerSummary["writeProposals"][number];
+    writeProposalId: string;
+  }> = [];
   for (const [index, proposal] of summary.writeProposals.entries()) {
-    const isCounterpartyProposal = proposal.proposalType === "create_counterparty";
     const writeProposalId = `${input.plannerRunId}-proposal-${index + 1}`;
-
-    if (isCounterpartyProposal) {
-      counterpartyProposalIds.push(writeProposalId);
-    }
+    const dependencyIds = resolveStoredProposalDependencies(insertedProposals, proposal);
 
     const proposalState = determineInitialProposalState({
-      candidateState: candidateIds.length ? await loadCandidateState(database, candidateIds[0]!) : "candidate",
-      dependencyCount: isCounterpartyProposal ? 0 : counterpartyProposalIds.length,
+      candidateState,
+      dependencyCount: dependencyIds.length,
       proposalType: proposal.proposalType,
     });
 
@@ -520,19 +533,23 @@ export async function savePlannerArtifacts(
       proposal.proposalType,
       proposalState,
       1,
-      isCounterpartyProposal || !counterpartyProposalIds.length
-        ? null
-        : JSON.stringify(counterpartyProposalIds),
+      dependencyIds.length ? JSON.stringify(dependencyIds) : null,
       JSON.stringify(proposal.values),
       buildProposalRationale(proposal),
       input.createdAt,
       input.createdAt,
     );
+    insertedProposals.push({ proposal, writeProposalId });
   }
 
-  const batchState = determineBatchState(summary, candidateIds.length ? await loadCandidateState(database, candidateIds[0]!) : "candidate");
+  const duplicateReceiptProposal = summary.writeProposals.find(
+    (proposal) => proposal.proposalType === "resolve_duplicate_receipt",
+  );
+  const batchState = determineBatchState(summary, candidateState);
   await updateUploadBatchState(database, {
     batchId: input.batchId,
+    duplicateKind: duplicateReceiptProposal ? "near_duplicate" : null,
+    duplicateOfEvidenceId: asString(duplicateReceiptProposal?.values.conflictEvidenceId ?? duplicateReceiptProposal?.values.duplicateEvidenceId),
     state: batchState,
     updatedAt: input.createdAt,
   });
@@ -659,6 +676,25 @@ export async function approveWorkflowWriteProposal(
     return;
   }
 
+  if (proposal.proposalType === "merge_counterparty") {
+    await executeMergeCounterpartyProposal(database, {
+      actor: input.actor ?? "local_user",
+      proposal,
+      updatedAt: input.updatedAt,
+    });
+    return;
+  }
+
+  if (proposal.proposalType === "resolve_duplicate_receipt") {
+    await executeResolveDuplicateReceiptProposal(database, {
+      actor: input.actor ?? "local_user",
+      evidenceId: input.evidenceId,
+      proposal,
+      updatedAt: input.updatedAt,
+    });
+    return;
+  }
+
   await executePersistCandidateProposal(database, {
     actor: input.actor ?? "local_user",
     evidenceId: input.evidenceId,
@@ -706,6 +742,27 @@ export async function rejectWorkflowWriteProposal(
 
   if (proposal.proposalType === "create_counterparty") {
     await blockDependentProposals(database, proposal.writeProposalId, input.updatedAt);
+    await updateUploadBatchState(database, {
+      batchId: proposal.batchId,
+      state: "rejected",
+      updatedAt: input.updatedAt,
+    });
+  } else if (
+    proposal.proposalType === "merge_counterparty" ||
+    proposal.proposalType === "resolve_duplicate_receipt"
+  ) {
+    await releaseResolvedDecisionDependencies(database, input.updatedAt);
+    await updateUploadBatchState(database, {
+      batchId: proposal.batchId,
+      state: "review_required",
+      updatedAt: input.updatedAt,
+    });
+  } else if (proposal.proposalType === "persist_candidate_record") {
+    await updateUploadBatchState(database, {
+      batchId: proposal.batchId,
+      state: "rejected",
+      updatedAt: input.updatedAt,
+    });
   }
 
   await appendWorkflowAuditEvent(database, {
@@ -957,54 +1014,149 @@ async function lookupCounterparties(
   database: ReadableStorageDatabase,
   entityId: string,
   label: string | null,
-): Promise<PlannerLookupMatch[]> {
-  const normalized = normalizeText(label);
+): Promise<CounterpartyLookupResult> {
+  const normalized = normalizeComparableText(label);
 
   if (!normalized) {
-    return [];
+    return {
+      exactMatches: [],
+      suggestedMatches: [],
+    };
   }
 
-  return database.getAllAsync<PlannerLookupMatch>(
+  const rows = await database.getAllAsync<PlannerLookupMatch>(
     `SELECT
       counterparty_id AS counterpartyId,
       display_name AS displayName
     FROM counterparties
     WHERE entity_id = ?
-      AND LOWER(TRIM(display_name)) = LOWER(TRIM(?))
     ORDER BY created_at ASC;`,
     entityId,
-    normalized,
   );
+
+  const exactMatches = rows.filter((row) => normalizeComparableText(row.displayName) === normalized);
+  const suggestedMatches = rows
+    .filter((row) => !exactMatches.some((match) => match.counterpartyId === row.counterpartyId))
+    .map((row) => ({
+      ...row,
+      matchScore: scoreTextSimilarity(normalized, normalizeComparableText(row.displayName)),
+    }))
+    .filter((row) => (row.matchScore ?? 0) >= 0.55)
+    .sort((left, right) => (right.matchScore ?? 0) - (left.matchScore ?? 0))
+    .slice(0, 3);
+
+  return {
+    exactMatches,
+    suggestedMatches,
+  };
 }
 
-async function lookupDuplicateRecords(
+async function lookupDuplicateReceiptMatches(
   database: ReadableStorageDatabase,
   input: {
     amountCents: number | null;
     date: string | null;
     description: string | null;
     entityId: string;
+    sourceLabel: string | null;
+    targetLabel: string | null;
   },
-): Promise<string[]> {
-  if (!input.amountCents || !input.date || !normalizeText(input.description)) {
+): Promise<DuplicateReceiptMatch[]> {
+  if (!input.amountCents && !input.date && !normalizeText(input.description)) {
     return [];
   }
 
-  const rows = await database.getAllAsync<{ recordId: string }>(
-    `SELECT record_id AS recordId
+  const rows = await database.getAllAsync<{
+    amountCents: number;
+    conflictEvidenceId: string | null;
+    conflictLabel: string | null;
+    date: string;
+    description: string;
+    evidenceRecordCount: number;
+    recordId: string;
+    sourceLabel: string;
+    targetLabel: string;
+  }>(
+    `SELECT
+      records.record_id AS recordId,
+      records.amount_cents AS amountCents,
+      records.occurred_on AS date,
+      records.description AS description,
+      records.source_label AS sourceLabel,
+      records.target_label AS targetLabel,
+      links.evidence_id AS conflictEvidenceId,
+      evidence_files.original_file_name AS conflictLabel,
+      (
+        SELECT COUNT(*)
+        FROM record_evidence_links related_links
+        WHERE related_links.evidence_id = links.evidence_id
+      ) AS evidenceRecordCount
      FROM records
-     WHERE entity_id = ?
-       AND occurred_on = ?
-       AND amount_cents = ?
-       AND LOWER(TRIM(description)) = LOWER(TRIM(?))
-     ORDER BY created_at DESC;`,
+     LEFT JOIN record_evidence_links links
+       ON links.record_id = records.record_id
+     LEFT JOIN evidence_files
+       ON evidence_files.evidence_id = links.evidence_id
+      AND evidence_files.is_primary = 1
+     WHERE records.entity_id = ?
+       AND (
+         (? IS NOT NULL AND records.occurred_on = ?)
+         OR (? IS NOT NULL AND records.amount_cents = ?)
+         OR (? IS NOT NULL AND LOWER(TRIM(records.description)) = LOWER(TRIM(?)))
+         OR (? IS NOT NULL AND LOWER(TRIM(records.source_label)) = LOWER(TRIM(?)))
+         OR (? IS NOT NULL AND LOWER(TRIM(records.target_label)) = LOWER(TRIM(?)))
+       )
+     ORDER BY records.created_at DESC;`,
     input.entityId,
     input.date,
+    input.date,
     input.amountCents,
-    input.description!,
+    input.amountCents,
+    input.description,
+    input.description,
+    input.sourceLabel,
+    input.sourceLabel,
+    input.targetLabel,
+    input.targetLabel,
   );
 
-  return rows.map((row) => row.recordId);
+  const groupedMatches = new Map<string, DuplicateReceiptMatch>();
+
+  for (const row of rows) {
+    const conflictEvidenceId = normalizeText(row.conflictEvidenceId);
+
+    if (!conflictEvidenceId) {
+      continue;
+    }
+
+    const score = scoreDuplicateReceiptRow(row, input);
+
+    if (score < 6) {
+      continue;
+    }
+
+    const existing = groupedMatches.get(conflictEvidenceId) ?? {
+      conflictEvidenceId,
+      conflictLabel: normalizeText(row.conflictLabel) ?? conflictEvidenceId,
+      matchedRecordIds: [],
+      overlapEntryCount: row.evidenceRecordCount > 0 ? row.evidenceRecordCount : 1,
+    };
+
+    if (!existing.matchedRecordIds.includes(row.recordId)) {
+      existing.matchedRecordIds.push(row.recordId);
+    }
+
+    existing.overlapEntryCount = Math.max(
+      existing.overlapEntryCount,
+      row.evidenceRecordCount > 0 ? row.evidenceRecordCount : existing.matchedRecordIds.length,
+    );
+    groupedMatches.set(conflictEvidenceId, existing);
+  }
+
+  return [...groupedMatches.values()].sort((left, right) =>
+    right.overlapEntryCount - left.overlapEntryCount ||
+    right.matchedRecordIds.length - left.matchedRecordIds.length ||
+    left.conflictLabel.localeCompare(right.conflictLabel),
+  );
 }
 
 async function loadCandidateState(
@@ -1231,12 +1383,206 @@ async function executeCreateCounterpartyProposal(
     input.proposal.writeProposalId,
   );
   await unblockDependentProposals(database, input.proposal.writeProposalId, input.updatedAt);
+  await releaseResolvedDecisionDependencies(database, input.updatedAt);
   await appendWorkflowAuditEvent(database, {
     batchId: input.proposal.batchId,
     candidateId: input.proposal.candidateId,
     createdAt: input.updatedAt,
     eventType: "counterparty_created",
     message: `${displayName} approved and persisted as a counterparty.`,
+    plannerRunId: input.proposal.plannerRunId,
+    writeProposalId: input.proposal.writeProposalId,
+  });
+  await updateUploadBatchState(database, {
+    batchId: input.proposal.batchId,
+    state: "review_required",
+    updatedAt: input.updatedAt,
+  });
+}
+
+async function executeMergeCounterpartyProposal(
+  database: WritableStorageDatabase,
+  input: {
+    actor: string;
+    proposal: NonNullable<Awaited<ReturnType<typeof loadProposalById>>>;
+    updatedAt: string;
+  },
+): Promise<void> {
+  const role = normalizeText(asString(input.proposal.payload.role)) === "target" ? "target" : "source";
+  const existingCounterpartyId = normalizeText(
+    asString(input.proposal.payload.existingCounterpartyId),
+  );
+  const existingDisplayName = normalizeText(
+    asString(input.proposal.payload.existingDisplayName),
+  );
+
+  if (!existingCounterpartyId || !existingDisplayName || !input.proposal.candidateId) {
+    throw new Error("Counterparty merge proposal is missing the existing counterparty reference.");
+  }
+
+  const candidate = await loadCandidateById(database, input.proposal.candidateId);
+
+  if (!candidate) {
+    throw new Error("Candidate row no longer exists.");
+  }
+
+  const nextPayload = {
+    ...candidate.payload,
+    ...(role === "source"
+      ? { sourceCounterpartyId: existingCounterpartyId, sourceLabel: existingDisplayName }
+      : { targetCounterpartyId: existingCounterpartyId, targetLabel: existingDisplayName }),
+  } satisfies CandidateRecordPayload;
+
+  await database.runAsync(
+    `UPDATE candidate_records
+     SET payload_json = ?,
+         review_json = ?,
+         state = ?,
+         updated_at = ?
+     WHERE candidate_id = ?;`,
+    JSON.stringify(nextPayload),
+    JSON.stringify(buildReviewValuesFromPayload(nextPayload)),
+    "validated",
+    input.updatedAt,
+    candidate.candidateId,
+  );
+  await database.runAsync(
+    `UPDATE workflow_write_proposals
+     SET state = ?,
+         updated_at = ?
+     WHERE write_proposal_id = ?;`,
+    "executed",
+    input.updatedAt,
+    input.proposal.writeProposalId,
+  );
+
+  const siblingCreateProposal = await findSiblingCounterpartyCreateProposal(database, {
+    plannerRunId: input.proposal.plannerRunId,
+    role,
+  });
+
+  if (siblingCreateProposal && siblingCreateProposal.state !== "executed") {
+    await database.runAsync(
+      `UPDATE workflow_write_proposals
+       SET state = ?,
+           updated_at = ?
+       WHERE write_proposal_id = ?;`,
+      "rejected",
+      input.updatedAt,
+      siblingCreateProposal.writeProposalId,
+    );
+    await removeProposalDependency(database, siblingCreateProposal.writeProposalId, input.updatedAt);
+  }
+
+  await releaseResolvedDecisionDependencies(database, input.updatedAt);
+  await appendWorkflowAuditEvent(database, {
+    batchId: input.proposal.batchId,
+    candidateId: input.proposal.candidateId,
+    createdAt: input.updatedAt,
+    eventType: "counterparty_merged",
+    message: `${existingDisplayName} kept as the local counterparty after approval by ${input.actor}.`,
+    plannerRunId: input.proposal.plannerRunId,
+    writeProposalId: input.proposal.writeProposalId,
+  });
+  await updateUploadBatchState(database, {
+    batchId: input.proposal.batchId,
+    state: "review_required",
+    updatedAt: input.updatedAt,
+  });
+}
+
+async function executeResolveDuplicateReceiptProposal(
+  database: WritableStorageDatabase,
+  input: {
+    actor: string;
+    evidenceId: string;
+    proposal: NonNullable<Awaited<ReturnType<typeof loadProposalById>>>;
+    updatedAt: string;
+  },
+): Promise<void> {
+  const conflictEvidenceId = normalizeText(
+    asString(input.proposal.payload.conflictEvidenceId ?? input.proposal.payload.duplicateEvidenceId),
+  );
+  const matchedRecordIds = conflictEvidenceId
+    ? (await database.getAllAsync<{ recordId: string }>(
+        `SELECT record_id AS recordId
+         FROM record_evidence_links
+         WHERE evidence_id = ?
+         ORDER BY record_id ASC;`,
+        conflictEvidenceId,
+      )).map((row) => row.recordId)
+    : asStringArrayValue(input.proposal.payload.matchedRecordIds);
+
+  if (!matchedRecordIds.length || !input.proposal.candidateId) {
+    throw new Error("Duplicate receipt proposal is missing matched record references.");
+  }
+
+  for (const recordId of matchedRecordIds) {
+    await database.runAsync(
+      `INSERT OR IGNORE INTO record_evidence_links (
+        record_id,
+        evidence_id,
+        link_role,
+        is_primary,
+        created_at
+      ) VALUES (?, ?, ?, ?, ?);`,
+      recordId,
+      input.evidenceId,
+      "supporting",
+      0,
+      input.updatedAt,
+    );
+  }
+
+  await database.runAsync(
+    `UPDATE candidate_records
+     SET state = ?,
+         updated_at = ?
+     WHERE candidate_id = ?;`,
+    "approved",
+    input.updatedAt,
+    input.proposal.candidateId,
+  );
+  await database.runAsync(
+    `UPDATE workflow_write_proposals
+     SET state = ?,
+         updated_at = ?
+     WHERE write_proposal_id = ?;`,
+    "executed",
+    input.updatedAt,
+    input.proposal.writeProposalId,
+  );
+  await database.runAsync(
+    `UPDATE workflow_write_proposals
+     SET state = ?,
+         updated_at = ?
+     WHERE planner_run_id = ?
+       AND write_proposal_id != ?
+       AND state IN ('pending_approval', 'blocked');`,
+    "rejected",
+    input.updatedAt,
+    input.proposal.plannerRunId,
+    input.proposal.writeProposalId,
+  );
+  await database.runAsync(
+    `UPDATE evidences
+     SET parse_status = 'parsed'
+     WHERE evidence_id = ?;`,
+    input.evidenceId,
+  );
+  await updateUploadBatchState(database, {
+    batchId: input.proposal.batchId,
+    duplicateKind: "near_duplicate",
+    duplicateOfEvidenceId: asString(input.proposal.payload.conflictEvidenceId ?? input.proposal.payload.duplicateEvidenceId),
+    state: "approved",
+    updatedAt: input.updatedAt,
+  });
+  await appendWorkflowAuditEvent(database, {
+    batchId: input.proposal.batchId,
+    candidateId: input.proposal.candidateId,
+    createdAt: input.updatedAt,
+    eventType: "duplicate_receipt_merged",
+    message: `Duplicate receipt merge approved by ${input.actor}; duplicate final writes were suppressed.`,
     plannerRunId: input.proposal.plannerRunId,
     writeProposalId: input.proposal.writeProposalId,
   });
@@ -1472,6 +1818,32 @@ async function loadLatestCandidateForEvidence(
   };
 }
 
+async function findSiblingCounterpartyCreateProposal(
+  database: ReadableStorageDatabase,
+  input: {
+    plannerRunId: string;
+    role: "source" | "target";
+  },
+): Promise<{ state: WorkflowWriteProposalState; writeProposalId: string } | null> {
+  const rows = await database.getAllAsync<{
+    payloadJson: string;
+    state: WorkflowWriteProposalState;
+    writeProposalId: string;
+  }>(
+    `SELECT
+      write_proposal_id AS writeProposalId,
+      state,
+      payload_json AS payloadJson
+    FROM workflow_write_proposals
+    WHERE planner_run_id = ?
+      AND proposal_type = 'create_counterparty'
+    ORDER BY created_at ASC;`,
+    input.plannerRunId,
+  );
+
+  return rows.find((row) => normalizeText(asString((JSON.parse(row.payloadJson) as Record<string, JsonValue>).role)) === input.role) ?? null;
+}
+
 async function unblockDependentProposals(
   database: WritableStorageDatabase,
   dependencyProposalId: string,
@@ -1513,6 +1885,93 @@ async function unblockDependentProposals(
   }
 }
 
+async function releaseResolvedDecisionDependencies(
+  database: WritableStorageDatabase,
+  updatedAt: string,
+): Promise<void> {
+  const rows = await database.getAllAsync<{ dependencyIds: string | null; writeProposalId: string }>(
+    `SELECT
+      write_proposal_id AS writeProposalId,
+      dependency_ids AS dependencyIds
+    FROM workflow_write_proposals
+    WHERE dependency_ids IS NOT NULL
+      AND state = 'blocked';`,
+  );
+
+  for (const row of rows) {
+    const dependencyIds = row.dependencyIds ? (JSON.parse(row.dependencyIds) as string[]) : [];
+
+    if (!dependencyIds.length) {
+      continue;
+    }
+
+    const dependencyStates = await database.getAllAsync<{
+      proposalType: WorkflowWriteProposalItem["proposalType"];
+      state: WorkflowWriteProposalState;
+    }>(
+      `SELECT
+        proposal_type AS proposalType,
+        state
+       FROM workflow_write_proposals
+       WHERE write_proposal_id IN (${dependencyIds.map(() => "?").join(", ")});`,
+      ...dependencyIds,
+    );
+
+    const allDependenciesResolved = dependencyStates.every((dependency) =>
+      dependency.state === "executed" || dependency.state === "rejected",
+    );
+    const rejectedCreateDependency = dependencyStates.some((dependency) =>
+      dependency.proposalType === "create_counterparty" && dependency.state === "rejected",
+    );
+
+    if (allDependenciesResolved && !rejectedCreateDependency) {
+      await database.runAsync(
+        `UPDATE workflow_write_proposals
+         SET state = ?,
+             updated_at = ?
+         WHERE write_proposal_id = ?;`,
+        "pending_approval",
+        updatedAt,
+        row.writeProposalId,
+      );
+    }
+  }
+}
+
+async function removeProposalDependency(
+  database: WritableStorageDatabase,
+  dependencyProposalId: string,
+  updatedAt: string,
+): Promise<void> {
+  const rows = await database.getAllAsync<{ dependencyIds: string | null; writeProposalId: string }>(
+    `SELECT
+      write_proposal_id AS writeProposalId,
+      dependency_ids AS dependencyIds
+    FROM workflow_write_proposals
+    WHERE dependency_ids IS NOT NULL;`,
+  );
+
+  for (const row of rows) {
+    const dependencyIds = row.dependencyIds ? (JSON.parse(row.dependencyIds) as string[]) : [];
+
+    if (!dependencyIds.includes(dependencyProposalId)) {
+      continue;
+    }
+
+    const nextDependencyIds = dependencyIds.filter((dependencyId) => dependencyId !== dependencyProposalId);
+
+    await database.runAsync(
+      `UPDATE workflow_write_proposals
+       SET dependency_ids = ?,
+           updated_at = ?
+       WHERE write_proposal_id = ?;`,
+      nextDependencyIds.length ? JSON.stringify(nextDependencyIds) : null,
+      updatedAt,
+      row.writeProposalId,
+    );
+  }
+}
+
 async function blockDependentProposals(
   database: WritableStorageDatabase,
   dependencyProposalId: string,
@@ -1550,15 +2009,15 @@ function determineInitialProposalState(input: {
   dependencyCount: number;
   proposalType: WorkflowWriteProposalItem["proposalType"];
 }): WorkflowWriteProposalState {
-  if (input.candidateState === "duplicate") {
+  if (
+    input.proposalType === "persist_candidate_record" &&
+    input.candidateState !== "validated" &&
+    input.candidateState !== "needs_review"
+  ) {
     return "blocked";
   }
 
-  if (input.proposalType === "persist_candidate_record" && input.candidateState !== "validated") {
-    return "blocked";
-  }
-
-  if (input.proposalType === "persist_candidate_record" && input.dependencyCount > 0) {
+  if (input.dependencyCount > 0) {
     return "blocked";
   }
 
@@ -1586,8 +2045,16 @@ function buildProposalRationale(proposal: PlannerSummary["writeProposals"][numbe
     return "Parsed label does not match an existing local counterparty, so creation requires approval.";
   }
 
+  if (proposal.proposalType === "merge_counterparty") {
+    return "A likely existing local counterparty was found, so the operator must decide whether to merge it or keep a new counterparty.";
+  }
+
   if (proposal.proposalType === "persist_candidate_record") {
     return "Candidate record is ready for final persistence after approval and local validation.";
+  }
+
+  if (proposal.proposalType === "resolve_duplicate_receipt") {
+    return "A likely duplicate receipt was found, so the operator must decide whether to merge the evidence or keep the uploads separate.";
   }
 
   return "Workflow update requires approval.";
@@ -1652,9 +2119,117 @@ function asString(value: JsonValue | undefined): string {
   return typeof value === "string" ? value : "";
 }
 
+function asStringArrayValue(value: JsonValue | undefined): string[] {
+  return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
+}
+
 function normalizeText(value: string | null | undefined): string | null {
   const normalized = value?.trim();
   return normalized ? normalized : null;
+}
+
+function normalizeComparableText(value: string | null | undefined): string {
+  return (value ?? "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function scoreTextSimilarity(left: string, right: string): number {
+  if (!left || !right) {
+    return 0;
+  }
+
+  if (left === right) {
+    return 1;
+  }
+
+  if (left.includes(right) || right.includes(left)) {
+    return 0.8;
+  }
+
+  const leftTokens = new Set(left.split(" ").filter(Boolean));
+  const rightTokens = new Set(right.split(" ").filter(Boolean));
+  const intersection = [...leftTokens].filter((token) => rightTokens.has(token)).length;
+  const union = new Set([...leftTokens, ...rightTokens]).size;
+
+  return union > 0 ? intersection / union : 0;
+}
+
+function scoreDuplicateReceiptRow(
+  row: {
+    amountCents: number;
+    date: string;
+    description: string;
+    sourceLabel: string;
+    targetLabel: string;
+  },
+  input: {
+    amountCents: number | null;
+    date: string | null;
+    description: string | null;
+    sourceLabel: string | null;
+    targetLabel: string | null;
+  },
+): number {
+  let score = 0;
+
+  if (input.amountCents != null && row.amountCents === input.amountCents) {
+    score += 4;
+  }
+
+  if (input.date && row.date === input.date) {
+    score += 3;
+  }
+
+  if (scoreTextSimilarity(normalizeComparableText(row.description), normalizeComparableText(input.description)) >= 0.75) {
+    score += 2;
+  }
+
+  if (scoreTextSimilarity(normalizeComparableText(row.sourceLabel), normalizeComparableText(input.sourceLabel)) >= 0.6) {
+    score += 1;
+  }
+
+  if (scoreTextSimilarity(normalizeComparableText(row.targetLabel), normalizeComparableText(input.targetLabel)) >= 0.6) {
+    score += 1;
+  }
+
+  return score;
+}
+
+function resolveStoredProposalDependencies(
+  insertedProposals: Array<{
+    proposal: PlannerSummary["writeProposals"][number];
+    writeProposalId: string;
+  }>,
+  proposal: PlannerSummary["writeProposals"][number],
+): string[] {
+  if (proposal.proposalType === "create_counterparty") {
+    const role = proposal.role ?? normalizeText(asString(proposal.values.role));
+
+    return insertedProposals
+      .filter((item) =>
+        item.proposal.proposalType === "merge_counterparty" &&
+        (item.proposal.role ?? normalizeText(asString(item.proposal.values.role))) === role,
+      )
+      .map((item) => item.writeProposalId);
+  }
+
+  if (proposal.proposalType === "persist_candidate_record") {
+    return insertedProposals
+      .filter((item) =>
+        item.proposal.proposalType === "create_counterparty" ||
+        item.proposal.proposalType === "merge_counterparty" ||
+        item.proposal.proposalType === "resolve_duplicate_receipt",
+      )
+      .map((item) => item.writeProposalId);
+  }
+
+  return [];
+}
+
+function dedupeStrings(values: string[]): string[] {
+  return [...new Set(values.filter((value) => value.trim().length > 0))];
 }
 
 function sanitizeId(value: string): string {

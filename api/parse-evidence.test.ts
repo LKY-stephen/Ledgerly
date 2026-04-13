@@ -15,7 +15,7 @@ describe("POST /api/parse-evidence compatibility route", () => {
   });
 
   it("keeps the legacy route returning the validated parser DTO", async () => {
-    vi.mocked(global.fetch).mockResolvedValueOnce(
+    const fetchMock = vi.fn().mockResolvedValueOnce(
       new Response(
         JSON.stringify({
           output_text: JSON.stringify({
@@ -54,6 +54,7 @@ describe("POST /api/parse-evidence compatibility route", () => {
         },
       ),
     );
+    global.fetch = fetchMock as typeof global.fetch;
 
     const formData = new FormData();
     formData.append("filename", "statement.pdf");
@@ -100,5 +101,14 @@ describe("POST /api/parse-evidence compatibility route", () => {
       rawText: "March payout statement",
       warnings: ["Target inferred from payout language."],
     });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    const [, init] = fetchMock.mock.calls[0] ?? [];
+    const providerRequest = JSON.parse(String(init?.body));
+    expect(providerRequest.input[1].content[1]).toMatchObject({
+      filename: "statement.pdf",
+      type: "input_file",
+    });
+    expect(providerRequest.input[1].content[1].file_data).toContain("data:application/pdf;base64,");
   });
 });

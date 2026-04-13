@@ -1,5 +1,6 @@
 import { DatabaseSync } from "node:sqlite";
 import { describe, expect, it } from "vitest";
+import type { ReceiptPlannerPayload } from "@creator-cfo/schemas";
 
 import {
   createWritableStorageDatabase,
@@ -13,10 +14,17 @@ import {
   type ImportedEvidenceBundle,
 } from "../src/features/ledger/ledger-domain";
 import {
+  approveWorkflowWriteProposal,
+  createExtractionRun,
+  createPlannerRun,
+  createUploadBatch,
   ensureDefaultEntity,
   finalizeEvidenceReview,
   insertImportedEvidenceBundle,
+  loadEvidenceById,
   loadEvidenceQueue,
+  rejectWorkflowWriteProposal,
+  savePlannerArtifacts,
   updateEvidenceExtraction,
 } from "../src/features/ledger/ledger-store";
 
@@ -86,6 +94,219 @@ function createLivePhotoBundle(): ImportedEvidenceBundle {
     ],
     sourceSystem: "feat-upload-test",
   };
+}
+
+function createReceiptBundle(input: {
+  batchId: string;
+  capturedAt: string;
+  evidenceId: string;
+  evidenceKind?: string;
+  fileName: string;
+  filePath: string;
+}): ImportedEvidenceBundle {
+  return {
+    batchId: input.batchId,
+    capturedAt: input.capturedAt,
+    entityId: "entity-main",
+    evidenceId: input.evidenceId,
+    evidenceKind: input.evidenceKind ?? "receipt_document",
+    filePath: input.filePath,
+    files: [
+      {
+        capturedAt: input.capturedAt,
+        evidenceFileId: `${input.evidenceId}-file-primary`,
+        isPrimary: true,
+        mimeType: "application/pdf",
+        originalFileName: input.fileName,
+        relativePath: input.filePath,
+        sha256Hex: `${input.evidenceId}-hash`,
+        sizeBytes: 1_024,
+        vaultCollection: "evidence-objects",
+      },
+    ],
+    sourceSystem: "feat-upload-test",
+  };
+}
+
+function createPlannerPayload(evidenceId: string): ReceiptPlannerPayload {
+  return {
+    businessEvents: ["Receipt payment"],
+    candidateRecords: [
+      {
+        amountCents: 5299,
+        currency: "USD",
+        date: "2026-02-27",
+        description: "Apple Store accessories",
+        evidenceId,
+        recordKind: "expense",
+        sourceLabel: "Business Card",
+        targetLabel: "Apple Store",
+      },
+    ],
+    classifiedFacts: [
+      {
+        confidence: "high",
+        field: "amountCents",
+        reason: "Amount printed on the receipt.",
+        status: "confirmed",
+        value: 5299,
+      },
+    ],
+    counterpartyResolutions: [
+      {
+        confidence: "high",
+        displayName: "Business Card",
+        matchedDisplayNames: [],
+        matchedCounterpartyIds: [],
+        role: "source",
+        status: "proposed_new",
+      },
+      {
+        confidence: "medium",
+        displayName: "Apple Store",
+        matchedDisplayNames: [],
+        matchedCounterpartyIds: [],
+        role: "target",
+        status: "proposed_new",
+      },
+    ],
+    duplicateHints: [],
+    readTasks: [
+      {
+        readTaskId: "read-1",
+        rationale: "Look up source counterparty.",
+        status: "pending",
+        taskType: "counterparty_lookup",
+      },
+      {
+        readTaskId: "read-2",
+        rationale: "Check for duplicate receipts.",
+        status: "pending",
+        taskType: "duplicate_lookup",
+      },
+    ],
+    summary: "One expense record from the uploaded receipt.",
+    warnings: [],
+    writeProposals: [
+      {
+        proposalType: "create_counterparty",
+        role: "source",
+        values: { displayName: "Business Card", role: "source" },
+      },
+      {
+        proposalType: "create_counterparty",
+        role: "target",
+        values: { displayName: "Apple Store", role: "target" },
+      },
+      {
+        proposalType: "persist_candidate_record",
+        reviewFields: ["amount", "date", "source", "target"],
+        values: { candidateIndex: 0 },
+      },
+    ],
+  };
+}
+
+async function seedCounterparty(
+  database: ReturnType<typeof createWritableDatabase>,
+  input: {
+    counterpartyId: string;
+    displayName: string;
+    role: "source" | "target";
+  },
+) {
+  await database.runAsync(
+    `INSERT INTO counterparties (
+      counterparty_id,
+      entity_id,
+      counterparty_type,
+      display_name,
+      raw_reference,
+      notes,
+      created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?);`,
+    input.counterpartyId,
+    "entity-main",
+    input.role,
+    input.displayName,
+    input.displayName,
+    "seeded for workflow tests",
+    "2026-02-27T08:00:00.000Z",
+  );
+}
+
+async function seedConflictingReceiptEvidence(
+  database: DatabaseSync,
+  writableDatabase: ReturnType<typeof createWritableDatabase>,
+) {
+  const bundle = createReceiptBundle({
+    batchId: "batch-existing-duplicate",
+    capturedAt: "2026-02-27T08:30:00.000Z",
+    evidenceId: "evidence-existing-duplicate",
+    fileName: "receipt-2026-02-27.pdf",
+    filePath: "evidence-objects/entity-main/uploads/2026/02/receipt-2026-02-27.pdf",
+  });
+  await insertImportedEvidenceBundle(writableDatabase, bundle);
+
+  for (let index = 0; index < 5; index += 1) {
+    const recordId = `record-existing-${index + 1}`;
+
+    await writableDatabase.runAsync(
+      `INSERT INTO records (
+        record_id,
+        entity_id,
+        record_status,
+        source_system,
+        description,
+        memo,
+        occurred_on,
+        currency,
+        amount_cents,
+        source_label,
+        target_label,
+        source_counterparty_id,
+        target_counterparty_id,
+        record_kind,
+        category_code,
+        subcategory_code,
+        tax_category_code,
+        tax_line_code,
+        business_use_bps,
+        created_at,
+        updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+      recordId,
+      "entity-main",
+      "posted",
+      "duplicate-fixture",
+      index === 0 ? "Apple Store accessories" : `Linked line ${index + 1}`,
+      null,
+      "2026-02-27",
+      "USD",
+      index === 0 ? 5299 : 100 + index,
+      "Business Card",
+      index === 0 ? "Apple Store" : `Linked target ${index + 1}`,
+      null,
+      null,
+      "expense",
+      null,
+      null,
+      null,
+      null,
+      10_000,
+      `2026-02-27T08:3${index}:00.000Z`,
+      `2026-02-27T08:3${index}:00.000Z`,
+    );
+    database.prepare(
+      `INSERT INTO record_evidence_links (
+        record_id,
+        evidence_id,
+        link_role,
+        is_primary,
+        created_at
+      ) VALUES (?, ?, ?, ?, ?);`,
+    ).run(recordId, "evidence-existing-duplicate", "supporting", index === 0 ? 1 : 0, `2026-02-27T08:3${index}:00.000Z`);
+  }
 }
 
 describe("feat_upload data flow", () => {
@@ -421,5 +642,273 @@ describe("feat_upload data flow", () => {
       sourceLabel: "OpenAI GPT",
     });
     expect(recordLinkCount.count).toBe(0);
+  });
+
+  it("keeps duplicate and counterparty decisions durable when the operator chooses keep separate and keep new", async () => {
+    const database = createStorageDatabase();
+    const writableDatabase = createWritableDatabase(database);
+    const bundle = createReceiptBundle({
+      batchId: "batch-duplicate-decision",
+      capturedAt: "2026-02-27T09:00:00.000Z",
+      evidenceId: "evidence-duplicate-decision",
+      fileName: "receipt-feb-27.pdf",
+      filePath: "evidence-objects/entity-main/uploads/2026/02/receipt-feb-27.pdf",
+    });
+
+    await ensureDefaultEntity(writableDatabase, bundle.capturedAt);
+    await insertImportedEvidenceBundle(writableDatabase, bundle);
+    await seedCounterparty(writableDatabase, {
+      counterpartyId: "counterparty-source-existing",
+      displayName: "Business Card",
+      role: "source",
+    });
+    await seedCounterparty(writableDatabase, {
+      counterpartyId: "counterparty-target-existing",
+      displayName: "Apple Store LLC",
+      role: "target",
+    });
+    await seedConflictingReceiptEvidence(database, writableDatabase);
+
+    await updateEvidenceExtraction(writableDatabase, {
+      evidenceId: bundle.evidenceId,
+      extractedData: buildRemoteExtractedData({
+        fileName: bundle.files[0]!.originalFileName,
+        parsePayload: {
+          candidates: {
+            amountCents: 5299,
+            category: "expense",
+            date: "2026-02-27",
+            description: "Apple Store accessories",
+            notes: null,
+            source: "Business Card",
+            target: "Apple Store",
+            taxCategory: "office",
+          },
+          fields: {
+            amountCents: 5299,
+            category: "expense",
+            date: "2026-02-27",
+            description: "Apple Store accessories",
+            notes: null,
+            source: "Business Card",
+            target: "Apple Store",
+            taxCategory: "office",
+          },
+          model: "gpt-5",
+          parser: "openai_gpt",
+          rawSummary: "Apple Store receipt",
+          rawText: "Apple Store 02/27/2026 $52.99",
+          warnings: [],
+        },
+        scheme: {},
+        sourceLabel: "OpenAI GPT",
+      }),
+      parseStatus: "pending",
+    });
+
+    await createUploadBatch(writableDatabase, {
+      batchId: bundle.batchId,
+      createdAt: bundle.capturedAt,
+      evidenceId: bundle.evidenceId,
+      sourceSystem: "feat-upload-test",
+      state: "parse_complete",
+    });
+    await createExtractionRun(writableDatabase, {
+      batchId: bundle.batchId,
+      createdAt: bundle.capturedAt,
+      evidenceId: bundle.evidenceId,
+      extractionRunId: "extraction-duplicate-decision",
+    });
+    await createPlannerRun(writableDatabase, {
+      batchId: bundle.batchId,
+      createdAt: bundle.capturedAt,
+      evidenceId: bundle.evidenceId,
+      extractionRunId: "extraction-duplicate-decision",
+      plannerRunId: "planner-duplicate-decision",
+    });
+
+    const evidenceBeforeSave = await loadEvidenceById(writableDatabase, bundle.evidenceId);
+    expect(evidenceBeforeSave).not.toBeNull();
+
+    await savePlannerArtifacts(writableDatabase, {
+      batchId: bundle.batchId,
+      createdAt: bundle.capturedAt,
+      evidence: evidenceBeforeSave!,
+      plannerRunId: "planner-duplicate-decision",
+      remotePlan: createPlannerPayload(bundle.evidenceId),
+    });
+
+    let evidence = await loadEvidenceById(writableDatabase, bundle.evidenceId);
+    expect(evidence?.writeProposals).toHaveLength(4);
+    expect(evidence?.writeProposals.find((proposal) => proposal.proposalType === "resolve_duplicate_receipt")?.state).toBe("pending_approval");
+    expect(evidence?.writeProposals.find((proposal) => proposal.proposalType === "merge_counterparty")?.state).toBe("pending_approval");
+    expect(evidence?.writeProposals.find((proposal) => proposal.proposalType === "create_counterparty")?.state).toBe("blocked");
+    expect(evidence?.writeProposals.find((proposal) => proposal.proposalType === "persist_candidate_record")?.state).toBe("blocked");
+
+    const mergeProposal = evidence!.writeProposals.find((proposal) => proposal.proposalType === "merge_counterparty");
+    const duplicateProposal = evidence!.writeProposals.find((proposal) => proposal.proposalType === "resolve_duplicate_receipt");
+    const createProposal = evidence!.writeProposals.find((proposal) => proposal.proposalType === "create_counterparty");
+    const persistProposal = evidence!.writeProposals.find((proposal) => proposal.proposalType === "persist_candidate_record");
+
+    await rejectWorkflowWriteProposal(writableDatabase, {
+      updatedAt: "2026-02-27T09:05:00.000Z",
+      writeProposalId: mergeProposal!.writeProposalId,
+    });
+    evidence = await loadEvidenceById(writableDatabase, bundle.evidenceId);
+    expect(evidence?.writeProposals.find((proposal) => proposal.proposalType === "create_counterparty")?.state).toBe("pending_approval");
+    expect(evidence?.batchState).toBe("review_required");
+
+    await rejectWorkflowWriteProposal(writableDatabase, {
+      updatedAt: "2026-02-27T09:06:00.000Z",
+      writeProposalId: duplicateProposal!.writeProposalId,
+    });
+    evidence = await loadEvidenceById(writableDatabase, bundle.evidenceId);
+    expect(evidence?.writeProposals.find((proposal) => proposal.proposalType === "persist_candidate_record")?.state).toBe("blocked");
+
+    await approveWorkflowWriteProposal(writableDatabase, {
+      evidenceId: bundle.evidenceId,
+      updatedAt: "2026-02-27T09:07:00.000Z",
+      writeProposalId: createProposal!.writeProposalId,
+    });
+    evidence = await loadEvidenceById(writableDatabase, bundle.evidenceId);
+    expect(evidence?.writeProposals.find((proposal) => proposal.proposalType === "persist_candidate_record")?.state).toBe("pending_approval");
+
+    await approveWorkflowWriteProposal(writableDatabase, {
+      evidenceId: bundle.evidenceId,
+      review: {
+        amount: "52.99",
+        category: "expense",
+        date: "2026-02-27",
+        description: "Apple Store accessories",
+        notes: "keep separate and keep new",
+        source: "Business Card",
+        target: "Apple Store",
+        taxCategory: "office",
+      },
+      updatedAt: "2026-02-27T09:08:00.000Z",
+      writeProposalId: persistProposal!.writeProposalId,
+    });
+    evidence = await loadEvidenceById(writableDatabase, bundle.evidenceId);
+    expect(evidence?.batchState).toBe("approved");
+    expect(evidence?.candidateRecords[0]?.state).toBe("persisted_final");
+  });
+
+  it("merges duplicate receipts by linking the new evidence onto the existing five related records", async () => {
+    const database = createStorageDatabase();
+    const writableDatabase = createWritableDatabase(database);
+    const bundle = createReceiptBundle({
+      batchId: "batch-duplicate-merge",
+      capturedAt: "2026-02-27T10:00:00.000Z",
+      evidenceId: "evidence-duplicate-merge",
+      fileName: "receipt-feb-27-duplicate.pdf",
+      filePath: "evidence-objects/entity-main/uploads/2026/02/receipt-feb-27-duplicate.pdf",
+    });
+
+    await ensureDefaultEntity(writableDatabase, bundle.capturedAt);
+    await insertImportedEvidenceBundle(writableDatabase, bundle);
+    await seedCounterparty(writableDatabase, {
+      counterpartyId: "counterparty-source-existing",
+      displayName: "Business Card",
+      role: "source",
+    });
+    await seedCounterparty(writableDatabase, {
+      counterpartyId: "counterparty-target-existing",
+      displayName: "Apple Store",
+      role: "target",
+    });
+    await seedConflictingReceiptEvidence(database, writableDatabase);
+
+    await updateEvidenceExtraction(writableDatabase, {
+      evidenceId: bundle.evidenceId,
+      extractedData: buildRemoteExtractedData({
+        fileName: bundle.files[0]!.originalFileName,
+        parsePayload: {
+          candidates: {
+            amountCents: 5299,
+            category: "expense",
+            date: "2026-02-27",
+            description: "Apple Store accessories",
+            notes: null,
+            source: "Business Card",
+            target: "Apple Store",
+            taxCategory: "office",
+          },
+          fields: {
+            amountCents: 5299,
+            category: "expense",
+            date: "2026-02-27",
+            description: "Apple Store accessories",
+            notes: null,
+            source: "Business Card",
+            target: "Apple Store",
+            taxCategory: "office",
+          },
+          model: "gpt-5",
+          parser: "openai_gpt",
+          rawSummary: "Apple Store receipt",
+          rawText: "Apple Store 02/27/2026 $52.99",
+          warnings: [],
+        },
+        scheme: {},
+        sourceLabel: "OpenAI GPT",
+      }),
+      parseStatus: "pending",
+    });
+
+    await createUploadBatch(writableDatabase, {
+      batchId: bundle.batchId,
+      createdAt: bundle.capturedAt,
+      evidenceId: bundle.evidenceId,
+      sourceSystem: "feat-upload-test",
+      state: "parse_complete",
+    });
+    await createExtractionRun(writableDatabase, {
+      batchId: bundle.batchId,
+      createdAt: bundle.capturedAt,
+      evidenceId: bundle.evidenceId,
+      extractionRunId: "extraction-duplicate-merge",
+    });
+    await createPlannerRun(writableDatabase, {
+      batchId: bundle.batchId,
+      createdAt: bundle.capturedAt,
+      evidenceId: bundle.evidenceId,
+      extractionRunId: "extraction-duplicate-merge",
+      plannerRunId: "planner-duplicate-merge",
+    });
+
+    const evidenceBeforeSave = await loadEvidenceById(writableDatabase, bundle.evidenceId);
+    expect(evidenceBeforeSave).not.toBeNull();
+
+    await savePlannerArtifacts(writableDatabase, {
+      batchId: bundle.batchId,
+      createdAt: bundle.capturedAt,
+      evidence: evidenceBeforeSave!,
+      plannerRunId: "planner-duplicate-merge",
+      remotePlan: createPlannerPayload(bundle.evidenceId),
+    });
+
+    const evidence = await loadEvidenceById(writableDatabase, bundle.evidenceId);
+    const duplicateProposal = evidence?.writeProposals.find((proposal) => proposal.proposalType === "resolve_duplicate_receipt");
+    expect(duplicateProposal?.payload).toMatchObject({
+      duplicateReceiptLabel: "receipt-2026-02-27.pdf",
+      overlapEntryCount: 5,
+    });
+
+    await approveWorkflowWriteProposal(writableDatabase, {
+      evidenceId: bundle.evidenceId,
+      updatedAt: "2026-02-27T10:05:00.000Z",
+      writeProposalId: duplicateProposal!.writeProposalId,
+    });
+
+    const linkedRow = database
+      .prepare("SELECT COUNT(*) AS count FROM record_evidence_links WHERE evidence_id = ?;")
+      .get(bundle.evidenceId) as { count: number };
+    const mergedEvidence = await loadEvidenceById(writableDatabase, bundle.evidenceId);
+    expect(linkedRow.count).toBe(5);
+    expect(mergedEvidence?.batchState).toBe("approved");
+    expect(mergedEvidence?.candidateRecords[0]?.state).toBe("approved");
+    expect(
+      mergedEvidence?.writeProposals.find((proposal) => proposal.proposalType === "persist_candidate_record")?.state,
+    ).toBe("rejected");
   });
 });

@@ -158,7 +158,7 @@ const structuredTables = [
   },
   {
     name: "upload_batches",
-    summary: "Operator-visible upload workflow batches that summarize parse, planning, and approval state.",
+    summary: "Operator-visible upload workflow batches that summarize parse, planning, approval state, and duplicate-receipt context.",
     createStatement: `CREATE TABLE IF NOT EXISTS upload_batches (
       batch_id TEXT PRIMARY KEY NOT NULL,
       evidence_id TEXT,
@@ -287,7 +287,7 @@ const structuredTables = [
   },
   {
     name: "workflow_write_proposals",
-    summary: "Approval-gated workflow proposals produced by planner runs before mutating counterparties or final records.",
+    summary: "Approval-gated workflow proposals produced by planner runs before mutating counterparties, resolving duplicate receipts, or writing final records.",
     createStatement: `CREATE TABLE IF NOT EXISTS workflow_write_proposals (
       write_proposal_id TEXT PRIMARY KEY NOT NULL,
       planner_run_id TEXT NOT NULL,

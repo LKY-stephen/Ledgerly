@@ -28,7 +28,18 @@ pnpm --filter @creator-cfo/mobile android
 pnpm --filter @creator-cfo/mobile web
 ```
 
-Apple 登录只会在支持的 iOS 设备上触发真实授权；Web 与其他环境会优雅降级到游客流程。
+This repository is `pnpm`-only. Do not run `npm install`: npm does not read `pnpm-workspace.yaml`, so it can leave `apps/mobile` without `expo` and other workspace dependencies.
+
+If `npm install` was already run, recover from the repo root with:
+
+```bash
+rm -rf node_modules package-lock.json
+pnpm install
+```
+
+`pnpm --filter @creator-cfo/mobile ios` now starts Metro port selection at `8088` and automatically walks upward until it finds an available port, so Expo no longer stops on the interactive port prompt in the default path. Set `RCT_METRO_PORT` to force a specific port. If the command still fails before launching the app, verify the host simulator stack with `xcrun simctl list devices`; Expo cannot boot iOS without a healthy CoreSimulatorService.
+
+The iOS wrapper also repairs known local ExpoModulesCore CocoaPods drift before build, including missing public links for `expo-modules-core/ios/Protocols/*.h`, stale dangling header imports left behind by older pod layouts, and stale `Pods.xcodeproj` source entries such as a missing `AppContextFactory.swift` or obsolete `RCTComponentData+Privates.{h,m}` references.
 
 ## Required Checks
 

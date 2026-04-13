@@ -1,11 +1,14 @@
 /**
- * Smoke test: PDF parse → planner full pipeline
+ * Smoke test: receipt file parse → planner full pipeline
+ *
+ * Supports both PDF and image inputs. Non-PDF files are sent as image uploads.
  *
  * Usage:
- *   node tests/smoke/test-pdf-parse.mjs <openai-api-key> <pdf-file-path>
+ *   node tests/smoke/test-pdf-parse.mjs <openai-api-key> <file-path>
  *
  * Example:
  *   node tests/smoke/test-pdf-parse.mjs sk-proj-xxx /Users/you/Downloads/Receipt.pdf
+ *   node tests/smoke/test-pdf-parse.mjs sk-proj-xxx /Users/you/Downloads/Receipt.jpg
  */
 
 import { readFileSync } from "fs";
@@ -15,7 +18,7 @@ const apiKey = process.argv[2];
 const filePath = process.argv[3];
 
 if (!apiKey || !filePath) {
-  console.error("Usage: node test-pdf-parse.mjs <openai-api-key> <pdf-file-path>");
+  console.error("Usage: node test-pdf-parse.mjs <openai-api-key> <file-path>");
   process.exit(1);
 }
 

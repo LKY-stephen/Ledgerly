@@ -6,7 +6,7 @@ vi.mock("../src/features/app-shell/storage", () => ({
   loadPersistedOpenAiApiKey: vi.fn(async () => ""),
 }));
 
-import { planEvidenceDbUpdates } from "../src/features/ledger/remote-parse";
+import { planEvidenceDbUpdates, resetRemoteParseRuntimeStateForTests } from "../src/features/ledger/remote-parse";
 
 const originalBaseUrl = process.env.EXPO_PUBLIC_OPENAI_BASE_URL;
 const originalModel = process.env.EXPO_PUBLIC_OPENAI_MODEL;
@@ -16,8 +16,10 @@ afterEach(() => {
   process.env.EXPO_PUBLIC_OPENAI_BASE_URL = originalBaseUrl;
   process.env.EXPO_PUBLIC_OPENAI_MODEL = originalModel;
   process.env.EXPO_PUBLIC_OPENAI_API_KEY = originalApiKey;
+  delete process.env.EXPO_PUBLIC_OPENAI_FALLBACK_MODELS;
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
+  resetRemoteParseRuntimeStateForTests();
 });
 
 function stubOpenAiEnv() {
@@ -188,5 +190,43 @@ describe("planner sourceProfileInfo", () => {
     const systemPrompt = systemMessage!.content[0].text;
     expect(systemPrompt).toContain("sourceProfileInfo");
     expect(systemPrompt).toContain("sourceLabel / targetLabel");
+  });
+
+  it("switches the planner call to a fallback model when the current model is experiencing high demand", async () => {
+    stubOpenAiEnv();
+
+    const requestedModels: string[] = [];
+    let firstPrimaryAttempt = true;
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (_url: string, init?: RequestInit) => {
+        const body = JSON.parse(String(init?.body));
+        requestedModels.push(body.model);
+
+        if (body.model === "gpt-4o" && firstPrimaryAttempt) {
+          firstPrimaryAttempt = false;
+          return new Response(
+            JSON.stringify({ error: { message: "This model is experiencing high demand. Please try again later." } }),
+            { headers: { "content-type": "application/json" }, status: 503 },
+          );
+        }
+
+        return new Response(
+          JSON.stringify({ output_text: buildPlannerResponse() }),
+          { headers: { "content-type": "application/json" }, status: 200 },
+        );
+      }),
+    );
+
+    const result = await planEvidenceDbUpdates({
+      evidenceId: "ev-1",
+      fileName: "receipt.pdf",
+      mimeType: "application/pdf",
+      rawJson: { total: 50 },
+    });
+
+    expect(result.summary).toBe("One expense record.");
+    expect(requestedModels).toEqual(["gpt-4o", "gpt-4.1"]);
   });
 });

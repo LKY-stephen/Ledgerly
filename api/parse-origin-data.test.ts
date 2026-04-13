@@ -15,7 +15,7 @@ describe("POST /api/parse-origin-data", () => {
   });
 
   it("parses multipart uploads into the validated parser DTO", async () => {
-    vi.mocked(global.fetch).mockResolvedValueOnce(
+    const fetchMock = vi.fn().mockResolvedValueOnce(
       new Response(
         JSON.stringify({
           output_text: JSON.stringify({
@@ -54,6 +54,7 @@ describe("POST /api/parse-origin-data", () => {
         },
       ),
     );
+    global.fetch = fetchMock as typeof global.fetch;
 
     const formData = new FormData();
     formData.append("filename", "receipt.jpg");
@@ -100,6 +101,15 @@ describe("POST /api/parse-origin-data", () => {
       rawText: "Apple Store 04/01/2026 $52.99",
       warnings: [],
     });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    const [, init] = fetchMock.mock.calls[0] ?? [];
+    const providerRequest = JSON.parse(String(init?.body));
+    expect(providerRequest.input[1].content[1]).toMatchObject({
+      detail: "high",
+      type: "input_image",
+    });
+    expect(providerRequest.input[1].content[1].image_url).toContain("data:image/jpeg;base64,");
   });
 
   it("surfaces OpenAI authentication failures as controlled JSON", async () => {
