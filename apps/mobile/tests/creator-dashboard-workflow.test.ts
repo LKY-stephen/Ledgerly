@@ -11,7 +11,10 @@ import {
 } from "@creator-cfo/storage";
 
 import { loadHomeSnapshot } from "../src/features/home/home-data";
-import { buildLedgerPeriodId, loadLedgerSnapshot } from "../src/features/ledger/ledger-reporting";
+import {
+  buildLedgerPeriodId,
+  loadLedgerSnapshot,
+} from "../src/features/ledger/ledger-reporting";
 import { ensureDefaultEntity } from "../src/features/ledger/ledger-store";
 
 function createStorageDatabase(): DatabaseSync {
@@ -38,7 +41,9 @@ function createWritableDatabase(database: DatabaseSync) {
       return database.prepare(source).all({}, ...params) as Row[];
     },
     async getFirstAsync<Row>(source: string, ...params: StorageSqlValue[]) {
-      return (database.prepare(source).get({}, ...params) as Row | undefined) ?? null;
+      return (
+        (database.prepare(source).get({}, ...params) as Row | undefined) ?? null
+      );
     },
     async runAsync(source: string, ...params: StorageSqlValue[]) {
       return database.prepare(source).run(...params);
@@ -193,8 +198,44 @@ describe("creator dashboard workflow", () => {
       "Camera rental for client shoot",
     ]);
     expect(snapshot.hasMore).toBe(true);
-    expect(snapshot.trend.find((point) => point.date === "2026-04-18")?.amountCents).toBe(115_000);
-    expect(snapshot.trend.find((point) => point.date === "2026-04-12")?.amountCents).toBe(0);
+    expect(snapshot.trend.find((point) => point.date === "2026-04-18")).toEqual(
+      {
+        date: "2026-04-18",
+        expenseCents: 0,
+        incomeCents: 115_000,
+        label: "Apr 18",
+        netCents: 115_000,
+      },
+    );
+    expect(snapshot.trend.find((point) => point.date === "2026-04-12")).toEqual(
+      {
+        date: "2026-04-12",
+        expenseCents: 8_800,
+        incomeCents: 0,
+        label: "Apr 12",
+        netCents: -8_800,
+      },
+    );
+  });
+
+  it("anchors the home trend window to the latest record date when no explicit now is provided", async () => {
+    const database = createStorageDatabase();
+    const writableDatabase = createWritableDatabase(database);
+    await ensureDefaultEntity(writableDatabase, "2026-01-01T08:00:00.000Z");
+    await seedCreatorMockRecords(writableDatabase);
+
+    const snapshot = await loadHomeSnapshot(writableDatabase, {
+      limit: 3,
+    });
+
+    expect(snapshot.trend).toHaveLength(30);
+    expect(snapshot.trend.at(-1)?.date).toBe("2026-04-18");
+    expect(snapshot.trend.at(-1)?.incomeCents).toBe(115_000);
+    expect(snapshot.trend.at(-1)?.expenseCents).toBe(0);
+    expect(snapshot.trend.at(-1)?.netCents).toBe(115_000);
+    expect(snapshot.recentRecords[0]?.description).toBe(
+      "Affiliate network payout",
+    );
   });
 
   it("keeps business and personal ledger reporting separate with the same mock dataset", async () => {
@@ -217,40 +258,37 @@ describe("creator dashboard workflow", () => {
     });
 
     expect(businessSnapshot.generalLedger.recordCountLabel).toBe("6 records");
-    expect(businessSnapshot.profitAndLoss.metricCards.map((card) => card.value)).toEqual([
-      "$8,120.00",
-      "$127.39",
-    ]);
+    expect(
+      businessSnapshot.profitAndLoss.metricCards.map((card) => card.value),
+    ).toEqual(["$8,120.00", "$127.39"]);
     expect(businessSnapshot.profitAndLoss.netIncomeLabel).toBe("$7,992.61");
-    expect(businessSnapshot.profitAndLoss.revenueRows.map((row) => row.label)).toEqual([
-      "TikTok",
-      "YouTube",
-      "Affiliate Network",
-      "Patreon",
-    ]);
-    expect(businessSnapshot.profitAndLoss.expenseRows.map((row) => row.label)).toEqual([
-      "Camera Rental Co",
-      "Adobe",
-    ]);
-    expect(businessSnapshot.generalLedger.entries.find((entry) => entry.id === "mock-camera-expense")?.amount).toBe(
-      "$74.40",
-    );
+    expect(
+      businessSnapshot.profitAndLoss.revenueRows.map((row) => row.label),
+    ).toEqual(["TikTok", "YouTube", "Affiliate Network", "Patreon"]);
+    expect(
+      businessSnapshot.profitAndLoss.expenseRows.map((row) => row.label),
+    ).toEqual(["Camera Rental Co", "Adobe"]);
+    expect(
+      businessSnapshot.generalLedger.entries.find(
+        (entry) => entry.id === "mock-camera-expense",
+      )?.amount,
+    ).toBe("$74.40");
 
     expect(q1BusinessSnapshot.selectedPeriod.id).toBe("2026:q1");
     expect(q1BusinessSnapshot.generalLedger.recordCountLabel).toBe("4 records");
-    expect(q1BusinessSnapshot.profitAndLoss.metricCards.map((card) => card.value)).toEqual([
-      "$6,970.00",
-      "$52.99",
-    ]);
+    expect(
+      q1BusinessSnapshot.profitAndLoss.metricCards.map((card) => card.value),
+    ).toEqual(["$6,970.00", "$52.99"]);
 
     expect(personalSnapshot.selectedScope).toBe("personal");
     expect(personalSnapshot.generalLedger.recordCountLabel).toBe("1 record");
-    expect(personalSnapshot.generalLedger.entries[0]?.title).toBe("Family dinner");
+    expect(personalSnapshot.generalLedger.entries[0]?.title).toBe(
+      "Family dinner",
+    );
     expect(personalSnapshot.generalLedger.entries[0]?.amount).toBe("$88.00");
-    expect(personalSnapshot.profitAndLoss.metricCards.map((card) => card.value)).toEqual([
-      "$7,992.61",
-      "$88.00",
-    ]);
+    expect(
+      personalSnapshot.profitAndLoss.metricCards.map((card) => card.value),
+    ).toEqual(["$7,992.61", "$88.00"]);
   });
 
   it("localizes home and ledger runtime labels when the locale switches to zh-CN", async () => {
@@ -271,20 +309,26 @@ describe("creator dashboard workflow", () => {
       scopeId: "business",
     });
 
-    expect(homeSnapshot.trend.find((point) => point.date === "2026-04-18")?.label).toBe("4/18");
+    expect(
+      homeSnapshot.trend.find((point) => point.date === "2026-04-18")?.label,
+    ).toBe("4/18");
     expect(ledgerSnapshot.selectedPeriod.label).toBe("2026年4月");
-    expect(ledgerSnapshot.selectedPeriod.summary).toBe("2026年4月01日 - 2026年4月30日");
+    expect(ledgerSnapshot.selectedPeriod.summary).toBe(
+      "2026年4月01日 - 2026年4月30日",
+    );
     expect(ledgerSnapshot.generalLedger.recordCountLabel).toBe("2 条记录");
     expect(ledgerSnapshot.generalLedger.entries[0]?.kindLabel).toBe("收入");
-    expect(ledgerSnapshot.generalLedger.entries[0]?.lines[0]?.accountName).toBe("现金与银行");
-    expect(ledgerSnapshot.generalLedger.entries[0]?.subtitle).toContain("参考编号");
-    expect(ledgerSnapshot.profitAndLoss.metricCards.map((card) => card.label)).toEqual([
-      "总收入",
-      "总支出",
-    ]);
-    expect(ledgerSnapshot.balanceSheet.metricCards.map((card) => card.label)).toEqual([
-      "总资产",
-      "总负债",
-    ]);
+    expect(ledgerSnapshot.generalLedger.entries[0]?.lines[0]?.accountName).toBe(
+      "现金与银行",
+    );
+    expect(ledgerSnapshot.generalLedger.entries[0]?.subtitle).toContain(
+      "参考编号",
+    );
+    expect(
+      ledgerSnapshot.profitAndLoss.metricCards.map((card) => card.label),
+    ).toEqual(["总收入", "总支出"]);
+    expect(
+      ledgerSnapshot.balanceSheet.metricCards.map((card) => card.label),
+    ).toEqual(["总资产", "总负债"]);
   });
 });

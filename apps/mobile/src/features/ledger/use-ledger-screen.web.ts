@@ -46,7 +46,7 @@ const emptyDatabase = createReadableStorageDatabase({
 });
 
 export function useLedgerScreen(): UseLedgerScreenResult {
-  const { resolvedLocale } = useAppShell();
+  const { resolvedLocale, storageRevision } = useAppShell();
   const [error, setError] = useState<string | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -57,6 +57,10 @@ export function useLedgerScreen(): UseLedgerScreenResult {
   const [snapshot, setSnapshot] = useState<LedgerScreenSnapshot>(() =>
     createEmptyLedgerSnapshot(resolvedLocale),
   );
+
+  useEffect(() => {
+    setSelectedPeriodId(null);
+  }, [storageRevision]);
 
   useEffect(() => {
     let isMounted = true;
@@ -102,7 +106,7 @@ export function useLedgerScreen(): UseLedgerScreenResult {
     return () => {
       isMounted = false;
     };
-  }, [refreshNonce, resolvedLocale, selectedPeriodId, selectedScope]);
+  }, [refreshNonce, resolvedLocale, selectedPeriodId, selectedScope, storageRevision]);
 
   return {
     error,

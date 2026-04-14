@@ -36,7 +36,9 @@ function createWritableDatabase(database: DatabaseSync) {
       return database.prepare(source).all({}, ...params) as Row[];
     },
     async getFirstAsync<Row>(source: string, ...params: StorageSqlValue[]) {
-      return (database.prepare(source).get({}, ...params) as Row | undefined) ?? null;
+      return (
+        (database.prepare(source).get({}, ...params) as Row | undefined) ?? null
+      );
     },
     async runAsync(source: string, ...params: StorageSqlValue[]) {
       return database.prepare(source).run(...params);
@@ -45,7 +47,7 @@ function createWritableDatabase(database: DatabaseSync) {
 }
 
 describe("feat_upload home aggregation", () => {
-  it("aggregates month totals, 30-day income trend, and paginated recent records", async () => {
+  it("aggregates month totals, 30-day cash-flow trend, and paginated recent records", async () => {
     const database = createStorageDatabase();
     const writableDatabase = createWritableDatabase(database);
     await ensureDefaultEntity(writableDatabase, "2026-04-01T08:00:00.000Z");
@@ -127,11 +129,99 @@ describe("feat_upload home aggregation", () => {
       netCents: 17_200,
       outflowCents: 4_200,
     });
-    expect(firstPage.trend.find((point) => point.date === "2026-04-18")?.amountCents).toBe(8_900);
-    expect(firstPage.trend.find((point) => point.date === "2026-04-10")?.amountCents).toBe(0);
+    expect(
+      firstPage.trend.find((point) => point.date === "2026-04-18"),
+    ).toEqual({
+      date: "2026-04-18",
+      expenseCents: 0,
+      incomeCents: 8_900,
+      label: "Apr 18",
+      netCents: 8_900,
+    });
+    expect(
+      firstPage.trend.find((point) => point.date === "2026-04-10"),
+    ).toEqual({
+      date: "2026-04-10",
+      expenseCents: 4_200,
+      incomeCents: 0,
+      label: "Apr 10",
+      netCents: -4_200,
+    });
     expect(firstPage.recentRecords).toHaveLength(2);
     expect(firstPage.hasMore).toBe(true);
     expect(secondPage.recentRecords).toHaveLength(1);
     expect(secondPage.hasMore).toBe(false);
+  });
+
+  it("splits same-day income and outflow into separate trend totals", async () => {
+    const database = createStorageDatabase();
+    const writableDatabase = createWritableDatabase(database);
+    await ensureDefaultEntity(writableDatabase, "2026-04-01T08:00:00.000Z");
+
+    const entries = [
+      resolveStandardReceiptEntry(
+        {
+          amountCents: 9_500,
+          currency: "USD",
+          description: "TikTok payout",
+          entityId: "entity-main",
+          occurredOn: "2026-04-18",
+          source: "TikTok",
+          target: "Business checking",
+          userClassification: "income",
+        },
+        {
+          createdAt: "2026-04-18T09:00:00.000Z",
+          recordId: "record-income-dual",
+          sourceSystem: "home-test",
+          updatedAt: "2026-04-18T09:00:00.000Z",
+        },
+      ),
+      resolveStandardReceiptEntry(
+        {
+          amountCents: 2_600,
+          currency: "USD",
+          description: "Editing software",
+          entityId: "entity-main",
+          occurredOn: "2026-04-18",
+          source: "Business checking",
+          target: "CapCut",
+          userClassification: "expense",
+        },
+        {
+          createdAt: "2026-04-18T11:00:00.000Z",
+          recordId: "record-expense-dual",
+          sourceSystem: "home-test",
+          updatedAt: "2026-04-18T11:00:00.000Z",
+        },
+      ),
+    ];
+
+    for (const entry of entries) {
+      await persistResolvedStandardReceiptEntry(writableDatabase, entry);
+    }
+
+    const snapshot = await loadHomeSnapshot(writableDatabase, {
+      now: "2026-04-20",
+    });
+
+    expect(snapshot.trend.find((point) => point.date === "2026-04-18")).toEqual(
+      {
+        date: "2026-04-18",
+        expenseCents: 2_600,
+        incomeCents: 9_500,
+        label: "Apr 18",
+        netCents: 6_900,
+      },
+    );
+    expect(snapshot.trend.find((point) => point.date === "2026-04-19")).toEqual(
+      {
+        date: "2026-04-19",
+        expenseCents: 0,
+        incomeCents: 0,
+        label: "Apr 19",
+        netCents: 0,
+      },
+    );
   });
 });

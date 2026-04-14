@@ -384,6 +384,12 @@ export interface AppCopy {
     apiSectionEyebrow: string;
     apiSectionTitle: string;
     databaseDescription: string;
+    databaseDemoAction: string;
+    databaseDemoDescription: string;
+    databaseDemoFailure: string;
+    databaseDemoInProgress: string;
+    databaseDemoRecordSuffix: string;
+    databaseDemoSuccess: string;
     databaseImportAction: string;
     databaseImportCheckedSuffix: string;
     databaseImportFailure: string;
@@ -621,8 +627,8 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
       trendEmptySummary:
         "Add a posted income record to start the 30-day trend view.",
       trendEmptyTitle: "No income in the last 30 days",
-      trendSubtitle: "Pulled from local SQLite records",
-      trendTitle: "30-Day Income Trend",
+      trendSubtitle: "Built from 30 days of local ledger activity",
+      trendTitle: "30-Day Cash Flow Trend",
     },
     home: {
       cashTitle: "Cash confidence",
@@ -907,6 +913,13 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
       apiSectionTitle: "AI Parse Settings",
       databaseDescription:
         "Import a CFO database package from Files or iCloud Drive. The selected database must keep its evidence files beside it under package-relative paths. On iPhone and iPad, choose the creator-cfo-vault folder, or a folder that contains it, in the folder picker.",
+      databaseDemoAction: "Load Demo Ledger",
+      databaseDemoDescription:
+        "Populate this local database with a creator-finance demo ledger so Home and Ledger show realistic balances, activity, and reports.",
+      databaseDemoFailure: "Demo ledger load failed.",
+      databaseDemoInProgress: "Loading demo ledger...",
+      databaseDemoRecordSuffix: "demo records created.",
+      databaseDemoSuccess: "Loaded demo ledger.",
       databaseImportAction: "Import Database",
       databaseImportCheckedSuffix: "path(s) checked.",
       databaseImportFailure: "Database import failed.",
@@ -1143,8 +1156,8 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
       trendEmptySummary:
         "新增一条已入账收入记录后，这里会开始展示近 30 天趋势。",
       trendEmptyTitle: "近 30 天还没有收入",
-      trendSubtitle: "从本地 SQLite 记录生成",
-      trendTitle: "30 天收入趋势",
+      trendSubtitle: "基于最近 30 天本地账本动态生成",
+      trendTitle: "30 天收支趋势",
     },
     home: {
       cashTitle: "现金把控",
@@ -1415,6 +1428,13 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
       apiSectionTitle: "AI 解析设置",
       databaseDescription:
         "从文件或 iCloud Drive 导入一个 CFO 数据库包。所选数据库必须把凭证文件按相对路径放在数据库旁边。在 iPhone 和 iPad 上，请在文件夹选择器里选择 creator-cfo-vault 文件夹，或选择包含它的上级文件夹。",
+      databaseDemoAction: "导入演示账本",
+      databaseDemoDescription:
+        "向当前本地数据库注入一组创作者财务演示记录，让首页与记账页直接展示真实汇总、流水和报表效果。",
+      databaseDemoFailure: "演示账本导入失败。",
+      databaseDemoInProgress: "正在导入演示账本...",
+      databaseDemoRecordSuffix: "条演示记录已创建。",
+      databaseDemoSuccess: "演示账本导入成功。",
       databaseImportAction: "导入数据库",
       databaseImportCheckedSuffix: "个路径已检查。",
       databaseImportFailure: "数据库导入失败。",

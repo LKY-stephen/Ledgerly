@@ -214,22 +214,22 @@ export function DiscoverScreen() {
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 24,
+    borderRadius: 18,
     borderWidth: 1,
-    gap: 12,
-    padding: 18,
-    shadowOffset: { width: 0, height: 12 },
+    gap: 10,
+    padding: 16,
+    shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 1,
-    shadowRadius: 24,
+    shadowRadius: 16,
   },
   cardSummary: {
     fontSize: 14,
     lineHeight: 21,
   },
   cardTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: "800",
-    lineHeight: 25,
+    lineHeight: 23,
   },
   cardTop: {
     alignItems: "center",
@@ -248,22 +248,22 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   container: {
-    gap: 14,
-    padding: 20,
-    paddingBottom: 36,
+    gap: 12,
+    padding: 18,
+    paddingBottom: 32,
   },
   emptyState: {
-    borderRadius: 24,
+    borderRadius: 18,
     borderWidth: 1,
-    gap: 10,
-    padding: 20,
+    gap: 8,
+    padding: 18,
   },
   emptySummary: {
     fontSize: 14,
     lineHeight: 21,
   },
   emptyTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "800",
   },
   eyebrow: {
@@ -273,14 +273,19 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
   },
   footer: {
-    paddingBottom: 20,
-    paddingTop: 6,
+    paddingBottom: 18,
+    paddingTop: 4,
   },
   header: {
-    gap: 14,
+    gap: 12,
   },
   hero: {
-    gap: 10,
+    backgroundColor: "#FFFFFF",
+    borderColor: "rgba(0, 32, 69, 0.08)",
+    borderRadius: 18,
+    borderWidth: 1,
+    gap: 8,
+    padding: 16,
   },
   latestLabel: {
     fontSize: 13,
@@ -288,13 +293,13 @@ const styles = StyleSheet.create({
   },
   loadMoreButton: {
     alignItems: "center",
-    borderRadius: 18,
+    borderRadius: 16,
     borderWidth: 1,
     flexDirection: "row",
-    gap: 10,
+    gap: 8,
     justifyContent: "center",
-    minHeight: 52,
-    paddingHorizontal: 18,
+    minHeight: 46,
+    paddingHorizontal: 16,
   },
   loadMoreLabel: {
     fontSize: 15,
@@ -320,12 +325,12 @@ const styles = StyleSheet.create({
   },
   refreshHint: {
     alignItems: "center",
-    borderRadius: 18,
+    borderRadius: 16,
     borderWidth: 1,
     flexDirection: "row",
-    gap: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
   },
   refreshHintLabel: {
     flex: 1,
@@ -341,12 +346,12 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   summary: {
-    fontSize: 16,
-    lineHeight: 24,
+    fontSize: 14,
+    lineHeight: 21,
   },
   title: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: "800",
-    lineHeight: 34,
+    lineHeight: 30,
   },
 });

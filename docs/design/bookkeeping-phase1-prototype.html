@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CreatorCFO Phase 1 Prototype</title>
+    <style>
+      :root {
+        --bg: #eef5f1;
+        --paper: #fffaf2;
+        --paper-soft: #f4ede0;
+        --ink: #14213d;
+        --muted: #5b6472;
+        --accent: #0f766e;
+        --accent-soft: #dff8f4;
+        --border: rgba(15, 118, 110, 0.18);
+        --divider: rgba(20, 33, 61, 0.08);
+        --gold: #c98b2e;
+        --gold-soft: rgba(201, 139, 46, 0.14);
+        --rose: #8c3f50;
+        --rose-soft: rgba(140, 63, 80, 0.14);
+        --shadow: 0 22px 54px rgba(17, 51, 79, 0.12);
+        --r-xl: 28px;
+        --r-lg: 22px;
+        --r-md: 16px;
+      }
+
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        color: var(--ink);
+        font-family: Inter, "Helvetica Neue", Arial, sans-serif;
+        background:
+          radial-gradient(circle at top left, rgba(15, 118, 110, 0.14), transparent 22%),
+          radial-gradient(circle at top right, rgba(201, 139, 46, 0.12), transparent 24%),
+          linear-gradient(180deg, #edf5f1 0%, #f8fbf9 100%);
+      }
+
+      .page {
+        width: min(1480px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 28px 0 56px;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+        gap: 20px;
+        align-items: end;
+      }
+
+      .eyebrow {
+        margin: 0 0 10px;
+        font-size: 12px;
+        line-height: 1;
+        letter-spacing: .22em;
+        text-transform: uppercase;
+        color: var(--accent);
+        font-weight: 800;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(40px, 6vw, 66px);
+        line-height: .96;
+        letter-spacing: -.04em;
+      }
+
+      .hero p {
+        margin: 16px 0 0;
+        max-width: 72ch;
+        color: var(--muted);
+        font-size: 18px;
+        line-height: 1.7;
+      }
+
+      .card, .phone-wrap {
+        border: 1px solid var(--border);
+        border-radius: var(--r-xl);
+        background: rgba(255, 250, 242, .86);
+        box-shadow: var(--shadow);
+      }
+
+      .card { padding: 22px; }
+
+      .meta { display: grid; gap: 14px; }
+      .meta span, .muted, .caption, .tab, .table-head { color: var(--muted); }
+      .meta strong { display:block; margin-top: 4px; font-size: 18px; }
+
+      .summary-grid {
+        margin-top: 20px;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+      }
+
+      h2, h3, h4 { margin: 0; }
+      .card p, .screen-note, li { color: var(--muted); line-height: 1.65; }
+
+      .constraint-bar {
+        margin-top: 20px;
+        padding: 18px 20px;
+        border-radius: var(--r-lg);
+        border: 1px solid var(--border);
+        background: rgba(255,255,255,.78);
+        color: var(--ink);
+        box-shadow: var(--shadow);
+      }
+
+      .constraint-bar strong { display:block; margin-bottom: 8px; }
+
+      .phones {
+        margin-top: 20px;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px;
+      }
+
+      .phone-wrap { padding: 16px; }
+      .phone-head {
+        display:flex; justify-content:space-between; gap:12px; align-items:center;
+        margin-bottom: 12px;
+      }
+      .phone-head strong { font-size: 18px; }
+
+      .phone {
+        width: min(390px, 100%);
+        min-height: 844px;
+        margin: 0 auto;
+        border-radius: 42px;
+        border: 10px solid #172033;
+        background:
+          radial-gradient(circle at top left, rgba(15,118,110,.14), transparent 24%),
+          linear-gradient(180deg, #f8f3ea 0%, #fffdf9 100%);
+        overflow: hidden;
+        box-shadow: 0 20px 48px rgba(20,33,61,.16);
+      }
+
+      .screen { padding: 16px; }
+      .notch {
+        width: 112px; height: 20px; margin: 0 auto 16px;
+        border-radius: 999px; background: #172033;
+      }
+
+      .appbar {
+        display:flex; justify-content:space-between; gap:12px; align-items:start;
+      }
+
+      .title {
+        margin-top: 4px;
+        font-size: 22px;
+        font-weight: 800;
+        line-height: 1.2;
+      }
+
+      .ghost, .primary, .secondary {
+        border-radius: 16px; border:none; font-weight:700;
+      }
+
+      .ghost {
+        padding: 12px 14px; background: rgba(20,33,61,.08); color: var(--ink);
+      }
+
+      .surface, .hero-card, .row-card, .quote, .upload-tile {
+        margin-top: 14px;
+        padding: 16px;
+        border-radius: 24px;
+        border: 1px solid var(--border);
+        background: rgba(255,255,255,.86);
+      }
+
+      .hero-card {
+        background: linear-gradient(135deg, rgba(15,118,110,.12), rgba(255,255,255,.95));
+      }
+
+      .hero-card strong { display:block; margin-top: 6px; font-size: 28px; }
+      .hero-card p, .surface p, .row-card p, .quote p, .upload-tile p {
+        margin: 8px 0 0; color: var(--muted); line-height: 1.6;
+      }
+
+      .seg {
+        margin-top: 14px;
+        display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 8px;
+        padding: 6px; border-radius: 18px; background: rgba(20,33,61,.06);
+      }
+
+      .seg div {
+        padding: 10px 12px; text-align:center; border-radius: 14px; color: var(--muted); font-size: 13px;
+      }
+
+      .seg .active {
+        background: white; color: var(--ink); font-weight: 800;
+      }
+
+      .actions {
+        display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; margin-top: 14px;
+      }
+
+      .primary, .secondary {
+        width:100%; min-height:50px; padding: 14px 16px;
+      }
+
+      .primary { background: var(--ink); color: white; }
+      .secondary { background: rgba(20,33,61,.08); color: var(--ink); }
+
+      .stats {
+        display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px; margin-top: 12px;
+      }
+
+      .stat {
+        padding: 14px 12px; border-radius: 18px; background: rgba(20,33,61,.06);
+      }
+
+      .stat.accent { background: var(--accent-soft); }
+      .stat.gold { background: var(--gold-soft); }
+      .stat strong { display:block; margin-top: 6px; font-size: 22px; color: var(--ink); }
+
+      .list { display:grid; gap: 10px; margin-top: 14px; }
+      .row-card { background: rgba(255,255,255,.82); }
+
+      .row-top { display:flex; justify-content:space-between; gap:10px; align-items:start; }
+
+      .badge {
+        padding: 7px 10px; border-radius: 999px; font-size: 12px; font-weight: 800;
+        white-space: nowrap; background: var(--accent-soft); color: var(--accent);
+      }
+
+      .badge.gold { background: var(--gold-soft); color: #8a6118; }
+      .badge.rose { background: var(--rose-soft); color: var(--rose); }
+
+      .form { display:grid; gap: 10px; margin-top: 14px; }
+      .field {
+        padding: 14px; border-radius: 18px; background: rgba(255,255,255,.82); border: 1px solid var(--divider);
+      }
+
+      .field strong { display:block; font-size: 13px; margin-bottom: 6px; }
+
+      .tile-grid {
+        display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; margin-top: 14px;
+      }
+
+      .upload-tile strong { display:block; margin-bottom: 4px; }
+
+      .table {
+        display:grid; gap: 8px; margin-top: 12px;
+      }
+
+      .table-head, .table-row {
+        display:grid; grid-template-columns: 1fr .95fr .95fr .85fr; gap: 8px;
+        padding: 12px; border-radius: 16px;
+      }
+
+      .table-head {
+        background: rgba(20,33,61,.05); font-size: 11px; text-transform: uppercase; letter-spacing: .08em;
+      }
+
+      .table-row {
+        background: rgba(255,255,255,.82); border: 1px solid var(--divider); font-size: 13px;
+      }
+
+      .warn { color: var(--rose); font-weight: 800; }
+
+      .quote {
+        background: linear-gradient(135deg, rgba(15,118,110,.08), rgba(255,255,255,.94));
+      }
+
+      .question-list {
+        display:grid; gap: 8px; margin-top: 12px;
+      }
+
+      .question-list button {
+        border:none; text-align:left; padding: 12px 14px; border-radius: 14px;
+        background: rgba(255,255,255,.92); color: var(--ink);
+      }
+
+      .tabbar {
+        margin-top: 18px;
+        display:grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 8px;
+        padding: 10px; border-radius: 22px; background: rgba(20,33,61,.9);
+      }
+
+      .tab { text-align:center; font-size: 12px; color: rgba(255,255,255,.72); }
+      .tab.active { color: white; font-weight: 800; }
+
+      .footer-note {
+        margin-top: 20px;
+        padding: 18px 20px;
+        border-radius: var(--r-lg);
+        border: 1px solid var(--border);
+        background: rgba(255,255,255,.74);
+        color: var(--muted);
+        line-height: 1.7;
+      }
+
+      @media (max-width: 1200px) {
+        .hero, .summary-grid, .phones { grid-template-columns: 1fr; }
+      }
+
+      @media (max-width: 560px) {
+        .page { width: min(100% - 16px, 100%); padding-top: 16px; }
+        .phone { border-width: 8px; border-radius: 34px; }
+        .actions, .stats, .tile-grid, .table-head, .table-row { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <section class="hero">
+        <div>
+          <p class="eyebrow">Phase 1 Bookkeeping + Upload + Parse</p>
+          <h1>CreatorCFO 一期原型图</h1>
+          <p>
+            这版原型严格遵守当前仓库约束：**不改任何原有底部菜单**，仍然保留 `Home / Ledger / Discover / Profile`。
+            一期只在现有菜单内容里补充 `记账 + 上传 + 解析` 能力，不扩展成复杂财税系统。
+          </p>
+        </div>
+
+        <aside class="card meta">
+          <div>
+            <span>底部导航</span>
+            <strong>Home / Ledger / Discover / Profile 保持不变</strong>
+          </div>
+          <div>
+            <span>一期范围</span>
+            <strong>记账、上传、解析</strong>
+          </div>
+          <div>
+            <span>设计核心</span>
+            <strong>增强内容层，不重做 IA</strong>
+          </div>
+        </aside>
+      </section>
+
+      <div class="constraint-bar">
+        <strong>本次设计的关键约束</strong>
+        当前底部菜单结构完全不改。一期能力只加在已有页面内部：
+        `Home` 增加总览和待处理，`Ledger` 成为记账主工作区，`Discover` 承接上传记录与解析工具，`Profile` 保持设置页角色。
+      </div>
+
+      <section class="summary-grid">
+        <article class="card">
+          <p class="eyebrow">Home</p>
+          <h2>财务总览</h2>
+          <p>不改变菜单，但把首页从说明页升级成总览页，加入收入、费用、待处理和最近上传信号。</p>
+        </article>
+        <article class="card">
+          <p class="eyebrow">Ledger</p>
+          <h2>记账主工作区</h2>
+          <p>承接一期最核心功能：收入、费用、发票、新增记录和上传入口。</p>
+        </article>
+        <article class="card">
+          <p class="eyebrow">Discover</p>
+          <h2>工具与解析入口</h2>
+          <p>不做复杂智能助手，只承接上传历史、模板资料和解析入口。</p>
+        </article>
+      </section>
+
+      <section class="phones">
+        <article class="phone-wrap">
+          <div class="phone-head">
+            <strong>01 Home</strong>
+            <span class="caption">菜单不变，仅增强内容</span>
+          </div>
+          <div class="phone">
+            <div class="screen">
+              <div class="notch"></div>
+              <div class="appbar">
+                <div>
+                  <div class="eyebrow">Home</div>
+                  <div class="title">March bookkeeping pulse</div>
+                </div>
+                <button class="ghost">Sync</button>
+              </div>
+
+              <div class="hero-card">
+                <div class="caption">This month</div>
+                <strong>24 bookkeeping actions</strong>
+                <p>Keep your income, expenses, invoices, and uploaded support files organized on device.</p>
+              </div>
+
+              <div class="stats">
+                <div class="stat accent">
+                  <span>Income</span>
+                  <strong>$8.4k</strong>
+                </div>
+                <div class="stat gold">
+                  <span>Expenses</span>
+                  <strong>$1.9k</strong>
+                </div>
+                <div class="stat">
+                  <span>To review</span>
+                  <strong>5</strong>
+                </div>
+              </div>
+
+              <div class="list">
+                <div class="row-card">
+                  <div class="row-top">
+                    <div>
+                      <strong>Recent uploads waiting for parse review</strong>
+                      <p>2 receipts and 1 statement still need confirmation.</p>
+                    </div>
+                    <span class="badge">Action</span>
+                  </div>
+                </div>
+                <div class="row-card">
+                  <div class="row-top">
+                    <div>
+                      <strong>Invoice due this week</strong>
+                      <p>1 sponsor invoice should be marked paid or reviewed.</p>
+                    </div>
+                    <span class="badge gold">Due</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="tabbar">
+                <div class="tab active">Home</div>
+                <div class="tab">Ledger</div>
+                <div class="tab">Discover</div>
+                <div class="tab">Me</div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="phone-wrap">
+          <div class="phone-head">
+            <strong>02 Ledger Home</strong>
+            <span class="caption">主工作区 + 上传入口</span>
+          </div>
+          <div class="phone">
+            <div class="screen">
+              <div class="notch"></div>
+              <div class="appbar">
+                <div>
+                  <div class="eyebrow">Ledger</div>
+                  <div class="title">Bookkeeping workspace</div>
+                </div>
+                <button class="ghost">Filter</button>
+              </div>
+
+              <div class="seg">
+                <div class="active">Income</div>
+                <div>Expenses</div>
+                <div>Invoices</div>
+              </div>
+
+              <div class="actions">
+                <button class="primary">New Record</button>
+                <button class="secondary">Upload</button>
+              </div>
+
+              <div class="list">
+                <div class="row-card">
+                  <div class="row-top">
+                    <div>
+                      <strong>YouTube payout</strong>
+                      <p>Platform income · Mar 30</p>
+                    </div>
+                    <span class="badge">Cleared</span>
+                  </div>
+                  <p>$4,250.00</p>
+                </div>
+                <div class="row-card">
+                  <div class="row-top">
+                    <div>
+                      <strong>Adobe CC</strong>
+                      <p>Software expense · Mar 27</p>
+                    </div>
+                    <span class="badge rose">Need receipt</span>
+                  </div>
+                  <p>-$59.00</p>
+                </div>
+                <div class="row-card">
+                  <div class="row-top">
+                    <div>
+                      <strong>Northwave sponsor invoice</strong>
+                      <p>Invoice record · Due Apr 02</p>
+                    </div>
+                    <span class="badge gold">Pending</span>
+                  </div>
+                  <p>$1,500.00</p>
+                </div>
+              </div>
+
+              <div class="tabbar">
+                <div class="tab">Home</div>
+                <div class="tab active">Ledger</div>
+                <div class="tab">Discover</div>
+                <div class="tab">Me</div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="phone-wrap">
+          <div class="phone-head">
+            <strong>03 Upload Center</strong>
+            <span class="caption">上传功能仍属于记账主线</span>
+          </div>
+          <div class="phone">
+            <div class="screen">
+              <div class="notch"></div>
+              <div class="appbar">
+                <div>
+                  <div class="eyebrow">Upload Center</div>
+                  <div class="title">Attach files to records</div>
+                </div>
+                <button class="ghost">Recent</button>
+              </div>
+
+              <div class="tile-grid">
+                <div class="upload-tile">
+                  <strong>Receipt</strong>
+                  <p>Expense proof</p>
+                </div>
+                <div class="upload-tile">
+                  <strong>Statement</strong>
+                  <p>Income source document</p>
+                </div>
+                <div class="upload-tile">
+                  <strong>Invoice file</strong>
+                  <p>Invoice PDF or export</p>
+                </div>
+                <div class="upload-tile">
+                  <strong>Support file</strong>
+                  <p>Other local attachments</p>
+                </div>
+              </div>
+
+              <div class="quote">
+                <h4>Recent uploads</h4>
+                <p>adobe-receipt.jpg · youtube-march.csv · sponsor-invoice.pdf</p>
+              </div>
+
+              <div class="actions">
+                <button class="primary">Choose file</button>
+                <button class="secondary">Open vault</button>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="phone-wrap">
+          <div class="phone-head">
+            <strong>04 Parse Review</strong>
+            <span class="caption">上传后的确认步骤</span>
+          </div>
+          <div class="phone">
+            <div class="screen">
+              <div class="notch"></div>
+              <div class="appbar">
+                <div>
+                  <div class="eyebrow">Parse Review</div>
+                  <div class="title">Confirm extracted fields</div>
+                </div>
+                <button class="ghost">Skip</button>
+              </div>
+
+              <div class="surface">
+                <h4>Source file</h4>
+                <p>adobe-receipt.jpg</p>
+              </div>
+
+              <div class="form">
+                <div class="field"><strong>Parsed amount</strong><span class="muted">$59.00</span></div>
+                <div class="field"><strong>Parsed date</strong><span class="muted">2026-03-27</span></div>
+                <div class="field"><strong>Suggested category</strong><span class="muted">Software</span></div>
+                <div class="field"><strong>Suggested note</strong><span class="muted">Adobe Creative Cloud subscription</span></div>
+              </div>
+
+              <div class="question-list">
+                <button>Save as expense</button>
+                <button>Save as income</button>
+                <button>Attach to existing record</button>
+              </div>
+
+              <div class="quote">
+                <h4>Design rule</h4>
+                <p>解析结果只是建议，必须允许用户确认和修正后再入账。</p>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="phone-wrap">
+          <div class="phone-head">
+            <strong>05 Discover</strong>
+            <span class="caption">菜单不变，仅承接工具入口</span>
+          </div>
+          <div class="phone">
+            <div class="screen">
+              <div class="notch"></div>
+              <div class="appbar">
+                <div>
+                  <div class="eyebrow">Discover</div>
+                  <div class="title">Tools and local resources</div>
+                </div>
+                <button class="ghost">Tools</button>
+              </div>
+
+              <div class="list">
+                <div class="row-card">
+                  <div class="row-top">
+                    <div>
+                      <strong>Upload history</strong>
+                      <p>Review recent files and re-open parse confirmations.</p>
+                    </div>
+                    <span class="badge">Open</span>
+                  </div>
+                </div>
+                <div class="row-card">
+                  <div class="row-top">
+                    <div>
+                      <strong>Template vault</strong>
+                      <p>Use local templates for invoice and statement organization.</p>
+                    </div>
+                    <span class="badge gold">Vault</span>
+                  </div>
+                </div>
+                <div class="row-card">
+                  <div class="row-top">
+                    <div>
+                      <strong>Parse tools</strong>
+                      <p>Return to files that still need field confirmation.</p>
+                    </div>
+                    <span class="badge">Parse</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="tabbar">
+                <div class="tab">Home</div>
+                <div class="tab">Ledger</div>
+                <div class="tab active">Discover</div>
+                <div class="tab">Me</div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="phone-wrap">
+          <div class="phone-head">
+            <strong>06 Record Detail</strong>
+            <span class="caption">记录与附件关联</span>
+          </div>
+          <div class="phone">
+            <div class="screen">
+              <div class="notch"></div>
+              <div class="appbar">
+                <div>
+                  <div class="eyebrow">Record Detail</div>
+                  <div class="title">Adobe CC expense</div>
+                </div>
+                <button class="ghost">Edit</button>
+              </div>
+
+              <div class="hero-card">
+                <div class="caption">Expense record</div>
+                <strong>-$59.00</strong>
+                <p>Category: Software · Date: Mar 27 · Status: needs receipt</p>
+              </div>
+
+              <div class="surface">
+                <h4>Attachment</h4>
+                <div class="table">
+                  <div class="table-head">
+                    <span>File</span>
+                    <span>Type</span>
+                    <span>Status</span>
+                    <span>Source</span>
+                  </div>
+                  <div class="table-row">
+                    <span>adobe-receipt.jpg</span>
+                    <span>Receipt</span>
+                    <span>Attached</span>
+                    <span>Parsed</span>
+                  </div>
+                </div>
+                <div class="actions">
+                  <button class="secondary">Attach file</button>
+                  <button class="secondary">Replace</button>
+                </div>
+              </div>
+
+              <div class="quote">
+                <h4>Record logic</h4>
+                <p>一条记录既可以手动建立，也可以来源于上传解析，且必须能回看到关联文件。</p>
+              </div>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <div class="footer-note">
+        这份原型图的关键不是“多做功能”，而是保证：在不改动当前原有底部菜单的情况下，把一期的记账、上传、解析能力准确落在现有页面结构里。
+      </div>
+    </main>
+  </body>
+  </html>

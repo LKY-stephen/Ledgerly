@@ -8,7 +8,7 @@ import {
 
 import { loadPersistedAiProvider, loadPersistedGeminiApiKey, loadPersistedGeminiAuthMode, loadPersistedInferApiKey, loadPersistedInferBaseUrl, loadPersistedInferModel, loadPersistedOpenAiApiKey } from "../app-shell/storage";
 import type { AiProvider, GeminiAuthMode } from "../app-shell/types";
-import { getValidGoogleAccessToken } from "../auth/google-auth";
+import { getValidGoogleAccessToken } from "../auth/google-token-runtime";
 import { receiptDbUpdatePlannerSkill, receiptParseSkill } from "./prompt-skills";
 
 export interface ParseResult {
@@ -959,12 +959,15 @@ async function blobToBase64(blob: Blob): Promise<string> {
 }
 
 async function readNativeFileAsBase64(uri: string): Promise<string> {
-  // Use require() instead of dynamic import() to avoid Metro code-splitting
-  // which fails on native with "global location variable is not defined".
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const fileSystemModule = require("expo-file-system/legacy") as {
     EncodingType: { Base64: string };
-    readAsStringAsync: (uri: string, options: { encoding: string }) => Promise<string>;
+    readAsStringAsync: (
+      targetUri: string,
+      options: { encoding: string },
+    ) => Promise<string>;
   };
+
   return fileSystemModule.readAsStringAsync(uri, {
     encoding: fileSystemModule.EncodingType.Base64,
   });
@@ -987,9 +990,10 @@ function bytesToBase64(bytes: Uint8Array): string {
 }
 
 async function readExpoExtra(): Promise<{ openAiBaseUrl?: unknown; openAiModel?: unknown } | null> {
-  // Use require() instead of dynamic import() to avoid Metro code-splitting
-  // which fails on native with "global location variable is not defined".
-  const constantsModule = require("expo-constants") as { default: Record<string, unknown> };
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const constantsModule = require("expo-constants") as {
+    default: Record<string, unknown>;
+  };
   const constants = constantsModule.default;
   const expoConfigExtra = (constants as {
     expoConfig?: { extra?: { openAiBaseUrl?: unknown; openAiModel?: unknown } };

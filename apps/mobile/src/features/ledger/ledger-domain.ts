@@ -136,9 +136,11 @@ export interface HomeRecentRecord {
 }
 
 export interface HomeTrendPoint {
-  amountCents: number;
   date: string;
+  expenseCents: number;
+  incomeCents: number;
   label: string;
+  netCents: number;
 }
 
 export function buildStoredUploadFileName(
@@ -148,8 +150,10 @@ export function buildStoredUploadFileName(
   originalFileName: string,
 ): string {
   const extension = getFileExtension(originalFileName) ?? "bin";
-  const timestamp = capturedAt.replace(/[-:.TZ]/g, "").slice(0, 14) || "00000000000000";
-  const hashSuffix = sha256Hex.trim().toLowerCase().slice(0, 10) || "0000000000";
+  const timestamp =
+    capturedAt.replace(/[-:.TZ]/g, "").slice(0, 14) || "00000000000000";
+  const hashSuffix =
+    sha256Hex.trim().toLowerCase().slice(0, 10) || "0000000000";
 
   return `${entityId}_${timestamp}_${hashSuffix}.${extension}`;
 }
@@ -165,8 +169,14 @@ export function buildExtractedData(input: {
   const normalizedLines = input.rawLines
     .map((line) => line.trim())
     .filter((line) => line.length > 0);
-  const normalizedText = input.rawText.trim() || normalizedLines.join("\n").trim() || input.fileName;
-  const fields = extractFieldCandidates(normalizedText, normalizedLines, input.fileName, input.fallbackDate);
+  const normalizedText =
+    input.rawText.trim() || normalizedLines.join("\n").trim() || input.fileName;
+  const fields = extractFieldCandidates(
+    normalizedText,
+    normalizedLines,
+    input.fileName,
+    input.fallbackDate,
+  );
 
   return {
     candidates: fields,
@@ -192,12 +202,19 @@ export function buildFailedExtractedData(input: {
   scheme?: ParseEvidenceScheme;
   sourceLabel: string;
 }): EvidenceExtractedData {
-  const rawText = input.originData ? JSON.stringify(input.originData, null, 2).trim() : "";
+  const rawText = input.originData
+    ? JSON.stringify(input.originData, null, 2).trim()
+    : "";
   const rawLines = rawText
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter((line) => line.length > 0);
-  const fields = extractFieldCandidates(rawText, rawLines, input.fileName, input.fallbackDate);
+  const fields = extractFieldCandidates(
+    rawText,
+    rawLines,
+    input.fileName,
+    input.fallbackDate,
+  );
 
   return {
     candidates: fields,
@@ -253,8 +270,9 @@ export function buildRemoteExtractedData(input: {
 }
 
 export function buildRecordSchemeTemplate(): ParseEvidenceScheme {
-  const createStatement = getLocalStorageBootstrapPlan().structuredTables.find((table) => table.name === "records")
-    ?.createStatement;
+  const createStatement = getLocalStorageBootstrapPlan().structuredTables.find(
+    (table) => table.name === "records",
+  )?.createStatement;
 
   if (!createStatement) {
     throw new Error("Unable to locate the records table contract.");
@@ -282,23 +300,34 @@ export function createEmptyReviewValues(): LedgerReviewValues {
   };
 }
 
-export function deriveReviewValues(item: EvidenceQueueItem): LedgerReviewValues {
+export function deriveReviewValues(
+  item: EvidenceQueueItem,
+): LedgerReviewValues {
   const candidateRecord = item.candidateRecords[0];
   const candidatePayload = candidateRecord?.payload;
-  const candidates = item.extractedData?.fields ?? item.extractedData?.candidates;
+  const candidates =
+    item.extractedData?.fields ?? item.extractedData?.candidates;
   const amountCents =
-    candidatePayload?.amountCents ?? candidates?.amountCents ?? item.capturedAmountCents;
+    candidatePayload?.amountCents ??
+    candidates?.amountCents ??
+    item.capturedAmountCents;
   const description =
-    candidatePayload?.description ?? candidates?.description ?? item.capturedDescription;
-  const source = candidatePayload?.sourceLabel ?? candidates?.source ?? item.capturedSource;
-  const target = candidatePayload?.targetLabel ?? candidates?.target ?? item.capturedTarget;
-  const taxCategory = candidatePayload?.taxCategoryCode ?? candidates?.taxCategory ?? "";
+    candidatePayload?.description ??
+    candidates?.description ??
+    item.capturedDescription;
+  const source =
+    candidatePayload?.sourceLabel ?? candidates?.source ?? item.capturedSource;
+  const target =
+    candidatePayload?.targetLabel ?? candidates?.target ?? item.capturedTarget;
+  const taxCategory =
+    candidatePayload?.taxCategoryCode ?? candidates?.taxCategory ?? "";
   const notes =
     candidates?.notes ??
     item.extractedData?.failureReason ??
     item.plannerSummary?.warnings.join("\n") ??
     "";
-  const occurredOn = candidatePayload?.date ?? candidates?.date ?? item.capturedDate;
+  const occurredOn =
+    candidatePayload?.date ?? candidates?.date ?? item.capturedDate;
   const recordKind = candidatePayload?.recordKind;
 
   return {
@@ -318,7 +347,9 @@ export function deriveReviewValues(item: EvidenceQueueItem): LedgerReviewValues 
   };
 }
 
-export function deriveLedgerCategory(candidates: EvidenceFieldCandidates | undefined): LedgerCategory {
+export function deriveLedgerCategory(
+  candidates: EvidenceFieldCandidates | undefined,
+): LedgerCategory {
   const category = candidates?.category?.trim().toLowerCase();
 
   if (category === "income") {
@@ -387,7 +418,9 @@ export function prioritizeEvidenceQueue(
     return queue;
   }
 
-  const focusedIndex = queue.findIndex((item) => item.evidenceId === normalizedFocusEvidenceId);
+  const focusedIndex = queue.findIndex(
+    (item) => item.evidenceId === normalizedFocusEvidenceId,
+  );
 
   if (focusedIndex <= 0) {
     return queue;
@@ -399,9 +432,14 @@ export function prioritizeEvidenceQueue(
     return queue;
   }
 
-  return [focusedItem, ...queue.slice(0, focusedIndex), ...queue.slice(focusedIndex + 1)].sort(
-    (left, right) =>
-      (right.batchCreatedAt ?? right.createdAt).localeCompare(left.batchCreatedAt ?? left.createdAt),
+  return [
+    focusedItem,
+    ...queue.slice(0, focusedIndex),
+    ...queue.slice(focusedIndex + 1),
+  ].sort((left, right) =>
+    (right.batchCreatedAt ?? right.createdAt).localeCompare(
+      left.batchCreatedAt ?? left.createdAt,
+    ),
   );
 }
 
@@ -412,8 +450,8 @@ export function formatDisplayDate(
   return formatLedgerDisplayDate(dateValue, locale);
 }
 
-export function createTrendPointsFromTotals(
-  totalsByDate: Record<string, number>,
+export function createTrendPointsFromDailyTotals(
+  totalsByDate: Record<string, { expenseCents: number; incomeCents: number }>,
   endingOn: string,
   locale: ResolvedLocale = "en",
 ): HomeTrendPoint[] {
@@ -424,10 +462,14 @@ export function createTrendPointsFromTotals(
     const current = new Date(endDate);
     current.setUTCDate(endDate.getUTCDate() - offset);
     const date = current.toISOString().slice(0, 10);
+    const totals = totalsByDate[date] ?? { expenseCents: 0, incomeCents: 0 };
+
     points.push({
-      amountCents: totalsByDate[date] ?? 0,
       date,
+      expenseCents: totals.expenseCents,
+      incomeCents: totals.incomeCents,
       label: formatTrendPointLabel(date, locale),
+      netCents: totals.incomeCents - totals.expenseCents,
     });
   }
 
@@ -441,8 +483,9 @@ function extractFieldCandidates(
   fallbackDate: string,
 ): EvidenceFieldCandidates {
   const descriptionLine =
-    rawLines.find((line) => line.length > 3 && !/\d{2,}/.test(line.slice(0, 3))) ??
-    stripExtension(fileName);
+    rawLines.find(
+      (line) => line.length > 3 && !/\d{2,}/.test(line.slice(0, 3)),
+    ) ?? stripExtension(fileName);
   const normalizedText = rawText || rawLines.join("\n");
   const lowerText = normalizedText.toLowerCase();
 
@@ -459,7 +502,9 @@ function extractFieldCandidates(
 }
 
 function extractAmountCents(value: string): number | null {
-  const matches = value.match(/\$?\d{1,3}(?:,\d{3})*(?:\.\d{2})|\$?\d+(?:\.\d{2})/g);
+  const matches = value.match(
+    /\$?\d{1,3}(?:,\d{3})*(?:\.\d{2})|\$?\d+(?:\.\d{2})/g,
+  );
 
   if (!matches?.length) {
     return null;
@@ -497,7 +542,11 @@ function extractIsoDate(value: string): string | null {
 }
 
 function inferCategory(lowerText: string): string {
-  if (/(payout|deposit|income|revenue|settlement|payment received)/.test(lowerText)) {
+  if (
+    /(payout|deposit|income|revenue|settlement|payment received)/.test(
+      lowerText,
+    )
+  ) {
     return "income";
   }
 
@@ -543,7 +592,12 @@ function extractRecordTableFields(createStatement: string): string[] {
   for (const rawLine of createStatement.split("\n")) {
     const line = rawLine.trim();
 
-    if (!line || line.startsWith("CREATE TABLE") || line.startsWith(");") || line.startsWith("FOREIGN KEY")) {
+    if (
+      !line ||
+      line.startsWith("CREATE TABLE") ||
+      line.startsWith(");") ||
+      line.startsWith("FOREIGN KEY")
+    ) {
       continue;
     }
 
@@ -563,5 +617,8 @@ function getFileExtension(fileName: string): string | null {
 }
 
 function stripExtension(fileName: string): string {
-  return fileName.replace(/\.[a-z0-9]+$/i, "").replace(/[_-]+/g, " ").trim();
+  return fileName
+    .replace(/\.[a-z0-9]+$/i, "")
+    .replace(/[_-]+/g, " ")
+    .trim();
 }

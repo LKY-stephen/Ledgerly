@@ -87,14 +87,14 @@ export function LedgerUploadScreen() {
   return (
     <SafeAreaView
       edges={["top", "left", "right"]}
-      style={[styles.safeArea, { backgroundColor: palette.shell }]}
+      style={[styles.safeArea, { backgroundColor: "#F5F6F8" }]}
       testID="ledger-upload-screen"
     >
       <View
         style={[
           styles.appBar,
           {
-            backgroundColor: palette.shell,
+            backgroundColor: "#F5F6F8",
             borderBottomColor: palette.divider,
           },
         ]}
@@ -250,28 +250,28 @@ export function LedgerUploadScreen() {
 const styles = StyleSheet.create({
   appBar: {
     borderBottomWidth: StyleSheet.hairlineWidth,
-    paddingBottom: 12,
-    paddingHorizontal: 20,
+    paddingBottom: 10,
+    paddingHorizontal: 18,
   },
   buttonStack: {
-    gap: 12,
+    gap: 10,
     width: "100%",
   },
   container: {
-    gap: 18,
-    padding: 20,
-    paddingBottom: 34,
+    gap: 14,
+    padding: 18,
+    paddingBottom: 32,
   },
   dropCard: {
     alignItems: "center",
-    borderRadius: 28,
+    borderRadius: 18,
     borderWidth: 1,
-    gap: 14,
-    paddingHorizontal: 18,
-    paddingVertical: 26,
-    shadowOffset: { height: 16, width: 0 },
-    shadowOpacity: 0.12,
-    shadowRadius: 24,
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 20,
+    shadowOffset: { height: 8, width: 0 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
   },
   dropSummary: {
     fontSize: 14,
@@ -279,9 +279,9 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   dropTitle: {
-    fontSize: 30,
+    fontSize: 22,
     fontWeight: "800",
-    lineHeight: 34,
+    lineHeight: 28,
     textAlign: "center",
   },
   eyebrow: {
@@ -291,31 +291,36 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
   },
   heroBlock: {
-    gap: 10,
+    backgroundColor: "#FFFFFF",
+    borderColor: "rgba(0, 32, 69, 0.08)",
+    borderRadius: 18,
+    borderWidth: 1,
+    gap: 8,
+    padding: 16,
   },
   heroSummary: {
-    fontSize: 18,
-    lineHeight: 28,
+    fontSize: 14,
+    lineHeight: 21,
   },
   heroTitle: {
-    fontSize: 44,
+    fontSize: 24,
     fontWeight: "800",
-    letterSpacing: -1.1,
-    lineHeight: 46,
+    letterSpacing: -0.6,
+    lineHeight: 30,
   },
   hint: {
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 12,
+    lineHeight: 17,
     textAlign: "center",
   },
   primaryButton: {
     alignItems: "center",
-    borderRadius: 999,
-    height: 48,
+    borderRadius: 14,
+    height: 44,
     justifyContent: "center",
-    shadowOffset: { height: 10, width: 0 },
-    shadowOpacity: 0.12,
-    shadowRadius: 18,
+    shadowOffset: { height: 6, width: 0 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
     width: "100%",
   },
   primaryButtonContent: {
@@ -332,9 +337,9 @@ const styles = StyleSheet.create({
   },
   secondaryButton: {
     alignItems: "center",
-    borderRadius: 999,
+    borderRadius: 14,
     borderWidth: 1,
-    height: 48,
+    height: 44,
     justifyContent: "center",
     width: "100%",
   },
@@ -344,9 +349,9 @@ const styles = StyleSheet.create({
   },
   uploadGlyph: {
     alignItems: "center",
-    borderRadius: 999,
-    height: 78,
+    borderRadius: 16,
+    height: 56,
     justifyContent: "center",
-    width: 78,
+    width: 56,
   },
 });

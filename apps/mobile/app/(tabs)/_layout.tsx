@@ -30,40 +30,39 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         sceneStyle: {
-          backgroundColor: "#F9F9F7",
+          backgroundColor: "#F5F6F8",
         },
         tabBarActiveTintColor: "#002045",
         tabBarInactiveTintColor: "rgba(0, 32, 69, 0.4)",
         tabBarShowLabel: true,
         tabBarLabelStyle: {
           fontSize: 10,
-          fontWeight: "500",
-          letterSpacing: 0.5,
+          fontWeight: "600",
+          letterSpacing: 0.2,
           marginTop: 0,
-          textTransform: "uppercase",
+          textTransform: "none",
         },
         tabBarIconStyle: {
-          marginBottom: 2,
+          marginBottom: 1,
         },
         tabBarItemStyle: {
-          paddingTop: 0,
+          paddingTop: 2,
         },
         tabBarStyle: {
-          backgroundColor: "rgba(249, 249, 247, 0.8)",
-          borderTopColor: "transparent",
-          borderTopLeftRadius: 32,
-          borderTopRightRadius: 32,
-          borderTopWidth: 0,
+          backgroundColor: "#FFFFFF",
+          borderTopColor: "rgba(0, 32, 69, 0.08)",
+          borderTopLeftRadius: 18,
+          borderTopRightRadius: 18,
+          borderTopWidth: 1,
           elevation: 0,
-          height: 96,
-          paddingBottom: 28,
-          paddingHorizontal: 24,
-          paddingTop: 12,
-          position: "absolute",
-          shadowColor: "rgba(0, 0, 0, 0.04)",
-          shadowOffset: { height: -8, width: 0 },
-          shadowOpacity: 1,
-          shadowRadius: 32,
+          height: 82,
+          paddingBottom: 12,
+          paddingHorizontal: 12,
+          paddingTop: 8,
+          shadowColor: "rgba(0, 32, 69, 0.08)",
+          shadowOffset: { height: -4, width: 0 },
+          shadowOpacity: 0.12,
+          shadowRadius: 12,
         },
       }}
     >
@@ -81,7 +80,7 @@ export default function TabLayout() {
             title: screen.title,
             tabBarIcon: ({ color }) => <AppIcon color={color} name={screen.icon} size={screen.iconSize} />,
             tabBarLabel: ({ color }) => (
-              <Text style={{ color, fontSize: 10, fontWeight: "500", letterSpacing: 0.5, textTransform: "uppercase" }}>
+              <Text style={{ color, fontSize: 10, fontWeight: "600", letterSpacing: 0.2, textTransform: "none" }}>
                 {screen.title}
               </Text>
             ),

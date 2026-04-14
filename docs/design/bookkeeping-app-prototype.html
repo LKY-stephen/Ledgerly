@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CreatorCFO Bookkeeping Prototype</title>
+    <style>
+      :root {
+        --bg: #eef5f1;
+        --paper: #fffaf2;
+        --paper-soft: #f4ede0;
+        --ink: #14213d;
+        --muted: #5b6472;
+        --accent: #0f766e;
+        --accent-soft: #dff8f4;
+        --border: rgba(15, 118, 110, 0.18);
+        --divider: rgba(20, 33, 61, 0.08);
+        --gold: #c98b2e;
+        --gold-soft: rgba(201, 139, 46, 0.14);
+        --rose: #8c3f50;
+        --rose-soft: rgba(140, 63, 80, 0.14);
+        --shadow: 0 22px 54px rgba(17, 51, 79, 0.12);
+        --r-xl: 28px;
+        --r-lg: 22px;
+        --r-md: 16px;
+      }
+
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        color: var(--ink);
+        font-family: Inter, "Helvetica Neue", Arial, sans-serif;
+        background:
+          radial-gradient(circle at top left, rgba(15, 118, 110, 0.14), transparent 22%),
+          radial-gradient(circle at top right, rgba(201, 139, 46, 0.12), transparent 24%),
+          linear-gradient(180deg, #edf5f1 0%, #f8fbf9 100%);
+      }
+
+      .page {
+        width: min(1480px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 28px 0 56px;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
+        gap: 20px;
+        align-items: end;
+      }
+
+      .eyebrow {
+        margin: 0 0 10px;
+        font-size: 12px;
+        line-height: 1;
+        letter-spacing: .22em;
+        text-transform: uppercase;
+        color: var(--accent);
+        font-weight: 800;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(40px, 6vw, 66px);
+        line-height: .96;
+        letter-spacing: -.04em;
+      }
+
+      .hero p {
+        margin: 16px 0 0;
+        max-width: 70ch;
+        color: var(--muted);
+        font-size: 18px;
+        line-height: 1.7;
+      }
+
+      .card, .phone-wrap {
+        border: 1px solid var(--border);
+        border-radius: var(--r-xl);
+        background: rgba(255, 250, 242, .86);
+        box-shadow: var(--shadow);
+      }
+
+      .card { padding: 22px; }
+
+      .meta {
+        display: grid;
+        gap: 14px;
+      }
+
+      .meta span, .muted, .caption, .tab, .table-head { color: var(--muted); }
+      .meta strong { display:block; margin-top: 4px; font-size: 18px; }
+
+      .summary-grid {
+        margin-top: 20px;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+      }
+
+      h2, h3, h4 { margin: 0; }
+      .card p, .screen-note, li { color: var(--muted); line-height: 1.65; }
+
+      .phones {
+        margin-top: 20px;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px;
+      }
+
+      .phone-wrap { padding: 16px; }
+      .phone-head {
+        display: flex; justify-content: space-between; align-items: center; gap: 12px;
+        margin-bottom: 12px;
+      }
+
+      .phone-head strong { font-size: 18px; }
+
+      .phone {
+        width: min(390px, 100%);
+        min-height: 844px;
+        margin: 0 auto;
+        border-radius: 42px;
+        border: 10px solid #172033;
+        background:
+          radial-gradient(circle at top left, rgba(15,118,110,.14), transparent 24%),
+          linear-gradient(180deg, #f8f3ea 0%, #fffdf9 100%);
+        overflow: hidden;
+        box-shadow: 0 20px 48px rgba(20,33,61,.16);
+      }
+
+      .screen { padding: 16px; }
+      .notch {
+        width: 112px; height: 20px; margin: 0 auto 16px;
+        border-radius: 999px; background: #172033;
+      }
+
+      .appbar {
+        display: flex; justify-content: space-between; gap: 12px; align-items: start;
+      }
+
+      .title {
+        margin-top: 4px;
+        font-size: 22px;
+        font-weight: 800;
+        line-height: 1.2;
+      }
+
+      .ghost, .primary, .secondary {
+        border-radius: 16px;
+        border: none;
+        font-weight: 700;
+      }
+
+      .ghost {
+        padding: 12px 14px;
+        background: rgba(20,33,61,.08);
+        color: var(--ink);
+      }
+
+      .surface, .hero-card, .row-card, .quote, .upload-tile {
+        margin-top: 14px;
+        padding: 16px;
+        border-radius: 24px;
+        border: 1px solid var(--border);
+        background: rgba(255,255,255,.86);
+      }
+
+      .hero-card {
+        background: linear-gradient(135deg, rgba(15,118,110,.12), rgba(255,255,255,.95));
+      }
+
+      .hero-card strong {
+        display:block;
+        margin-top: 6px;
+        font-size: 28px;
+      }
+
+      .hero-card p, .surface p, .row-card p, .quote p, .upload-tile p {
+        margin: 8px 0 0;
+        color: var(--muted);
+        line-height: 1.6;
+      }
+
+      .seg {
+        margin-top: 14px;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0,1fr));
+        gap: 8px;
+        padding: 6px;
+        border-radius: 18px;
+        background: rgba(20,33,61,.06);
+      }
+
+      .seg div {
+        padding: 10px 12px;
+        text-align: center;
+        border-radius: 14px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .seg .active {
+        background: white;
+        color: var(--ink);
+        font-weight: 800;
+      }
+
+      .actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0,1fr));
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .primary, .secondary {
+        width: 100%;
+        min-height: 50px;
+        padding: 14px 16px;
+      }
+
+      .primary { background: var(--ink); color: white; }
+      .secondary { background: rgba(20,33,61,.08); color: var(--ink); }
+
+      .list { display:grid; gap: 10px; margin-top: 14px; }
+      .row-card { background: rgba(255,255,255,.82); }
+
+      .row-top {
+        display:flex; justify-content:space-between; gap:10px; align-items:start;
+      }
+
+      .badge {
+        padding: 7px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 800;
+        white-space: nowrap;
+        background: var(--accent-soft);
+        color: var(--accent);
+      }
+
+      .badge.gold { background: var(--gold-soft); color: #8a6118; }
+      .badge.rose { background: var(--rose-soft); color: var(--rose); }
+
+      .form { display:grid; gap: 10px; margin-top: 14px; }
+      .field {
+        padding: 14px;
+        border-radius: 18px;
+        background: rgba(255,255,255,.82);
+        border: 1px solid var(--divider);
+      }
+
+      .field strong { display:block; font-size: 13px; margin-bottom: 6px; }
+
+      .tile-grid {
+        display:grid;
+        grid-template-columns: repeat(2, minmax(0,1fr));
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .upload-tile strong { display:block; margin-bottom: 4px; }
+
+      .table {
+        display:grid; gap: 8px; margin-top: 12px;
+      }
+
+      .table-head, .table-row {
+        display:grid;
+        grid-template-columns: 1fr .9fr 1fr .85fr;
+        gap: 8px;
+        padding: 12px;
+        border-radius: 16px;
+      }
+
+      .table-head {
+        background: rgba(20,33,61,.05);
+        font-size: 11px;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+      }
+
+      .table-row {
+        background: rgba(255,255,255,.82);
+        border: 1px solid var(--divider);
+        font-size: 13px;
+      }
+
+      .quote {
+        background: linear-gradient(135deg, rgba(15,118,110,.08), rgba(255,255,255,.94));
+      }
+
+      .tabbar {
+        margin-top: 18px;
+        display:grid;
+        grid-template-columns: repeat(4, minmax(0,1fr));
+        gap: 8px;
+        padding: 10px;
+        border-radius: 22px;
+        background: rgba(20,33,61,.9);
+      }
+
+      .tab { text-align:center; font-size: 12px; color: rgba(255,255,255,.72); }
+      .tab.active { color: white; font-weight: 800; }
+
+      .footer-note {
+        margin-top: 20px;
+        padding: 18px 20px;
+        border-radius: var(--r-lg);
+        border: 1px solid var(--border);
+        background: rgba(255,255,255,.74);
+        color: var(--muted);
+        line-height: 1.7;
+      }
+
+      @media (max-width: 1200px) {
+        .hero, .summary-grid, .phones { grid-template-columns: 1fr; }
+      }
+
+      @media (max-width: 560px) {
+        .page { width: min(100% - 16px, 100%); padding-top: 16px; }
+        .phone { border-width: 8px; border-radius: 34px; }
+        .actions, .tile-grid, .table-head, .table-row { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <section class="hero">
+        <div>
+          <p class="eyebrow">Bookkeeping Only Prototype</p>
+          <h1>CreatorCFO 记账版 APP 原型图</h1>
+          <p>
+            这版原型完全按照你当前收缩后的产品范围设计：只做记账功能，不做税务、不做自动同步、不做对账。核心目标是把移动端本地账本做成一个真实可用的工作区，并明确加入上传入口。
+          </p>
+        </div>
+
+        <aside class="card meta">
+          <div>
+            <span>范围</span>
+            <strong>Income / Expense / Invoice / Upload</strong>
+          </div>
+          <div>
+            <span>形态</span>
+            <strong>移动端、本地优先、无后端</strong>
+          </div>
+          <div>
+            <span>重点</span>
+            <strong>Ledger 必须成为真正工作区</strong>
+          </div>
+        </aside>
+      </section>
+
+      <section class="summary-grid">
+        <article class="card">
+          <p class="eyebrow">设计重点</p>
+          <h2>只做记账闭环</h2>
+          <p>用户应能在手机端新增记录、查看记录、编辑记录，并通过上传入口补充文件资料。</p>
+        </article>
+        <article class="card">
+          <p class="eyebrow">上传入口</p>
+          <h2>Upload 必须显性存在</h2>
+          <p>Ledger 首页有 Upload，具体记录页还能追加附件，避免文件功能被埋藏。</p>
+        </article>
+        <article class="card">
+          <p class="eyebrow">产品感受</p>
+          <h2>不是消费记账</h2>
+          <p>整体风格更像创作者经营账本与财务整理工具，而不是个人生活预算 App。</p>
+        </article>
+      </section>
+
+      <section class="phones">
+        <article class="phone-wrap">
+          <div class="phone-head">
+            <strong>01 Ledger Home</strong>
+            <span class="caption">主工作区</span>
+          </div>
+          <div class="phone">
+            <div class="screen">
+              <div class="notch"></div>
+              <div class="appbar">
+                <div>
+                  <div class="eyebrow">Ledger</div>
+                  <div class="title">Bookkeeping workspace</div>
+                </div>
+                <button class="ghost">Filter</button>
+              </div>
+
+              <div class="hero-card">
+                <div class="caption">This month</div>
+                <strong>42 records</strong>
+                <p>Track creator income, operating expenses, and invoices in one local ledger.</p>
+              </div>
+
+              <div class="seg">
+                <div class="active">Income</div>
+                <div>Expenses</div>
+                <div>Invoices</div>
+              </div>
+
+              <div class="actions">
+                <button class="primary">New Record</button>
+                <button class="secondary">Upload</button>
+              </div>
+
+              <div class="list">
+                <div class="row-card">
+                  <div class="row-top">
+                    <div>
+                      <strong>YouTube payout</strong>
+                      <p>Platform income · Mar 28</p>
+                    </div>
+                    <span class="badge">Cleared</span>
+                  </div>
+                  <p>$4,250.00</p>
+                </div>
+                <div class="row-card">
+                  <div class="row-top">
+                    <div>
+                      <strong>Brand sponsor</strong>
+                      <p>Invoice record · Due Apr 2</p>
+                    </div>
+                    <span class="badge gold">Pending</span>
+                  </div>
+                  <p>$1,500.00</p>
+                </div>
+                <div class="row-card">
+                  <div class="row-top">
+                    <div>
+                      <strong>Adobe CC</strong>
+                      <p>Software expense · Mar 25</p>
+                    </div>
+                    <span class="badge rose">Needs receipt</span>
+                  </div>
+                  <p>-$59.00</p>
+                </div>
+              </div>
+
+              <div class="tabbar">
+                <div class="tab">Home</div>
+                <div class="tab active">Ledger</div>
+                <div class="tab">Discover</div>
+                <div class="tab">Me</div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="phone-wrap">
+          <div class="phone-head">
+            <strong>02 New Income</strong>
+            <span class="caption">手动新增收入</span>
+          </div>
+          <div class="phone">
+            <div class="screen">
+              <div class="notch"></div>
+              <div class="appbar">
+                <div>
+                  <div class="eyebrow">New Income</div>
+                  <div class="title">Add income</div>
+                </div>
+                <button class="ghost">Cancel</button>
+              </div>
+
+              <div class="form">
+                <div class="field"><strong>Source</strong><span class="muted">YouTube / Patreon / Sponsor / Affiliate / Other</span></div>
+                <div class="field"><strong>Income type</strong><span class="muted">platform_income / sponsorship / affiliate_income</span></div>
+                <div class="field"><strong>Amount</strong><span class="muted">$0.00</span></div>
+                <div class="field"><strong>Currency</strong><span class="muted">USD</span></div>
+                <div class="field"><strong>Date</strong><span class="muted">2026-03-30</span></div>
+                <div class="field"><strong>Note</strong><span class="muted">Optional description</span></div>
+              </div>
+
+              <div class="surface">
+                <h4>Attachment</h4>
+                <p>Attach statement or proof file if this income should keep source evidence.</p>
+                <div class="actions" style="margin-top:12px">
+                  <button class="secondary">Attach statement</button>
+                  <button class="secondary">Attach proof</button>
+                </div>
+              </div>
+
+              <button class="primary" style="margin-top:14px;width:100%">Save income</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="phone-wrap">
+          <div class="phone-head">
+            <strong>03 New Expense</strong>
+            <span class="caption">手动新增费用</span>
+          </div>
+          <div class="phone">
+            <div class="screen">
+              <div class="notch"></div>
+              <div class="appbar">
+                <div>
+                  <div class="eyebrow">New Expense</div>
+                  <div class="title">Add expense</div>
+                </div>
+                <button class="ghost">Cancel</button>
+              </div>
+
+              <div class="form">
+                <div class="field"><strong>Category</strong><span class="muted">Software / Equipment / Travel / Contractor / Other</span></div>
+                <div class="field"><strong>Amount</strong><span class="muted">$0.00</span></div>
+                <div class="field"><strong>Currency</strong><span class="muted">USD</span></div>
+                <div class="field"><strong>Incurred date</strong><span class="muted">2026-03-30</span></div>
+                <div class="field"><strong>Note</strong><span class="muted">Optional description</span></div>
+              </div>
+
+              <div class="surface">
+                <h4>Receipt upload</h4>
+                <p>Attach a receipt now or add one later from the local vault.</p>
+                <div class="actions" style="margin-top:12px">
+                  <button class="primary">Upload receipt</button>
+                  <button class="secondary">Attach from vault</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="phone-wrap">
+          <div class="phone-head">
+            <strong>04 New Invoice</strong>
+            <span class="caption">新增应收 / 发票</span>
+          </div>
+          <div class="phone">
+            <div class="screen">
+              <div class="notch"></div>
+              <div class="appbar">
+                <div>
+                  <div class="eyebrow">New Invoice</div>
+                  <div class="title">Track receivable</div>
+                </div>
+                <button class="ghost">Cancel</button>
+              </div>
+
+              <div class="form">
+                <div class="field"><strong>Client name</strong><span class="muted">Brand / Client</span></div>
+                <div class="field"><strong>Amount</strong><span class="muted">$0.00</span></div>
+                <div class="field"><strong>Currency</strong><span class="muted">USD</span></div>
+                <div class="field"><strong>Due date</strong><span class="muted">2026-04-15</span></div>
+                <div class="field"><strong>Status</strong><span class="muted">draft / sent / paid / overdue</span></div>
+              </div>
+
+              <div class="surface">
+                <h4>Invoice file</h4>
+                <p>Upload PDF or attach a generated export later.</p>
+                <button class="secondary" style="margin-top:12px;width:100%">Upload invoice file</button>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="phone-wrap">
+          <div class="phone-head">
+            <strong>05 Upload Center</strong>
+            <span class="caption">统一上传入口</span>
+          </div>
+          <div class="phone">
+            <div class="screen">
+              <div class="notch"></div>
+              <div class="appbar">
+                <div>
+                  <div class="eyebrow">Upload Center</div>
+                  <div class="title">Attach files to your ledger</div>
+                </div>
+                <button class="ghost">Recent</button>
+              </div>
+
+              <div class="tile-grid">
+                <div class="upload-tile">
+                  <strong>Receipt</strong>
+                  <p>Expense proof and receipts</p>
+                </div>
+                <div class="upload-tile">
+                  <strong>Statement</strong>
+                  <p>Platform payout or source document</p>
+                </div>
+                <div class="upload-tile">
+                  <strong>Invoice file</strong>
+                  <p>PDF or exported invoice draft</p>
+                </div>
+                <div class="upload-tile">
+                  <strong>Tax support</strong>
+                  <p>Other supporting documents</p>
+                </div>
+              </div>
+
+              <div class="quote">
+                <h4>Recent uploads</h4>
+                <p>youtube-march-statement.csv · adobe-receipt.jpg · sponsor-invoice.pdf</p>
+              </div>
+
+              <button class="primary" style="margin-top:14px;width:100%">Choose file to upload</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="phone-wrap">
+          <div class="phone-head">
+            <strong>06 Record Detail</strong>
+            <span class="caption">查看、编辑、补附件</span>
+          </div>
+          <div class="phone">
+            <div class="screen">
+              <div class="notch"></div>
+              <div class="appbar">
+                <div>
+                  <div class="eyebrow">Record Detail</div>
+                  <div class="title">Brand sponsor invoice</div>
+                </div>
+                <button class="ghost">Edit</button>
+              </div>
+
+              <div class="hero-card">
+                <div class="caption">Invoice record</div>
+                <strong>$1,500.00</strong>
+                <p>Client: Northwave Studio · Due Apr 2 · Status pending</p>
+              </div>
+
+              <div class="surface">
+                <h4>Fields</h4>
+                <p>Client name, amount, due date, status, notes</p>
+              </div>
+
+              <div class="surface">
+                <h4>Attachments</h4>
+                <div class="list" style="margin-top:12px">
+                  <div class="row-card">
+                    <div class="row-top">
+                      <div>
+                        <strong>sponsor-invoice.pdf</strong>
+                        <p>Invoice file</p>
+                      </div>
+                      <span class="badge">Attached</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="actions" style="margin-top:12px">
+                  <button class="secondary">Attach file</button>
+                  <button class="secondary">Open vault</button>
+                </div>
+              </div>
+
+              <div class="actions">
+                <button class="primary">Mark paid</button>
+                <button class="secondary">Review</button>
+              </div>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <div class="footer-note">
+        这份 HTML 原型图严格基于“只做记账功能”的范围设计，重点是让 Ledger 成为真实工作区，并把上传入口做成显性能力。适合作为设计评审、产品讨论或下一步落 React Native 页面时的参考。
+      </div>
+    </main>
+  </body>
+  </html>

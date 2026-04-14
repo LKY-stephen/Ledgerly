@@ -1,7 +1,7 @@
 import type { BottomTabBarButtonProps } from "@react-navigation/bottom-tabs";
 import type { ReactNode } from "react";
 import { useEffect, useRef } from "react";
-import { Animated, Easing, Pressable, StyleSheet, View } from "react-native";
+import { Animated, Pressable, StyleSheet, View } from "react-native";
 
 interface AnimatedTabBarButtonProps extends BottomTabBarButtonProps {
   children: ReactNode;
@@ -14,43 +14,21 @@ export function TabBarIcon({
   onPress,
 }: AnimatedTabBarButtonProps) {
   const focused = accessibilityState?.selected ?? false;
-  const wobble = useRef(new Animated.Value(0)).current;
   const scale = useRef(new Animated.Value(focused ? 1 : 0.98)).current;
 
   const runFocusAnimation = () => {
-    wobble.setValue(0);
-
-    Animated.parallel([
-      Animated.sequence([
-        Animated.timing(wobble, {
-          toValue: 1,
-          duration: 95,
-          easing: Easing.out(Easing.quad),
-          useNativeDriver: true,
-        }),
-        Animated.timing(wobble, {
-          toValue: -0.85,
-          duration: 110,
-          easing: Easing.out(Easing.quad),
-          useNativeDriver: true,
-        }),
-        Animated.timing(wobble, {
-          toValue: 0.5,
-          duration: 95,
-          easing: Easing.out(Easing.quad),
-          useNativeDriver: true,
-        }),
-        Animated.timing(wobble, {
-          toValue: 0,
-          duration: 85,
-          easing: Easing.out(Easing.quad),
-          useNativeDriver: true,
-        }),
-      ]),
+    Animated.sequence([
       Animated.spring(scale, {
-        damping: 9,
-        mass: 0.72,
+        damping: 11,
+        mass: 0.78,
         stiffness: 220,
+        toValue: 1.02,
+        useNativeDriver: true,
+      }),
+      Animated.spring(scale, {
+        damping: 13,
+        mass: 0.82,
+        stiffness: 210,
         toValue: 1,
         useNativeDriver: true,
       }),
@@ -72,7 +50,7 @@ export function TabBarIcon({
         useNativeDriver: true,
       }),
     ]).start();
-  }, [focused, scale, wobble]);
+  }, [focused, scale]);
 
   return (
     <Pressable
@@ -89,8 +67,8 @@ export function TabBarIcon({
         style={[
           styles.wrap,
           {
-            backgroundColor: focused ? "rgba(255,255,255,0.5)" : "transparent",
-            borderColor: "transparent",
+            backgroundColor: focused ? "rgba(0, 32, 69, 0.06)" : "transparent",
+            borderColor: focused ? "rgba(0, 32, 69, 0.08)" : "transparent",
           },
         ]}
       >
@@ -98,21 +76,7 @@ export function TabBarIcon({
           style={[
             styles.content,
             {
-              transform: [
-                { scale },
-                {
-                  rotate: wobble.interpolate({
-                    inputRange: [-1, 0, 1],
-                    outputRange: ["-9deg", "0deg", "9deg"],
-                  }),
-                },
-                {
-                  translateY: wobble.interpolate({
-                    inputRange: [-1, 0, 1],
-                    outputRange: [0, 0, -2],
-                  }),
-                },
-              ],
+              transform: [{ scale }],
             },
           ]}
         >
@@ -142,11 +106,11 @@ const styles = StyleSheet.create({
   wrap: {
     alignItems: "center",
     borderRadius: 999,
-    borderWidth: 0,
+    borderWidth: 1,
     justifyContent: "center",
-    minWidth: 92,
-    minHeight: 48,
-    paddingHorizontal: 20,
-    paddingVertical: 6,
+    minWidth: 84,
+    minHeight: 46,
+    paddingHorizontal: 16,
+    paddingVertical: 5,
   },
 });

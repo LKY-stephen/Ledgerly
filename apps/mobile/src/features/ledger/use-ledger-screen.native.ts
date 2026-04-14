@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useSQLiteContext } from "expo-sqlite";
 
 import {
@@ -14,6 +14,7 @@ import {
   buildLedgerPeriodIdForYear,
 } from "./ledger-screen-state";
 import { useAppShell } from "../app-shell/provider";
+import type { ResolvedLocale } from "../app-shell/types";
 import { createReadableStorageDatabase } from "../../storage/storage-adapter";
 
 type LedgerDatabase = ReturnType<typeof useSQLiteContext>;
@@ -37,9 +38,8 @@ export interface UseLedgerScreenResult {
 }
 
 export function useLedgerScreen(): UseLedgerScreenResult {
-  const { resolvedLocale } = useAppShell();
+  const { resolvedLocale, storageRevision } = useAppShell();
   const database = useSQLiteContext();
-  const lastDatabaseRef = useRef<LedgerDatabase | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -50,11 +50,10 @@ export function useLedgerScreen(): UseLedgerScreenResult {
   const [snapshot, setSnapshot] = useState<LedgerScreenSnapshot>(() =>
     createEmptyLedgerSnapshot(resolvedLocale),
   );
-  const forceDefaultSelection = lastDatabaseRef.current !== database;
 
-  if (forceDefaultSelection) {
-    lastDatabaseRef.current = database;
-  }
+  useEffect(() => {
+    setSelectedPeriodId(null);
+  }, [storageRevision]);
 
   useEffect(() => {
     let isMounted = true;
@@ -64,9 +63,9 @@ export function useLedgerScreen(): UseLedgerScreenResult {
 
     loadSnapshot(
       database,
-      forceDefaultSelection ? null : selectedPeriodId,
+      selectedPeriodId,
       selectedScope,
-      forceDefaultSelection,
+      false,
       resolvedLocale,
     )
       .then((nextSnapshot) => {
@@ -95,7 +94,7 @@ export function useLedgerScreen(): UseLedgerScreenResult {
     return () => {
       isMounted = false;
     };
-  }, [database, forceDefaultSelection, refreshNonce, resolvedLocale, selectedPeriodId, selectedScope]);
+  }, [database, refreshNonce, resolvedLocale, selectedPeriodId, selectedScope, storageRevision]);
 
   return {
     error,
@@ -135,7 +134,7 @@ async function loadSnapshot(
   preferredPeriodId: string | null,
   scopeId: LedgerScopeId,
   forceDefaultSelection: boolean,
-  locale: import("../app-shell/types").ResolvedLocale,
+  locale: ResolvedLocale,
 ) {
   return loadLedgerSnapshot(createReadableStorageDatabase(database), {
     forceDefaultSelection,
@@ -147,7 +146,7 @@ async function loadSnapshot(
 
 function getErrorMessage(
   error: unknown,
-  locale: import("../app-shell/types").ResolvedLocale,
+  locale: ResolvedLocale,
 ): string {
   if (error instanceof Error) {
     return error.message;

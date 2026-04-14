@@ -16,6 +16,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { SectionCard } from "@creator-cfo/ui";
 
+import { seedCreatorFinanceDemoLedger } from "../database-demo/seed-database-demo";
 import { pickAndImportDatabasePackageAsync } from "../../storage/database-import";
 import {
   localePreferenceOptions,
@@ -189,6 +190,7 @@ export function ProfileScreen() {
   } | null>(null);
   const [isImportingDatabase, setIsImportingDatabase] = useState(false);
   const [isGoogleConnecting, setIsGoogleConnecting] = useState(false);
+  const [isSeedingDemoLedger, setIsSeedingDemoLedger] = useState(false);
 
   const googleClientIdIos = (Constants.expoConfig?.extra?.googleClientIdIos as string) ?? "";
   const googleClientIdWeb = (Constants.expoConfig?.extra?.googleClientIdWeb as string) ?? "";
@@ -227,7 +229,14 @@ export function ProfileScreen() {
       .finally(() => {
         setIsGoogleConnecting(false);
       });
-  }, [googleResponse]);
+  }, [
+    connectGeminiWithGoogle,
+    copy.login.googleUnavailable,
+    googleClientIdIos,
+    googleClientIdWeb,
+    googleRequest,
+    googleResponse,
+  ]);
 
   useEffect(() => {
     setAiProviderDraft(aiProvider);
@@ -899,6 +908,58 @@ export function ProfileScreen() {
                   : copy.meScreen.databaseImportAction}
               </Text>
             </Pressable>
+
+            <Text style={[styles.sectionHint, { color: palette.inkMuted }]}>
+              {copy.meScreen.databaseDemoDescription}
+            </Text>
+
+            <Pressable
+              accessibilityRole="button"
+              disabled={isSeedingDemoLedger}
+              onPress={async () => {
+                setIsSeedingDemoLedger(true);
+                setDatabaseImportMessage(null);
+                setStorageSuspended(true);
+
+                try {
+                  const result = await seedCreatorFinanceDemoLedger();
+                  bumpStorageRevision();
+                  setDatabaseImportMessage({
+                    tone: "success",
+                    value:
+                      `${copy.meScreen.databaseDemoSuccess} ${result.recordCount} ` +
+                      copy.meScreen.databaseDemoRecordSuffix,
+                  });
+                } catch (error) {
+                  const message =
+                    error instanceof Error
+                      ? error.message
+                      : copy.meScreen.databaseDemoFailure;
+                  setDatabaseImportMessage({
+                    tone: "error",
+                    value: `${copy.meScreen.databaseDemoFailure} ${message}`,
+                  });
+                } finally {
+                  setStorageSuspended(false);
+                  setIsSeedingDemoLedger(false);
+                }
+              }}
+              style={[
+                styles.actionButton,
+                {
+                  backgroundColor: palette.paperMuted,
+                  borderColor: palette.border,
+                  opacity: isSeedingDemoLedger ? 0.7 : 1,
+                },
+              ]}
+              testID="profile-seed-demo-ledger-button"
+            >
+              <Text style={[styles.secondaryActionLabel, { color: palette.ink }]}>
+                {isSeedingDemoLedger
+                  ? copy.meScreen.databaseDemoInProgress
+                  : copy.meScreen.databaseDemoAction}
+              </Text>
+            </Pressable>
           </SectionCard>
         ) : null}
 
@@ -939,11 +1000,11 @@ export function ProfileScreen() {
 const styles = StyleSheet.create({
   actionButton: {
     alignItems: "center",
-    borderRadius: 16,
+    borderRadius: 14,
     borderWidth: 1,
     flex: 1,
     justifyContent: "center",
-    minHeight: 48,
+    minHeight: 44,
     paddingHorizontal: 16,
   },
   actionButtonLabel: {
@@ -951,9 +1012,9 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   container: {
-    gap: 16,
-    padding: 20,
-    paddingBottom: 120,
+    gap: 14,
+    padding: 18,
+    paddingBottom: 168,
   },
   databaseMessage: {
     fontSize: 13,
@@ -974,22 +1035,27 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   hero: {
-    gap: 12,
+    backgroundColor: "#FFFFFF",
+    borderColor: "rgba(0, 32, 69, 0.08)",
+    borderRadius: 18,
+    borderWidth: 1,
+    gap: 8,
+    padding: 16,
   },
   inputChrome: {
     alignItems: "center",
-    borderRadius: 16,
+    borderRadius: 14,
     borderWidth: 1,
     flexDirection: "row",
-    minHeight: 48,
+    minHeight: 44,
   },
   input: {
-    borderRadius: 16,
+    borderRadius: 14,
     borderWidth: 1,
     fontSize: 14,
-    minHeight: 48,
+    minHeight: 44,
     paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingVertical: 10,
   },
   inputIconButton: {
     alignItems: "center",
@@ -1000,17 +1066,17 @@ const styles = StyleSheet.create({
   keyInput: {
     flex: 1,
     fontSize: 14,
-    minHeight: 48,
+    minHeight: 44,
     paddingLeft: 14,
     paddingRight: 8,
-    paddingVertical: 12,
+    paddingVertical: 10,
   },
   logoutButton: {
     alignItems: "center",
-    borderRadius: 18,
+    borderRadius: 14,
     justifyContent: "center",
     marginTop: 8,
-    minHeight: 50,
+    minHeight: 44,
     paddingHorizontal: 20,
   },
   googleConnectButton: {
@@ -1070,8 +1136,8 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     borderWidth: 1,
     minWidth: 92,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
   },
   optionRow: {
     flexDirection: "row",
@@ -1082,8 +1148,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   sectionHint: {
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 13,
+    lineHeight: 19,
   },
   secondaryActionLabel: {
     fontSize: 14,
@@ -1094,12 +1160,12 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   summary: {
-    fontSize: 16,
-    lineHeight: 24,
+    fontSize: 14,
+    lineHeight: 21,
   },
   title: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: "800",
-    lineHeight: 34,
+    lineHeight: 30,
   },
 });

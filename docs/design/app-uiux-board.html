@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CreatorCFO App UI/UX Board</title>
+    <style>
+      :root {
+        --bg: #eef5f1;
+        --paper: #fffaf2;
+        --paper-soft: #f4ede0;
+        --ink: #14213d;
+        --muted: #5b6472;
+        --accent: #0f766e;
+        --accent-soft: #dff8f4;
+        --border: rgba(15, 118, 110, 0.18);
+        --divider: rgba(20, 33, 61, 0.08);
+        --hero-a: #0f766e;
+        --hero-b: #11334f;
+        --gold: #c98b2e;
+        --gold-soft: rgba(201, 139, 46, 0.14);
+        --rose: #8c3f50;
+        --rose-soft: rgba(140, 63, 80, 0.14);
+        --shadow: 0 22px 54px rgba(17, 51, 79, 0.12);
+        --r-xl: 28px;
+        --r-lg: 22px;
+        --r-md: 16px;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        font-family: Inter, "Helvetica Neue", Arial, sans-serif;
+        background:
+          radial-gradient(circle at top left, rgba(15, 118, 110, 0.14), transparent 22%),
+          radial-gradient(circle at top right, rgba(201, 139, 46, 0.12), transparent 24%),
+          linear-gradient(180deg, #edf5f1 0%, #f8fbf9 100%);
+      }
+
+      .page {
+        width: min(1500px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 28px 0 56px;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+        gap: 20px;
+        align-items: end;
+      }
+
+      .eyebrow {
+        margin: 0 0 10px;
+        font-size: 12px;
+        line-height: 1;
+        letter-spacing: .22em;
+        text-transform: uppercase;
+        color: var(--accent);
+        font-weight: 800;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(40px, 6vw, 68px);
+        line-height: .96;
+        letter-spacing: -.04em;
+      }
+
+      .hero p {
+        margin: 16px 0 0;
+        max-width: 72ch;
+        color: var(--muted);
+        font-size: 18px;
+        line-height: 1.7;
+      }
+
+      .card,
+      .panel,
+      .phone-wrap {
+        border: 1px solid var(--border);
+        border-radius: var(--r-xl);
+        background: rgba(255, 250, 242, .86);
+        box-shadow: var(--shadow);
+      }
+
+      .meta {
+        padding: 20px;
+        display: grid;
+        gap: 14px;
+      }
+
+      .meta span,
+      .muted,
+      .caption,
+      .mini-note,
+      .table-head,
+      .pill,
+      .tab {
+        color: var(--muted);
+      }
+
+      .meta strong { display: block; margin-top: 4px; font-size: 18px; }
+
+      .analysis {
+        margin-top: 20px;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+      }
+
+      .card, .panel { padding: 22px; }
+
+      h2, h3, h4 { margin: 0; }
+
+      .card p, .panel p, li {
+        color: var(--muted);
+        line-height: 1.65;
+      }
+
+      .layout {
+        margin-top: 20px;
+        display: grid;
+        grid-template-columns: minmax(0, 1.45fr) minmax(340px, .72fr);
+        gap: 20px;
+      }
+
+      .stack { display: grid; gap: 20px; }
+
+      .ia-grid {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 16px;
+      }
+
+      .ia-item {
+        padding: 16px;
+        border-radius: var(--r-lg);
+        background: rgba(255,255,255,.74);
+        border: 1px solid var(--border);
+      }
+
+      .ia-item .num {
+        width: 34px; height: 34px; display: inline-grid; place-items: center;
+        border-radius: 999px; background: var(--accent-soft); color: var(--accent);
+        font-size: 13px; font-weight: 800;
+      }
+
+      .ia-item strong { display: block; margin-top: 12px; font-size: 16px; }
+
+      .phones {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px;
+      }
+
+      .phone-wrap { padding: 16px; }
+
+      .phone-head {
+        display: flex; justify-content: space-between; gap: 12px; align-items: center;
+        margin-bottom: 12px;
+      }
+
+      .phone-head strong { font-size: 18px; }
+
+      .phone {
+        width: min(390px, 100%);
+        min-height: 844px;
+        margin: 0 auto;
+        border-radius: 42px;
+        border: 10px solid #172033;
+        background:
+          radial-gradient(circle at top left, rgba(15,118,110,.14), transparent 24%),
+          linear-gradient(180deg, #f8f3ea 0%, #fffdf9 100%);
+        overflow: hidden;
+        box-shadow: 0 20px 48px rgba(20,33,61,.16);
+      }
+
+      .phone.login {
+        background:
+          radial-gradient(circle at top left, rgba(15,118,110,.18), transparent 20%),
+          linear-gradient(180deg, #11334f 0%, #0f766e 50%, #eef5f1 100%);
+      }
+
+      .screen { padding: 16px; }
+
+      .notch {
+        width: 112px; height: 20px; margin: 0 auto 16px;
+        border-radius: 999px; background: #172033;
+      }
+
+      .appbar { display: flex; justify-content: space-between; gap: 12px; align-items: start; }
+
+      .title { margin-top: 4px; font-size: 22px; font-weight: 800; line-height: 1.2; }
+
+      .avatar, .ghost-btn, .primary-btn, .secondary-btn {
+        border-radius: 16px;
+        display: inline-grid;
+        place-items: center;
+        font-weight: 700;
+        border: none;
+      }
+
+      .avatar {
+        width: 42px; height: 42px; background: rgba(20,33,61,.08);
+      }
+
+      .login .title, .login .eyebrow, .login p, .login .caption { color: #f7fffd; }
+
+      .hero-card, .surface, .row-card, .quote, .cta {
+        margin-top: 14px;
+        padding: 16px;
+        border-radius: 24px;
+        border: 1px solid var(--border);
+        background: rgba(255,255,255,.86);
+      }
+
+      .hero-card {
+        background: linear-gradient(135deg, rgba(15,118,110,.12), rgba(255,255,255,.95));
+      }
+
+      .hero-card strong { display: block; margin-top: 6px; font-size: 28px; line-height: 1.05; }
+
+      .hero-card p, .surface p, .row-card p, .quote p, .cta p {
+        margin: 8px 0 0;
+        color: var(--muted);
+        line-height: 1.6;
+      }
+
+      .login-card {
+        margin-top: 18px;
+        padding: 18px;
+        border-radius: 28px;
+        background: rgba(255,250,242,.95);
+        border: 1px solid rgba(255,255,255,.12);
+      }
+
+      .signal-row, .tag-row {
+        display: flex; flex-wrap: wrap; gap: 8px;
+      }
+
+      .pill {
+        padding: 10px 12px; border-radius: 999px; background: rgba(20,33,61,.06); font-size: 13px;
+      }
+
+      .signal {
+        padding: 8px 10px; border-radius: 999px; background: rgba(15,118,110,.14); color: var(--ink); font-size: 12px; font-weight: 700;
+      }
+
+      .actions { display: grid; gap: 10px; margin-top: 16px; }
+
+      .primary-btn {
+        width: 100%; padding: 14px 16px; background: var(--ink); color: white; min-height: 52px;
+      }
+
+      .secondary-btn {
+        width: 100%; padding: 14px 16px; background: rgba(20,33,61,.08); color: var(--ink); min-height: 52px;
+      }
+
+      .status {
+        margin-top: 12px; padding: 14px; border-radius: 16px; background: var(--paper-soft); color: var(--muted);
+        font-size: 13px;
+      }
+
+      .stats {
+        display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px; margin-top: 12px;
+      }
+
+      .stat {
+        padding: 14px 12px; border-radius: 18px; background: rgba(20,33,61,.06);
+      }
+
+      .stat.accent { background: var(--accent-soft); }
+      .stat.gold { background: var(--gold-soft); }
+
+      .stat strong { display:block; margin-top: 6px; font-size: 22px; color: var(--ink); }
+
+      .section-row {
+        margin-top: 18px; display:flex; justify-content: space-between; gap: 8px; align-items:center;
+      }
+
+      .list {
+        display: grid; gap: 10px; margin-top: 12px;
+      }
+
+      .row-card {
+        background: rgba(255,255,255,.82);
+      }
+
+      .row-top { display:flex; justify-content:space-between; gap:10px; align-items:start; }
+
+      .badge {
+        padding: 7px 10px; border-radius: 999px; font-size: 12px; font-weight: 800; white-space: nowrap;
+        background: var(--accent-soft); color: var(--accent);
+      }
+
+      .badge.gold { background: var(--gold-soft); color: #8a6118; }
+      .badge.rose { background: var(--rose-soft); color: var(--rose); }
+
+      .table {
+        display: grid; gap: 8px; margin-top: 12px;
+      }
+
+      .table-head, .table-row {
+        display: grid; grid-template-columns: 1fr .9fr 1fr .85fr; gap: 8px;
+        padding: 12px; border-radius: 16px;
+      }
+
+      .table-head {
+        background: rgba(20,33,61,.05); font-size: 11px; letter-spacing: .08em; text-transform: uppercase;
+      }
+
+      .table-row {
+        background: rgba(255,255,255,.82); border: 1px solid var(--divider); font-size: 13px;
+      }
+
+      .warn { color: var(--rose); font-weight: 800; }
+
+      .quote {
+        background: linear-gradient(135deg, rgba(15,118,110,.08), rgba(255,255,255,.94));
+      }
+
+      .question-list { display: grid; gap: 8px; margin-top: 12px; }
+
+      .question-list button {
+        border: none; text-align: left; padding: 12px 14px; border-radius: 14px;
+        background: rgba(255,255,255,.92); color: var(--ink);
+      }
+
+      .tabbar {
+        margin-top: 18px; display:grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 8px;
+        padding: 10px; border-radius: 22px; background: rgba(20,33,61,.9);
+      }
+
+      .tab { text-align:center; font-size: 12px; color: rgba(255,255,255,.72); }
+      .tab.active { color: white; font-weight: 800; }
+
+      .side-panels { display: grid; gap: 20px; }
+
+      .side-list { display: grid; gap: 12px; }
+
+      .side-item {
+        padding: 14px; border-radius: 18px; background: rgba(255,255,255,.72); border: 1px solid var(--divider);
+      }
+
+      .side-item strong { display:block; margin-bottom: 6px; }
+
+      .footer-note {
+        margin-top: 20px; padding: 18px 20px; border-radius: var(--r-lg); border: 1px solid var(--border);
+        background: rgba(255,255,255,.74); color: var(--muted); line-height: 1.7;
+      }
+
+      @media (max-width: 1200px) {
+        .hero, .analysis, .layout, .ia-grid, .phones { grid-template-columns: 1fr; }
+      }
+
+      @media (max-width: 560px) {
+        .page { width: min(100% - 16px, 100%); padding-top: 16px; }
+        .phone { border-width: 8px; border-radius: 34px; }
+        .stats, .table-head, .table-row { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <section class="hero">
+        <div>
+          <p class="eyebrow">Repository Analysis + App UI/UX</p>
+          <h1>CreatorCFO 移动端产品骨架与 UI/UX 设计稿</h1>
+          <p>
+            这个仓库当前已经明确了产品的几个关键前提：`移动端优先`、`本地优先`、`四个底部 Tab`、`Expo + SQLite + File Vault + AsyncStorage`。
+            但业务页面仍处于壳层阶段，所以这版设计图的目标不是复刻现状，而是**在不违背当前架构的前提下，把它推进成真实可用的 Creator 财务 App**。
+          </p>
+        </div>
+
+        <aside class="card meta">
+          <div>
+            <span>当前形态</span>
+            <strong>Expo Router + React Native 本地优先 App</strong>
+          </div>
+          <div>
+            <span>现有 IA</span>
+            <strong>Login / Home / Ledger / Discover / Profile</strong>
+          </div>
+          <div>
+            <span>设计目标</span>
+            <strong>让壳层变成真正的创作者财务工作流</strong>
+          </div>
+        </aside>
+      </section>
+
+      <section class="analysis">
+        <article class="card">
+          <p class="eyebrow">分析结论</p>
+          <h2>仓库当前做到了什么</h2>
+          <p>已经搭好了登录、四个 Tab、本地会话、主题、多语言和本地存储契约。也就是说，技术底座已经具备继续往真实产品演进的条件。</p>
+        </article>
+        <article class="card">
+          <p class="eyebrow">主要缺口</p>
+          <h2>还没进入业务深水区</h2>
+          <p>Home 更像项目介绍页，Ledger / Discover / Profile 仍偏占位。缺少真正的收入、对账、税务和助手场景界面。</p>
+        </article>
+        <article class="card">
+          <p class="eyebrow">设计策略</p>
+          <h2>保留现有 IA，重做内容层</h2>
+          <p>这版设计不推翻四 Tab 结构，而是在 Home、Ledger、Discover 中放入真正的 CreatorCFO 工作流，并把 Tax Assistant 作为 Discover 的重点入口。</p>
+        </article>
+      </section>
+
+      <section class="layout">
+        <div class="stack">
+          <article class="panel">
+            <p class="eyebrow">Recommended App IA</p>
+            <h2>基于当前仓库的 App 信息架构</h2>
+            <div class="ia-grid">
+              <div class="ia-item">
+                <div class="num">01</div>
+                <strong>Login</strong>
+                <p>Apple / 游客模式进入，保持当前本地优先定位。</p>
+              </div>
+              <div class="ia-item">
+                <div class="num">02</div>
+                <strong>Home</strong>
+                <p>现金、收入、税务预留、待处理事项的总览页。</p>
+              </div>
+              <div class="ia-item">
+                <div class="num">03</div>
+                <strong>Ledger</strong>
+                <p>收入、费用、发票和待对账记录的主工作区。</p>
+              </div>
+              <div class="ia-item">
+                <div class="num">04</div>
+                <strong>Discover</strong>
+                <p>Tax Assistant、模板资料库、智能建议和增长入口。</p>
+              </div>
+              <div class="ia-item">
+                <div class="num">05</div>
+                <strong>Profile</strong>
+                <p>主题、语言、会话和本地数据管理。</p>
+              </div>
+            </div>
+          </article>
+
+          <section class="phones">
+            <article class="phone-wrap">
+              <div class="phone-head">
+                <strong>01 Login / 登录页</strong>
+                <span class="caption">保留当前仓库的入口逻辑</span>
+              </div>
+              <div class="phone login">
+                <div class="screen">
+                  <div class="notch"></div>
+                  <div class="appbar">
+                    <div>
+                      <div class="eyebrow">Local-first login</div>
+                      <div class="title">One calm place for creator cash.</div>
+                    </div>
+                    <div class="pill">Skip</div>
+                  </div>
+
+                  <div class="login-card">
+                    <div class="signal-row">
+                      <span class="signal">On-device first</span>
+                      <span class="signal">Guest ready</span>
+                      <span class="signal">Theme aware</span>
+                    </div>
+                    <div class="hero-card" style="margin-top:16px">
+                      <div class="caption">Creator CFO</div>
+                      <strong>本地优先的创作者财务工作台</strong>
+                      <p>先用 Apple 登录或游客模式进入。当前阶段不依赖后端，所有体验都围绕设备本地数据展开。</p>
+                    </div>
+                    <div class="actions">
+                      <button class="primary-btn">使用 Apple 登录</button>
+                      <button class="secondary-btn">暂不登录</button>
+                    </div>
+                    <div class="status">Apple sign-in works on supported iPhone and iPad devices.</div>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <article class="phone-wrap">
+              <div class="phone-head">
+                <strong>02 Home / 首页</strong>
+                <span class="caption">从说明页升级为财务总览</span>
+              </div>
+              <div class="phone">
+                <div class="screen">
+                  <div class="notch"></div>
+                  <div class="appbar">
+                    <div>
+                      <div class="eyebrow">Home</div>
+                      <div class="title">March finance pulse</div>
+                    </div>
+                    <div class="avatar">CF</div>
+                  </div>
+
+                  <div class="hero-card">
+                    <div class="caption">Cash available after reserve</div>
+                    <strong>$62,800</strong>
+                    <p>Updated from local ledger snapshots, invoice watchlist, and tax reserve rules.</p>
+                  </div>
+
+                  <div class="stats">
+                    <div class="stat accent">
+                      <span>Month revenue</span>
+                      <strong>$84k</strong>
+                    </div>
+                    <div class="stat gold">
+                      <span>Tax reserve</span>
+                      <strong>$21k</strong>
+                    </div>
+                    <div class="stat">
+                      <span>Open reviews</span>
+                      <strong>6</strong>
+                    </div>
+                  </div>
+
+                  <div class="section-row">
+                    <h3>Today’s queue</h3>
+                    <span class="caption">3 items</span>
+                  </div>
+                  <div class="list">
+                    <div class="row-card">
+                      <div class="row-top">
+                        <div>
+                          <strong>Review payout variance</strong>
+                          <p>Impact settlement landed short after affiliate clawbacks.</p>
+                        </div>
+                        <span class="badge rose">Action</span>
+                      </div>
+                    </div>
+                    <div class="row-card">
+                      <div class="row-top">
+                        <div>
+                          <strong>Move money to tax reserve</strong>
+                          <p>Suggested transfer before next filing window.</p>
+                        </div>
+                        <span class="badge gold">Tax</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="tabbar">
+                    <div class="tab active">Home</div>
+                    <div class="tab">Ledger</div>
+                    <div class="tab">Discover</div>
+                    <div class="tab">Me</div>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <article class="phone-wrap">
+              <div class="phone-head">
+                <strong>03 Ledger / 记账主工作区</strong>
+                <span class="caption">把现有占位页升级为业务页</span>
+              </div>
+              <div class="phone">
+                <div class="screen">
+                  <div class="notch"></div>
+                  <div class="appbar">
+                    <div>
+                      <div class="eyebrow">Ledger</div>
+                      <div class="title">Income, expenses, and invoices</div>
+                    </div>
+                    <div class="pill">Filter</div>
+                  </div>
+
+                  <div class="table">
+                    <div class="table-head">
+                      <span>Source</span>
+                      <span>Type</span>
+                      <span>Amount</span>
+                      <span>Status</span>
+                    </div>
+                    <div class="table-row">
+                      <span>YouTube</span>
+                      <span>Income</span>
+                      <span>$4,250</span>
+                      <span>Cleared</span>
+                    </div>
+                    <div class="table-row">
+                      <span>Patreon</span>
+                      <span>Fee</span>
+                      <span>-$180</span>
+                      <span>Captured</span>
+                    </div>
+                    <div class="table-row">
+                      <span>Sponsor invoice</span>
+                      <span>AR</span>
+                      <span>$1,500</span>
+                      <span class="warn">Overdue</span>
+                    </div>
+                  </div>
+
+                  <div class="quote">
+                    <h4>Quick action</h4>
+                    <p>Attach a receipt, mark an invoice paid, or review a bank match candidate from one place.</p>
+                  </div>
+
+                  <div class="tabbar">
+                    <div class="tab">Home</div>
+                    <div class="tab active">Ledger</div>
+                    <div class="tab">Discover</div>
+                    <div class="tab">Me</div>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <article class="phone-wrap">
+              <div class="phone-head">
+                <strong>04 Discover / 发现 + Tax Assistant</strong>
+                <span class="caption">把智能体放在这里作为重点入口</span>
+              </div>
+              <div class="phone">
+                <div class="screen">
+                  <div class="notch"></div>
+                  <div class="appbar">
+                    <div>
+                      <div class="eyebrow">Discover</div>
+                      <div class="title">Tools, templates, and tax guidance</div>
+                    </div>
+                    <div class="pill">Ask</div>
+                  </div>
+
+                  <div class="hero-card">
+                    <div class="caption">Tax Assistant</div>
+                    <strong>1099 + Schedule C readiness</strong>
+                    <p>Understand what income belongs in self-employed tax prep, what expenses need mapping, and what is still missing.</p>
+                  </div>
+
+                  <div class="list">
+                    <div class="row-card">
+                      <div class="row-top">
+                        <div>
+                          <strong>Am I on a Schedule C path?</strong>
+                          <p>Eligibility router for creators, freelancers, and solo operators.</p>
+                        </div>
+                        <span class="badge">AI</span>
+                      </div>
+                    </div>
+                    <div class="row-card">
+                      <div class="row-top">
+                        <div>
+                          <strong>1099 income inbox</strong>
+                          <p>Review 1099 received, expected, and taxable income without a form.</p>
+                        </div>
+                        <span class="badge gold">New</span>
+                      </div>
+                    </div>
+                    <div class="row-card">
+                      <div class="row-top">
+                        <div>
+                          <strong>Template vault</strong>
+                          <p>Keep receipts, export kits, and invoice drafts organized on-device.</p>
+                        </div>
+                        <span class="badge">Vault</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="tabbar">
+                    <div class="tab">Home</div>
+                    <div class="tab">Ledger</div>
+                    <div class="tab active">Discover</div>
+                    <div class="tab">Me</div>
+                  </div>
+                </div>
+              </div>
+            </article>
+          </section>
+        </div>
+
+        <aside class="side-panels">
+          <article class="panel">
+            <p class="eyebrow">Design Reasoning</p>
+            <h2>为什么这样设计</h2>
+            <div class="side-list">
+              <div class="side-item">
+                <strong>不推翻当前四 Tab 结构</strong>
+                <p>仓库已经把导航、状态、主题和会话模型定下来了，UI 最好沿着这个外壳继续深化。</p>
+              </div>
+              <div class="side-item">
+                <strong>首页承担决策，不承担介绍</strong>
+                <p>Home 应该回答“我今天财务上最该看什么”，而不是展示系统模块说明。</p>
+              </div>
+              <div class="side-item">
+                <strong>Tax Assistant 最适合放在 Discover</strong>
+                <p>从当前 IA 看，Discover 是承接 AI、模板、指南和扩展能力的最佳位置。</p>
+              </div>
+            </div>
+          </article>
+
+          <article class="panel">
+            <p class="eyebrow">Product Translation</p>
+            <h2>从仓库到产品的映射</h2>
+            <ul>
+              <li><strong>HomeScreen</strong> 现状是项目概览，建议升级成 cash + reserve + tasks dashboard。</li>
+              <li><strong>LedgerScreen</strong> 现状是占位卡片，建议升级成收入 / 费用 / 发票混合工作台。</li>
+              <li><strong>DiscoverScreen</strong> 现状最轻，最适合承接 Tax Assistant 和模板资料库。</li>
+              <li><strong>ProfileScreen</strong> 当前结构合理，保持主题 / 语言 / 会话管理即可。</li>
+            </ul>
+          </article>
+
+          <article class="panel">
+            <p class="eyebrow">Next Screens</p>
+            <h2>下一步最值得细化的页面</h2>
+            <ul>
+              <li>Tax Assistant 详细流程页</li>
+              <li>Receipt capture / file vault 页面</li>
+              <li>Invoice detail / AR tracking 页面</li>
+              <li>Month-end review 页面</li>
+              <li>Settings 中的 local vault 管理页</li>
+            </ul>
+          </article>
+        </aside>
+      </section>
+
+      <div class="footer-note">
+        这版 UI/UX 设计图是基于当前仓库的真实结构做的“产品化推进稿”，不是脱离代码的概念稿。核心判断是：这个仓库已经具备移动端本地优先的产品底座，接下来最该补的是业务工作流，而不是继续扩展说明型页面。
+      </div>
+    </main>
+  </body>
+  </html>

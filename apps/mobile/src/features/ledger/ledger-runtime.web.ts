@@ -2,16 +2,30 @@ import * as DocumentPicker from "expo-document-picker";
 import * as ImagePicker from "expo-image-picker";
 
 import type { PlannerSummary, ReceiptParsePayload } from "@creator-cfo/schemas";
+import type { ResolvedLocale } from "../app-shell/types";
 
-import { parseFileWithOpenAiFromBlob, planEvidenceDbUpdates, type ParseResult } from "./remote-parse";
+import {
+  parseFileWithOpenAiFromBlob,
+  planEvidenceDbUpdates,
+  type ParseResult,
+} from "./remote-parse";
 import {
   buildRemoteExtractedData,
   type LedgerReviewValues,
   type WorkflowCandidateRecord,
   type WorkflowWriteProposalItem,
 } from "./ledger-domain";
-import { buildPlannerSummary, buildReviewValuesFromPayload, deriveCandidateState, type PlannerReadResults } from "./workflow-planner";
-import { createTrendPointsFromTotals, homeRecentPageSize, type HomeRecentRecord } from "./ledger-domain";
+import {
+  buildPlannerSummary,
+  buildReviewValuesFromPayload,
+  deriveCandidateState,
+  type PlannerReadResults,
+} from "./workflow-planner";
+import {
+  createTrendPointsFromDailyTotals,
+  homeRecentPageSize,
+  type HomeRecentRecord,
+} from "./ledger-domain";
 import type { HomeSnapshot } from "../home/home-data";
 
 interface UploadCandidate {
@@ -37,7 +51,9 @@ export interface PlannerResult {
 
 const plannerStateStore = new Map<string, PlannerResult>();
 
-export async function pickDocumentUploadCandidates(): Promise<UploadCandidate[]> {
+export async function pickDocumentUploadCandidates(): Promise<
+  UploadCandidate[]
+> {
   const result = await DocumentPicker.getDocumentAsync({
     copyToCacheDirectory: true,
     multiple: true,
@@ -60,8 +76,10 @@ export async function pickDocumentUploadCandidates(): Promise<UploadCandidate[]>
 }
 
 export async function pickPhotoUploadCandidates(
-  _locale?: import("../app-shell/types").ResolvedLocale,
+  locale?: ResolvedLocale,
 ): Promise<UploadCandidate[]> {
+  void locale;
+
   const result = await ImagePicker.launchImageLibraryAsync({
     allowsEditing: false,
     allowsMultipleSelection: true,
@@ -75,7 +93,8 @@ export async function pickPhotoUploadCandidates(
   }
 
   return result.assets.map((asset, index) => ({
-    evidenceGroupKey: asset.assetId || asset.fileName || `${asset.uri}-${index}`,
+    evidenceGroupKey:
+      asset.assetId || asset.fileName || `${asset.uri}-${index}`,
     isPrimary: true,
     kind: "image",
     mimeType: asset.mimeType ?? null,
@@ -86,9 +105,10 @@ export async function pickPhotoUploadCandidates(
 }
 
 export async function takeCameraPhoto(
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/consistent-type-imports
-  _locale?: import("../app-shell/types").ResolvedLocale,
+  locale?: ResolvedLocale,
 ): Promise<UploadCandidate[]> {
+  void locale;
+
   const result = await ImagePicker.launchCameraAsync({
     allowsEditing: false,
     mediaTypes: ["images"] as never,
@@ -100,7 +120,8 @@ export async function takeCameraPhoto(
   }
 
   return result.assets.map((asset, index) => ({
-    evidenceGroupKey: asset.assetId || asset.fileName || `${asset.uri}-${index}`,
+    evidenceGroupKey:
+      asset.assetId || asset.fileName || `${asset.uri}-${index}`,
     isPrimary: true,
     kind: "image" as const,
     mimeType: asset.mimeType ?? "image/jpeg",
@@ -131,31 +152,63 @@ export async function parseFile(
   return parseFileWithOpenAiFromBlob({ fileName, blob, mimeType });
 }
 
-export async function loadHomeScreenSnapshot(input: {
-  limit?: number;
-  now?: string;
-  offset?: number;
-} = {}): Promise<HomeSnapshot> {
-  const now = input.now ?? new Date().toISOString().slice(0, 10);
+export async function loadHomeScreenSnapshot(
+  input: {
+    limit?: number;
+    now?: string;
+    offset?: number;
+  } = {},
+): Promise<HomeSnapshot> {
+  const records = loadRecords();
+  const latestOccurredOn =
+    records[0]?.occurredOn ?? new Date().toISOString().slice(0, 10);
+  const latestCreatedOn =
+    records[0]?.createdAt?.slice(0, 10) ?? latestOccurredOn;
+  const metricsNow = input.now ?? latestOccurredOn;
+  const trendNow = input.now ?? latestCreatedOn;
   const offset = input.offset ?? 0;
   const limit = input.limit ?? homeRecentPageSize;
-  const records = loadRecords();
-  const monthStart = `${now.slice(0, 7)}-01`;
-  const monthEnd = endOfMonth(now);
-  const trendStart = shiftIsoDate(now, -29);
-  const metricRows = records.filter((r) => r.occurredOn >= monthStart && r.occurredOn <= monthEnd);
-  const incomeCents = metricRows.filter((r) => r.recordKind === "income").reduce((s, r) => s + r.amountCents, 0);
-  const outflowCents = metricRows.filter((r) => r.recordKind !== "income").reduce((s, r) => s + r.amountCents, 0);
-  const trendRows = records.filter((r) => r.recordKind === "income" && r.occurredOn >= trendStart && r.occurredOn <= now);
-  const totalsByDate = Object.fromEntries(
-    trendRows.map((row) => [row.occurredOn, trendRows.filter((r) => r.occurredOn === row.occurredOn).reduce((s, r) => s + r.amountCents, 0)]),
+  const monthStart = `${metricsNow.slice(0, 7)}-01`;
+  const monthEnd = endOfMonth(metricsNow);
+  const trendStart = shiftIsoDate(trendNow, -29);
+  const metricRows = records.filter(
+    (r) => r.occurredOn >= monthStart && r.occurredOn <= monthEnd,
   );
+  const incomeCents = metricRows
+    .filter((r) => r.recordKind === "income")
+    .reduce((s, r) => s + r.amountCents, 0);
+  const outflowCents = metricRows
+    .filter((r) => r.recordKind !== "income")
+    .reduce((s, r) => s + r.amountCents, 0);
+  const trendRows = records.filter((r) => {
+    const createdOn = r.createdAt.slice(0, 10);
+    return createdOn >= trendStart && createdOn <= trendNow;
+  });
+  const totalsByDate = trendRows.reduce<
+    Record<string, { expenseCents: number; incomeCents: number }>
+  >((totals, row) => {
+    const createdOn = row.createdAt.slice(0, 10);
+    const current = totals[createdOn] ?? { expenseCents: 0, incomeCents: 0 };
+
+    if (row.recordKind === "income") {
+      current.incomeCents += row.amountCents;
+    } else {
+      current.expenseCents += row.amountCents;
+    }
+
+    totals[createdOn] = current;
+    return totals;
+  }, {});
 
   return {
     hasMore: records.length > offset + limit,
-    metrics: { incomeCents, netCents: incomeCents - outflowCents, outflowCents },
+    metrics: {
+      incomeCents,
+      netCents: incomeCents - outflowCents,
+      outflowCents,
+    },
     recentRecords: records.slice(offset, offset + limit),
-    trend: createTrendPointsFromTotals(totalsByDate, now),
+    trend: createTrendPointsFromDailyTotals(totalsByDate, trendNow),
   };
 }
 
@@ -187,7 +240,8 @@ export async function runPlanner(input: {
     fileName: input.fileName,
     parsePayload: input.rawJson as ReceiptParsePayload,
     scheme: {},
-    sourceLabel: input.parserKind === "gemini" ? "gemini_upload" : "openai_upload",
+    sourceLabel:
+      input.parserKind === "gemini" ? "gemini_upload" : "openai_upload",
   });
 
   // Build read results (empty for web - no local DB)
@@ -218,25 +272,26 @@ export async function runPlanner(input: {
   });
 
   // Build candidate records and write proposals for UI
-  const candidateRecords: WorkflowCandidateRecord[] = summary.candidateRecords.map((payload, index) => {
-    const candidateId = `${plannerRunId}-candidate-${index + 1}`;
-    const state = deriveCandidateState({
-      duplicateHints: summary.duplicateHints,
-      payload,
-      resolutions: summary.counterpartyResolutions,
-    });
+  const candidateRecords: WorkflowCandidateRecord[] =
+    summary.candidateRecords.map((payload, index) => {
+      const candidateId = `${plannerRunId}-candidate-${index + 1}`;
+      const state = deriveCandidateState({
+        duplicateHints: summary.duplicateHints,
+        payload,
+        resolutions: summary.counterpartyResolutions,
+      });
 
-    return {
-      candidateId,
-      createdAt: now,
-      errorMessage: null,
-      payload,
-      recordId: null,
-      reviewValues: buildReviewValuesFromPayload(payload),
-      state,
-      updatedAt: now,
-    };
-  });
+      return {
+        candidateId,
+        createdAt: now,
+        errorMessage: null,
+        payload,
+        recordId: null,
+        reviewValues: buildReviewValuesFromPayload(payload),
+        state,
+        updatedAt: now,
+      };
+    });
 
   const writeProposals = buildWebWriteProposals({
     candidateId: candidateRecords[0]?.candidateId ?? null,
@@ -283,7 +338,9 @@ export async function approveWriteProposal(
     throw new Error("Planner state not found for batch.");
   }
 
-  const proposal = state.writeProposals.find((p) => p.writeProposalId === writeProposalId);
+  const proposal = state.writeProposals.find(
+    (p) => p.writeProposalId === writeProposalId,
+  );
 
   if (!proposal) {
     throw new Error("Write proposal not found.");
@@ -294,7 +351,10 @@ export async function approveWriteProposal(
 
   if (proposal.proposalType === "create_counterparty") {
     applyWebCounterpartySelection(state, proposal, {
-      displayName: readFirstString(proposal.payload.displayName, proposal.payload.parsedDisplayName),
+      displayName: readFirstString(
+        proposal.payload.displayName,
+        proposal.payload.parsedDisplayName,
+      ),
       counterpartyId: `counterparty-web-${proposal.writeProposalId}`,
     });
     releaseResolvedWebDependencies(state);
@@ -304,8 +364,13 @@ export async function approveWriteProposal(
 
   if (proposal.proposalType === "merge_counterparty") {
     applyWebCounterpartySelection(state, proposal, {
-      displayName: readFirstString(proposal.payload.existingDisplayName, proposal.payload.displayName),
-      counterpartyId: readFirstString(proposal.payload.existingCounterpartyId) ?? `counterparty-web-${proposal.writeProposalId}`,
+      displayName: readFirstString(
+        proposal.payload.existingDisplayName,
+        proposal.payload.displayName,
+      ),
+      counterpartyId:
+        readFirstString(proposal.payload.existingCounterpartyId) ??
+        `counterparty-web-${proposal.writeProposalId}`,
     });
     rejectSiblingWebCounterpartyCreate(state, proposal);
     releaseResolvedWebDependencies(state);
@@ -320,7 +385,10 @@ export async function approveWriteProposal(
     }
 
     for (const item of state.writeProposals) {
-      if (item.writeProposalId !== writeProposalId && (item.state === "pending_approval" || item.state === "blocked")) {
+      if (
+        item.writeProposalId !== writeProposalId &&
+        (item.state === "pending_approval" || item.state === "blocked")
+      ) {
         item.state = "rejected";
         item.updatedAt = proposal.updatedAt;
       }
@@ -330,7 +398,10 @@ export async function approveWriteProposal(
     return state;
   }
 
-  if (proposal.proposalType === "persist_candidate_record" && state.candidateRecords[0]) {
+  if (
+    proposal.proposalType === "persist_candidate_record" &&
+    state.candidateRecords[0]
+  ) {
     state.candidateRecords[0].state = "persisted_final";
     state.candidateRecords[0].updatedAt = new Date().toISOString();
 
@@ -355,7 +426,9 @@ export async function rejectWriteProposal(
     throw new Error("Planner state not found for batch.");
   }
 
-  const proposal = state.writeProposals.find((p) => p.writeProposalId === writeProposalId);
+  const proposal = state.writeProposals.find(
+    (p) => p.writeProposalId === writeProposalId,
+  );
 
   if (!proposal) {
     throw new Error("Write proposal not found.");
@@ -376,13 +449,19 @@ export async function rejectWriteProposal(
     return state;
   }
 
-  if (proposal.proposalType === "merge_counterparty" || proposal.proposalType === "resolve_duplicate_receipt") {
+  if (
+    proposal.proposalType === "merge_counterparty" ||
+    proposal.proposalType === "resolve_duplicate_receipt"
+  ) {
     releaseResolvedWebDependencies(state);
     state.batchState = "review_required";
     return state;
   }
 
-  if (proposal.proposalType === "persist_candidate_record" && state.candidateRecords[0]) {
+  if (
+    proposal.proposalType === "persist_candidate_record" &&
+    state.candidateRecords[0]
+  ) {
     state.candidateRecords[0].state = "rejected";
     state.candidateRecords[0].updatedAt = proposal.updatedAt;
   }
@@ -391,7 +470,9 @@ export async function rejectWriteProposal(
   return state;
 }
 
-export async function loadPlannerState(batchId: string): Promise<PlannerResult | null> {
+export async function loadPlannerState(
+  batchId: string,
+): Promise<PlannerResult | null> {
   return plannerStateStore.get(batchId) ?? null;
 }
 
@@ -410,12 +491,13 @@ function buildWebWriteProposals(input: {
   return input.proposals.map((proposal, index) => {
     const writeProposalId = `${input.plannerRunId}-proposal-${index + 1}`;
     const dependencyIds = resolveWebProposalDependencies(inserted, proposal);
-    const state = dependencyIds.length > 0 ||
-        (proposal.proposalType === "persist_candidate_record" &&
-          input.candidateState !== "validated" &&
-          input.candidateState !== "needs_review")
-      ? "blocked"
-      : "pending_approval";
+    const state =
+      dependencyIds.length > 0 ||
+      (proposal.proposalType === "persist_candidate_record" &&
+        input.candidateState !== "validated" &&
+        input.candidateState !== "needs_review")
+        ? "blocked"
+        : "pending_approval";
 
     inserted.push({ proposal, writeProposalId });
 
@@ -445,19 +527,22 @@ function resolveWebProposalDependencies(
     const role = readFirstString(proposal.values.role, proposal.role);
 
     return inserted
-      .filter((item) =>
-        item.proposal.proposalType === "merge_counterparty" &&
-        readFirstString(item.proposal.values.role, item.proposal.role) === role,
+      .filter(
+        (item) =>
+          item.proposal.proposalType === "merge_counterparty" &&
+          readFirstString(item.proposal.values.role, item.proposal.role) ===
+            role,
       )
       .map((item) => item.writeProposalId);
   }
 
   if (proposal.proposalType === "persist_candidate_record") {
     return inserted
-      .filter((item) =>
-        item.proposal.proposalType === "create_counterparty" ||
-        item.proposal.proposalType === "merge_counterparty" ||
-        item.proposal.proposalType === "resolve_duplicate_receipt",
+      .filter(
+        (item) =>
+          item.proposal.proposalType === "create_counterparty" ||
+          item.proposal.proposalType === "merge_counterparty" ||
+          item.proposal.proposalType === "resolve_duplicate_receipt",
       )
       .map((item) => item.writeProposalId);
   }
@@ -465,7 +550,9 @@ function resolveWebProposalDependencies(
   return [];
 }
 
-function buildWebProposalRationale(proposal: PlannerSummary["writeProposals"][number]): string {
+function buildWebProposalRationale(
+  proposal: PlannerSummary["writeProposals"][number],
+): string {
   if (proposal.proposalType === "create_counterparty") {
     return "Parsed label does not match an existing local counterparty, so creation requires approval.";
   }
@@ -489,7 +576,8 @@ function applyWebCounterpartySelection(
     displayName: string | null;
   },
 ): void {
-  const role = readFirstString(proposal.payload.role) === "target" ? "target" : "source";
+  const role =
+    readFirstString(proposal.payload.role) === "target" ? "target" : "source";
   const displayName = input.displayName ?? "";
   const candidate = state.candidateRecords[0];
 
@@ -501,7 +589,10 @@ function applyWebCounterpartySelection(
     ...candidate.payload,
     ...(role === "source"
       ? { sourceCounterpartyId: input.counterpartyId, sourceLabel: displayName }
-      : { targetCounterpartyId: input.counterpartyId, targetLabel: displayName }),
+      : {
+          targetCounterpartyId: input.counterpartyId,
+          targetLabel: displayName,
+        }),
   };
   candidate.reviewValues = buildReviewValuesFromPayload(candidate.payload);
   candidate.state = "validated";
@@ -536,13 +627,20 @@ function releaseResolvedWebDependencies(state: PlannerResult): void {
     }
 
     const dependencyStates = proposal.dependencyIds
-      .map((dependencyId) => state.writeProposals.find((item) => item.writeProposalId === dependencyId))
+      .map((dependencyId) =>
+        state.writeProposals.find(
+          (item) => item.writeProposalId === dependencyId,
+        ),
+      )
       .filter((item): item is WorkflowWriteProposalItem => Boolean(item));
-    const allResolved = dependencyStates.every((dependency) =>
-      dependency.state === "executed" || dependency.state === "rejected",
+    const allResolved = dependencyStates.every(
+      (dependency) =>
+        dependency.state === "executed" || dependency.state === "rejected",
     );
-    const rejectedCreateDependency = dependencyStates.some((dependency) =>
-      dependency.proposalType === "create_counterparty" && dependency.state === "rejected",
+    const rejectedCreateDependency = dependencyStates.some(
+      (dependency) =>
+        dependency.proposalType === "create_counterparty" &&
+        dependency.state === "rejected",
     );
 
     if (allResolved && !rejectedCreateDependency) {
@@ -552,13 +650,18 @@ function releaseResolvedWebDependencies(state: PlannerResult): void {
   }
 }
 
-function removeWebProposalDependency(state: PlannerResult, dependencyProposalId: string): void {
+function removeWebProposalDependency(
+  state: PlannerResult,
+  dependencyProposalId: string,
+): void {
   for (const proposal of state.writeProposals) {
     if (!proposal.dependencyIds.includes(dependencyProposalId)) {
       continue;
     }
 
-    proposal.dependencyIds = proposal.dependencyIds.filter((dependencyId) => dependencyId !== dependencyProposalId);
+    proposal.dependencyIds = proposal.dependencyIds.filter(
+      (dependencyId) => dependencyId !== dependencyProposalId,
+    );
     proposal.updatedAt = new Date().toISOString();
   }
 }
@@ -573,7 +676,10 @@ function readFirstString(...values: unknown[]): string | null {
   return null;
 }
 
-function inferUploadKind(mimeType: string | null, fileName: string): UploadCandidate["kind"] {
+function inferUploadKind(
+  mimeType: string | null,
+  fileName: string,
+): UploadCandidate["kind"] {
   const normalized = `${mimeType ?? ""} ${fileName}`.toLowerCase();
   if (normalized.includes("pdf")) return "document";
   if (normalized.includes("live")) return "live_photo";
@@ -597,7 +703,9 @@ const storageKey = "creator-cfo-web-records-v1";
 function loadRecords(): HomeRecentRecord[] {
   if (typeof localStorage === "undefined") return [];
   try {
-    return JSON.parse(localStorage.getItem(storageKey) ?? "[]") as HomeRecentRecord[];
+    return JSON.parse(
+      localStorage.getItem(storageKey) ?? "[]",
+    ) as HomeRecentRecord[];
   } catch {
     return [];
   }

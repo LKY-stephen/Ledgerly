@@ -902,7 +902,6 @@ function buildBalanceSheetSnapshot(
       summary,
       input.selectedPeriod.year,
       input.scopeId,
-      input.locale,
     ),
     equationSummary: buildBalanceSheetEquationSummary(
       summary,
@@ -1065,7 +1064,6 @@ function buildBalanceSheetEquationSummary(
   scopeId: LedgerScopeId,
   locale: ResolvedLocale,
 ): string {
-  const runtimeCopy = getLedgerRuntimeCopy(locale);
   const opening = formatCurrencyFromCents(
     normalizeSignedZeroCents(summary.openingBalanceCents),
   );
@@ -1215,7 +1213,6 @@ function buildBalanceSheetCarryForwardRows(
   },
   selectedYear: number,
   scopeId: LedgerScopeId,
-  locale: ResolvedLocale,
 ): LedgerSectionRow[] {
   const openingBalanceRow: LedgerSectionRow = {
     amount: formatCurrencyFromCents(normalizeSignedZeroCents(summary.openingBalanceCents)),
@@ -1420,35 +1417,5 @@ async function loadLedgerRowsForRange(
       r.tax_line_code AS taxLineCode`,
   });
 }
-
-const monthNamesShort = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-] as const;
-
-const monthNamesLong = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-] as const;
 
 export const ledgerPostableStatuses = [...accountingPostableRecordStatuses];
