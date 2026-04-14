@@ -158,11 +158,14 @@ Compatibility notes:
 
 ## Device State
 
-The device-state contract is now at version `5`. In addition to theme, locale, and session, the app persists:
+The device-state contract is now at version `6`. In addition to theme, locale, and session, the app persists:
 
 - `openai_api_key`: the user-provided OpenAI API key used only for outbound parse requests
-- `ai_provider`: the user's selected AI provider for document parsing and planning (`"openai"` or `"gemini"`, default `"openai"`)
+- `ai_provider`: the user's selected AI provider for document parsing and planning (`"openai"`, `"gemini"`, or `"infer"`, default `"openai"`)
 - `gemini_api_key`: the user-provided Gemini API key for direct Gemini parse requests
+- `infer_api_key`: the user-provided Infer API key for OpenAI-compatible parse requests via Infer
+- `infer_base_url`: the user-provided Infer base URL for OpenAI-compatible parse requests via Infer
+- `infer_model`: the user-selected model name for Infer API parse requests (e.g. `deepseek-chat`)
 - `gemini_auth_mode`: whether Gemini uses a manual API key or Google OAuth token (`"api_key"` or `"google_oauth"`, default `"api_key"`)
 - `google_access_token`: the Google OAuth access token for direct Gemini API calls when using `google_oauth` auth mode
 - `google_refresh_token`: the Google OAuth refresh token for silent token renewal
@@ -171,7 +174,7 @@ The device-state contract is now at version `5`. In addition to theme, locale, a
 - `profile_email`: profile email used as mapping source context
 - `profile_phone`: profile phone used as mapping source context
 
-The OpenAI base URL and model now come from the runtime env (`EXPO_PUBLIC_OPENAI_BASE_URL`, `EXPO_PUBLIC_OPENAI_MODEL`) rather than local device state. Gemini base URL and model come from `EXPO_PUBLIC_GEMINI_BASE_URL` and `EXPO_PUBLIC_GEMINI_MODEL` respectively.
+The OpenAI base URL and model now come from the runtime env (`EXPO_PUBLIC_OPENAI_BASE_URL`, `EXPO_PUBLIC_OPENAI_MODEL`) rather than local device state. Gemini base URL and model come from `EXPO_PUBLIC_GEMINI_BASE_URL` and `EXPO_PUBLIC_GEMINI_MODEL` respectively. Infer model can be overridden via `EXPO_PUBLIC_INFER_MODEL`.
 
 ## Contract Source Of Truth
 

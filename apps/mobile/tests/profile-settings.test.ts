@@ -3,6 +3,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 vi.mock("../src/features/app-shell/storage", () => ({
   loadPersistedAiProvider: vi.fn(async () => "openai"),
   loadPersistedGeminiApiKey: vi.fn(async () => ""),
+  loadPersistedGeminiAuthMode: vi.fn(async () => "api_key"),
+  loadPersistedInferApiKey: vi.fn(async () => ""),
+  loadPersistedInferBaseUrl: vi.fn(async () => ""),
+  loadPersistedInferModel: vi.fn(async () => ""),
   loadPersistedOpenAiApiKey: vi.fn(async () => ""),
 }));
 
@@ -228,5 +232,69 @@ describe("planner sourceProfileInfo", () => {
 
     expect(result.summary).toBe("One expense record.");
     expect(requestedModels).toEqual(["gpt-4o", "gpt-4.1"]);
+  });
+});
+
+describe("infer provider routing", () => {
+  it("routes planner call through Infer base URL when ai_provider is infer", async () => {
+    const storageMock = await import("../src/features/app-shell/storage");
+    vi.mocked(storageMock.loadPersistedAiProvider).mockResolvedValue("infer");
+    vi.mocked(storageMock.loadPersistedInferApiKey).mockResolvedValue("infer-key-123");
+    vi.mocked(storageMock.loadPersistedInferBaseUrl).mockResolvedValue("https://infer.example.com/v1");
+
+    let capturedUrl = "";
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string, _init?: RequestInit) => {
+        capturedUrl = url;
+        return new Response(
+          JSON.stringify({ output_text: buildPlannerResponse() }),
+          { headers: { "content-type": "application/json" }, status: 200 },
+        );
+      }),
+    );
+
+    const result = await planEvidenceDbUpdates({
+      evidenceId: "ev-1",
+      fileName: "receipt.pdf",
+      mimeType: "application/pdf",
+      rawJson: { total: 50 },
+    });
+
+    expect(capturedUrl).toContain("https://infer.example.com/v1");
+    expect(result.summary).toBe("One expense record.");
+  });
+
+  it("throws missing_config when Infer base URL is empty", async () => {
+    const storageMock = await import("../src/features/app-shell/storage");
+    vi.mocked(storageMock.loadPersistedAiProvider).mockResolvedValue("infer");
+    vi.mocked(storageMock.loadPersistedInferApiKey).mockResolvedValue("infer-key-123");
+    vi.mocked(storageMock.loadPersistedInferBaseUrl).mockResolvedValue("");
+
+    await expect(
+      planEvidenceDbUpdates({
+        evidenceId: "ev-1",
+        fileName: "receipt.pdf",
+        mimeType: "application/pdf",
+        rawJson: { total: 50 },
+      }),
+    ).rejects.toThrow("Missing Infer Base URL");
+  });
+
+  it("throws missing_config when Infer API Key is empty", async () => {
+    const storageMock = await import("../src/features/app-shell/storage");
+    vi.mocked(storageMock.loadPersistedAiProvider).mockResolvedValue("infer");
+    vi.mocked(storageMock.loadPersistedInferApiKey).mockResolvedValue("");
+    vi.mocked(storageMock.loadPersistedInferBaseUrl).mockResolvedValue("https://infer.example.com/v1");
+
+    await expect(
+      planEvidenceDbUpdates({
+        evidenceId: "ev-1",
+        fileName: "receipt.pdf",
+        mimeType: "application/pdf",
+        rawJson: { total: 50 },
+      }),
+    ).rejects.toThrow("Missing Infer API Key");
   });
 });

@@ -147,6 +147,9 @@ export function ProfileScreen() {
     disconnectGoogleOAuth,
     geminiApiKey,
     geminiAuthMode,
+    inferApiKey,
+    inferBaseUrl,
+    inferModel,
     localePreference,
     openAiApiKey,
     palette,
@@ -157,6 +160,9 @@ export function ProfileScreen() {
     sessionDisplayName,
     setAiProvider,
     setGeminiApiKey,
+    setInferApiKey,
+    setInferBaseUrl,
+    setInferModel,
     setStorageSuspended,
     setLocalePreference,
     setOpenAiApiKey,
@@ -169,8 +175,12 @@ export function ProfileScreen() {
   const [aiProviderDraft, setAiProviderDraft] = useState<AiProvider>(aiProvider);
   const [apiKeyDraft, setApiKeyDraft] = useState(openAiApiKey);
   const [geminiKeyDraft, setGeminiKeyDraft] = useState(geminiApiKey);
+  const [inferKeyDraft, setInferKeyDraft] = useState(inferApiKey);
+  const [inferBaseUrlDraft, setInferBaseUrlDraft] = useState(inferBaseUrl);
+  const [inferModelDraft, setInferModelDraft] = useState(inferModel);
   const [isOpenAiKeyVisible, setIsOpenAiKeyVisible] = useState(false);
   const [isGeminiKeyVisible, setIsGeminiKeyVisible] = useState(false);
+  const [isInferKeyVisible, setIsInferKeyVisible] = useState(false);
   const [baseUrlDraft, setBaseUrlDraft] = useState(parseApiBaseUrl);
   const [draftProfile, setDraftProfile] = useState<ProfileInfo>(profileInfo);
   const [databaseImportMessage, setDatabaseImportMessage] = useState<{
@@ -232,6 +242,18 @@ export function ProfileScreen() {
   }, [geminiApiKey]);
 
   useEffect(() => {
+    setInferKeyDraft(inferApiKey);
+  }, [inferApiKey]);
+
+  useEffect(() => {
+    setInferBaseUrlDraft(inferBaseUrl);
+  }, [inferBaseUrl]);
+
+  useEffect(() => {
+    setInferModelDraft(inferModel);
+  }, [inferModel]);
+
+  useEffect(() => {
     setBaseUrlDraft(parseApiBaseUrl);
   }, [parseApiBaseUrl]);
 
@@ -288,6 +310,29 @@ export function ProfileScreen() {
       return;
     }
 
+    if (aiProviderDraft === "infer") {
+      const normalizedBaseUrl = inferBaseUrlDraft.trim();
+      const normalizedKey = inferKeyDraft.trim();
+
+      if (!normalizedBaseUrl) {
+        Alert.alert(copy.meScreen.inferBaseUrlRequiredAlert);
+        return;
+      }
+
+      if (!normalizedKey) {
+        Alert.alert(copy.meScreen.inferKeyRequiredAlert);
+        return;
+      }
+
+      await Promise.all([
+        setInferBaseUrl(normalizedBaseUrl),
+        setInferApiKey(normalizedKey),
+        setInferModel(inferModelDraft.trim()),
+        setAiProvider("infer"),
+      ]);
+      return;
+    }
+
     if (isGeminiOAuth) {
       await Promise.all([
         setParseApiBaseUrl(baseUrlDraft),
@@ -314,6 +359,14 @@ export function ProfileScreen() {
     if (aiProviderDraft === "openai") {
       setApiKeyDraft("");
       await setOpenAiApiKey("");
+      return;
+    }
+
+    if (aiProviderDraft === "infer") {
+      setInferKeyDraft("");
+      setInferBaseUrlDraft("");
+      setInferModelDraft("");
+      await Promise.all([setInferApiKey(""), setInferBaseUrl(""), setInferModel("")]);
       return;
     }
 
@@ -523,33 +576,41 @@ export function ProfileScreen() {
                 onPress={() => setAiProviderDraft("gemini")}
                 palette={palette}
               />
+              <PreferencePill
+                active={aiProviderDraft === "infer"}
+                label={copy.meScreen.aiProviderInfer}
+                onPress={() => setAiProviderDraft("infer")}
+                palette={palette}
+              />
             </View>
           </View>
 
-          <View style={styles.fieldBlock}>
-            <Text style={[styles.fieldLabel, { color: palette.inkMuted }]}>
-              {copy.meScreen.apiBaseUrlLabel}
-            </Text>
-            <TextInput
-              autoCapitalize="none"
-              autoCorrect={false}
-              onChangeText={setBaseUrlDraft}
-              placeholder={copy.meScreen.apiBaseUrlPlaceholder}
-              placeholderTextColor={palette.inkMuted}
-              style={[
-                styles.input,
-                {
-                  backgroundColor: palette.paperMuted,
-                  borderColor: palette.border,
-                  color: palette.ink,
-                },
-              ]}
-              testID="profile-api-base-url-input"
-              value={baseUrlDraft}
-            />
-          </View>
+          {aiProviderDraft !== "infer" && (
+            <View style={styles.fieldBlock}>
+              <Text style={[styles.fieldLabel, { color: palette.inkMuted }]}>
+                {copy.meScreen.apiBaseUrlLabel}
+              </Text>
+              <TextInput
+                autoCapitalize="none"
+                autoCorrect={false}
+                onChangeText={setBaseUrlDraft}
+                placeholder={copy.meScreen.apiBaseUrlPlaceholder}
+                placeholderTextColor={palette.inkMuted}
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: palette.paperMuted,
+                    borderColor: palette.border,
+                    color: palette.ink,
+                  },
+                ]}
+                testID="profile-api-base-url-input"
+                value={baseUrlDraft}
+              />
+            </View>
+          )}
 
-          {aiProviderDraft === "openai" ? (
+          {aiProviderDraft === "openai" && (
             <ApiKeyField
               hiddenAccessibilityLabel={copy.meScreen.hideApiKey}
               isVisible={isOpenAiKeyVisible}
@@ -565,7 +626,9 @@ export function ProfileScreen() {
               value={apiKeyDraft}
               visibleAccessibilityLabel={copy.meScreen.showApiKey}
             />
-          ) : isGeminiOAuth ? (
+          )}
+
+          {aiProviderDraft === "gemini" && isGeminiOAuth && (
             <View style={styles.fieldBlock}>
               <View style={styles.oauthStatusRow}>
                 <View style={[styles.oauthDot, { backgroundColor: palette.accent }]} />
@@ -591,7 +654,9 @@ export function ProfileScreen() {
                 </Text>
               </Pressable>
             </View>
-          ) : (
+          )}
+
+          {aiProviderDraft === "gemini" && !isGeminiOAuth && (
             <View style={styles.fieldBlock}>
               <ApiKeyField
                 hiddenAccessibilityLabel={copy.meScreen.hideApiKey}
@@ -638,6 +703,70 @@ export function ProfileScreen() {
                 {copy.login.googleHint}
               </Text>
             </View>
+          )}
+
+          {aiProviderDraft === "infer" && (
+            <>
+              <View style={styles.fieldBlock}>
+                <Text style={[styles.fieldLabel, { color: palette.inkMuted }]}>
+                  {copy.meScreen.apiInferBaseUrlLabel}
+                </Text>
+                <TextInput
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  onChangeText={setInferBaseUrlDraft}
+                  placeholder={copy.meScreen.apiInferBaseUrlPlaceholder}
+                  placeholderTextColor={palette.inkMuted}
+                  style={[
+                    styles.input,
+                    {
+                      backgroundColor: palette.paperMuted,
+                      borderColor: palette.border,
+                      color: palette.ink,
+                    },
+                  ]}
+                  testID="profile-infer-base-url-input"
+                  value={inferBaseUrlDraft}
+                />
+              </View>
+              <View style={styles.fieldBlock}>
+                <Text style={[styles.fieldLabel, { color: palette.inkMuted }]}>
+                  {copy.meScreen.apiInferModelLabel}
+                </Text>
+                <TextInput
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  onChangeText={setInferModelDraft}
+                  placeholder={copy.meScreen.apiInferModelPlaceholder}
+                  placeholderTextColor={palette.inkMuted}
+                  style={[
+                    styles.input,
+                    {
+                      backgroundColor: palette.paperMuted,
+                      borderColor: palette.border,
+                      color: palette.ink,
+                    },
+                  ]}
+                  testID="profile-infer-model-input"
+                  value={inferModelDraft}
+                />
+              </View>
+              <ApiKeyField
+                hiddenAccessibilityLabel={copy.meScreen.hideApiKey}
+                isVisible={isInferKeyVisible}
+                label={copy.meScreen.apiInferKeyLabel}
+                onChangeText={setInferKeyDraft}
+                onToggleVisibility={() => {
+                  setIsInferKeyVisible((current) => !current);
+                }}
+                palette={palette}
+                placeholder={copy.meScreen.apiInferKeyPlaceholder}
+                testID="profile-infer-key-input"
+                toggleTestID="profile-infer-key-toggle"
+                value={inferKeyDraft}
+                visibleAccessibilityLabel={copy.meScreen.showApiKey}
+              />
+            </>
           )}
 
           <View style={styles.optionRow}>

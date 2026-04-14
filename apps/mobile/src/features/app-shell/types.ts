@@ -1,4 +1,4 @@
-export type AiProvider = "openai" | "gemini";
+export type AiProvider = "openai" | "gemini" | "infer";
 export type ThemePreference = "system" | "light" | "dark";
 export type LocalePreference = "system" | "en" | "zh-CN";
 export type ResolvedLocale = "en" | "zh-CN";
@@ -42,6 +42,9 @@ export interface PersistedAppState {
   googleAccessToken: string;
   googleRefreshToken: string;
   googleTokenExpiresAt: string;
+  inferApiKey: string;
+  inferBaseUrl: string;
+  inferModel: string;
   localePreference: LocalePreference;
   openAiApiKey: string;
   parseApiBaseUrl: string;

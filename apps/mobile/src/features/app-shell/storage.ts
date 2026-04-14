@@ -21,6 +21,9 @@ const STORAGE_KEYS = {
   googleAccessToken: buildDeviceStateStorageKey("google_access_token"),
   googleRefreshToken: buildDeviceStateStorageKey("google_refresh_token"),
   googleTokenExpiresAt: buildDeviceStateStorageKey("google_token_expires_at"),
+  inferApiKey: buildDeviceStateStorageKey("infer_api_key"),
+  inferBaseUrl: buildDeviceStateStorageKey("infer_base_url"),
+  inferModel: buildDeviceStateStorageKey("infer_model"),
   localePreference: buildDeviceStateStorageKey("locale_preference"),
   openAiApiKey: buildDeviceStateStorageKey("openai_api_key"),
   parseApiBaseUrl: "@creator-cfo/mobile/parse_api_base_url",
@@ -50,12 +53,15 @@ export async function loadPersistedAppState(): Promise<PersistedAppState> {
   const rawAiProvider = String(values[STORAGE_KEYS.aiProvider] ?? "").trim();
   const rawGeminiAuthMode = String(values[STORAGE_KEYS.geminiAuthMode] ?? "").trim();
   const persistedState: PersistedAppState = {
-    aiProvider: rawAiProvider === "gemini" ? "gemini" : "openai",
+    aiProvider: rawAiProvider === "gemini" ? "gemini" : rawAiProvider === "infer" ? "infer" : "openai",
     geminiApiKey: String(values[STORAGE_KEYS.geminiApiKey] ?? "").trim(),
     geminiAuthMode: rawGeminiAuthMode === "google_oauth" ? "google_oauth" : "api_key",
     googleAccessToken: String(values[STORAGE_KEYS.googleAccessToken] ?? "").trim(),
     googleRefreshToken: String(values[STORAGE_KEYS.googleRefreshToken] ?? "").trim(),
     googleTokenExpiresAt: String(values[STORAGE_KEYS.googleTokenExpiresAt] ?? "").trim(),
+    inferApiKey: String(values[STORAGE_KEYS.inferApiKey] ?? "").trim(),
+    inferBaseUrl: String(values[STORAGE_KEYS.inferBaseUrl] ?? "").trim().replace(/\/+$/g, ""),
+    inferModel: String(values[STORAGE_KEYS.inferModel] ?? "").trim(),
     localePreference: coerceLocalePreference(
       values[STORAGE_KEYS.localePreference],
     ),
@@ -182,7 +188,9 @@ export async function loadPersistedAiProvider(): Promise<AiProvider> {
   }
 
   const raw = String((await AsyncStorage.getItem(STORAGE_KEYS.aiProvider)) ?? "").trim();
-  return raw === "gemini" ? "gemini" : "openai";
+  if (raw === "gemini") return "gemini";
+  if (raw === "infer") return "infer";
+  return "openai";
 }
 
 export async function loadPersistedGeminiApiKey(): Promise<string> {
@@ -201,6 +209,68 @@ export async function loadPersistedOpenAiApiKey(): Promise<string> {
   return String(
     (await AsyncStorage.getItem(STORAGE_KEYS.openAiApiKey)) ?? "",
   ).trim();
+}
+
+export async function persistInferApiKey(value: string) {
+  const normalized = value.trim();
+  runtimeOverrides.inferApiKey = normalized;
+
+  if (normalized) {
+    await AsyncStorage.setItem(STORAGE_KEYS.inferApiKey, normalized);
+    return;
+  }
+
+  await AsyncStorage.removeItem(STORAGE_KEYS.inferApiKey);
+}
+
+export async function loadPersistedInferApiKey(): Promise<string> {
+  if (hasRuntimeOverride("inferApiKey")) {
+    return runtimeOverrides.inferApiKey ?? "";
+  }
+
+  return String((await AsyncStorage.getItem(STORAGE_KEYS.inferApiKey)) ?? "").trim();
+}
+
+export async function persistInferBaseUrl(value: string) {
+  const normalized = value.trim().replace(/\/+$/g, "");
+  runtimeOverrides.inferBaseUrl = normalized;
+
+  if (normalized) {
+    await AsyncStorage.setItem(STORAGE_KEYS.inferBaseUrl, normalized);
+    return;
+  }
+
+  await AsyncStorage.removeItem(STORAGE_KEYS.inferBaseUrl);
+}
+
+export async function loadPersistedInferBaseUrl(): Promise<string> {
+  if (hasRuntimeOverride("inferBaseUrl")) {
+    return runtimeOverrides.inferBaseUrl ?? "";
+  }
+
+  return String((await AsyncStorage.getItem(STORAGE_KEYS.inferBaseUrl)) ?? "")
+    .trim()
+    .replace(/\/+$/g, "");
+}
+
+export async function persistInferModel(value: string) {
+  const normalized = value.trim();
+  runtimeOverrides.inferModel = normalized;
+
+  if (normalized) {
+    await AsyncStorage.setItem(STORAGE_KEYS.inferModel, normalized);
+    return;
+  }
+
+  await AsyncStorage.removeItem(STORAGE_KEYS.inferModel);
+}
+
+export async function loadPersistedInferModel(): Promise<string> {
+  if (hasRuntimeOverride("inferModel")) {
+    return runtimeOverrides.inferModel ?? "";
+  }
+
+  return String((await AsyncStorage.getItem(STORAGE_KEYS.inferModel)) ?? "").trim();
 }
 
 export async function persistGeminiAuthMode(value: GeminiAuthMode) {

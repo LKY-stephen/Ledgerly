@@ -29,6 +29,9 @@ import {
   persistGeminiApiKey,
   persistGeminiAuthMode,
   persistGoogleTokens,
+  persistInferApiKey,
+  persistInferBaseUrl,
+  persistInferModel,
   persistLocalePreference,
   persistOpenAiApiKey,
   persistParseApiBaseUrl,
@@ -56,6 +59,9 @@ interface AppShellContextValue {
   initializeEmptyStorage: () => Promise<void>;
   geminiApiKey: string;
   geminiAuthMode: GeminiAuthMode;
+  inferApiKey: string;
+  inferBaseUrl: string;
+  inferModel: string;
   isStorageSuspended: boolean;
   isHydrated: boolean;
   localePreference: LocalePreference;
@@ -70,6 +76,9 @@ interface AppShellContextValue {
   setAiProvider: (value: AiProvider) => Promise<void>;
   setGeminiApiKey: (value: string) => Promise<void>;
   setGeminiAuthMode: (value: GeminiAuthMode) => Promise<void>;
+  setInferApiKey: (value: string) => Promise<void>;
+  setInferBaseUrl: (value: string) => Promise<void>;
+  setInferModel: (value: string) => Promise<void>;
   setStorageSuspended: (value: boolean) => void;
   setLocalePreference: (value: LocalePreference) => Promise<void>;
   setOpenAiApiKey: (value: string) => Promise<void>;
@@ -104,6 +113,9 @@ const initialState: PersistedAppState = {
   googleAccessToken: "",
   googleRefreshToken: "",
   googleTokenExpiresAt: "",
+  inferApiKey: "",
+  inferBaseUrl: "",
+  inferModel: "",
   localePreference: "system",
   openAiApiKey: "",
   parseApiBaseUrl: "",
@@ -227,6 +239,24 @@ export function AppShellProvider({ children }: PropsWithChildren) {
     await persistParseApiBaseUrl(normalized);
   };
 
+  const setInferApiKey = async (value: string) => {
+    const normalized = value.trim();
+    setState((current) => ({ ...current, inferApiKey: normalized }));
+    await persistInferApiKey(normalized);
+  };
+
+  const setInferBaseUrl = async (value: string) => {
+    const normalized = value.trim().replace(/\/+$/g, "");
+    setState((current) => ({ ...current, inferBaseUrl: normalized }));
+    await persistInferBaseUrl(normalized);
+  };
+
+  const setInferModel = async (value: string) => {
+    const normalized = value.trim();
+    setState((current) => ({ ...current, inferModel: normalized }));
+    await persistInferModel(normalized);
+  };
+
   const setProfileInfo = async (value: ProfileInfo) => {
     setState((current) => ({ ...current, profileInfo: value }));
     await persistProfileInfo(value);
@@ -267,6 +297,9 @@ export function AppShellProvider({ children }: PropsWithChildren) {
     },
     geminiApiKey: state.geminiApiKey,
     geminiAuthMode: state.geminiAuthMode,
+    inferApiKey: state.inferApiKey,
+    inferBaseUrl: state.inferBaseUrl,
+    inferModel: state.inferModel,
     isStorageSuspended,
     isHydrated,
     localePreference: state.localePreference,
@@ -281,6 +314,9 @@ export function AppShellProvider({ children }: PropsWithChildren) {
     setAiProvider,
     setGeminiApiKey,
     setGeminiAuthMode,
+    setInferApiKey,
+    setInferBaseUrl,
+    setInferModel,
     setStorageSuspended,
     setLocalePreference,
     setOpenAiApiKey,

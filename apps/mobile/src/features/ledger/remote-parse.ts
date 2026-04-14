@@ -6,7 +6,7 @@ import {
   type ReceiptPlannerPayload,
 } from "@creator-cfo/schemas";
 
-import { loadPersistedAiProvider, loadPersistedGeminiApiKey, loadPersistedGeminiAuthMode, loadPersistedOpenAiApiKey } from "../app-shell/storage";
+import { loadPersistedAiProvider, loadPersistedGeminiApiKey, loadPersistedGeminiAuthMode, loadPersistedInferApiKey, loadPersistedInferBaseUrl, loadPersistedInferModel, loadPersistedOpenAiApiKey } from "../app-shell/storage";
 import type { AiProvider, GeminiAuthMode } from "../app-shell/types";
 import { getValidGoogleAccessToken } from "../auth/google-auth";
 import { receiptDbUpdatePlannerSkill, receiptParseSkill } from "./prompt-skills";
@@ -22,7 +22,7 @@ export interface ParseResult {
 export class ParseEvidenceClientError extends Error {
   constructor(
     message: string,
-    public readonly code: "gemini_error" | "invalid_planner_response" | "missing_config" | "network" | "openai_error",
+    public readonly code: "gemini_error" | "infer_error" | "invalid_planner_response" | "missing_config" | "network" | "openai_error",
   ) {
     super(message);
     this.name = "ParseEvidenceClientError";
@@ -314,6 +314,7 @@ const geminiFallbackModelMap: Record<string, string[]> = {
 export function resetRemoteParseRuntimeStateForTests() {
   delete runtimeModelOverrides.openai;
   delete runtimeModelOverrides.gemini;
+  delete runtimeModelOverrides.infer;
 }
 
 export function buildFallbackModelListForTests(provider: AiProvider, model: string): string[] {
@@ -334,16 +335,18 @@ export async function parseFileWithOpenAi(input: {
       return await callGeminiParseApi(base64, input.fileName, mimeType);
     }
 
-    const settings = await loadRequiredOpenAiSettings();
+    const settings = aiProvider === "infer"
+      ? await loadRequiredInferSettings()
+      : await loadRequiredOpenAiSettings();
     const filePart = createInputFilePart({ base64, fileName: input.fileName, mimeType });
-    return await callOpenAiParseApi(settings, filePart, input.fileName, mimeType);
+    return await callOpenAiParseApi(settings, filePart, input.fileName, mimeType, aiProvider);
   } catch (error) {
     const aiProvider = await loadPersistedAiProvider().catch(() => "openai" as AiProvider);
     return {
       rawJson: null,
       rawText: "",
       model: "",
-      parserKind: aiProvider === "gemini" ? "gemini" : "openai_gpt",
+      parserKind: aiProvider === "gemini" ? "gemini" : aiProvider === "infer" ? "infer" : "openai_gpt",
       error: error instanceof Error ? error.message : "Unknown parse error",
     };
   }
@@ -363,16 +366,18 @@ export async function parseFileWithOpenAiFromBlob(input: {
       return await callGeminiParseApi(base64, input.fileName, mimeType);
     }
 
-    const settings = await loadRequiredOpenAiSettings();
+    const settings = aiProvider === "infer"
+      ? await loadRequiredInferSettings()
+      : await loadRequiredOpenAiSettings();
     const filePart = createInputFilePart({ base64, fileName: input.fileName, mimeType });
-    return await callOpenAiParseApi(settings, filePart, input.fileName, mimeType);
+    return await callOpenAiParseApi(settings, filePart, input.fileName, mimeType, aiProvider);
   } catch (error) {
     const aiProvider = await loadPersistedAiProvider().catch(() => "openai" as AiProvider);
     return {
       rawJson: null,
       rawText: "",
       model: "",
-      parserKind: aiProvider === "gemini" ? "gemini" : "openai_gpt",
+      parserKind: aiProvider === "gemini" ? "gemini" : aiProvider === "infer" ? "infer" : "openai_gpt",
       error: error instanceof Error ? error.message : "Unknown parse error",
     };
   }
@@ -383,6 +388,7 @@ async function callOpenAiParseApi(
   filePart: OpenAiFilePart,
   fileName: string,
   mimeType: string,
+  provider: AiProvider = "openai",
 ): Promise<ParseResult> {
   const input = [
     {
@@ -403,7 +409,7 @@ async function callOpenAiParseApi(
     },
   ];
 
-  const { model: activeModel, payload } = await callOpenAi(settings, input);
+  const { model: activeModel, payload } = await callOpenAi(settings, input, provider);
   const outputText = extractOpenAiOutputText(payload);
 
   if (!outputText) {
@@ -531,6 +537,36 @@ async function loadRequiredOpenAiSettings(): Promise<OpenAiSettings> {
   };
 }
 
+async function loadRequiredInferSettings(): Promise<OpenAiSettings> {
+  const inferApiKey = (await loadPersistedInferApiKey().catch(() => "")).trim();
+  const inferBaseUrl = (await loadPersistedInferBaseUrl().catch(() => "")).trim();
+  const inferModel = (await loadPersistedInferModel().catch(() => "")).trim();
+
+  if (!inferBaseUrl) {
+    throw new ParseEvidenceClientError(
+      "Missing Infer Base URL. Add it from Settings.",
+      "missing_config",
+    );
+  }
+
+  if (!inferApiKey) {
+    throw new ParseEvidenceClientError(
+      "Missing Infer API Key. Add it from Settings.",
+      "missing_config",
+    );
+  }
+
+  const model =
+    runtimeModelOverrides.infer ??
+    (inferModel || ((process.env.EXPO_PUBLIC_INFER_MODEL ?? "").trim() || defaultOpenAiModel));
+
+  return {
+    baseUrl: normalizeBaseUrl(inferBaseUrl),
+    model,
+    openAiApiKey: inferApiKey,
+  };
+}
+
 async function resolveOpenAiBaseUrl(): Promise<string> {
   const envBaseUrl = (process.env.EXPO_PUBLIC_OPENAI_BASE_URL ?? "").trim();
   if (envBaseUrl) return envBaseUrl;
@@ -583,17 +619,20 @@ async function callAiText(
     return text;
   }
 
-  const settings = await loadRequiredOpenAiSettings();
+  const settings = aiProvider === "infer"
+    ? await loadRequiredInferSettings()
+    : await loadRequiredOpenAiSettings();
+  const errorCode = aiProvider === "infer" ? "infer_error" as const : "openai_error" as const;
   const apiInput = [
     { content: [{ text: systemPrompt, type: "input_text" }], role: "system" },
     { content: [{ text: userPrompt, type: "input_text" }], role: "user" },
   ];
-  const { payload } = await callOpenAi(settings, apiInput);
+  const { payload } = await callOpenAi(settings, apiInput, aiProvider);
   const text = extractOpenAiOutputText(payload);
   if (!text) {
     throw new ParseEvidenceClientError(
       `Planner returned no text. Keys: [${Object.keys(payload).join(", ")}]`,
-      "openai_error",
+      errorCode,
     );
   }
   return text;
@@ -726,15 +765,15 @@ function extractGeminiOutputText(payload: Record<string, unknown>): string {
   return parts.join("\n").trim();
 }
 
-async function callOpenAi(settings: OpenAiSettings, input: unknown): Promise<ProviderCallResult> {
-  const candidateModels = getFallbackModels("openai", settings.model);
+async function callOpenAi(settings: OpenAiSettings, input: unknown, provider: AiProvider = "openai"): Promise<ProviderCallResult> {
+  const candidateModels = getFallbackModels(provider, settings.model);
   let lastError: unknown = null;
 
   for (const model of candidateModels) {
     try {
       const payload = await performOpenAiRequest(settings, input, model);
       if (model !== settings.model) {
-        runtimeModelOverrides.openai = model;
+        runtimeModelOverrides[provider] = model;
       }
       return { model, payload };
     } catch (error) {
@@ -795,6 +834,10 @@ async function performOpenAiRequest(
 }
 
 function getFallbackModels(provider: AiProvider, model: string): string[] {
+  if (provider === "infer") {
+    return [model];
+  }
+
   const envCandidates = splitCommaSeparatedModels(
     provider === "openai"
       ? process.env.EXPO_PUBLIC_OPENAI_FALLBACK_MODELS ?? ""

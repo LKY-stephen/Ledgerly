@@ -196,6 +196,7 @@ export interface AppCopy {
       fieldTarget: string;
       heroEyebrow: string;
       heroTitle: string;
+      heroTitleSuffix: string;
       mapToRecords: string;
       mapping: string;
       modelLabel: string;
@@ -362,6 +363,7 @@ export interface AppCopy {
   };
   meScreen: {
     aiProviderGemini: string;
+    aiProviderInfer: string;
     aiProviderLabel: string;
     aiProviderOpenAi: string;
     apiBaseUrlLabel: string;
@@ -369,6 +371,12 @@ export interface AppCopy {
     apiClear: string;
     apiGeminiKeyLabel: string;
     apiGeminiKeyPlaceholder: string;
+    apiInferBaseUrlLabel: string;
+    apiInferBaseUrlPlaceholder: string;
+    apiInferKeyLabel: string;
+    apiInferKeyPlaceholder: string;
+    apiInferModelLabel: string;
+    apiInferModelPlaceholder: string;
     apiKeyLabel: string;
     apiKeyPlaceholder: string;
     apiSave: string;
@@ -384,6 +392,8 @@ export interface AppCopy {
     databaseTitle: string;
     geminiKeyRequiredAlert: string;
     hideApiKey: string;
+    inferBaseUrlRequiredAlert: string;
+    inferKeyRequiredAlert: string;
     localeDescription: string;
     logoutDescription: string;
     openAiKeyRequiredAlert: string;
@@ -696,6 +706,7 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
         fieldTarget: "Target",
         heroEyebrow: "Parse result",
         heroTitle: "OpenAI Response",
+        heroTitleSuffix: "Response",
         mapToRecords: "Map to Records",
         mapping: "Mapping...",
         modelLabel: "Model",
@@ -873,6 +884,7 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
     },
     meScreen: {
       aiProviderGemini: "Google AI Studio Gemini",
+      aiProviderInfer: "Infer API",
       aiProviderLabel: "AI Provider",
       aiProviderOpenAi: "OpenAI",
       apiBaseUrlLabel: "Vercel API Base URL",
@@ -880,6 +892,12 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
       apiClear: "Clear",
       apiGeminiKeyLabel: "Gemini API Key",
       apiGeminiKeyPlaceholder: "AIza...",
+      apiInferBaseUrlLabel: "Infer Base URL",
+      apiInferBaseUrlPlaceholder: "https://api.infer.com/v1",
+      apiInferKeyLabel: "Infer API Key",
+      apiInferKeyPlaceholder: "sk-...",
+      apiInferModelLabel: "Infer Model",
+      apiInferModelPlaceholder: "e.g. gpt-4o, deepseek-chat",
       apiKeyLabel: "OpenAI API Key",
       apiKeyPlaceholder: "sk-...",
       apiSave: "Save API Settings",
@@ -901,6 +919,8 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
       geminiOAuthDisconnect: "Disconnect Google AI",
       geminiOAuthOrLabel: "OR",
       hideApiKey: "Hide API key",
+      inferBaseUrlRequiredAlert: "Enter an Infer Base URL first.",
+      inferKeyRequiredAlert: "Enter an Infer API Key first.",
       localeDescription:
         "Switch shell copy instantly and keep the choice on device.",
       logoutDescription:
@@ -1201,6 +1221,7 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
         fieldTarget: "去向方",
         heroEyebrow: "解析结果",
         heroTitle: "OpenAI 返回结果",
+        heroTitleSuffix: "返回结果",
         mapToRecords: "映射到记录",
         mapping: "映射中...",
         modelLabel: "模型",
@@ -1371,6 +1392,7 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
     },
     meScreen: {
       aiProviderGemini: "Google AI Studio Gemini",
+      aiProviderInfer: "Infer API",
       aiProviderLabel: "AI 提供方",
       aiProviderOpenAi: "OpenAI",
       apiBaseUrlLabel: "Vercel API 地址",
@@ -1378,6 +1400,12 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
       apiClear: "清空",
       apiGeminiKeyLabel: "Gemini API Key",
       apiGeminiKeyPlaceholder: "AIza...",
+      apiInferBaseUrlLabel: "Infer Base URL",
+      apiInferBaseUrlPlaceholder: "https://api.infer.com/v1",
+      apiInferKeyLabel: "Infer API Key",
+      apiInferKeyPlaceholder: "sk-...",
+      apiInferModelLabel: "Infer Model",
+      apiInferModelPlaceholder: "如 gpt-4o, deepseek-chat",
       apiKeyLabel: "OpenAI API Key",
       apiKeyPlaceholder: "sk-...",
       apiSave: "保存设置",
@@ -1399,6 +1427,8 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
       geminiOAuthDisconnect: "断开 Google AI",
       geminiOAuthOrLabel: "或",
       hideApiKey: "隐藏 Key",
+      inferBaseUrlRequiredAlert: "请填入 Infer Base URL",
+      inferKeyRequiredAlert: "请填入 Infer API Key",
       localeDescription: "立即切换界面语言，并把选择保存在设备本地。",
       logoutDescription: "清除本地会话摘要，并返回登录入口。",
       openAiKeyRequiredAlert: "请先填写 OpenAI API Key。",

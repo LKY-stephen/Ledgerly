@@ -62,6 +62,7 @@ export function LedgerUploadScreen() {
           rawText: result.rawText,
           model: result.model,
           parseError: result.error ?? "",
+          parserKind: result.parserKind,
         },
         pathname: "/ledger/parse",
       });

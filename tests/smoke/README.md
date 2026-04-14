@@ -85,10 +85,17 @@ pnpm smoke
 16. 若在支持的 iOS 设备上，验证 Apple 登录可进入主壳层；若当前环境不支持，确认会优雅提示并允许游客继续。
 17. 运行 `pnpm contract:check`，确认本地存储与设备状态契约测试通过。
 18. 在「设置」页确认 Profile 模块可见（Name / Email / Phone 三个字段），输入后点击 Save Profile，退出重进后回显正确。设置页不再出现 "Vercel API Base URL" 或等价配置项。上传文件 → Map to Records → 确认 planner 不报错且 source / target 映射合理（若已填写 Profile，source 应优先归属到 Profile 主体）。
-19. 在「设置」页 AI Provider 区块确认可切换 OpenAI / Gemini：
+19. 在「设置」页 AI Provider 区块确认可切换 OpenAI / Gemini / Infer API：
     - 默认选中 OpenAI，显示 OpenAI API Key 输入框
     - 切换到 Gemini 后，显示 Gemini API Key 输入框
     - 填入对应 API key 并点击 Save，退出重进后 provider 和 key 均回显正确
     - 切换 provider 不会清除另一方 key
     - 选中 Gemini 并填入有效 Gemini key 后，上传文件 → Parse → 确认使用 Gemini 解析（model 字段应显示 gemini 相关模型）
     - 切回 OpenAI 并填入有效 OpenAI key 后，上传文件 → Parse → 确认使用 OpenAI 解析
+20. 在「设置」页 AI Provider 区块确认 Infer API 渠道：
+    - 切换到 Infer API 后，显示 Infer Base URL 和 Infer API Key 输入框，隐藏 Vercel API Base URL 输入框
+    - 不填 Infer Base URL 点保存 → 提示 "Enter an Infer Base URL first."（中文环境显示 "请填入 Infer Base URL"）
+    - 不填 Infer API Key 点保存 → 提示 "Enter an Infer API Key first."（中文环境显示 "请填入 Infer API Key"）
+    - 填入有效 Infer Base URL 与 Infer API Key 并保存，退出重进后 provider、Base URL 和 key 均回显正确
+    - 切换到 Infer API 后上传文件 → Parse → 确认请求走 Infer 配置的 Base URL
+    - 回归 OpenAI / Gemini，确认原有 provider 未被破坏

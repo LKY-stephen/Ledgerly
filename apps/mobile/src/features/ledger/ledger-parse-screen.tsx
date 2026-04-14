@@ -44,7 +44,8 @@ export function LedgerParseScreen() {
 
   const hasData = rawJson || rawText;
   const formattedJson = formatJson(rawJson);
-  const providerLabel = parserKind === "gemini" ? "Gemini" : "OpenAI";
+  const providerLabel =
+    parserKind === "gemini" ? "Gemini" : parserKind === "infer" ? "Infer API" : "OpenAI";
 
   const parsedRawJson = rawJson ? tryParse(rawJson) : null;
 
@@ -101,7 +102,7 @@ export function LedgerParseScreen() {
             {parseCopy.heroEyebrow}
           </Text>
           <Text style={[styles.heroTitle, { color: palette.ink }]}>
-            {parseCopy.heroTitle}
+            {`${providerLabel} ${parseCopy.heroTitleSuffix}`}
           </Text>
         </View>
 
