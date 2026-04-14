@@ -137,6 +137,40 @@ export async function pickPhotoUploadCandidates(
   });
 }
 
+export async function takeCameraPhoto(
+  locale: ResolvedLocale = "en",
+): Promise<UploadCandidate[]> {
+  const permission = await ImagePicker.requestCameraPermissionsAsync();
+
+  if (!permission.granted) {
+    throw new Error(
+      locale === "zh-CN"
+        ? "需要开启相机权限后才能拍照，请前往系统设置开启。"
+        : "Camera access is required to take a photo. Please enable it in Settings.",
+    );
+  }
+
+  const result = await ImagePicker.launchCameraAsync({
+    allowsEditing: false,
+    mediaTypes: ["images"] as never,
+    quality: 1,
+  });
+
+  if (result.canceled) {
+    return [];
+  }
+
+  return result.assets.map((asset, index) => ({
+    evidenceGroupKey: asset.assetId || asset.fileName || `${asset.uri}-${index}`,
+    isPrimary: true,
+    kind: "image" as const,
+    mimeType: asset.mimeType ?? "image/jpeg",
+    originalFileName: asset.fileName ?? `camera-${Date.now()}.jpg`,
+    sizeBytes: asset.fileSize ?? null,
+    uri: asset.uri,
+  }));
+}
+
 export async function importUploadCandidates(
   candidates: UploadCandidate[],
 ): Promise<string[]> {

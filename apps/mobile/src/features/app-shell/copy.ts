@@ -245,6 +245,7 @@ export interface AppCopy {
     summary: string;
     title: string;
     upload: {
+      cameraPermissionDenied: string;
       continue: string;
       emptySelection: string;
       eyebrow: string;
@@ -256,6 +257,7 @@ export interface AppCopy {
       selectPhotos: string;
       sourceTitle: string;
       summary: string;
+      takePhoto: string;
       title: string;
       uploadCardSummary: string;
       uploadCardTitle: string;
@@ -347,6 +349,10 @@ export interface AppCopy {
     body: string;
     caption: string;
     eyebrow: string;
+    googleButton: string;
+    googleCancelled: string;
+    googleHint: string;
+    googleUnavailable: string;
     privacyEyebrow: string;
     privacyMetrics: [string, string];
     privacySummary: string;
@@ -391,8 +397,13 @@ export interface AppCopy {
     profilePhonePlaceholder: string;
     profileSave: string;
     profileTitle: string;
+    geminiOAuthConnected: string;
+    geminiOAuthConnecting: string;
+    geminiOAuthDisconnect: string;
+    geminiOAuthOrLabel: string;
     sessionApple: string;
     sessionDescription: string;
+    sessionGoogle: string;
     sessionGuest: string;
     sessionNone: string;
     sessionTitle: string;
@@ -423,7 +434,7 @@ export interface AppCopy {
 export const appCopy: Record<ResolvedLocale, AppCopy> = {
   en: {
     common: {
-      appName: "Creator CFO",
+      appName: "Ledgerly",
       dark: "Dark",
       english: "English",
       guest: "Guest",
@@ -738,6 +749,8 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
       title:
         "The accounting shell is ready for the first local-first workflows.",
       upload: {
+        cameraPermissionDenied:
+          "Camera access is required to take a photo. Please enable it in Settings.",
         continue: "Continue to parser",
         emptySelection: "No files were selected.",
         eyebrow: "Upload center",
@@ -750,6 +763,7 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
         sourceTitle: "Upload source",
         summary:
           "Upload receipts, PDFs, or photos. The file is sent to OpenAI for parsing and the raw JSON result is displayed on the next screen.",
+        takePhoto: "Take Photo",
         title: "Upload workspace",
         uploadCardSummary:
           "Select a file, send it to OpenAI, and view the raw JSON response.",
@@ -843,9 +857,13 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
       appleUnavailable:
         "Apple sign-in is unavailable here. Continue as a guest.",
       brandSubtitle: "Your local-first financial workbench.",
-      body: "Sign in with Apple or step in as a guest. Your shell stays local, calm, and ready.",
+      body: "Sign in with Apple, Google, or step in as a guest. Your shell stays local, calm, and ready.",
       caption: "Theme and language stay in sync with your device.",
       eyebrow: "Local-first login",
+      googleButton: "Continue with Google",
+      googleCancelled: "Google sign-in canceled. Retry or continue as a guest.",
+      googleHint: "Sign in with Google to use Gemini AI without an API key.",
+      googleUnavailable: "Google sign-in is not available right now.",
       privacyEyebrow: "Privacy first",
       privacyMetrics: ["AES-256 local encryption", "Zero cloud sync default"],
       privacySummary: "Your records stay organized on-device first.",
@@ -878,6 +896,10 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
       databaseImportSuccess: "Imported database package successfully.",
       databaseTitle: "Local database package",
       geminiKeyRequiredAlert: "Enter a Gemini API key first.",
+      geminiOAuthConnected: "Connected via Google Sign-In",
+      geminiOAuthConnecting: "Connecting...",
+      geminiOAuthDisconnect: "Disconnect Google AI",
+      geminiOAuthOrLabel: "OR",
       hideApiKey: "Hide API key",
       localeDescription:
         "Switch shell copy instantly and keep the choice on device.",
@@ -897,7 +919,8 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
       profileTitle: "Profile",
       sessionApple: "Apple ID",
       sessionDescription:
-        "Session state is stored locally for guest mode or Apple sign-in preview.",
+        "Session state is stored locally for guest mode, Apple, or Google sign-in.",
+      sessionGoogle: "Google",
       sessionGuest: "Guest mode",
       sessionNone: "Signed out",
       sessionTitle: "Session",
@@ -929,7 +952,7 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
   },
   "zh-CN": {
     common: {
-      appName: "Creator CFO",
+      appName: "Ledgerly",
       dark: "黑夜",
       english: "英文",
       guest: "游客",
@@ -1228,6 +1251,8 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
         "这个页面先验证导航、视觉节奏和模块边界，后续再接入更深的表单与数据流。",
       title: "记账壳层已经为首批本地流程预留好位置。",
       upload: {
+        cameraPermissionDenied:
+          "需要开启相机权限后才能拍照，请前往系统设置开启。",
         continue: "继续到解析页",
         emptySelection: "未选择任何文件。",
         eyebrow: "上传中心",
@@ -1240,6 +1265,7 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
         sourceTitle: "上传来源",
         summary:
           "上传票据、PDF 或照片后，文件会被发送给 OpenAI 解析，原始 JSON 结果会在下一页展示。",
+        takePhoto: "拍照",
         title: "上传工作台",
         uploadCardSummary:
           "选择一个文件，发送给 OpenAI，并查看返回的原始 JSON 结果。",
@@ -1329,9 +1355,13 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
       appleHint: "Apple 登录仅在支持的 iPhone / iPad 设备上可用。",
       appleUnavailable: "当前环境暂不支持 Apple 登录，请先使用游客模式。",
       brandSubtitle: "你的本地优先财务工作台。",
-      body: "用 Apple 登录，或先以游客进入。你的财务工作台会保持本地、清晰、轻量。",
+      body: "用 Apple、Google 登录，或先以游客进入。你的财务工作台会保持本地、清晰、轻量。",
       caption: "主题与语言会继续跟随你的设备偏好。",
       eyebrow: "本地优先登录",
+      googleButton: "使用 Google 继续",
+      googleCancelled: "已取消 Google 登录，你可以重试或先以游客进入。",
+      googleHint: "使用 Google 登录后可直接使用 Gemini AI，无需 API Key。",
+      googleUnavailable: "Google 登录暂不可用，请稍后重试。",
       privacyEyebrow: "隐私优先",
       privacyMetrics: ["AES-256 本地加密", "默认不启用云同步"],
       privacySummary: "你的记录会优先保存在本机并保持有序。",
@@ -1364,6 +1394,10 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
       databaseImportSuccess: "数据库包导入成功。",
       databaseTitle: "本地数据库包",
       geminiKeyRequiredAlert: "请先填写 Gemini API Key。",
+      geminiOAuthConnected: "已通过 Google 登录连接",
+      geminiOAuthConnecting: "连接中...",
+      geminiOAuthDisconnect: "断开 Google AI",
+      geminiOAuthOrLabel: "或",
       hideApiKey: "隐藏 Key",
       localeDescription: "立即切换界面语言，并把选择保存在设备本地。",
       logoutDescription: "清除本地会话摘要，并返回登录入口。",
@@ -1380,7 +1414,8 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
       profileTitle: "个人资料",
       sessionApple: "Apple ID",
       sessionDescription:
-        "游客态和 Apple 登录态都只保存在本机，方便本地优先阶段验证体验。",
+        "游客态、Apple 和 Google 登录态都只保存在本机，方便本地优先阶段验证体验。",
+      sessionGoogle: "Google",
       sessionGuest: "游客模式",
       sessionNone: "未登录",
       sessionTitle: "当前会话",

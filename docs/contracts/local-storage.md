@@ -163,6 +163,10 @@ The device-state contract is now at version `5`. In addition to theme, locale, a
 - `openai_api_key`: the user-provided OpenAI API key used only for outbound parse requests
 - `ai_provider`: the user's selected AI provider for document parsing and planning (`"openai"` or `"gemini"`, default `"openai"`)
 - `gemini_api_key`: the user-provided Gemini API key for direct Gemini parse requests
+- `gemini_auth_mode`: whether Gemini uses a manual API key or Google OAuth token (`"api_key"` or `"google_oauth"`, default `"api_key"`)
+- `google_access_token`: the Google OAuth access token for direct Gemini API calls when using `google_oauth` auth mode
+- `google_refresh_token`: the Google OAuth refresh token for silent token renewal
+- `google_token_expires_at`: the ISO 8601 timestamp when the current Google access token expires
 - `profile_name`: profile name used as mapping source context
 - `profile_email`: profile email used as mapping source context
 - `profile_phone`: profile phone used as mapping source context

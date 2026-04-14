@@ -28,10 +28,12 @@ export async function inspectStorageGateState(): Promise<StorageGateState> {
     return { kind: "missing" };
   }
 
-  const compatibility = await loadActiveDatabaseCompatibility();
-  const shouldBackupForMigration = compatibility.tableCompatibility === "legacy";
+  let shouldBackupForMigration = false;
 
   try {
+    const compatibility = await loadActiveDatabaseCompatibility();
+    shouldBackupForMigration = compatibility.tableCompatibility === "legacy";
+
     if (shouldBackupForMigration) {
       await backupActiveDatabaseFilesForMigration();
     }

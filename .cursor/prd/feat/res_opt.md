@@ -118,3 +118,17 @@
   - `docs/contracts/`
   - `packages/storage/src/contracts.ts`
   - `packages/schemas/src/index.ts`
+
+## 外部参考（非真源）
+
+以下项目仅用于产品交互、业务流程、计算口径与异常处理的启发式参考，不作为本仓库契约、数据结构或实现真源：
+
+- `GnuCash`：<https://github.com/gnucash/gnucash>
+  - 重点参考：复式记账、金额汇总、余额计算、会计口径一致性
+- `Akaunting`：<https://github.com/akaunting/akaunting>
+  - 重点参考：中小企业记账产品的信息架构、表单流程、报表与业务模块组织
+
+使用边界：
+- 不直接迁移其数据库结构、包结构、后端实现
+- 本仓库仍以 `docs/contracts/`、`packages/storage/src/contracts.ts`、`packages/schemas/src/index.ts` 为真源
+- 若外部参考与当前 PRD 冲突，以当前 PRD 与本仓库契约为准

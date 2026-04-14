@@ -59,7 +59,11 @@ pnpm smoke
    - 运行前提供 `EXPO_PUBLIC_OPENAI_BASE_URL`（可省略，默认 `https://api.openai.com/v1`）
    - 如需覆盖模型，提供 `EXPO_PUBLIC_OPENAI_MODEL`
    - 在应用 Settings 中填写 OpenAI API key
-   - Upload workspace 支持 `Select Photos` 与 `Select Files`
+   - Upload workspace 支持 `Select Photos`、`Take Photo` 与 `Select Files`
+   - 点击 `Take Photo` 首次会弹出相机权限请求：
+     - 授权后打开系统相机，拍照完成后自动进入 Parse Review
+     - 拒绝权限后显示错误提示（中文环境显示中文提示）
+     - 拍照后点击取消（Cancel）时正常返回上传页，无异常
    - 选择一张清晰收据图片或一个小 PDF 后，会进入 Parse Review
    - Parse Review 可见 batch state、raw parse JSON、planner summary、write proposals、candidate record
    - `Amount`、`Date`、`Source`、`Target` 可编辑

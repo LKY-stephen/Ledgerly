@@ -12,7 +12,11 @@ export async function initializeLocalDatabase(database: StorageSqlExecDatabase):
   const storagePlan = getLocalStorageBootstrapPlan();
 
   for (const pragma of storagePlan.pragmas) {
-    await database.execAsync(pragma);
+    try {
+      await database.execAsync(pragma);
+    } catch {
+      // WAL mode or other pragmas may fail on certain platforms; continue with defaults.
+    }
   }
 
   for (const statement of storagePlan.schemaStatements) {

@@ -96,6 +96,20 @@
 - `.cursor/skills/project/expo`（Expo 文件系统 API、本地存储）
 - 可选：图片解析库（如 `react-native-vision-camera`、`tesseract.js` 等），可通过 npm 自动下载
 
+## 外部参考（非真源）
+
+以下项目仅用于产品交互、业务流程、计算口径与异常处理的启发式参考，不作为本仓库契约、数据结构或实现真源：
+
+- `GnuCash`：<https://github.com/gnucash/gnucash>
+  - 重点参考：复式记账、金额汇总、余额计算、会计口径一致性
+- `Akaunting`：<https://github.com/akaunting/akaunting>
+  - 重点参考：中小企业记账产品的信息架构、表单流程、报表与业务模块组织
+
+使用边界：
+- 不直接迁移其数据库结构、包结构、后端实现
+- 本仓库仍以 `docs/contracts/`、`packages/storage/src/contracts.ts`、`packages/schemas/src/index.ts` 为真源
+- 若外部参考与当前 PRD 冲突，以当前 PRD 与本仓库契约为准
+
 ## 公用约定（勿在本文件重复展开）
 
 > 角色三角、工作流与交付前 `pnpm` 命令见 `.cursor/prd/agent-dev-guide-summary.md`；需求闭环后按该摘要在 `.cursor/context/` **新建** `{semver}_context.md` 并按需同步 `main.md`。
@@ -106,4 +120,3 @@
 - **参考数据设计**：`prd/database-schema-summary/v1.md`（当前活跃契约）
 - **手工冒烟清单**：`tests/smoke/README.md`
 - **Testor 走查**：具体 UI 场景表与测试报告由 Testor 按 `.cursor/rules/work_flow.md` 产出；Harness 对验收项勾选须有证据（截图/报告/CI）
-

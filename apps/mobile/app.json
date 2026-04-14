@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Creator CFO",
+    "name": "Ledgerly",
     "slug": "creator-cfo",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -42,7 +42,7 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Allow Creator CFO to access your photo library so you can upload receipt images for parsing."
+          "photosPermission": "Allow Ledgerly to access your photo library so you can upload receipt images for parsing."
         }
       ],
       "expo-sqlite",
@@ -52,7 +52,9 @@
       "typedRoutes": false
     },
     "extra": {
-      "productPhase": "mobile-local-first"
+      "productPhase": "mobile-local-first",
+      "googleClientIdIos": "92227696874-dv06kacdsra030i6dntda2ee5q5ajcoo.apps.googleusercontent.com",
+      "googleClientIdWeb": "92227696874-0bo1s6j5flqm7hink43saeh2i92o1s9f.apps.googleusercontent.com"
     }
   }
 }
