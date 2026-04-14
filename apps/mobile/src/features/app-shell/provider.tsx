@@ -23,9 +23,12 @@ import {
   resolveThemeName,
 } from "./model";
 import {
+  clearGoogleTokens,
   loadPersistedAppState,
   persistAiProvider,
   persistGeminiApiKey,
+  persistGeminiAuthMode,
+  persistGoogleTokens,
   persistLocalePreference,
   persistOpenAiApiKey,
   persistParseApiBaseUrl,
@@ -36,6 +39,7 @@ import {
 import type {
   AiProvider,
   AppSession,
+  GeminiAuthMode,
   LocalePreference,
   PersistedAppState,
   ProfileInfo,
@@ -48,8 +52,10 @@ interface AppShellContextValue {
   bumpStorageRevision: () => void;
   continueAsGuest: () => Promise<void>;
   copy: ReturnType<typeof getAppCopy>;
+  disconnectGoogleOAuth: () => Promise<void>;
   initializeEmptyStorage: () => Promise<void>;
   geminiApiKey: string;
+  geminiAuthMode: GeminiAuthMode;
   isStorageSuspended: boolean;
   isHydrated: boolean;
   localePreference: LocalePreference;
@@ -63,6 +69,7 @@ interface AppShellContextValue {
   refreshStorageGateState: () => Promise<StorageGateState>;
   setAiProvider: (value: AiProvider) => Promise<void>;
   setGeminiApiKey: (value: string) => Promise<void>;
+  setGeminiAuthMode: (value: GeminiAuthMode) => Promise<void>;
   setStorageSuspended: (value: boolean) => void;
   setLocalePreference: (value: LocalePreference) => Promise<void>;
   setOpenAiApiKey: (value: string) => Promise<void>;
@@ -76,6 +83,13 @@ interface AppShellContextValue {
     givenName?: string | null;
     user: string;
   }) => Promise<void>;
+  connectGeminiWithGoogle: (input: {
+    accessToken: string;
+    refreshToken: string;
+    expiresAt: string;
+    email?: string | null;
+    displayName?: string | null;
+  }) => Promise<void>;
   storageGateState: StorageGateState | { kind: "checking" };
   storageRevision: number;
   themePreference: ThemePreference;
@@ -86,6 +100,10 @@ const AppShellContext = createContext<AppShellContextValue | null>(null);
 const initialState: PersistedAppState = {
   aiProvider: "openai",
   geminiApiKey: "",
+  geminiAuthMode: "api_key",
+  googleAccessToken: "",
+  googleRefreshToken: "",
+  googleTokenExpiresAt: "",
   localePreference: "system",
   openAiApiKey: "",
   parseApiBaseUrl: "",
@@ -213,6 +231,11 @@ export function AppShellProvider({ children }: PropsWithChildren) {
     setState((current) => ({ ...current, profileInfo: value }));
     await persistProfileInfo(value);
   };
+  const setGeminiAuthMode = async (value: GeminiAuthMode) => {
+    setState((current) => ({ ...current, geminiAuthMode: value }));
+    await persistGeminiAuthMode(value);
+  };
+
   const setSession = async (session: AppSession | null) => {
     setState((current) => ({ ...current, session }));
     await persistSession(session);
@@ -227,12 +250,23 @@ export function AppShellProvider({ children }: PropsWithChildren) {
       await setSession(createGuestSession());
     },
     copy,
+    disconnectGoogleOAuth: async () => {
+      setState((current) => ({
+        ...current,
+        geminiAuthMode: "api_key",
+        googleAccessToken: "",
+        googleRefreshToken: "",
+        googleTokenExpiresAt: "",
+      }));
+      await clearGoogleTokens();
+    },
     initializeEmptyStorage: async () => {
       await initializeEmptyStorageFromSetup();
       setStorageRevision((current) => current + 1);
       await refreshStorageGateState();
     },
     geminiApiKey: state.geminiApiKey,
+    geminiAuthMode: state.geminiAuthMode,
     isStorageSuspended,
     isHydrated,
     localePreference: state.localePreference,
@@ -246,6 +280,7 @@ export function AppShellProvider({ children }: PropsWithChildren) {
     refreshStorageGateState,
     setAiProvider,
     setGeminiApiKey,
+    setGeminiAuthMode,
     setStorageSuspended,
     setLocalePreference,
     setOpenAiApiKey,
@@ -257,6 +292,28 @@ export function AppShellProvider({ children }: PropsWithChildren) {
     },
     signInWithApple: async (input) => {
       await setSession(createAppleSession(input));
+    },
+    connectGeminiWithGoogle: async (input) => {
+      await setAiProvider("gemini");
+      await setGeminiAuthMode("google_oauth");
+      await persistGoogleTokens({
+        accessToken: input.accessToken,
+        refreshToken: input.refreshToken,
+        expiresAt: input.expiresAt,
+      });
+      setState((current) => ({
+        ...current,
+        googleAccessToken: input.accessToken,
+        googleRefreshToken: input.refreshToken,
+        googleTokenExpiresAt: input.expiresAt,
+      }));
+      if (input.email || input.displayName) {
+        await setProfileInfo({
+          email: input.email ?? state.profileInfo.email,
+          name: input.displayName ?? state.profileInfo.name,
+          phone: state.profileInfo.phone,
+        });
+      }
     },
     storageGateState,
     storageRevision,

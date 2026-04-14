@@ -52,7 +52,9 @@
       "typedRoutes": false
     },
     "extra": {
-      "productPhase": "mobile-local-first"
+      "productPhase": "mobile-local-first",
+      "googleClientIdIos": "92227696874-dv06kacdsra030i6dntda2ee5q5ajcoo.apps.googleusercontent.com",
+      "googleClientIdWeb": "92227696874-0bo1s6j5flqm7hink43saeh2i92o1s9f.apps.googleusercontent.com"
     }
   }
 }

@@ -23,11 +23,25 @@ export interface AppleSession {
   startedAt: string;
 }
 
-export type AppSession = GuestSession | AppleSession;
+export interface GoogleSession {
+  kind: "google";
+  googleUserId: string;
+  email: string | null;
+  displayName: string | null;
+  startedAt: string;
+}
+
+export type AppSession = GuestSession | AppleSession | GoogleSession;
+
+export type GeminiAuthMode = "api_key" | "google_oauth";
 
 export interface PersistedAppState {
   aiProvider: AiProvider;
   geminiApiKey: string;
+  geminiAuthMode: GeminiAuthMode;
+  googleAccessToken: string;
+  googleRefreshToken: string;
+  googleTokenExpiresAt: string;
   localePreference: LocalePreference;
   openAiApiKey: string;
   parseApiBaseUrl: string;

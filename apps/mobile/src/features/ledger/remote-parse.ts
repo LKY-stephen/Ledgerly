@@ -6,8 +6,9 @@ import {
   type ReceiptPlannerPayload,
 } from "@creator-cfo/schemas";
 
-import { loadPersistedAiProvider, loadPersistedGeminiApiKey, loadPersistedOpenAiApiKey } from "../app-shell/storage";
-import type { AiProvider } from "../app-shell/types";
+import { loadPersistedAiProvider, loadPersistedGeminiApiKey, loadPersistedGeminiAuthMode, loadPersistedOpenAiApiKey } from "../app-shell/storage";
+import type { AiProvider, GeminiAuthMode } from "../app-shell/types";
+import { getValidGoogleAccessToken } from "../auth/google-auth";
 import { receiptDbUpdatePlannerSkill, receiptParseSkill } from "./prompt-skills";
 
 export interface ParseResult {
@@ -232,8 +233,10 @@ function buildFallbackPlannerPayload(
 }
 
 interface GeminiSettings {
+  authMode: GeminiAuthMode;
   baseUrl: string;
   geminiApiKey: string;
+  googleAccessToken: string;
   model: string;
 }
 
@@ -597,6 +600,24 @@ async function callAiText(
 }
 
 async function loadRequiredGeminiSettings(): Promise<GeminiSettings> {
+  const authMode = await loadPersistedGeminiAuthMode();
+  const baseUrl = normalizeBaseUrl(
+    (process.env.EXPO_PUBLIC_GEMINI_BASE_URL ?? "").trim() || defaultGeminiBaseUrl,
+  );
+  const configuredModel = (process.env.EXPO_PUBLIC_GEMINI_MODEL ?? "").trim() || defaultGeminiModel;
+  const model = runtimeModelOverrides.gemini ?? configuredModel;
+
+  if (authMode === "google_oauth") {
+    const googleAccessToken = await getValidGoogleAccessToken();
+    if (!googleAccessToken) {
+      throw new ParseEvidenceClientError(
+        "Google sign-in session expired. Please sign in again from Settings.",
+        "missing_config",
+      );
+    }
+    return { authMode, baseUrl, geminiApiKey: "", googleAccessToken, model };
+  }
+
   const persistedApiKey = await loadPersistedGeminiApiKey().catch(() => "");
   const geminiApiKey = persistedApiKey || (process.env.EXPO_PUBLIC_GEMINI_API_KEY ?? "").trim();
 
@@ -607,13 +628,7 @@ async function loadRequiredGeminiSettings(): Promise<GeminiSettings> {
     );
   }
 
-  const baseUrl = normalizeBaseUrl(
-    (process.env.EXPO_PUBLIC_GEMINI_BASE_URL ?? "").trim() || defaultGeminiBaseUrl,
-  );
-  const configuredModel = (process.env.EXPO_PUBLIC_GEMINI_MODEL ?? "").trim() || defaultGeminiModel;
-  const model = runtimeModelOverrides.gemini ?? configuredModel;
-
-  return { baseUrl, geminiApiKey, model };
+  return { authMode, baseUrl, geminiApiKey, googleAccessToken: "", model };
 }
 
 async function callGemini(
@@ -655,7 +670,16 @@ async function performGeminiRequest(
   const timeoutId = setTimeout(() => controller?.abort(), openAiRequestTimeoutMs);
 
   try {
-    const url = `${settings.baseUrl}/models/${model}:generateContent?key=${settings.geminiApiKey}`;
+    const url =
+      settings.authMode === "google_oauth"
+        ? `${settings.baseUrl}/models/${model}:generateContent`
+        : `${settings.baseUrl}/models/${model}:generateContent?key=${settings.geminiApiKey}`;
+
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (settings.authMode === "google_oauth") {
+      headers["Authorization"] = `Bearer ${settings.googleAccessToken}`;
+    }
+
     const response = await fetch(url, {
       body: JSON.stringify({
         contents: [{ parts: userParts, role: "user" }],
@@ -663,7 +687,7 @@ async function performGeminiRequest(
         systemInstruction: { parts: [{ text: systemText }] },
       }),
       cache: "no-store",
-      headers: { "Content-Type": "application/json" },
+      headers,
       method: "POST",
       signal: controller?.signal,
     });

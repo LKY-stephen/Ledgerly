@@ -3,6 +3,7 @@ import type { AppThemeName } from "@creator-cfo/ui";
 import type {
   AppSession,
   AppleSession,
+  GoogleSession,
   LocalePreference,
   ResolvedLocale,
   ThemePreference,
@@ -63,6 +64,20 @@ export function createAppleSession(input: {
   };
 }
 
+export function createGoogleSession(input: {
+  email: string | null;
+  displayName: string | null;
+  googleUserId: string;
+}): GoogleSession {
+  return {
+    kind: "google",
+    googleUserId: input.googleUserId,
+    email: input.email,
+    displayName: input.displayName,
+    startedAt: new Date().toISOString(),
+  };
+}
+
 export function parseSession(value: string | null | undefined): AppSession | null {
   if (!value) {
     return null;
@@ -96,6 +111,22 @@ export function parseSession(value: string | null | undefined): AppSession | nul
       };
     }
 
+    if (
+      parsed.kind === "google" &&
+      typeof (parsed as Partial<GoogleSession>).googleUserId === "string" &&
+      typeof parsed.startedAt === "string"
+    ) {
+      const g = parsed as Partial<GoogleSession>;
+      return {
+        kind: "google",
+        googleUserId: g.googleUserId!,
+        email: typeof g.email === "string" || g.email === null ? g.email : null,
+        displayName:
+          typeof g.displayName === "string" || g.displayName === null ? g.displayName : null,
+        startedAt: parsed.startedAt!,
+      };
+    }
+
     return null;
   } catch {
     return null;
@@ -109,6 +140,10 @@ export function getSessionDisplayName(session: AppSession | null): string {
 
   if (session.kind === "guest") {
     return session.displayName;
+  }
+
+  if (session.kind === "google") {
+    return session.displayName ?? session.email ?? "Google";
   }
 
   return session.displayName ?? session.email ?? "Apple ID";

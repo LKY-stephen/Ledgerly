@@ -9,6 +9,7 @@ import {
 import type {
   AiProvider,
   AppSession,
+  GeminiAuthMode,
   PersistedAppState,
   ProfileInfo,
 } from "./types";
@@ -16,6 +17,10 @@ import type {
 const STORAGE_KEYS = {
   aiProvider: buildDeviceStateStorageKey("ai_provider"),
   geminiApiKey: buildDeviceStateStorageKey("gemini_api_key"),
+  geminiAuthMode: buildDeviceStateStorageKey("gemini_auth_mode"),
+  googleAccessToken: buildDeviceStateStorageKey("google_access_token"),
+  googleRefreshToken: buildDeviceStateStorageKey("google_refresh_token"),
+  googleTokenExpiresAt: buildDeviceStateStorageKey("google_token_expires_at"),
   localePreference: buildDeviceStateStorageKey("locale_preference"),
   openAiApiKey: buildDeviceStateStorageKey("openai_api_key"),
   parseApiBaseUrl: "@creator-cfo/mobile/parse_api_base_url",
@@ -43,9 +48,14 @@ export async function loadPersistedAppState(): Promise<PersistedAppState> {
   const values = Object.fromEntries(entries);
 
   const rawAiProvider = String(values[STORAGE_KEYS.aiProvider] ?? "").trim();
+  const rawGeminiAuthMode = String(values[STORAGE_KEYS.geminiAuthMode] ?? "").trim();
   const persistedState: PersistedAppState = {
     aiProvider: rawAiProvider === "gemini" ? "gemini" : "openai",
     geminiApiKey: String(values[STORAGE_KEYS.geminiApiKey] ?? "").trim(),
+    geminiAuthMode: rawGeminiAuthMode === "google_oauth" ? "google_oauth" : "api_key",
+    googleAccessToken: String(values[STORAGE_KEYS.googleAccessToken] ?? "").trim(),
+    googleRefreshToken: String(values[STORAGE_KEYS.googleRefreshToken] ?? "").trim(),
+    googleTokenExpiresAt: String(values[STORAGE_KEYS.googleTokenExpiresAt] ?? "").trim(),
     localePreference: coerceLocalePreference(
       values[STORAGE_KEYS.localePreference],
     ),
@@ -191,6 +201,74 @@ export async function loadPersistedOpenAiApiKey(): Promise<string> {
   return String(
     (await AsyncStorage.getItem(STORAGE_KEYS.openAiApiKey)) ?? "",
   ).trim();
+}
+
+export async function persistGeminiAuthMode(value: GeminiAuthMode) {
+  runtimeOverrides.geminiAuthMode = value;
+  await AsyncStorage.setItem(STORAGE_KEYS.geminiAuthMode, value);
+}
+
+export async function loadPersistedGeminiAuthMode(): Promise<GeminiAuthMode> {
+  if (hasRuntimeOverride("geminiAuthMode")) {
+    return runtimeOverrides.geminiAuthMode ?? "api_key";
+  }
+
+  const raw = String((await AsyncStorage.getItem(STORAGE_KEYS.geminiAuthMode)) ?? "").trim();
+  return raw === "google_oauth" ? "google_oauth" : "api_key";
+}
+
+export async function persistGoogleTokens(tokens: {
+  accessToken: string;
+  refreshToken: string;
+  expiresAt: string;
+}) {
+  runtimeOverrides.googleAccessToken = tokens.accessToken;
+  runtimeOverrides.googleRefreshToken = tokens.refreshToken;
+  runtimeOverrides.googleTokenExpiresAt = tokens.expiresAt;
+
+  await AsyncStorage.multiSet([
+    [STORAGE_KEYS.googleAccessToken, tokens.accessToken],
+    [STORAGE_KEYS.googleRefreshToken, tokens.refreshToken],
+    [STORAGE_KEYS.googleTokenExpiresAt, tokens.expiresAt],
+  ]);
+}
+
+export async function loadPersistedGoogleAccessToken(): Promise<string> {
+  if (hasRuntimeOverride("googleAccessToken")) {
+    return runtimeOverrides.googleAccessToken ?? "";
+  }
+
+  return String((await AsyncStorage.getItem(STORAGE_KEYS.googleAccessToken)) ?? "").trim();
+}
+
+export async function loadPersistedGoogleRefreshToken(): Promise<string> {
+  if (hasRuntimeOverride("googleRefreshToken")) {
+    return runtimeOverrides.googleRefreshToken ?? "";
+  }
+
+  return String((await AsyncStorage.getItem(STORAGE_KEYS.googleRefreshToken)) ?? "").trim();
+}
+
+export async function loadPersistedGoogleTokenExpiresAt(): Promise<string> {
+  if (hasRuntimeOverride("googleTokenExpiresAt")) {
+    return runtimeOverrides.googleTokenExpiresAt ?? "";
+  }
+
+  return String((await AsyncStorage.getItem(STORAGE_KEYS.googleTokenExpiresAt)) ?? "").trim();
+}
+
+export async function clearGoogleTokens() {
+  runtimeOverrides.googleAccessToken = "";
+  runtimeOverrides.googleRefreshToken = "";
+  runtimeOverrides.googleTokenExpiresAt = "";
+  runtimeOverrides.geminiAuthMode = "api_key";
+
+  await AsyncStorage.multiRemove([
+    STORAGE_KEYS.googleAccessToken,
+    STORAGE_KEYS.googleRefreshToken,
+    STORAGE_KEYS.googleTokenExpiresAt,
+  ]);
+  await AsyncStorage.setItem(STORAGE_KEYS.geminiAuthMode, "api_key");
 }
 
 function normalizeProfileInfo(value: ProfileInfo): ProfileInfo {

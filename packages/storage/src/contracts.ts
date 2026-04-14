@@ -542,9 +542,9 @@ export const deviceStateContract = {
     {
       key: "auth_session",
       summary:
-        "Persist the locally trusted session summary for guest mode or on-device Apple sign-in.",
+        "Persist the locally trusted session summary for guest mode, Apple sign-in, or Google sign-in.",
       valueShape:
-        '{ kind: "guest" | "apple"; appleUserId?: string; email?: string | null; displayName?: string | null }',
+        '{ kind: "guest" | "apple" | "google"; appleUserId?: string; googleUserId?: string; email?: string | null; displayName?: string | null }',
     },
     {
       key: "openai_api_key",
@@ -578,6 +578,26 @@ export const deviceStateContract = {
       key: "profile_phone",
       summary: "Persist the profile phone used as mapping source context.",
       valueShape: "string",
+    },
+    {
+      key: "gemini_auth_mode",
+      summary: "Persist whether Gemini uses a manual API key or the Google OAuth token.",
+      valueShape: '"api_key" | "google_oauth"',
+    },
+    {
+      key: "google_access_token",
+      summary: "Persist the Google OAuth access token for direct Gemini API calls.",
+      valueShape: "string",
+    },
+    {
+      key: "google_refresh_token",
+      summary: "Persist the Google OAuth refresh token for silent token renewal.",
+      valueShape: "string",
+    },
+    {
+      key: "google_token_expires_at",
+      summary: "Persist the ISO timestamp when the current Google access token expires.",
+      valueShape: "string (ISO 8601)",
     },
   ],
 } as const satisfies {

@@ -1,5 +1,7 @@
 import { Feather } from "@expo/vector-icons";
+import * as Google from "expo-auth-session/providers/google";
 import { useRouter } from "expo-router";
+import * as WebBrowser from "expo-web-browser";
 import { useEffect, useState } from "react";
 import {
   Alert,
@@ -26,6 +28,13 @@ import type {
   ProfileInfo,
   ThemePreference,
 } from "../app-shell/types";
+import {
+  exchangeCodeForTokens,
+  GOOGLE_SCOPES,
+} from "../auth/google-auth";
+import Constants from "expo-constants";
+
+WebBrowser.maybeCompleteAuthSession();
 
 function PreferencePill(props: {
   active: boolean;
@@ -133,8 +142,11 @@ export function ProfileScreen() {
   const {
     aiProvider,
     bumpStorageRevision,
+    connectGeminiWithGoogle,
     copy,
+    disconnectGoogleOAuth,
     geminiApiKey,
+    geminiAuthMode,
     localePreference,
     openAiApiKey,
     palette,
@@ -166,6 +178,46 @@ export function ProfileScreen() {
     value: string;
   } | null>(null);
   const [isImportingDatabase, setIsImportingDatabase] = useState(false);
+  const [isGoogleConnecting, setIsGoogleConnecting] = useState(false);
+
+  const googleClientIdIos = (Constants.expoConfig?.extra?.googleClientIdIos as string) ?? "";
+  const googleClientIdWeb = (Constants.expoConfig?.extra?.googleClientIdWeb as string) ?? "";
+
+  const [googleRequest, googleResponse, promptGoogleAsync] = Google.useAuthRequest({
+    iosClientId: googleClientIdIos,
+    webClientId: googleClientIdWeb,
+    scopes: GOOGLE_SCOPES,
+    extraParams: { access_type: "offline" },
+  });
+
+  useEffect(() => {
+    if (googleResponse?.type !== "success") return;
+    const { code } = googleResponse.params;
+    if (!code || !googleRequest?.codeVerifier || !googleRequest?.redirectUri) return;
+
+    const clientId = Platform.OS === "ios" ? googleClientIdIos : googleClientIdWeb;
+
+    setIsGoogleConnecting(true);
+    exchangeCodeForTokens(code, googleRequest.redirectUri, googleRequest.codeVerifier, clientId)
+      .then((result) =>
+        connectGeminiWithGoogle({
+          accessToken: result.accessToken,
+          refreshToken: result.refreshToken,
+          expiresAt: result.expiresAt,
+          email: result.user.email,
+          displayName: result.user.displayName,
+        }),
+      )
+      .then(() => {
+        setAiProviderDraft("gemini");
+      })
+      .catch(() => {
+        Alert.alert(copy.login.googleUnavailable);
+      })
+      .finally(() => {
+        setIsGoogleConnecting(false);
+      });
+  }, [googleResponse]);
 
   useEffect(() => {
     setAiProviderDraft(aiProvider);
@@ -198,18 +250,24 @@ export function ProfileScreen() {
     "zh-CN": copy.common.zhCN,
   };
 
+  const isGeminiOAuth = aiProviderDraft === "gemini" && geminiAuthMode === "google_oauth";
+
   const sessionKindLabel =
     session?.kind === "apple"
       ? copy.meScreen.sessionApple
-      : session?.kind === "guest"
-        ? copy.common.guest
-        : copy.meScreen.sessionNone;
+      : session?.kind === "google"
+        ? copy.meScreen.sessionGoogle
+        : session?.kind === "guest"
+          ? copy.common.guest
+          : copy.meScreen.sessionNone;
   const sessionTitle =
     session?.kind === "apple"
       ? (sessionDisplayName || (session.displayName ?? session.email ?? copy.meScreen.sessionApple))
-      : session?.kind === "guest"
-        ? copy.meScreen.sessionGuest
-        : copy.meScreen.sessionNone;
+      : session?.kind === "google"
+        ? (sessionDisplayName || (session.displayName ?? session.email ?? copy.meScreen.sessionGoogle))
+        : session?.kind === "guest"
+          ? copy.meScreen.sessionGuest
+          : copy.meScreen.sessionNone;
   const destructiveLabelColor =
     palette.name === "dark" ? palette.shell : palette.inkOnAccent;
 
@@ -226,6 +284,14 @@ export function ProfileScreen() {
         setParseApiBaseUrl(baseUrlDraft),
         setOpenAiApiKey(normalized),
         setAiProvider("openai"),
+      ]);
+      return;
+    }
+
+    if (isGeminiOAuth) {
+      await Promise.all([
+        setParseApiBaseUrl(baseUrlDraft),
+        setAiProvider("gemini"),
       ]);
       return;
     }
@@ -499,22 +565,79 @@ export function ProfileScreen() {
               value={apiKeyDraft}
               visibleAccessibilityLabel={copy.meScreen.showApiKey}
             />
+          ) : isGeminiOAuth ? (
+            <View style={styles.fieldBlock}>
+              <View style={styles.oauthStatusRow}>
+                <View style={[styles.oauthDot, { backgroundColor: palette.accent }]} />
+                <Text style={[styles.oauthStatusText, { color: palette.accent }]}>
+                  {copy.meScreen.geminiOAuthConnected}
+                </Text>
+              </View>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => {
+                  void disconnectGoogleOAuth();
+                }}
+                style={[
+                  styles.actionButton,
+                  {
+                    backgroundColor: palette.paperMuted,
+                    borderColor: palette.border,
+                  },
+                ]}
+              >
+                <Text style={[styles.secondaryActionLabel, { color: palette.ink }]}>
+                  {copy.meScreen.geminiOAuthDisconnect}
+                </Text>
+              </Pressable>
+            </View>
           ) : (
-            <ApiKeyField
-              hiddenAccessibilityLabel={copy.meScreen.hideApiKey}
-              isVisible={isGeminiKeyVisible}
-              label={copy.meScreen.apiGeminiKeyLabel}
-              onChangeText={setGeminiKeyDraft}
-              onToggleVisibility={() => {
-                setIsGeminiKeyVisible((current) => !current);
-              }}
-              palette={palette}
-              placeholder={copy.meScreen.apiGeminiKeyPlaceholder}
-              testID="profile-gemini-key-input"
-              toggleTestID="profile-gemini-key-toggle"
-              value={geminiKeyDraft}
-              visibleAccessibilityLabel={copy.meScreen.showApiKey}
-            />
+            <View style={styles.fieldBlock}>
+              <ApiKeyField
+                hiddenAccessibilityLabel={copy.meScreen.hideApiKey}
+                isVisible={isGeminiKeyVisible}
+                label={copy.meScreen.apiGeminiKeyLabel}
+                onChangeText={setGeminiKeyDraft}
+                onToggleVisibility={() => {
+                  setIsGeminiKeyVisible((current) => !current);
+                }}
+                palette={palette}
+                placeholder={copy.meScreen.apiGeminiKeyPlaceholder}
+                testID="profile-gemini-key-input"
+                toggleTestID="profile-gemini-key-toggle"
+                value={geminiKeyDraft}
+                visibleAccessibilityLabel={copy.meScreen.showApiKey}
+              />
+              <View style={styles.oauthDivider}>
+                <View style={[styles.oauthDividerLine, { backgroundColor: palette.border }]} />
+                <Text style={[styles.oauthDividerText, { color: palette.inkMuted }]}>
+                  {copy.meScreen.geminiOAuthOrLabel}
+                </Text>
+                <View style={[styles.oauthDividerLine, { backgroundColor: palette.border }]} />
+              </View>
+              <Pressable
+                accessibilityRole="button"
+                disabled={!googleRequest || isGoogleConnecting}
+                onPress={() => {
+                  void promptGoogleAsync();
+                }}
+                style={[
+                  styles.googleConnectButton,
+                  {
+                    backgroundColor: palette.paperMuted,
+                    borderColor: palette.border,
+                    opacity: !googleRequest || isGoogleConnecting ? 0.6 : 1,
+                  },
+                ]}
+              >
+                <Text style={[styles.googleConnectLabel, { color: palette.ink }]}>
+                  {isGoogleConnecting ? copy.meScreen.geminiOAuthConnecting : copy.login.googleButton}
+                </Text>
+              </Pressable>
+              <Text style={[styles.googleConnectHint, { color: palette.inkMuted }]}>
+                {copy.login.googleHint}
+              </Text>
+            </View>
           )}
 
           <View style={styles.optionRow}>
@@ -760,6 +883,51 @@ const styles = StyleSheet.create({
     marginTop: 8,
     minHeight: 50,
     paddingHorizontal: 20,
+  },
+  googleConnectButton: {
+    alignItems: "center",
+    borderRadius: 999,
+    borderWidth: 1,
+    justifyContent: "center",
+    minHeight: 48,
+    paddingHorizontal: 16,
+  },
+  googleConnectHint: {
+    fontSize: 12,
+    lineHeight: 18,
+    textAlign: "center",
+  },
+  googleConnectLabel: {
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  oauthDivider: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 12,
+    marginVertical: 4,
+  },
+  oauthDividerLine: {
+    flex: 1,
+    height: StyleSheet.hairlineWidth,
+  },
+  oauthDividerText: {
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  oauthDot: {
+    borderRadius: 999,
+    height: 10,
+    width: 10,
+  },
+  oauthStatusRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 8,
+  },
+  oauthStatusText: {
+    fontSize: 14,
+    fontWeight: "700",
   },
   logoutLabel: {
     fontSize: 16,
