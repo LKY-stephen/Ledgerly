@@ -6,6 +6,8 @@ import {
   type ReceiptPlannerPayload,
 } from "@creator-cfo/schemas";
 
+import { Platform } from "react-native";
+
 import { loadPersistedAiProvider, loadPersistedGeminiApiKey, loadPersistedGeminiAuthMode, loadPersistedInferApiKey, loadPersistedInferBaseUrl, loadPersistedInferModel, loadPersistedOpenAiApiKey } from "../app-shell/storage";
 import type { AiProvider, GeminiAuthMode } from "../app-shell/types";
 import { getValidGoogleAccessToken } from "../auth/google-token-runtime";
@@ -799,19 +801,27 @@ async function performOpenAiRequest(
   const timeoutId = setTimeout(() => controller?.abort(), openAiRequestTimeoutMs);
 
   try {
-    const response = await fetch(`${settings.baseUrl}/responses`, {
-      body: JSON.stringify({
-        input,
-        max_output_tokens: 4_000,
-        model,
-        ...(isReasoningModel(model) ? { reasoning: { effort: "minimal" } } : {}),
-        store: false,
-      }),
+    const targetUrl = `${settings.baseUrl}/responses`;
+    const requestBody = JSON.stringify({
+      input,
+      max_output_tokens: 4_000,
+      model,
+      ...(isReasoningModel(model) ? { reasoning: { effort: "minimal" } } : {}),
+      store: false,
+    });
+
+    const useProxy = Platform.OS === "web" && !isFirstPartyApiHost(settings.baseUrl);
+    const fetchUrl = useProxy ? "http://localhost:19007" : targetUrl;
+    const fetchHeaders: Record<string, string> = {
+      Authorization: `Bearer ${settings.openAiApiKey}`,
+      "Content-Type": "application/json",
+      ...(useProxy ? { "x-proxy-target": targetUrl } : {}),
+    };
+
+    const response = await fetch(fetchUrl, {
+      body: requestBody,
       cache: "no-store",
-      headers: {
-        Authorization: `Bearer ${settings.openAiApiKey}`,
-        "Content-Type": "application/json",
-      },
+      headers: fetchHeaders,
       method: "POST",
       signal: controller?.signal,
     });
@@ -1037,4 +1047,15 @@ function normalizeBaseUrl(value: string): string {
 function isReasoningModel(model: string): boolean {
   const name = model.toLowerCase();
   return name.startsWith("o1") || name.startsWith("o3") || name.startsWith("o4");
+}
+
+const firstPartyApiHosts = ["api.openai.com", "generativelanguage.googleapis.com"];
+
+function isFirstPartyApiHost(baseUrl: string): boolean {
+  try {
+    const host = new URL(baseUrl).hostname;
+    return firstPartyApiHosts.some((allowed) => host === allowed || host.endsWith(`.${allowed}`));
+  } catch {
+    return false;
+  }
 }

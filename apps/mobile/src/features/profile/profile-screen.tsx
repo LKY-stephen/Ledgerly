@@ -18,6 +18,7 @@ import { SectionCard } from "@creator-cfo/ui";
 
 import { seedCreatorFinanceDemoLedger } from "../database-demo/seed-database-demo";
 import { pickAndImportDatabasePackageAsync } from "../../storage/database-import";
+import { useResponsive } from "../../hooks/use-responsive";
 import {
   localePreferenceOptions,
   themePreferenceOptions,
@@ -140,6 +141,7 @@ function ApiKeyField(props: {
 
 export function ProfileScreen() {
   const router = useRouter();
+  const { isExpanded } = useResponsive();
   const {
     aiProvider,
     bumpStorageRevision,
@@ -401,6 +403,8 @@ export function ProfileScreen() {
           </Text>
         </View>
 
+        <View style={isExpanded ? styles.wideBody : undefined}>
+        <View style={isExpanded ? styles.wideLeft : undefined}>
         <SectionCard
           eyebrow={copy.common.theme}
           palette={palette}
@@ -558,7 +562,9 @@ export function ProfileScreen() {
             </Pressable>
           </View>
         </SectionCard>
+        </View>
 
+        <View style={isExpanded ? styles.wideRight : undefined}>
         <SectionCard
           eyebrow={copy.meScreen.apiSectionEyebrow}
           palette={palette}
@@ -823,12 +829,11 @@ export function ProfileScreen() {
           </View>
         </SectionCard>
 
-        {Platform.OS !== "web" ? (
-          <SectionCard
-            eyebrow={copy.meScreen.storageEyebrow}
-            palette={palette}
-            title={copy.meScreen.databaseTitle}
-          >
+        <SectionCard
+          eyebrow={copy.meScreen.storageEyebrow}
+          palette={palette}
+          title={copy.meScreen.databaseTitle}
+        >
             <Text style={[styles.sectionHint, { color: palette.inkMuted }]}>
               {copy.meScreen.databaseDescription}
             </Text>
@@ -961,7 +966,6 @@ export function ProfileScreen() {
               </Text>
             </Pressable>
           </SectionCard>
-        ) : null}
 
         <SectionCard
           eyebrow={copy.meScreen.sessionTitle}
@@ -992,6 +996,8 @@ export function ProfileScreen() {
             </Text>
           </Pressable>
         </SectionCard>
+        </View>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -1167,5 +1173,17 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "800",
     lineHeight: 30,
+  },
+  wideBody: {
+    flexDirection: "row",
+    gap: 18,
+  },
+  wideLeft: {
+    flex: 1,
+    gap: 14,
+  },
+  wideRight: {
+    flex: 1,
+    gap: 14,
   },
 });

@@ -4,6 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { BackHeaderBar } from "../../components/back-header-bar";
 import { AppIcon } from "../../components/app-icon";
+import { useResponsive } from "../../hooks/use-responsive";
 import { useAppShell } from "../app-shell/provider";
 import { formatDiscoverPublishedDate } from "./discover-localization";
 import { getNewsArticleBySlug } from "./news-feed";
@@ -18,6 +19,7 @@ function resolveSlug(value: string | string[] | undefined) {
 
 export function DiscoverDetailScreen() {
   const router = useRouter();
+  const { isExpanded } = useResponsive();
   const { slug } = useLocalSearchParams<{ slug?: string | string[] }>();
   const { copy, palette, resolvedLocale } = useAppShell();
   const article = getNewsArticleBySlug(resolveSlug(slug), resolvedLocale);
@@ -35,14 +37,18 @@ export function DiscoverDetailScreen() {
       >
         <BackHeaderBar
           onBack={() => {
-            router.back();
+            if (router.canGoBack()) {
+              router.back();
+            } else {
+              router.replace("/(tabs)/discover");
+            }
           }}
           palette={palette}
           title={copy.common.appName}
         />
       </View>
       <ScrollView
-        contentContainerStyle={styles.container}
+        contentContainerStyle={[styles.container, isExpanded ? styles.containerWide : null]}
         showsVerticalScrollIndicator={false}
       >
         {article ? (
@@ -207,6 +213,11 @@ const styles = StyleSheet.create({
     gap: 16,
     padding: 20,
     paddingBottom: 36,
+  },
+  containerWide: {
+    alignSelf: "center",
+    maxWidth: 720,
+    width: "100%",
   },
   emptyState: {
     borderRadius: 28,

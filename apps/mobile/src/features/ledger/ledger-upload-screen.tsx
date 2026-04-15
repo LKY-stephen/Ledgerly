@@ -6,6 +6,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { BackHeaderBar } from "../../components/back-header-bar";
 import { CfoAvatar } from "../../components/cfo-avatar";
+import { useResponsive } from "../../hooks/use-responsive";
 import {
   parseFile,
   pickDocumentUploadCandidates,
@@ -16,6 +17,7 @@ import { useAppShell } from "../app-shell/provider";
 
 export function LedgerUploadScreen() {
   const router = useRouter();
+  const { isExpanded } = useResponsive();
   const { copy, palette, resolvedLocale } = useAppShell();
   const uploadCopy = copy.ledger.upload;
   const [error, setError] = useState<string | null>(null);
@@ -100,13 +102,19 @@ export function LedgerUploadScreen() {
         ]}
       >
         <BackHeaderBar
-          onBack={() => router.back()}
+          onBack={() => {
+            if (router.canGoBack()) {
+              router.back();
+            } else {
+              router.replace("/(tabs)/ledger");
+            }
+          }}
           palette={palette}
           rightAccessory={<CfoAvatar />}
           title={copy.common.appName}
         />
       </View>
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView contentContainerStyle={[styles.container, isExpanded ? styles.containerWide : null]}>
         <View style={styles.heroBlock}>
           <Text style={[styles.eyebrow, { color: palette.inkMuted }]}>
             {uploadCopy.eyebrow}
@@ -263,6 +271,11 @@ const styles = StyleSheet.create({
     gap: 14,
     padding: 18,
     paddingBottom: 32,
+  },
+  containerWide: {
+    alignSelf: "center",
+    maxWidth: 600,
+    width: "100%",
   },
   dropCard: {
     alignItems: "center",

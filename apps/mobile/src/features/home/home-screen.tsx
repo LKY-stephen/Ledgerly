@@ -2,6 +2,7 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import {
+  Platform,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -13,6 +14,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { AppIcon } from "../../components/app-icon";
 import { CfoAvatar } from "../../components/cfo-avatar";
+import { useResponsive } from "../../hooks/use-responsive";
 import {
   formatCurrencyFromCents,
   formatDisplayDate,
@@ -38,6 +40,7 @@ function ActivityIcon({ color, icon }: { color: string; icon: string }) {
 export function HomeScreen() {
   const router = useRouter();
   const { copy, palette, resolvedLocale } = useAppShell();
+  const { isExpanded } = useResponsive();
   const {
     error,
     isLoaded,
@@ -106,7 +109,7 @@ export function HomeScreen() {
       <ScrollView
         contentContainerStyle={styles.container}
         refreshControl={
-          <RefreshControl onRefresh={refresh} refreshing={isRefreshing} />
+          Platform.OS !== "web" ? <RefreshControl onRefresh={refresh} refreshing={isRefreshing} /> : undefined
         }
         showsVerticalScrollIndicator={false}
       >
@@ -117,224 +120,223 @@ export function HomeScreen() {
               {copy.common.appName}
             </Text>
           </View>
-          <Pressable
-            accessibilityLabel={screenCopy.notificationsLabel}
-            accessibilityRole="button"
-            onPress={() => router.push("/discover")}
-            style={({ pressed }) => [
-              styles.notificationButton,
-              { backgroundColor: pressed ? "#ECECE8" : "#F4F4F2" },
-            ]}
-          >
-            <Ionicons color="#002045" name="notifications-outline" size={18} />
-            <View style={styles.notificationDot} />
-          </Pressable>
-        </View>
-
-        <View style={styles.heroBlock}>
-          <View style={styles.heroHeader}>
-            <View style={styles.heroHeaderCopy}>
-              <Text
-                style={[styles.heroTitle, { color: "rgba(0, 32, 69, 0.6)" }]}
-              >
-                {screenCopy.monthlyProfit}
-              </Text>
-              <Text style={[styles.heroAmount, { color: "#002045" }]}>
-                {netLabel}
-              </Text>
-            </View>
-
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => router.push("/ledger/upload")}
-              style={({ pressed }) => [
-                styles.heroAction,
-                {
-                  backgroundColor: pressed ? "#173761" : "#002045",
-                },
-              ]}
-            >
-              <View style={styles.heroActionContent}>
-                <AppIcon color="#FFFFFF" name="add" size={11} />
-                <Text style={styles.heroActionLabel}>
-                  {screenCopy.newRecords}
-                </Text>
-              </View>
-            </Pressable>
-          </View>
-
-          <View style={styles.metricStrip}>
-            <View style={styles.metricItem}>
-              <Text style={styles.metricLabel}>{screenCopy.income}</Text>
-              <Text style={styles.metricValue}>{incomeLabel}</Text>
-            </View>
-            <View style={styles.metricItem}>
-              <Text style={styles.metricLabel}>{screenCopy.outflow}</Text>
-              <Text style={styles.metricValue}>{outflowLabel}</Text>
-            </View>
-          </View>
-        </View>
-
-        <View style={styles.profitCard}>
-          <View style={styles.profitHeader}>
-            <View>
-              <Text style={styles.profitTitle}>{screenCopy.trendTitle}</Text>
-              <Text style={styles.profitSubtitle}>
-                {screenCopy.trendSubtitle}
-              </Text>
-            </View>
-          </View>
-
-          {hasTrendActivity ? (
-            <View style={styles.trendPanel}>
-              {selectedTrendPoint ? (
-                <View style={styles.trendTooltip}>
-                  <View style={styles.trendTooltipHeader}>
-                    <Text style={styles.trendTooltipDate}>
-                      {formatDisplayDate(
-                        selectedTrendPoint.date,
-                        resolvedLocale,
-                      )}
-                    </Text>
-                    <Text
-                      style={[
-                        styles.trendTooltipNet,
-                        selectedTrendPoint.netCents >= 0
-                          ? styles.trendTooltipNetPositive
-                          : styles.trendTooltipNetNegative,
-                      ]}
-                    >
-                      {screenCopy.net}:{" "}
-                      {formatSignedCurrencyFromCents(
-                        selectedTrendPoint.netCents,
-                      )}
-                    </Text>
-                  </View>
-                  <View style={styles.trendTooltipMetrics}>
-                    <View style={styles.trendTooltipMetric}>
-                      <Text style={styles.trendTooltipMetricLabel}>
-                        {screenCopy.income}
-                      </Text>
-                      <Text
-                        style={[
-                          styles.trendTooltipMetricValue,
-                          styles.trendTooltipMetricIncome,
-                        ]}
-                      >
-                        {formatCurrencyFromCents(
-                          selectedTrendPoint.incomeCents,
-                        )}
-                      </Text>
-                    </View>
-                    <View style={styles.trendTooltipMetric}>
-                      <Text style={styles.trendTooltipMetricLabel}>
-                        {screenCopy.outflow}
-                      </Text>
-                      <Text
-                        style={[
-                          styles.trendTooltipMetricValue,
-                          styles.trendTooltipMetricExpense,
-                        ]}
-                      >
-                        {formatCurrencyFromCents(
-                          selectedTrendPoint.expenseCents,
-                        )}
-                      </Text>
-                    </View>
-                  </View>
-                </View>
-              ) : null}
-
-              <View style={styles.chartShell}>
-                <View style={styles.chartAxis}>
-                  <Text style={styles.axisLabel}>
-                    {formatCompactCurrency(chartPeak)}
-                  </Text>
-                  <Text style={styles.axisLabel}>
-                    {formatCompactCurrency(Math.round(chartPeak / 2))}
-                  </Text>
-                  <Text style={styles.axisLabel}>$0</Text>
-                </View>
-                <ScrollView
-                  contentContainerStyle={styles.chartScrollContent}
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  style={styles.chartScroll}
-                >
-                  <View style={styles.barRow}>
-                    {snapshot.trend.map((bar, index) => (
-                      <TrendBar
-                        key={bar.date}
-                        bar={bar}
-                        isAnchor={
-                          index % 5 === 0 || index === snapshot.trend.length - 1
-                        }
-                        isSelected={bar.date === selectedTrendPoint?.date}
-                        onPress={() => setSelectedTrendDate(bar.date)}
-                        peak={chartPeak}
-                      />
-                    ))}
-                  </View>
-                </ScrollView>
-              </View>
-            </View>
-          ) : (
-            <View style={styles.trendEmptyState}>
-              <View style={styles.trendEmptyIconWrap}>
-                <Ionicons color="#002045" name="bar-chart-outline" size={18} />
-              </View>
-              <View style={styles.trendEmptyCopy}>
-                <Text style={styles.trendEmptyTitle}>
-                  {screenCopy.trendEmptyTitle}
-                </Text>
-                <Text style={styles.trendEmptySummary}>
-                  {screenCopy.trendEmptySummary}
-                </Text>
-              </View>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+            {Platform.OS === "web" ? (
               <Pressable
+                accessibilityLabel="Refresh"
                 accessibilityRole="button"
-                onPress={() => router.push("/ledger/upload")}
+                onPress={refresh}
                 style={({ pressed }) => [
-                  styles.secondaryActionButton,
-                  pressed ? styles.secondaryActionButtonPressed : null,
+                  styles.notificationButton,
+                  { backgroundColor: pressed ? "#ECECE8" : "#F4F4F2", opacity: isRefreshing ? 0.5 : 1 },
                 ]}
               >
-                <Text style={styles.secondaryActionLabel}>
-                  {screenCopy.newRecords}
-                </Text>
+                <Ionicons color="#002045" name="refresh-outline" size={18} />
               </Pressable>
-            </View>
-          )}
-        </View>
-
-        <View style={styles.activitySection}>
-          <View style={styles.activityHeader}>
-            <View style={styles.activityHeaderCopy}>
-              <Text style={styles.activityTitle}>
-                {screenCopy.recentActivityTitle}
-              </Text>
-              <Text style={styles.activitySubtitle}>
-                {screenCopy.recentActivitySubtitle}
-              </Text>
-            </View>
+            ) : null}
             <Pressable
+              accessibilityLabel={screenCopy.notificationsLabel}
               accessibilityRole="button"
-              onPress={() => router.push("/(tabs)/ledger")}
+              onPress={() => router.push("/discover")}
+              style={({ pressed }) => [
+                styles.notificationButton,
+                { backgroundColor: pressed ? "#ECECE8" : "#F4F4F2" },
+              ]}
             >
-              <Text style={styles.seeAllLink}>{screenCopy.seeAll}</Text>
+              <Ionicons color="#002045" name="notifications-outline" size={18} />
+              <View style={styles.notificationDot} />
             </Pressable>
           </View>
+        </View>
 
-          <View style={styles.activityCard}>
-            {snapshot.recentRecords.length === 0 ? (
-              <View style={styles.emptyCardState}>
-                <Text style={styles.emptyCardTitle}>
-                  {isLoaded ? screenCopy.emptyTitle : screenCopy.loadingTitle}
-                </Text>
-                <Text style={styles.emptyCardSummary}>
-                  {screenCopy.emptySummary}
-                </Text>
-                {isLoaded ? (
+        {/* ---------- Two-column body on expanded, single-column on compact ---------- */}
+        <View style={isExpanded ? styles.wideBody : undefined}>
+          <View style={isExpanded ? styles.wideLeft : undefined}>
+            <View style={styles.heroBlock}>
+              <View style={styles.heroHeader}>
+                <View style={styles.heroHeaderCopy}>
+                  <Text
+                    style={[styles.heroTitle, { color: "rgba(0, 32, 69, 0.6)" }]}
+                  >
+                    {screenCopy.monthlyProfit}
+                  </Text>
+                  <Text style={[styles.heroAmount, { color: "#002045" }]}>
+                    {netLabel}
+                  </Text>
+                </View>
+
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => router.push("/ledger/upload")}
+                  style={({ pressed }) => [
+                    styles.heroAction,
+                    {
+                      backgroundColor: pressed ? "#173761" : "#002045",
+                    },
+                  ]}
+                >
+                  <View style={styles.heroActionContent}>
+                    <AppIcon color="#FFFFFF" name="add" size={11} />
+                    <Text style={styles.heroActionLabel}>
+                      {screenCopy.newRecords}
+                    </Text>
+                  </View>
+                </Pressable>
+              </View>
+
+              <View style={styles.metricStrip}>
+                <View style={styles.metricItem}>
+                  <Text style={styles.metricLabel}>{screenCopy.income}</Text>
+                  <Text style={styles.metricValue}>{incomeLabel}</Text>
+                </View>
+                <View style={styles.metricItem}>
+                  <Text style={styles.metricLabel}>{screenCopy.outflow}</Text>
+                  <Text style={styles.metricValue}>{outflowLabel}</Text>
+                </View>
+              </View>
+            </View>
+
+            <View style={[styles.profitCard, isExpanded ? styles.wideGapTop : null]}>
+              <View style={styles.profitHeader}>
+                <View>
+                  <Text style={styles.profitTitle}>{screenCopy.trendTitle}</Text>
+                  <Text style={styles.profitSubtitle}>
+                    {screenCopy.trendSubtitle}
+                  </Text>
+                </View>
+              </View>
+
+              {hasTrendActivity ? (
+                <View style={styles.trendPanel}>
+                  {selectedTrendPoint ? (
+                    <View style={styles.trendTooltip}>
+                      <View style={styles.trendTooltipHeader}>
+                        <Text style={styles.trendTooltipDate}>
+                          {formatDisplayDate(
+                            selectedTrendPoint.date,
+                            resolvedLocale,
+                          )}
+                        </Text>
+                        <Text
+                          style={[
+                            styles.trendTooltipNet,
+                            selectedTrendPoint.netCents >= 0
+                              ? styles.trendTooltipNetPositive
+                              : styles.trendTooltipNetNegative,
+                          ]}
+                        >
+                          {screenCopy.net}:{" "}
+                          {formatSignedCurrencyFromCents(
+                            selectedTrendPoint.netCents,
+                          )}
+                        </Text>
+                      </View>
+                      <View style={styles.trendTooltipMetrics}>
+                        <View style={styles.trendTooltipMetric}>
+                          <Text style={styles.trendTooltipMetricLabel}>
+                            {screenCopy.income}
+                          </Text>
+                          <Text
+                            style={[
+                              styles.trendTooltipMetricValue,
+                              styles.trendTooltipMetricIncome,
+                            ]}
+                          >
+                            {formatCurrencyFromCents(
+                              selectedTrendPoint.incomeCents,
+                            )}
+                          </Text>
+                        </View>
+                        <View style={styles.trendTooltipMetric}>
+                          <Text style={styles.trendTooltipMetricLabel}>
+                            {screenCopy.outflow}
+                          </Text>
+                          <Text
+                            style={[
+                              styles.trendTooltipMetricValue,
+                              styles.trendTooltipMetricExpense,
+                            ]}
+                          >
+                            {formatCurrencyFromCents(
+                              selectedTrendPoint.expenseCents,
+                            )}
+                          </Text>
+                        </View>
+                      </View>
+                    </View>
+                  ) : null}
+
+                  <View style={styles.chartShell}>
+                    <View style={styles.chartAxis}>
+                      <Text style={styles.axisLabel}>
+                        {formatCompactCurrency(chartPeak)}
+                      </Text>
+                      <Text style={styles.axisLabel}>
+                        {formatCompactCurrency(Math.round(chartPeak / 2))}
+                      </Text>
+                      <Text style={styles.axisLabel}>$0</Text>
+                    </View>
+                    {Platform.OS === "web" ? (
+                      <View
+                        style={[
+                          styles.chartScroll,
+                          // @ts-expect-error: web-only CSS – overflowX lets content scroll horizontally without capturing vertical wheel events
+                          { overflowX: "auto", overflowY: "hidden" },
+                        ]}
+                      >
+                        <View style={[styles.barRow, styles.chartScrollContent]}>
+                          {snapshot.trend.map((bar, index) => (
+                            <TrendBar
+                              key={bar.date}
+                              bar={bar}
+                              isAnchor={
+                                index % 5 === 0 || index === snapshot.trend.length - 1
+                              }
+                              isSelected={bar.date === selectedTrendPoint?.date}
+                              onPress={() => setSelectedTrendDate(bar.date)}
+                              peak={chartPeak}
+                            />
+                          ))}
+                        </View>
+                      </View>
+                    ) : (
+                      <ScrollView
+                        contentContainerStyle={styles.chartScrollContent}
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        style={styles.chartScroll}
+                      >
+                        <View style={styles.barRow}>
+                          {snapshot.trend.map((bar, index) => (
+                            <TrendBar
+                              key={bar.date}
+                              bar={bar}
+                              isAnchor={
+                                index % 5 === 0 || index === snapshot.trend.length - 1
+                              }
+                              isSelected={bar.date === selectedTrendPoint?.date}
+                              onPress={() => setSelectedTrendDate(bar.date)}
+                              peak={chartPeak}
+                            />
+                          ))}
+                        </View>
+                      </ScrollView>
+                    )}
+                  </View>
+                </View>
+              ) : (
+                <View style={styles.trendEmptyState}>
+                  <View style={styles.trendEmptyIconWrap}>
+                    <Ionicons color="#002045" name="bar-chart-outline" size={18} />
+                  </View>
+                  <View style={styles.trendEmptyCopy}>
+                    <Text style={styles.trendEmptyTitle}>
+                      {screenCopy.trendEmptyTitle}
+                    </Text>
+                    <Text style={styles.trendEmptySummary}>
+                      {screenCopy.trendEmptySummary}
+                    </Text>
+                  </View>
                   <Pressable
                     accessibilityRole="button"
                     onPress={() => router.push("/ledger/upload")}
@@ -347,85 +349,131 @@ export function HomeScreen() {
                       {screenCopy.newRecords}
                     </Text>
                   </Pressable>
-                ) : null}
-              </View>
-            ) : (
-              snapshot.recentRecords.map((item, index) => {
-                const income = item.recordKind === "income";
-                const accent = income ? "#45664A" : "#BA1A1A";
-                const icon = income
-                  ? "cash-plus"
-                  : item.recordKind === "expense"
-                    ? "receipt-outline"
-                    : "wallet-outline";
-
-                return (
-                  <View
-                    key={item.recordId}
-                    style={[
-                      styles.activityRow,
-                      index > 0 ? styles.activityRowBorder : null,
-                    ]}
-                  >
-                    <View style={styles.activityLeft}>
-                      <View
-                        style={[
-                          styles.activityIconWrap,
-                          {
-                            backgroundColor: income
-                              ? "#C3E9C5"
-                              : "rgba(255, 218, 214, 0.3)",
-                          },
-                        ]}
-                      >
-                        <ActivityIcon color={accent} icon={icon} />
-                      </View>
-                      <View style={styles.activityCopy}>
-                        <Text
-                          numberOfLines={2}
-                          style={styles.activityItemTitle}
-                        >
-                          {item.description}
-                        </Text>
-                        <Text
-                          numberOfLines={1}
-                          style={[styles.activityItemType, { color: accent }]}
-                        >
-                          {income ? item.sourceLabel : item.targetLabel}
-                        </Text>
-                      </View>
-                    </View>
-                    <View style={styles.activityRight}>
-                      <Text style={styles.activityAmount}>
-                        {income ? "+" : "-"}
-                        {formatCurrencyFromCents(item.amountCents)}
-                      </Text>
-                      <Text style={styles.activityDate}>
-                        {formatDisplayDate(item.occurredOn, resolvedLocale)}
-                      </Text>
-                    </View>
-                  </View>
-                );
-              })
-            )}
+                </View>
+              )}
+            </View>
           </View>
 
-          {error ? <Text style={styles.inlineError}>{error}</Text> : null}
+          <View style={[styles.activitySection, isExpanded ? styles.wideRight : null]}>
+            <View style={styles.activityHeader}>
+              <View style={styles.activityHeaderCopy}>
+                <Text style={styles.activityTitle}>
+                  {screenCopy.recentActivityTitle}
+                </Text>
+                <Text style={styles.activitySubtitle}>
+                  {screenCopy.recentActivitySubtitle}
+                </Text>
+              </View>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => router.push("/(tabs)/ledger")}
+              >
+                <Text style={styles.seeAllLink}>{screenCopy.seeAll}</Text>
+              </Pressable>
+            </View>
 
-          {snapshot.hasMore ? (
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => loadMore()}
-              style={({ pressed }) => [
-                styles.loadMoreButton,
-                { backgroundColor: pressed ? "#ECECE8" : "#F4F4F2" },
-              ]}
-            >
-              <Text style={styles.loadMoreLabel}>
-                {isLoadingMore ? screenCopy.loadingMore : screenCopy.loadMore}
-              </Text>
-            </Pressable>
-          ) : null}
+            <View style={styles.activityCard}>
+              {snapshot.recentRecords.length === 0 ? (
+                <View style={styles.emptyCardState}>
+                  <Text style={styles.emptyCardTitle}>
+                    {isLoaded ? screenCopy.emptyTitle : screenCopy.loadingTitle}
+                  </Text>
+                  <Text style={styles.emptyCardSummary}>
+                    {screenCopy.emptySummary}
+                  </Text>
+                  {isLoaded ? (
+                    <Pressable
+                      accessibilityRole="button"
+                      onPress={() => router.push("/ledger/upload")}
+                      style={({ pressed }) => [
+                        styles.secondaryActionButton,
+                        pressed ? styles.secondaryActionButtonPressed : null,
+                      ]}
+                    >
+                      <Text style={styles.secondaryActionLabel}>
+                        {screenCopy.newRecords}
+                      </Text>
+                    </Pressable>
+                  ) : null}
+                </View>
+              ) : (
+                snapshot.recentRecords.map((item, index) => {
+                  const income = item.recordKind === "income";
+                  const accent = income ? "#45664A" : "#BA1A1A";
+                  const icon = income
+                    ? "cash-plus"
+                    : item.recordKind === "expense"
+                      ? "receipt-outline"
+                      : "wallet-outline";
+
+                  return (
+                    <View
+                      key={item.recordId}
+                      style={[
+                        styles.activityRow,
+                        index > 0 ? styles.activityRowBorder : null,
+                      ]}
+                    >
+                      <View style={styles.activityLeft}>
+                        <View
+                          style={[
+                            styles.activityIconWrap,
+                            {
+                              backgroundColor: income
+                                ? "#C3E9C5"
+                                : "rgba(255, 218, 214, 0.3)",
+                            },
+                          ]}
+                        >
+                          <ActivityIcon color={accent} icon={icon} />
+                        </View>
+                        <View style={styles.activityCopy}>
+                          <Text
+                            numberOfLines={2}
+                            style={styles.activityItemTitle}
+                          >
+                            {item.description}
+                          </Text>
+                          <Text
+                            numberOfLines={1}
+                            style={[styles.activityItemType, { color: accent }]}
+                          >
+                            {income ? item.sourceLabel : item.targetLabel}
+                          </Text>
+                        </View>
+                      </View>
+                      <View style={styles.activityRight}>
+                        <Text style={styles.activityAmount}>
+                          {income ? "+" : "-"}
+                          {formatCurrencyFromCents(item.amountCents)}
+                        </Text>
+                        <Text style={styles.activityDate}>
+                          {formatDisplayDate(item.occurredOn, resolvedLocale)}
+                        </Text>
+                      </View>
+                    </View>
+                  );
+                })
+              )}
+            </View>
+
+            {error ? <Text style={styles.inlineError}>{error}</Text> : null}
+
+            {snapshot.hasMore ? (
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => loadMore()}
+                style={({ pressed }) => [
+                  styles.loadMoreButton,
+                  { backgroundColor: pressed ? "#ECECE8" : "#F4F4F2" },
+                ]}
+              >
+                <Text style={styles.loadMoreLabel}>
+                  {isLoadingMore ? screenCopy.loadingMore : screenCopy.loadMore}
+                </Text>
+              </Pressable>
+            ) : null}
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -984,5 +1032,19 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 2,
+  },
+  wideBody: {
+    flexDirection: "row",
+    gap: 20,
+  },
+  wideGapTop: {
+    marginTop: 16,
+  },
+  wideLeft: {
+    flex: 55,
+    gap: 0,
+  },
+  wideRight: {
+    flex: 45,
   },
 });

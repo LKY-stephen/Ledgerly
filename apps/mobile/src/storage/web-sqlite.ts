@@ -10,7 +10,7 @@ let sqlJsPromise: Promise<SqlJsStatic> | null = null;
 function getSqlJs(): Promise<SqlJsStatic> {
   if (!sqlJsPromise) {
     sqlJsPromise = initSqlJs({
-      locateFile: (file: string) => `https://sql.js.org/dist/${file}`,
+      locateFile: (file: string) => `/${file}`,
     });
   }
 
