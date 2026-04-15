@@ -27,7 +27,12 @@
       "predictiveBackGestureEnabled": false
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "name": "Ledgerly",
+      "shortName": "Ledgerly",
+      "description": "Creator finance platform",
+      "themeColor": "#09211f",
+      "backgroundColor": "#09211f"
     },
     "plugins": [
       "expo-router",

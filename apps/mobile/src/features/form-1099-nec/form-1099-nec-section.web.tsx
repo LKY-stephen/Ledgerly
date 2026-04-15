@@ -2,8 +2,9 @@ import type { ReactNode } from "react";
 import type { SurfaceTokens } from "@creator-cfo/ui";
 
 import type { AppCopy } from "../app-shell/copy";
+import { LocalStorageProvider } from "../../storage/provider.web";
 import { Form1099NecPreview } from "./form-1099-nec-preview";
-import { createEmptyForm1099NecSnapshot } from "./form-1099-nec-model";
+import { useForm1099Nec } from "./use-form-1099-nec.web";
 
 interface Form1099NecSectionProps {
   copy: AppCopy["discover"]["form1099Nec"];
@@ -13,24 +14,32 @@ interface Form1099NecSectionProps {
 }
 
 export function Form1099NecSection(props: Form1099NecSectionProps) {
+  return (
+    <LocalStorageProvider>
+      <Form1099NecWebSection {...props} />
+    </LocalStorageProvider>
+  );
+}
+
+function Form1099NecWebSection(props: Form1099NecSectionProps) {
   const { copy, manualBadge, palette, renderLauncher } = props;
+  const { error, isLoaded, recipients, selectedRecipientId, selectRecipient, snapshot } =
+    useForm1099Nec();
 
   return (
     <Form1099NecPreview
       copy={copy}
-      error={null}
+      error={error}
       footerNote={copy.footerWeb}
-      isLoaded={true}
+      isLoaded={isLoaded}
       manualBadge={manualBadge}
       palette={palette}
-      recipients={[]}
+      recipients={recipients}
       renderLauncher={renderLauncher}
-      sectionEyebrow={copy.webPreviewLabel}
-      selectedRecipientId={null}
-      snapshot={createEmptyForm1099NecSnapshot()}
-      onSelectRecipient={() => {
-        return;
-      }}
+      sectionEyebrow="1099-NEC"
+      selectedRecipientId={selectedRecipientId}
+      snapshot={snapshot}
+      onSelectRecipient={selectRecipient}
     />
   );
 }

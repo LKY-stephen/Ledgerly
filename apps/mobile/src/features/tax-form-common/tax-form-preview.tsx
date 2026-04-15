@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { SectionCard, type SurfaceTokens } from "@creator-cfo/ui";
 
+import { BackHeaderBar } from "../../components/back-header-bar";
 import type { TaxFormPage, TaxFormSlotId, TaxFormSlotSource, TaxFormSlotState } from "./types";
 
 const calculatedLegendColor = "#2563eb";
@@ -192,16 +193,7 @@ export function TaxFormPreview(props: TaxFormPreviewProps) {
                   },
                 ]}
               >
-                <Text style={[styles.previewHeaderTitle, { color: palette.ink }]}>{copy.title}</Text>
-                <Pressable
-                  accessibilityRole="button"
-                  onPress={closePreview}
-                  style={[styles.closeButton, { borderColor: palette.border }]}
-                >
-                  <Text style={[styles.closeButtonLabel, { color: palette.ink }]}>
-                    {copy.closePreview}
-                  </Text>
-                </Pressable>
+                <BackHeaderBar onBack={closePreview} palette={palette} title={copy.title} />
               </View>
 
               <ScrollView contentContainerStyle={styles.previewScrollContent}>
@@ -471,16 +463,6 @@ function PageButton(props: {
 }
 
 const styles = StyleSheet.create({
-  closeButton: {
-    borderRadius: 14,
-    borderWidth: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-  },
-  closeButtonLabel: {
-    fontSize: 14,
-    fontWeight: "700",
-  },
   errorText: {
     fontSize: 14,
     fontWeight: "600",
@@ -608,18 +590,9 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   previewHeader: {
-    alignItems: "center",
     borderBottomWidth: 1,
-    flexDirection: "row",
-    justifyContent: "space-between",
     paddingHorizontal: 18,
-    paddingVertical: 14,
-  },
-  previewHeaderTitle: {
-    flex: 1,
-    fontSize: 18,
-    fontWeight: "800",
-    paddingRight: 16,
+    paddingVertical: 10,
   },
   previewModalScreen: {
     flex: 1,

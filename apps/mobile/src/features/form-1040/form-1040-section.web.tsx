@@ -2,8 +2,9 @@ import type { ReactNode } from "react";
 import type { SurfaceTokens } from "@creator-cfo/ui";
 
 import type { AppCopy } from "../app-shell/copy";
+import { LocalStorageProvider } from "../../storage/provider.web";
 import { Form1040Preview } from "./form-1040-preview";
-import { createEmptyForm1040Snapshot } from "./form-1040-model";
+import { useForm1040 } from "./use-form-1040";
 
 interface Form1040SectionProps {
   calculatedBadge: string;
@@ -14,20 +15,29 @@ interface Form1040SectionProps {
 }
 
 export function Form1040Section(props: Form1040SectionProps) {
+  return (
+    <LocalStorageProvider>
+      <Form1040WebSection {...props} />
+    </LocalStorageProvider>
+  );
+}
+
+function Form1040WebSection(props: Form1040SectionProps) {
   const { calculatedBadge, copy, manualBadge, palette, renderLauncher } = props;
+  const { error, isLoaded, snapshot } = useForm1040();
 
   return (
     <Form1040Preview
       calculatedBadge={calculatedBadge}
       copy={copy}
-      error={null}
+      error={error}
       footerNote={copy.footerWeb}
-      isLoaded={true}
+      isLoaded={isLoaded}
       manualBadge={manualBadge}
       palette={palette}
       renderLauncher={renderLauncher}
-      sectionEyebrow={copy.webPreviewLabel}
-      snapshot={createEmptyForm1040Snapshot()}
+      sectionEyebrow="Form 1040"
+      snapshot={snapshot}
     />
   );
 }

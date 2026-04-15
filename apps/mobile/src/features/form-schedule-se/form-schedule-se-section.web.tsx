@@ -1,9 +1,11 @@
+import { useState } from "react";
 import type { ReactNode } from "react";
 import type { SurfaceTokens } from "@creator-cfo/ui";
 
 import type { AppCopy } from "../app-shell/copy";
+import { LocalStorageProvider } from "../../storage/provider.web";
 import { FormScheduleSEPreview } from "./form-schedule-se-preview";
-import { createEmptyFormScheduleSESnapshot } from "./form-schedule-se-model";
+import { useFormScheduleSE } from "./use-form-schedule-se.web";
 
 interface FormScheduleSESectionProps {
   calculatedBadge: string;
@@ -14,20 +16,35 @@ interface FormScheduleSESectionProps {
 }
 
 export function FormScheduleSESection(props: FormScheduleSESectionProps) {
+  return (
+    <LocalStorageProvider>
+      <FormScheduleSEWebSection {...props} />
+    </LocalStorageProvider>
+  );
+}
+
+function FormScheduleSEWebSection(props: FormScheduleSESectionProps) {
   const { calculatedBadge, copy, manualBadge, palette, renderLauncher } = props;
+  const currentTaxYear = new Date().getFullYear();
+  const taxYearOptions = [currentTaxYear - 1, currentTaxYear];
+  const [selectedTaxYear, setSelectedTaxYear] = useState(currentTaxYear);
+  const { error, isLoaded, snapshot } = useFormScheduleSE({ taxYear: selectedTaxYear });
 
   return (
     <FormScheduleSEPreview
       calculatedBadge={calculatedBadge}
       copy={copy}
-      error={null}
+      error={error}
       footerNote={copy.footerWeb}
-      isLoaded={true}
+      isLoaded={isLoaded}
       manualBadge={manualBadge}
+      onSelectTaxYear={setSelectedTaxYear}
       palette={palette}
       renderLauncher={renderLauncher}
-      sectionEyebrow={copy.webPreviewLabel}
-      snapshot={createEmptyFormScheduleSESnapshot()}
+      selectedTaxYear={selectedTaxYear}
+      sectionEyebrow="Schedule SE"
+      snapshot={snapshot}
+      taxYearOptions={taxYearOptions}
     />
   );
 }

@@ -1,5 +1,6 @@
 import { File } from "expo-file-system";
 import * as FileSystem from "expo-file-system/legacy";
+import * as Sharing from "expo-sharing";
 import { useSQLiteContext } from "expo-sqlite";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -10,8 +11,8 @@ import {
   Text,
   View,
 } from "react-native";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import {
-  buildTaxSupportPath,
   loadTaxHelperEvidenceFileLinks,
   loadTaxHelperSnapshot,
   type TaxHelperSnapshot,
@@ -30,12 +31,10 @@ import {
 } from "./ledger-tax-helper.shared";
 import { defaultEntityId } from "./ledger-domain";
 import { useAppShell } from "../app-shell/provider";
+import { BackHeaderBar } from "../../components/back-header-bar";
+import { CfoAvatar } from "../../components/cfo-avatar";
 import { getActivePackageRootDirectory } from "../../storage/package-environment.native";
-import {
-  buildPackageAbsolutePath,
-  getParentDirectory,
-  getBaseName,
-} from "../../storage/package-paths";
+import { buildPackageAbsolutePath } from "../../storage/package-paths";
 import { createReadableStorageDatabase } from "../../storage/storage-adapter";
 
 interface LedgerTaxHelperProps {
@@ -59,7 +58,7 @@ type WritableFileHandle = InstanceType<typeof File> & {
 
 export function LedgerTaxHelper(props: LedgerTaxHelperProps) {
   const { selectedScope, yearOptions } = props;
-  const { resolvedLocale } = useAppShell();
+  const { palette, resolvedLocale } = useAppShell();
   const database = useSQLiteContext();
   const [isVisible, setIsVisible] = useState(false);
   const [selectedYear, setSelectedYear] = useState<number | null>(
@@ -197,20 +196,13 @@ export function LedgerTaxHelper(props: LedgerTaxHelperProps) {
 
       const packageRoot = getActivePackageRootDirectory();
       const exportedAt = new Date().toISOString();
-      const archiveRelativePath = buildTaxSupportPath(
-        String(selectedYear),
-        `ledger-tax-helper-${selectedYear}-${buildArchiveTimestamp(exportedAt)}.zip`,
-      );
-      const archiveAbsolutePath = buildPackageAbsolutePath(
-        packageRoot,
-        archiveRelativePath,
-      );
+      const archiveFileName = `ledger-tax-helper-${selectedYear}-${buildArchiveTimestamp(exportedAt)}.zip`;
       const archiveEntries = await Promise.all([
         Promise.resolve({
           data: new TextEncoder().encode(
             JSON.stringify(
               buildLedgerTaxHelperArchiveManifest({
-                archiveFileName: getBaseName(archiveAbsolutePath),
+                archiveFileName,
                 derivedFields: snapshot.derivedFields,
                 evidenceFiles,
                 exportedAt,
@@ -247,21 +239,27 @@ export function LedgerTaxHelper(props: LedgerTaxHelperProps) {
         }),
       ]);
 
-      await FileSystem.makeDirectoryAsync(
-        getParentDirectory(archiveAbsolutePath),
-        {
-          intermediates: true,
-        },
-      );
-      asWritableFileHandle(new File(archiveAbsolutePath)).write(
+      const tempDir = `${FileSystem.cacheDirectory}tax-export/`;
+      const tempPath = `${tempDir}${archiveFileName}`;
+
+      await FileSystem.makeDirectoryAsync(tempDir, { intermediates: true });
+      asWritableFileHandle(new File(tempPath)).write(
         createStoredZipArchive(archiveEntries),
       );
+
+      await Sharing.shareAsync(tempPath, {
+        mimeType: "application/zip",
+        UTI: "com.pkware.zip-archive",
+      });
+
+      // Clean up temp file after sharing dialog closes
+      await FileSystem.deleteAsync(tempPath, { idempotent: true });
 
       setExportState({
         kind: "success",
         message: helperCopy.exportSaved(
           evidenceFiles.length,
-          archiveRelativePath,
+          archiveFileName,
         ),
       });
     } catch (nextError) {
@@ -304,26 +302,17 @@ export function LedgerTaxHelper(props: LedgerTaxHelperProps) {
         onRequestClose={closeHelper}
         visible={isVisible}
       >
-        <View style={styles.modalScreen}>
-          <View style={styles.modalHeader}>
-            <View style={styles.modalHeaderCopy}>
-              <Text style={styles.modalEyebrow}>{helperCopy.modalEyebrow}</Text>
-              <Text style={styles.modalTitle}>{helperCopy.modalTitle}</Text>
-              <Text style={styles.modalSummary}>{helperCopy.modalSummary}</Text>
-            </View>
-            <Pressable
-              accessibilityRole="button"
-              onPress={closeHelper}
-              style={({ pressed }) => [
-                styles.closeButton,
-                pressed ? styles.openButtonPressed : null,
-              ]}
-            >
-              <Text style={styles.closeButtonLabel}>{helperCopy.close}</Text>
-            </Pressable>
+        <SafeAreaProvider>
+        <SafeAreaView edges={["top", "left", "right"]} style={styles.modalScreen}>
+          <View style={styles.modalHeaderBar}>
+            <BackHeaderBar onBack={closeHelper} palette={palette} rightAccessory={<CfoAvatar />} title={helperCopy.modalTitle} />
           </View>
 
           <ScrollView contentContainerStyle={styles.modalContent}>
+            <View style={styles.modalIntro}>
+              <Text style={styles.modalEyebrow}>{helperCopy.modalEyebrow}</Text>
+              <Text style={styles.modalSummary}>{helperCopy.modalSummary}</Text>
+            </View>
             <View style={styles.sectionCard}>
               <Text style={styles.sectionTitle}>{helperCopy.yearTitle}</Text>
               <View style={styles.yearRow}>
@@ -467,7 +456,8 @@ export function LedgerTaxHelper(props: LedgerTaxHelperProps) {
               ) : null}
             </View>
           </ScrollView>
-        </View>
+        </SafeAreaView>
+        </SafeAreaProvider>
       </Modal>
     </>
   );
@@ -514,18 +504,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "800",
     lineHeight: 25,
-  },
-  closeButton: {
-    borderColor: "rgba(0, 32, 69, 0.12)",
-    borderRadius: 999,
-    borderWidth: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-  },
-  closeButtonLabel: {
-    color: "#002045",
-    fontSize: 14,
-    fontWeight: "700",
   },
   errorText: {
     color: "#B42318",
@@ -595,18 +573,14 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     textTransform: "uppercase",
   },
-  modalHeader: {
-    alignItems: "flex-start",
+  modalHeaderBar: {
     borderBottomColor: "rgba(0, 32, 69, 0.12)",
     borderBottomWidth: 1,
-    flexDirection: "row",
-    gap: 16,
-    justifyContent: "space-between",
-    padding: 20,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
   },
-  modalHeaderCopy: {
-    flex: 1,
-    gap: 6,
+  modalIntro: {
+    gap: 8,
   },
   modalScreen: {
     backgroundColor: "#EEF5FB",
@@ -616,12 +590,6 @@ const styles = StyleSheet.create({
     color: "rgba(0, 32, 69, 0.68)",
     fontSize: 14,
     lineHeight: 21,
-  },
-  modalTitle: {
-    color: "#002045",
-    fontSize: 24,
-    fontWeight: "800",
-    lineHeight: 29,
   },
   noticeStack: {
     gap: 8,

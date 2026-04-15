@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { createReadableStorageDatabase } from "@creator-cfo/storage";
 
 import {
   createEmptyLedgerSnapshot,
@@ -14,6 +13,10 @@ import {
   buildLedgerPeriodIdForYear,
 } from "./ledger-screen-state";
 import { useAppShell } from "../app-shell/provider";
+import {
+  createReadableStorageDatabaseFromWeb,
+  useWebDatabaseContext,
+} from "../../storage/provider.web";
 
 export interface UseLedgerScreenResult {
   error: string | null;
@@ -33,20 +36,9 @@ export interface UseLedgerScreenResult {
   snapshot: LedgerScreenSnapshot;
 }
 
-const emptyDatabase = createReadableStorageDatabase({
-  async getAllAsync<Row>() {
-    return [] as Row[];
-  },
-  async getFirstAsync<Row>() {
-    return {
-      maxOccurredOn: null,
-      minOccurredOn: null,
-    } as Row;
-  },
-});
-
 export function useLedgerScreen(): UseLedgerScreenResult {
   const { resolvedLocale, storageRevision } = useAppShell();
+  const database = useWebDatabaseContext();
   const [error, setError] = useState<string | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -68,7 +60,9 @@ export function useLedgerScreen(): UseLedgerScreenResult {
     setIsRefreshing(true);
     setError(null);
 
-    loadLedgerSnapshot(emptyDatabase, {
+    const readableDb = createReadableStorageDatabaseFromWeb(database);
+
+    loadLedgerSnapshot(readableDb, {
       forceDefaultSelection: false,
       locale: resolvedLocale,
       preferredPeriodId: selectedPeriodId,
@@ -106,7 +100,7 @@ export function useLedgerScreen(): UseLedgerScreenResult {
     return () => {
       isMounted = false;
     };
-  }, [refreshNonce, resolvedLocale, selectedPeriodId, selectedScope, storageRevision]);
+  }, [database, refreshNonce, resolvedLocale, selectedPeriodId, selectedScope, storageRevision]);
 
   return {
     error,
