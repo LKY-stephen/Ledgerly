@@ -1,7 +1,7 @@
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { BackHeaderBar } from "../../components/back-header-bar";
@@ -176,33 +176,35 @@ export function LedgerUploadScreen() {
               </View>
             </Pressable>
 
-            <Pressable
-              accessibilityRole="button"
-              disabled={isBusy}
-              onPress={() => handleImport("camera")}
-              style={({ pressed }) => [
-                styles.secondaryButton,
-                {
-                  backgroundColor: pressed ? palette.paperMuted : palette.paper,
-                  borderColor: palette.border,
-                  opacity: isBusy ? 0.7 : 1,
-                },
-              ]}
-              testID="ledger-upload-camera-button"
-            >
-              <View style={styles.primaryButtonContent}>
-                <MaterialCommunityIcons
-                  color={palette.ink}
-                  name="camera-outline"
-                  size={18}
-                />
-                <Text
-                  style={[styles.secondaryButtonLabel, { color: palette.ink }]}
-                >
-                  {uploadCopy.takePhoto}
-                </Text>
-              </View>
-            </Pressable>
+            {Platform.OS !== "web" && (
+              <Pressable
+                accessibilityRole="button"
+                disabled={isBusy}
+                onPress={() => handleImport("camera")}
+                style={({ pressed }) => [
+                  styles.secondaryButton,
+                  {
+                    backgroundColor: pressed ? palette.paperMuted : palette.paper,
+                    borderColor: palette.border,
+                    opacity: isBusy ? 0.7 : 1,
+                  },
+                ]}
+                testID="ledger-upload-camera-button"
+              >
+                <View style={styles.primaryButtonContent}>
+                  <MaterialCommunityIcons
+                    color={palette.ink}
+                    name="camera-outline"
+                    size={18}
+                  />
+                  <Text
+                    style={[styles.secondaryButtonLabel, { color: palette.ink }]}
+                  >
+                    {uploadCopy.takePhoto}
+                  </Text>
+                </View>
+              </Pressable>
+            )}
 
             <Pressable
               accessibilityRole="button"

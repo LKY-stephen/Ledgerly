@@ -2,6 +2,7 @@ import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 
 import { AppShellProvider, useAppShell } from "../src/features/app-shell/provider";
+import { WebLayoutContainer } from "../src/components/web-layout-container";
 
 function RootNavigator() {
   const { palette } = useAppShell();
@@ -9,14 +10,16 @@ function RootNavigator() {
   return (
     <>
       <StatusBar style={palette.statusBarStyle} />
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: {
-            backgroundColor: palette.shell,
-          },
-        }}
-      />
+      <WebLayoutContainer>
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: {
+              backgroundColor: palette.shell,
+            },
+          }}
+        />
+      </WebLayoutContainer>
     </>
   );
 }

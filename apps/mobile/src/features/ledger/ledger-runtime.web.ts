@@ -2,6 +2,12 @@ import * as DocumentPicker from "expo-document-picker";
 import * as ImagePicker from "expo-image-picker";
 
 import type { PlannerSummary, ReceiptParsePayload } from "@creator-cfo/schemas";
+import {
+  createReadableStorageDatabase,
+  createWritableStorageDatabase,
+  resolveStandardReceiptEntry,
+  persistResolvedStandardReceiptEntry,
+} from "@creator-cfo/storage";
 import type { ResolvedLocale } from "../app-shell/types";
 
 import {
@@ -11,6 +17,7 @@ import {
 } from "./remote-parse";
 import {
   buildRemoteExtractedData,
+  defaultEntityId,
   type LedgerReviewValues,
   type WorkflowCandidateRecord,
   type WorkflowWriteProposalItem,
@@ -27,6 +34,9 @@ import {
   type HomeRecentRecord,
 } from "./ledger-domain";
 import type { HomeSnapshot } from "../home/home-data";
+import { loadHomeSnapshot } from "../home/home-data";
+import { getActiveWebDatabase } from "../../storage/web-sqlite";
+import { writeVaultFile } from "../../storage/web-file-vault";
 
 interface UploadCandidate {
   evidenceGroupKey: string;
@@ -149,67 +159,46 @@ export async function parseFile(
   }
 
   const blob = await response.blob();
+
+  // Store file in IndexedDB vault for later reference
+  try {
+    const buffer = await blob.arrayBuffer();
+    const vaultPath = `uploads/${Date.now()}-${fileName}`;
+    await writeVaultFile(vaultPath, new Uint8Array(buffer));
+  } catch {
+    // Non-critical: parsing can proceed even if vault write fails
+  }
+
   return parseFileWithOpenAiFromBlob({ fileName, blob, mimeType });
 }
 
 export async function loadHomeScreenSnapshot(
   input: {
     limit?: number;
+    locale?: ResolvedLocale;
     now?: string;
     offset?: number;
   } = {},
 ): Promise<HomeSnapshot> {
-  const records = loadRecords();
-  const latestOccurredOn =
-    records[0]?.occurredOn ?? new Date().toISOString().slice(0, 10);
-  const latestCreatedOn =
-    records[0]?.createdAt?.slice(0, 10) ?? latestOccurredOn;
-  const metricsNow = input.now ?? latestOccurredOn;
-  const trendNow = input.now ?? latestCreatedOn;
-  const offset = input.offset ?? 0;
-  const limit = input.limit ?? homeRecentPageSize;
-  const monthStart = `${metricsNow.slice(0, 7)}-01`;
-  const monthEnd = endOfMonth(metricsNow);
-  const trendStart = shiftIsoDate(trendNow, -29);
-  const metricRows = records.filter(
-    (r) => r.occurredOn >= monthStart && r.occurredOn <= monthEnd,
-  );
-  const incomeCents = metricRows
-    .filter((r) => r.recordKind === "income")
-    .reduce((s, r) => s + r.amountCents, 0);
-  const outflowCents = metricRows
-    .filter((r) => r.recordKind !== "income")
-    .reduce((s, r) => s + r.amountCents, 0);
-  const trendRows = records.filter((r) => {
-    const createdOn = r.createdAt.slice(0, 10);
-    return createdOn >= trendStart && createdOn <= trendNow;
+  const db = getActiveWebDatabase();
+
+  if (!db) {
+    return {
+      hasMore: false,
+      metrics: { incomeCents: 0, netCents: 0, outflowCents: 0 },
+      recentRecords: [],
+      trend: [],
+    };
+  }
+
+  const readableDb = createReadableStorageDatabase({
+    getAllAsync: <Row>(source: string, ...params: unknown[]) =>
+      db.getAllAsync<Row>(source, ...(params as [])),
+    getFirstAsync: <Row>(source: string, ...params: unknown[]) =>
+      db.getFirstAsync<Row>(source, ...(params as [])),
   });
-  const totalsByDate = trendRows.reduce<
-    Record<string, { expenseCents: number; incomeCents: number }>
-  >((totals, row) => {
-    const createdOn = row.createdAt.slice(0, 10);
-    const current = totals[createdOn] ?? { expenseCents: 0, incomeCents: 0 };
 
-    if (row.recordKind === "income") {
-      current.incomeCents += row.amountCents;
-    } else {
-      current.expenseCents += row.amountCents;
-    }
-
-    totals[createdOn] = current;
-    return totals;
-  }, {});
-
-  return {
-    hasMore: records.length > offset + limit,
-    metrics: {
-      incomeCents,
-      netCents: incomeCents - outflowCents,
-      outflowCents,
-    },
-    recentRecords: records.slice(offset, offset + limit),
-    trend: createTrendPointsFromDailyTotals(totalsByDate, trendNow),
-  };
+  return loadHomeSnapshot(readableDb, input);
 }
 
 export async function runPlanner(input: {
@@ -402,12 +391,68 @@ export async function approveWriteProposal(
     proposal.proposalType === "persist_candidate_record" &&
     state.candidateRecords[0]
   ) {
-    state.candidateRecords[0].state = "persisted_final";
-    state.candidateRecords[0].updatedAt = new Date().toISOString();
+    const candidate = state.candidateRecords[0];
+    const now = new Date().toISOString();
+    candidate.state = "persisted_final";
+    candidate.updatedAt = now;
 
     if (review) {
-      state.candidateRecords[0].reviewValues = review;
+      candidate.reviewValues = review;
       state.reviewValues = review;
+    }
+
+    const finalReview = candidate.reviewValues;
+    const db = getActiveWebDatabase();
+
+    if (db && finalReview.amount && finalReview.date && finalReview.description) {
+      const amountCents = Math.round(
+        Number.parseFloat(finalReview.amount.replace(/[^0-9.]+/g, "")) * 100,
+      );
+      const userClassification =
+        finalReview.category === "income"
+          ? ("income" as const)
+          : finalReview.category === "spending"
+            ? ("personal_spending" as const)
+            : ("expense" as const);
+
+      const resolvedEntry = resolveStandardReceiptEntry(
+        {
+          amountCents,
+          currency: "USD",
+          description: finalReview.description.trim(),
+          entityId: defaultEntityId,
+          evidenceIds: [state.evidenceId],
+          memo: finalReview.notes?.trim() || null,
+          occurredOn: finalReview.date.trim(),
+          source: finalReview.source?.trim() || "",
+          target: finalReview.target?.trim() || "",
+          userClassification,
+        },
+        {
+          createdAt: now,
+          recordId: candidate.recordId ?? `record-${state.evidenceId}`,
+          sourceCounterpartyId: candidate.payload?.sourceCounterpartyId ?? null,
+          sourceSystem: "ledger-upload-workflow",
+          targetCounterpartyId: candidate.payload?.targetCounterpartyId ?? null,
+          updatedAt: now,
+        },
+      );
+
+      const writableDb = createWritableStorageDatabase({
+        getAllAsync: <Row>(source: string, ...params: unknown[]) =>
+          db.getAllAsync<Row>(source, ...(params as [])),
+        getFirstAsync: <Row>(source: string, ...params: unknown[]) =>
+          db.getFirstAsync<Row>(source, ...(params as [])),
+        runAsync: (source: string, ...params: unknown[]) =>
+          db.runAsync(source, ...(params as [])),
+      });
+
+      try {
+        await persistResolvedStandardReceiptEntry(writableDb, resolvedEntry);
+        candidate.recordId = resolvedEntry.record.recordId;
+      } catch (error) {
+        console.error("[web] Failed to persist record to sql.js:", error);
+      }
     }
 
     state.batchState = "approved";
@@ -686,37 +731,6 @@ function inferUploadKind(
   return "image";
 }
 
-function endOfMonth(dateValue: string): string {
-  const date = new Date(`${dateValue.slice(0, 7)}-01T00:00:00Z`);
-  date.setUTCMonth(date.getUTCMonth() + 1, 0);
-  return date.toISOString().slice(0, 10);
-}
-
-function shiftIsoDate(dateValue: string, offsetDays: number): string {
-  const date = new Date(`${dateValue}T00:00:00Z`);
-  date.setUTCDate(date.getUTCDate() + offsetDays);
-  return date.toISOString().slice(0, 10);
-}
-
-const storageKey = "creator-cfo-web-records-v1";
-
-function loadRecords(): HomeRecentRecord[] {
-  if (typeof localStorage === "undefined") return [];
-  try {
-    return JSON.parse(
-      localStorage.getItem(storageKey) ?? "[]",
-    ) as HomeRecentRecord[];
-  } catch {
-    return [];
-  }
-}
-
 export function resetLedgerWebRuntimeStateForTests() {
   plannerStateStore.clear();
-  if (
-    typeof localStorage !== "undefined" &&
-    typeof localStorage.removeItem === "function"
-  ) {
-    localStorage.removeItem(storageKey);
-  }
 }

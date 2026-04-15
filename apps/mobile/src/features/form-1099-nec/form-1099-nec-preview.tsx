@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { SectionCard, type SurfaceTokens } from "@creator-cfo/ui";
 
+import { BackHeaderBar } from "../../components/back-header-bar";
 import type { AppCopy } from "../app-shell/copy";
 import {
   buildForm1099NecSlots,
@@ -170,14 +171,7 @@ export function Form1099NecPreview(props: Form1099NecPreviewProps) {
                   },
                 ]}
               >
-                <Text style={[styles.previewHeaderTitle, { color: palette.ink }]}>{copy.title}</Text>
-                <Pressable
-                  accessibilityRole="button"
-                  onPress={closePreview}
-                  style={[styles.closeButton, { borderColor: palette.border }]}
-                >
-                  <Text style={[styles.closeButtonLabel, { color: palette.ink }]}>{copy.closePreview}</Text>
-                </Pressable>
+                <BackHeaderBar onBack={closePreview} palette={palette} title={copy.title} />
               </View>
 
               <ScrollView contentContainerStyle={styles.previewScrollContent}>
@@ -400,16 +394,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
   },
-  closeButton: {
-    borderRadius: 14,
-    borderWidth: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-  },
-  closeButtonLabel: {
-    fontSize: 14,
-    fontWeight: "700",
-  },
   formCanvas: {
     width: "100%",
   },
@@ -512,18 +496,9 @@ const styles = StyleSheet.create({
     lineHeight: 26,
   },
   previewHeader: {
-    alignItems: "center",
     borderBottomWidth: 1,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-  },
-  previewHeaderTitle: {
-    flex: 1,
-    fontSize: 18,
-    fontWeight: "800",
-    lineHeight: 24,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
     marginRight: 12,
   },
   previewModalScreen: {

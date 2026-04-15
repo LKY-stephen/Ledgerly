@@ -4,7 +4,7 @@ import type { SurfaceTokens } from "@creator-cfo/ui";
 import type { AppCopy } from "../app-shell/copy";
 import { LocalStorageProvider } from "../../storage/provider.native";
 import { Form1040Preview } from "./form-1040-preview";
-import { useForm1040 } from "./use-form-1040.native";
+import { useForm1040 } from "./use-form-1040";
 
 interface Form1040SectionProps {
   calculatedBadge: string;
