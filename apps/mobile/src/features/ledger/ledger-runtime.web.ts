@@ -35,7 +35,8 @@ import {
 } from "./ledger-domain";
 import type { HomeSnapshot } from "../home/home-data";
 import { loadHomeSnapshot } from "../home/home-data";
-import { getActiveWebDatabase } from "../../storage/web-sqlite";
+import { getActiveWebDatabase, openWebSqliteDatabase } from "../../storage/web-sqlite";
+import { initializeLocalDatabase } from "../../storage/database";
 import { writeVaultFile } from "../../storage/web-file-vault";
 
 interface UploadCandidate {
@@ -180,15 +181,11 @@ export async function loadHomeScreenSnapshot(
     offset?: number;
   } = {},
 ): Promise<HomeSnapshot> {
-  const db = getActiveWebDatabase();
+  let db = getActiveWebDatabase();
 
   if (!db) {
-    return {
-      hasMore: false,
-      metrics: { incomeCents: 0, netCents: 0, outflowCents: 0 },
-      recentRecords: [],
-      trend: [],
-    };
+    db = await openWebSqliteDatabase();
+    await initializeLocalDatabase(db);
   }
 
   const readableDb = createReadableStorageDatabase({

@@ -13,7 +13,7 @@
     "ios": "node ./scripts/run-ios.mjs",
     "test": "vitest run tests",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "web": "expo start --web"
+    "web": "node scripts/cors-proxy.js & expo start --web"
   },
   "dependencies": {
     "@creator-cfo/schemas": "workspace:*",

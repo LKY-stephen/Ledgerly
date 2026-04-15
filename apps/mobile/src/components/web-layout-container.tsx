@@ -1,6 +1,8 @@
 import { Platform, StyleSheet, View } from "react-native";
 import type { ReactNode } from "react";
 
+import { useResponsive } from "../hooks/use-responsive";
+
 interface WebLayoutContainerProps {
   children: ReactNode;
 }
@@ -10,9 +12,17 @@ export function WebLayoutContainer({ children }: WebLayoutContainerProps) {
     return <>{children}</>;
   }
 
+  return <WebLayoutInner>{children}</WebLayoutInner>;
+}
+
+function WebLayoutInner({ children }: { children: ReactNode }) {
+  const { contentMaxWidth } = useResponsive();
+
   return (
     <View style={styles.outerContainer}>
-      <View style={styles.innerContainer}>{children}</View>
+      <View style={[styles.innerContainer, { maxWidth: contentMaxWidth }]}>
+        {children}
+      </View>
     </View>
   );
 }
@@ -20,7 +30,6 @@ export function WebLayoutContainer({ children }: WebLayoutContainerProps) {
 const styles = StyleSheet.create({
   innerContainer: {
     flex: 1,
-    maxWidth: 480,
     width: "100%",
   },
   outerContainer: {

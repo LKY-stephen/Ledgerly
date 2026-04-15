@@ -4,11 +4,13 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { pickAndImportDatabasePackageAsync } from "../../storage/database-import";
+import { useResponsive } from "../../hooks/use-responsive";
 import { LaunchScreen } from "../app-shell/launch-screen";
 import { useAppShell } from "../app-shell/provider";
 
 export function StorageSetupScreen() {
   const router = useRouter();
+  const { isExpanded } = useResponsive();
   const {
     bumpStorageRevision,
     copy,
@@ -51,7 +53,7 @@ export function StorageSetupScreen() {
 
   return (
     <SafeAreaView edges={["top", "left", "right"]} style={[styles.safeArea, { backgroundColor: palette.shell }]}>
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView contentContainerStyle={[styles.container, isExpanded ? styles.containerWide : null]}>
         <View style={styles.hero}>
           <Text style={[styles.eyebrow, { color: palette.accent }]}>{copy.storageSetup.eyebrow}</Text>
           <Text style={[styles.title, { color: palette.ink }]}>{screenCopy.title}</Text>
@@ -182,6 +184,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     padding: 24,
     paddingBottom: 36,
+  },
+  containerWide: {
+    alignSelf: "center",
+    maxWidth: 560,
+    width: "100%",
   },
   eyebrow: {
     fontSize: 12,

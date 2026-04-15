@@ -3,6 +3,7 @@ import { useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import {
   Modal,
+  Platform,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -13,6 +14,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { CfoAvatar } from "../../components/cfo-avatar";
+import { useResponsive } from "../../hooks/use-responsive";
 import { useAppShell } from "../app-shell/provider";
 import type {
   GeneralLedgerEntry,
@@ -35,6 +37,7 @@ import {
 export function LedgerScreen() {
   const router = useRouter();
   const { copy, palette } = useAppShell();
+  const { isExpanded } = useResponsive();
   const screenCopy = copy.ledgerScreen;
   const [isSelectorOpen, setIsSelectorOpen] = useState(false);
   const [pickerStep, setPickerStep] = useState<"month" | "quarter" | "year">("year");
@@ -173,7 +176,7 @@ export function LedgerScreen() {
     >
       <ScrollView
         contentContainerStyle={styles.container}
-        refreshControl={<RefreshControl onRefresh={refresh} refreshing={isRefreshing} />}
+        refreshControl={Platform.OS !== "web" ? <RefreshControl onRefresh={refresh} refreshing={isRefreshing} /> : undefined}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.topRow}>
@@ -183,10 +186,25 @@ export function LedgerScreen() {
               {copy.common.appName}
             </Text>
           </View>
-          <View style={styles.headerBadge}>
-            <Text style={styles.headerBadgeLabel}>
-              {selectedScope === "personal" ? screenCopy.badge.personal : screenCopy.badge.business}
-            </Text>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+            {Platform.OS === "web" ? (
+              <Pressable
+                accessibilityLabel="Refresh"
+                accessibilityRole="button"
+                onPress={refresh}
+                style={({ pressed }) => [
+                  styles.headerBadge,
+                  { opacity: isRefreshing ? 0.5 : 1, backgroundColor: pressed ? "#ECECE8" : "#F4F4F2" },
+                ]}
+              >
+                <Ionicons color="#002045" name="refresh-outline" size={16} />
+              </Pressable>
+            ) : null}
+            <View style={styles.headerBadge}>
+              <Text style={styles.headerBadgeLabel}>
+                {selectedScope === "personal" ? screenCopy.badge.personal : screenCopy.badge.business}
+              </Text>
+            </View>
           </View>
         </View>
 
@@ -376,14 +394,20 @@ export function LedgerScreen() {
                       {snapshot.balanceSheet.netPositionLabel}
                     </Text>
                   </View>
-                  <SectionCard
-                    rows={snapshot.balanceSheet.assetRows}
-                    title={screenCopy.sections.assets}
-                  />
-                  <SectionCard
-                    rows={snapshot.balanceSheet.liabilityRows}
-                    title={screenCopy.sections.liabilities}
-                  />
+                  <View style={isExpanded ? styles.wideColumns : styles.sectionGap}>
+                    <View style={isExpanded ? styles.wideColumnChild : undefined}>
+                      <SectionCard
+                        rows={snapshot.balanceSheet.assetRows}
+                        title={screenCopy.sections.assets}
+                      />
+                    </View>
+                    <View style={isExpanded ? styles.wideColumnChild : undefined}>
+                      <SectionCard
+                        rows={snapshot.balanceSheet.liabilityRows}
+                        title={screenCopy.sections.liabilities}
+                      />
+                    </View>
+                  </View>
                   <SectionCard
                     rows={snapshot.balanceSheet.equityRows}
                     title={screenCopy.sections.equity}
@@ -413,14 +437,20 @@ export function LedgerScreen() {
                       {screenCopy.sections.netIncomeSummary}
                     </Text>
                   </View>
-                  <SectionCard
-                    rows={snapshot.profitAndLoss.revenueRows}
-                    title={screenCopy.sections.revenue}
-                  />
-                  <SectionCard
-                    rows={snapshot.profitAndLoss.expenseRows}
-                    title={screenCopy.sections.expenses}
-                  />
+                  <View style={isExpanded ? styles.wideColumns : styles.sectionGap}>
+                    <View style={isExpanded ? styles.wideColumnChild : undefined}>
+                      <SectionCard
+                        rows={snapshot.profitAndLoss.revenueRows}
+                        title={screenCopy.sections.revenue}
+                      />
+                    </View>
+                    <View style={isExpanded ? styles.wideColumnChild : undefined}>
+                      <SectionCard
+                        rows={snapshot.profitAndLoss.expenseRows}
+                        title={screenCopy.sections.expenses}
+                      />
+                    </View>
+                  </View>
                 </>
               )
             ) : null}
@@ -1095,7 +1125,9 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     gap: 16,
     maxHeight: "84%",
+    maxWidth: 520,
     padding: 20,
+    width: "100%",
   },
   modalCloseButton: {
     alignItems: "center",
@@ -1652,5 +1684,15 @@ const styles = StyleSheet.create({
   },
   utilityButtonPressed: {
     backgroundColor: "#F0F4F8",
+  },
+  sectionGap: {
+    gap: 12,
+  },
+  wideColumnChild: {
+    flex: 1,
+  },
+  wideColumns: {
+    flexDirection: "row",
+    gap: 12,
   },
 });

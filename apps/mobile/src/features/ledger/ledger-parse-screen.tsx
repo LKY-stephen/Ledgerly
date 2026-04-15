@@ -12,6 +12,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { BackHeaderBar } from "../../components/back-header-bar";
 import { CfoAvatar } from "../../components/cfo-avatar";
+import { useResponsive } from "../../hooks/use-responsive";
 import { useAppShell } from "../app-shell/provider";
 import {
   formatLedgerParseCandidateState,
@@ -22,6 +23,7 @@ import { usePlannerWorkflow } from "./use-planner-workflow";
 
 export function LedgerParseScreen() {
   const router = useRouter();
+  const { isExpanded } = useResponsive();
   const { copy, palette, profileInfo, resolvedLocale } = useAppShell();
   const parseCopy = copy.ledger.parse;
   const params = useLocalSearchParams<{
@@ -89,14 +91,20 @@ export function LedgerParseScreen() {
         ]}
       >
         <BackHeaderBar
-          onBack={() => router.back()}
+          onBack={() => {
+            if (router.canGoBack()) {
+              router.back();
+            } else {
+              router.replace("/(tabs)/ledger");
+            }
+          }}
           palette={palette}
           rightAccessory={<CfoAvatar />}
           title={copy.common.appName}
         />
       </View>
 
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView contentContainerStyle={[styles.container, isExpanded ? styles.containerWide : null]}>
         <View style={styles.heroBlock}>
           <Text style={[styles.eyebrow, { color: palette.inkMuted }]}>
             {parseCopy.heroEyebrow}
@@ -450,7 +458,13 @@ export function LedgerParseScreen() {
 
         <Pressable
           accessibilityRole="button"
-          onPress={() => router.back()}
+          onPress={() => {
+            if (router.canGoBack()) {
+              router.back();
+            } else {
+              router.replace("/(tabs)/ledger");
+            }
+          }}
           style={({ pressed }) => [
             styles.backButton,
             { backgroundColor: pressed ? palette.heroEnd : palette.ink },
@@ -609,6 +623,11 @@ const styles = StyleSheet.create({
     gap: 14,
     padding: 18,
     paddingBottom: 36,
+  },
+  containerWide: {
+    alignSelf: "center",
+    maxWidth: 720,
+    width: "100%",
   },
   editFieldContainer: {
     gap: 4,
