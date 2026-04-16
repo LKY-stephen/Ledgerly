@@ -3,10 +3,7 @@ import {
   type ReadableStorageDatabase,
 } from "@creator-cfo/storage";
 
-import {
-  defaultEntityId,
-  formatCurrencyFromCents,
-} from "./ledger-domain";
+import { defaultEntityId, formatCurrencyFromCents } from "./ledger-domain";
 import type { ResolvedLocale } from "../app-shell/types";
 import {
   formatLedgerDisplayDate,
@@ -16,8 +13,8 @@ import {
   formatLedgerRangeSummary,
   formatLedgerRecordCount,
   formatLedgerReferenceSubtitle,
-  type GeneralLedgerEntryKind,
   getLedgerRuntimeCopy,
+  type GeneralLedgerEntryKind,
 } from "./ledger-localization";
 
 export type LedgerViewId = "general-ledger" | "balance-sheet" | "profit-loss";
@@ -170,19 +167,12 @@ const monthSegmentIds = [
   "m11",
   "m12",
 ] as const satisfies readonly LedgerPeriodSegmentId[];
-const quarterSegmentIds = ["q1", "q2", "q3", "q4"] as const satisfies readonly LedgerPeriodSegmentId[];
-const businessLedgerRecordKinds = [
-  "income",
-  "expense",
-] as const satisfies readonly LedgerRecordRow["recordKind"][];
-const personalLedgerRecordKinds = [
-  "personal_spending",
-] as const satisfies readonly LedgerRecordRow["recordKind"][];
-const balanceSheetLedgerRecordKinds = [
-  "income",
-  "expense",
-  "personal_spending",
-] as const satisfies readonly LedgerRecordRow["recordKind"][];
+const quarterSegmentIds = [
+  "q1",
+  "q2",
+  "q3",
+  "q4",
+] as const satisfies readonly LedgerPeriodSegmentId[];
 const unavailableLedgerPeriodId = "unavailable";
 
 export async function loadLedgerSnapshot(
@@ -199,16 +189,15 @@ export async function loadLedgerSnapshot(
   const entityId = input.entityId ?? defaultEntityId;
   const locale = input.locale ?? "en";
   const scopeId = input.scopeId ?? "business";
-  const scopeRecordKinds = buildScopeRecordKinds(scopeId);
-  const availabilityRecordKinds = buildBalanceSheetRecordKinds();
-  const availabilityRecordKindsLiteral = buildRecordKindsLiteral(availabilityRecordKinds);
+  const scopeRecordKinds =
+    scopeId === "personal" ? "('personal_spending')" : "('income', 'expense')";
   const occurredOnRows = await database.getAllAsync<LedgerAvailableDateRow>(
     `SELECT DISTINCT
       occurred_on AS occurredOn
     FROM records
     WHERE entity_id = ?
       AND record_status IN ('posted', 'reconciled')
-      AND record_kind IN ${availabilityRecordKindsLiteral}
+      AND record_kind IN ${scopeRecordKinds}
     ORDER BY occurred_on DESC;`,
     entityId,
   );
@@ -224,42 +213,39 @@ export async function loadLedgerSnapshot(
     preferredPeriodId: input.preferredPeriodId ?? null,
     yearOptions: availability.yearOptions,
   });
-  const segmentOptions = availability.segmentOptionsByYear.get(selectedPeriod.year) ?? [];
-  const earliestOccurredOn = occurredOnRows[occurredOnRows.length - 1]?.occurredOn
-    ? normalizeIsoDate(occurredOnRows[occurredOnRows.length - 1].occurredOn)
-    : null;
-  const periodRows =
+  const segmentOptions =
+    availability.segmentOptionsByYear.get(selectedPeriod.year) ?? [];
+  const rows =
     availability.periodOptions.length > 0
-      ? await loadLedgerRowsForRange(database, {
-          endDate: selectedPeriod.endDate,
+      ? await database.searchRecordsByDateRangeAsync<LedgerRecordRow>({
+          dateRange: {
+            endOn: selectedPeriod.endDate,
+            startOn: selectedPeriod.startDate,
+          },
           entityId,
-          recordKinds: scopeRecordKinds,
-          startDate: selectedPeriod.startDate,
-        })
-      : [];
-  const profitLossRows =
-    availability.periodOptions.length > 0
-      ? await loadLedgerRowsForRange(database, {
-          endDate: selectedPeriod.endDate,
-          entityId,
-          recordKinds: availabilityRecordKinds,
-          startDate: selectedPeriod.startDate,
-        })
-      : [];
-  const balanceSheetRows =
-    availability.periodOptions.length > 0 && earliestOccurredOn
-      ? await loadLedgerRowsForRange(database, {
-          endDate: selectedPeriod.endDate,
-          entityId,
-          recordKinds: availabilityRecordKinds,
-          startDate: earliestOccurredOn,
+          orderBy: "r.occurred_on DESC, r.created_at DESC, r.record_id DESC",
+          recordKinds:
+            scopeId === "personal"
+              ? ["personal_spending"]
+              : ["income", "expense"],
+          recordStatuses: ledgerPostableStatuses,
+          select: `r.record_id AS recordId,
+            r.description,
+            r.memo,
+            r.occurred_on AS occurredOn,
+            r.created_at AS createdAt,
+            r.currency,
+            r.amount_cents AS amountCents,
+            r.record_kind AS recordKind,
+            r.source_label AS sourceLabel,
+            r.target_label AS targetLabel,
+            COALESCE(r.business_use_bps, 10000) AS businessUseBps,
+            r.tax_line_code AS taxLineCode`,
         })
       : [];
 
-  return buildLedgerSnapshotFromRows(periodRows, {
-    balanceSheetRows,
+  return buildLedgerSnapshotFromRows(rows, {
     locale,
-    profitLossRows,
     periodOptions: availability.periodOptions,
     selectedScope: scopeId,
     segmentOptions,
@@ -268,7 +254,10 @@ export async function loadLedgerSnapshot(
   });
 }
 
-export function buildLedgerPeriodId(year: number, segmentId: LedgerPeriodSegmentId): string {
+export function buildLedgerPeriodId(
+  year: number,
+  segmentId: LedgerPeriodSegmentId,
+): string {
   return `${year}:${segmentId}`;
 }
 
@@ -281,7 +270,9 @@ export function getDefaultLedgerPeriodId(
     : null;
 }
 
-export function buildLedgerYearOptions(years: readonly number[]): LedgerYearOption[] {
+export function buildLedgerYearOptions(
+  years: readonly number[],
+): LedgerYearOption[] {
   return [...years]
     .sort((left, right) => right - left)
     .map((year) => ({
@@ -325,7 +316,11 @@ export function buildLedgerPeriodOptions(
   locale: ResolvedLocale = "en",
 ): LedgerPeriodOption[] {
   return yearOptions.flatMap((option) =>
-    buildLedgerSegmentOptions(option.year, segmentIdsByYear?.get(option.year), locale).map((segment) => ({
+    buildLedgerSegmentOptions(
+      option.year,
+      segmentIdsByYear?.get(option.year),
+      locale,
+    ).map((segment) => ({
       ...segment,
       id: buildLedgerPeriodId(option.year, segment.id),
       label: formatLedgerPeriodLabel(option.year, segment.id, locale),
@@ -349,9 +344,7 @@ export function resolveLedgerPeriodOption(
 export function buildLedgerSnapshotFromRows(
   rows: readonly LedgerRecordRow[],
   input: {
-    balanceSheetRows?: readonly LedgerRecordRow[];
     locale?: ResolvedLocale;
-    profitLossRows?: readonly LedgerRecordRow[];
     periodOptions: readonly LedgerPeriodOption[];
     selectedScope: LedgerScopeId;
     segmentOptions: readonly LedgerPeriodSegmentOption[];
@@ -361,33 +354,109 @@ export function buildLedgerSnapshotFromRows(
 ): LedgerScreenSnapshot {
   const locale = input.locale ?? "en";
   const runtimeCopy = getLedgerRuntimeCopy(locale);
-  const normalizedRows = normalizeLedgerRows(rows, input.selectedScope);
-  const normalizedProfitLossRows = normalizeDerivedRows(input.profitLossRows ?? rows);
-  const normalizedBalanceSheetRows = normalizeDerivedRows(input.balanceSheetRows ?? rows);
-  const hasBalanceSheetData = normalizedBalanceSheetRows.length > 0;
+  const normalizedRows = rows
+    .map((row) => ({
+      ...row,
+      effectiveAmountCents: applyScopeAmount(row, input.selectedScope),
+    }))
+    .filter((row) => row.effectiveAmountCents > 0);
+  const incomeRows = normalizedRows.filter(
+    (row) => row.recordKind === "income",
+  );
+  const expenseRows = normalizedRows.filter(
+    (row) => row.recordKind === "expense",
+  );
+  const personalRows = normalizedRows.filter(
+    (row) => row.recordKind === "personal_spending",
+  );
+  const incomeTotalCents = sumAmounts(
+    incomeRows.map((row) => row.effectiveAmountCents),
+  );
+  const expenseTotalCents = sumAmounts(
+    expenseRows.map((row) => row.effectiveAmountCents),
+  );
+  const personalTotalCents = sumAmounts(
+    personalRows.map((row) => row.effectiveAmountCents),
+  );
+  const netIncomeCents = incomeTotalCents - expenseTotalCents;
+  const assetTotalCents = Math.max(netIncomeCents, 0);
+  const fundingGapCents = Math.max(netIncomeCents * -1, 0);
   const generalLedgerTotalCents =
     input.selectedScope === "personal"
-      ? sumAmounts(normalizedRows.map((row) => row.effectiveAmountCents))
+      ? personalTotalCents
       : sumAmounts(normalizedRows.map((row) => row.effectiveAmountCents));
-  const balanceSheet = buildBalanceSheetSnapshot(
-    normalizedBalanceSheetRows,
-    {
-      locale,
-      scopeId: input.selectedScope,
-      selectedPeriod: input.selectedPeriod,
-    },
-  );
-  const profitAndLoss = buildProfitAndLossSnapshot(
-    normalizedProfitLossRows,
-    input.selectedScope,
-    locale,
-  );
 
   return {
-    balanceSheet,
+    balanceSheet: {
+      assetRows: [
+        {
+          amount: formatCurrencyFromCents(assetTotalCents),
+          id: "net-business-assets",
+          label: runtimeCopy.balance.businessAssetsLabel,
+          note: runtimeCopy.balance.businessAssetsNote,
+        },
+      ],
+      carryForwardRows: [
+        {
+          amount: formatCurrencyFromCents(assetTotalCents),
+          id: "net-business-assets",
+          label: runtimeCopy.balance.businessAssetsLabel,
+          note: runtimeCopy.balance.businessAssetsNote,
+        },
+      ],
+      equationSummary:
+        netIncomeCents >= 0
+          ? `${formatCurrencyFromCents(assetTotalCents)} ${runtimeCopy.balance.assetsWord} = ${formatCurrencyFromCents(0)} ${runtimeCopy.balance.liabilitiesWord} + ${formatCurrencyFromCents(netIncomeCents)} ${runtimeCopy.balance.equityWord}`
+          : locale === "zh-CN"
+            ? `${formatCurrencyFromCents(assetTotalCents)} ${runtimeCopy.balance.assetsWord}，所有者补资缺口 ${formatCurrencyFromCents(fundingGapCents)}`
+            : `${formatCurrencyFromCents(assetTotalCents)} ${runtimeCopy.balance.assetsWord} with ${formatCurrencyFromCents(fundingGapCents)} owner funding gap`,
+      equityAmount: formatCurrencyFromCents(netIncomeCents),
+      equityRows: [
+        {
+          amount: formatCurrencyFromCents(netIncomeCents),
+          id: "owner-equity",
+          label:
+            netIncomeCents >= 0
+              ? runtimeCopy.balance.equityLabel
+              : runtimeCopy.balance.deficitLabel,
+          note: runtimeCopy.balance.equityNote,
+        },
+      ],
+      liabilityRows: [
+        {
+          amount: formatCurrencyFromCents(fundingGapCents),
+          id: "funding-gap",
+          label: runtimeCopy.balance.fundingGapLabel,
+          note: runtimeCopy.balance.fundingGapNote,
+        },
+      ],
+      metricCards: [
+        {
+          accent: "success",
+          id: "asset-total",
+          label: runtimeCopy.balance.assetMetric,
+          value: formatCurrencyFromCents(assetTotalCents),
+        },
+        {
+          accent: fundingGapCents > 0 ? "danger" : "neutral",
+          id: "funding-gap-total",
+          label:
+            fundingGapCents > 0
+              ? runtimeCopy.balance.fundingGapMetric
+              : runtimeCopy.balance.liabilitiesMetric,
+          value: formatCurrencyFromCents(fundingGapCents),
+        },
+      ],
+      netPositionLabel:
+        netIncomeCents >= 0
+          ? runtimeCopy.balance.positivePosition
+          : runtimeCopy.balance.deficitPosition,
+    },
     generalLedger: {
       debitTotal: formatCurrencyFromCents(generalLedgerTotalCents),
-      entries: normalizedRows.map((row) => buildGeneralLedgerEntry(row, locale)),
+      entries: normalizedRows.map((row) =>
+        buildGeneralLedgerEntry(row, locale),
+      ),
       metricCards: [
         {
           accent: input.selectedScope === "personal" ? "danger" : "success",
@@ -413,10 +482,50 @@ export function buildLedgerSnapshotFromRows(
       ],
       recordCountLabel: formatLedgerRecordCount(normalizedRows.length, locale),
     },
-    hasData: normalizedRows.length > 0 || hasBalanceSheetData,
-    isEmpty: normalizedRows.length === 0 && !hasBalanceSheetData,
+    hasData: normalizedRows.length > 0,
+    isEmpty: normalizedRows.length === 0,
     periodOptions: [...input.periodOptions],
-    profitAndLoss,
+    profitAndLoss: {
+      expenseRows:
+        input.selectedScope === "personal"
+          ? []
+          : buildGroupedSectionRows(expenseRows, "expense", locale),
+      metricCards: [
+        {
+          accent: input.selectedScope === "personal" ? "neutral" : "success",
+          id: "revenue-total",
+          label:
+            input.selectedScope === "personal"
+              ? runtimeCopy.journal.businessRevenueMetric
+              : runtimeCopy.journal.revenueMetric,
+          value: formatCurrencyFromCents(
+            input.selectedScope === "personal" ? 0 : incomeTotalCents,
+          ),
+        },
+        {
+          accent: input.selectedScope === "personal" ? "danger" : "danger",
+          id: "expense-total",
+          label:
+            input.selectedScope === "personal"
+              ? runtimeCopy.journal.personalSpendMetric
+              : runtimeCopy.journal.expenseMetric,
+          value: formatCurrencyFromCents(
+            input.selectedScope === "personal"
+              ? personalTotalCents
+              : expenseTotalCents,
+          ),
+        },
+      ],
+      netIncomeLabel: formatCurrencyFromCents(
+        input.selectedScope === "personal"
+          ? personalTotalCents * -1
+          : netIncomeCents,
+      ),
+      revenueRows:
+        input.selectedScope === "personal"
+          ? []
+          : buildGroupedSectionRows(incomeRows, "income", locale),
+    },
     selectedScope: input.selectedScope,
     segmentOptions: [...input.segmentOptions],
     selectedPeriod: input.selectedPeriod,
@@ -437,7 +546,9 @@ export function createEmptyLedgerSnapshot(
   });
 }
 
-function parseLedgerPeriodId(periodId: string): { segmentId: LedgerPeriodSegmentId; year: number } | null {
+function parseLedgerPeriodId(
+  periodId: string,
+): { segmentId: LedgerPeriodSegmentId; year: number } | null {
   const [yearValue, segmentId] = periodId.split(":");
   const year = Number(yearValue);
 
@@ -451,15 +562,25 @@ function parseLedgerPeriodId(periodId: string): { segmentId: LedgerPeriodSegment
   };
 }
 
-function isLedgerSegmentId(value: string | undefined): value is LedgerPeriodSegmentId {
-  return value === "full-year" || isQuarterSegmentId(value) || isMonthSegmentId(value);
+function isLedgerSegmentId(
+  value: string | undefined,
+): value is LedgerPeriodSegmentId {
+  return (
+    value === "full-year" ||
+    isQuarterSegmentId(value) ||
+    isMonthSegmentId(value)
+  );
 }
 
-function isQuarterSegmentId(value: string | undefined): value is (typeof quarterSegmentIds)[number] {
+function isQuarterSegmentId(
+  value: string | undefined,
+): value is (typeof quarterSegmentIds)[number] {
   return quarterSegmentIds.some((segmentId) => segmentId === value);
 }
 
-function isMonthSegmentId(value: string | undefined): value is (typeof monthSegmentIds)[number] {
+function isMonthSegmentId(
+  value: string | undefined,
+): value is (typeof monthSegmentIds)[number] {
   return monthSegmentIds.some((segmentId) => segmentId === value);
 }
 
@@ -542,11 +663,17 @@ function buildLedgerAvailability(
     const year = Number(occurredOn.slice(0, 4));
     const monthNumber = Number(occurredOn.slice(5, 7));
 
-    if (!Number.isInteger(year) || !Number.isInteger(monthNumber) || monthNumber < 1 || monthNumber > 12) {
+    if (
+      !Number.isInteger(year) ||
+      !Number.isInteger(monthNumber) ||
+      monthNumber < 1 ||
+      monthNumber > 12
+    ) {
       continue;
     }
 
-    const availableSegments = segmentIdsByYear.get(year) ?? new Set<LedgerPeriodSegmentId>();
+    const availableSegments =
+      segmentIdsByYear.get(year) ?? new Set<LedgerPeriodSegmentId>();
     const quarterId = quarterSegmentIds[Math.floor((monthNumber - 1) / 3)];
     const monthId = `m${padMonth(monthNumber)}` as LedgerPeriodSegmentId;
 
@@ -559,18 +686,32 @@ function buildLedgerAvailability(
   }
 
   const yearOptions = buildLedgerYearOptions([...segmentIdsByYear.keys()]);
-  const readonlySegmentIdsByYear = new Map<number, ReadonlySet<LedgerPeriodSegmentId>>(
-    [...segmentIdsByYear.entries()].map(([year, segmentIds]) => [year, segmentIds]),
+  const readonlySegmentIdsByYear = new Map<
+    number,
+    ReadonlySet<LedgerPeriodSegmentId>
+  >(
+    [...segmentIdsByYear.entries()].map(([year, segmentIds]) => [
+      year,
+      segmentIds,
+    ]),
   );
   const segmentOptionsByYear = new Map<number, LedgerPeriodSegmentOption[]>(
     yearOptions.map((option) => [
       option.year,
-      buildLedgerSegmentOptions(option.year, readonlySegmentIdsByYear.get(option.year), locale),
+      buildLedgerSegmentOptions(
+        option.year,
+        readonlySegmentIdsByYear.get(option.year),
+        locale,
+      ),
     ]),
   );
 
   return {
-    periodOptions: buildLedgerPeriodOptions(yearOptions, readonlySegmentIdsByYear, locale),
+    periodOptions: buildLedgerPeriodOptions(
+      yearOptions,
+      readonlySegmentIdsByYear,
+      locale,
+    ),
     segmentOptionsByYear,
     yearOptions,
   };
@@ -593,7 +734,11 @@ function resolveSelectedLedgerPeriod(input: {
 
   return (
     resolveLedgerPeriodOption(input.preferredPeriodId, input.periodOptions) ??
-    resolveLedgerFallbackPeriodOption(input.preferredPeriodId, input.periodOptions, defaultPeriod) ??
+    resolveLedgerFallbackPeriodOption(
+      input.preferredPeriodId,
+      input.periodOptions,
+      defaultPeriod,
+    ) ??
     defaultPeriod ??
     createUnavailableLedgerPeriodOption(input.locale)
   );
@@ -632,12 +777,20 @@ function pickLatestLedgerPeriodOption(
   periodOptions: readonly LedgerPeriodOption[],
   granularity: "full-year" | "month" | "quarter",
 ): LedgerPeriodOption | null {
-  return [...periodOptions]
-    .filter((option) => getLedgerPeriodGranularity(option.segmentId) === granularity)
-    .sort(compareLedgerPeriodRecency)[0] ?? null;
+  return (
+    [...periodOptions]
+      .filter(
+        (option) =>
+          getLedgerPeriodGranularity(option.segmentId) === granularity,
+      )
+      .sort(compareLedgerPeriodRecency)[0] ?? null
+  );
 }
 
-function compareLedgerPeriodRecency(left: LedgerPeriodOption, right: LedgerPeriodOption): number {
+function compareLedgerPeriodRecency(
+  left: LedgerPeriodOption,
+  right: LedgerPeriodOption,
+): number {
   return (
     right.endDate.localeCompare(left.endDate) ||
     right.startDate.localeCompare(left.startDate)
@@ -735,7 +888,9 @@ function buildGeneralLedgerEntry(
           ? runtimeCopy.journal.personalRecordKind
           : runtimeCopy.journal.expenseRecordKind,
     lines,
-    subtitle: row.memo?.trim() || formatLedgerReferenceSubtitle(row.occurredOn, row.recordId, locale),
+    subtitle:
+      row.memo?.trim() ||
+      formatLedgerReferenceSubtitle(row.occurredOn, row.recordId, locale),
     title: normalizeLabel(row.description, locale),
   };
 }
@@ -757,7 +912,9 @@ function buildGroupedSectionRows(
   }
 
   return [...groups.entries()]
-    .sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0]))
+    .sort(
+      (left, right) => right[1] - left[1] || left[0].localeCompare(right[0]),
+    )
     .map(([label, amountCents], index) => ({
       amount: formatCurrencyFromCents(amountCents),
       id: `${kind}-${index}-${label}`,
@@ -797,512 +954,6 @@ function applyScopeAmount(
   return applyBusinessUse(row.amountCents, row.businessUseBps);
 }
 
-function buildProfitAndLossSnapshot(
-  rows: readonly (LedgerRecordRow & { effectiveAmountCents: number })[],
-  scopeId: LedgerScopeId,
-  locale: ResolvedLocale,
-): ProfitAndLossSnapshot {
-  const runtimeCopy = getLedgerRuntimeCopy(locale);
-  const incomeRows = rows.filter((row) => row.recordKind === "income");
-  const expenseRows = rows.filter((row) => row.recordKind === "expense");
-  const personalRows = rows.filter((row) => row.recordKind === "personal_spending");
-  const businessRevenueTotalCents = sumAmounts(
-    incomeRows.map((row) => row.effectiveAmountCents),
-  );
-  const businessExpenseTotalCents = sumAmounts(
-    expenseRows.map((row) => row.effectiveAmountCents),
-  );
-  const personalSpendingTotalCents = sumAmounts(
-    personalRows.map((row) => row.effectiveAmountCents),
-  );
-  const businessProfitCents = businessRevenueTotalCents - businessExpenseTotalCents;
-  const personalProfitCents = businessProfitCents - personalSpendingTotalCents;
-
-  if (scopeId === "personal") {
-    return {
-      expenseRows: [],
-      metricCards: [
-        {
-          accent:
-            businessProfitCents > 0
-              ? "success"
-              : businessProfitCents < 0
-                ? "danger"
-                : "neutral",
-          id: "business-profit",
-          label: locale === "zh-CN" ? "经营利润" : "Business Profit",
-          value: formatCurrencyFromCents(normalizeSignedZeroCents(businessProfitCents)),
-        },
-        {
-          accent: "danger",
-          id: "personal-spend",
-          label: runtimeCopy.journal.personalSpendMetric,
-          value: formatCurrencyFromCents(personalSpendingTotalCents),
-        },
-      ],
-      netIncomeLabel: formatCurrencyFromCents(normalizeSignedZeroCents(personalProfitCents)),
-      revenueRows: [],
-    };
-  }
-
-  return {
-    expenseRows: buildGroupedSectionRows(expenseRows, "expense", locale),
-    metricCards: [
-      {
-        accent: "success",
-        id: "revenue-total",
-        label: runtimeCopy.journal.revenueMetric,
-        value: formatCurrencyFromCents(businessRevenueTotalCents),
-      },
-      {
-        accent: "danger",
-        id: "expense-total",
-        label: runtimeCopy.journal.expenseMetric,
-        value: formatCurrencyFromCents(businessExpenseTotalCents),
-      },
-    ],
-    netIncomeLabel: formatCurrencyFromCents(normalizeSignedZeroCents(businessProfitCents)),
-    revenueRows: buildGroupedSectionRows(incomeRows, "income", locale),
-  };
-}
-
-function buildBalanceSheetSnapshot(
-  rows: readonly (LedgerRecordRow & { effectiveAmountCents: number })[],
-  input: {
-    locale: ResolvedLocale;
-    scopeId: LedgerScopeId;
-    selectedPeriod: LedgerPeriodOption;
-  },
-): BalanceSheetSnapshot {
-  if (input.selectedPeriod.year < 1) {
-    return createEmptyBalanceSheetSnapshot(input.scopeId, input.locale);
-  }
-
-  const summary = buildSplitBalanceSheetSummary(rows, input.selectedPeriod.year);
-  const closingAssetCents =
-    input.scopeId === "business"
-      ? summary.businessClosingAssetCents
-      : summary.personalClosingAssetCents;
-  const businessAssetTotalCents = Math.max(summary.businessClosingAssetCents, 0);
-  const assetTotalCents = Math.max(closingAssetCents, 0);
-  const fundingGapCents = Math.max(closingAssetCents * -1, 0);
-
-  return {
-    assetRows: [
-      buildBalanceSheetAssetRow(
-        input.scopeId,
-        assetTotalCents,
-        businessAssetTotalCents,
-        summary.businessClosingAssetCents,
-        closingAssetCents,
-        input.locale,
-      ),
-    ],
-    carryForwardRows: buildBalanceSheetCarryForwardRows(
-      summary,
-      input.selectedPeriod.year,
-      input.scopeId,
-    ),
-    equationSummary: buildBalanceSheetEquationSummary(
-      summary,
-      input.scopeId,
-      input.locale,
-    ),
-    equityAmount: formatCurrencyFromCents(closingAssetCents),
-    equityRows: [
-      buildBalanceSheetEquityRow(
-        input.scopeId,
-        closingAssetCents,
-        input.locale,
-      ),
-    ],
-    liabilityRows: [
-      buildBalanceSheetLiabilityRow(
-        input.scopeId,
-        fundingGapCents,
-        input.locale,
-      ),
-    ],
-    metricCards: [
-      {
-        accent: "success",
-        id: "asset-total",
-        label: getLedgerRuntimeCopy(input.locale).balance.assetMetric,
-        value: formatCurrencyFromCents(assetTotalCents),
-      },
-      {
-        accent: fundingGapCents > 0 ? "danger" : "neutral",
-        id: "funding-gap-total",
-        label: buildBalanceSheetFundingGapLabel(fundingGapCents, input.locale),
-        value: formatCurrencyFromCents(fundingGapCents),
-      },
-    ],
-    netPositionLabel: buildBalanceSheetNetPositionLabel(
-      input.scopeId,
-      closingAssetCents,
-      input.locale,
-    ),
-  };
-}
-
-function buildBalanceSheetAssetRow(
-  scopeId: LedgerScopeId,
-  assetTotalCents: number,
-  businessAssetTotalCents: number,
-  businessClosingAssetCents: number,
-  closingNetAssetCents: number,
-  locale: ResolvedLocale,
-): LedgerSectionRow {
-  const runtimeCopy = getLedgerRuntimeCopy(locale);
-
-  if (scopeId === "personal") {
-    return {
-      amount: formatCurrencyFromCents(businessAssetTotalCents),
-      id: "business-total-asset-basis",
-      label: runtimeCopy.balance.businessAssetsLabel,
-      note:
-        businessClosingAssetCents >= 0
-          ? runtimeCopy.balance.businessAssetsNote
-          : runtimeCopy.balance.deficitPosition,
-    };
-  }
-
-  return {
-    amount: formatCurrencyFromCents(assetTotalCents),
-    id: "closing-business-assets",
-    label: runtimeCopy.balance.businessAssetsLabel,
-    note:
-      closingNetAssetCents >= 0
-        ? runtimeCopy.balance.businessAssetsNote
-        : runtimeCopy.balance.deficitPosition,
-  };
-}
-
-function buildBalanceSheetLiabilityRow(
-  scopeId: LedgerScopeId,
-  fundingGapCents: number,
-  locale: ResolvedLocale,
-): LedgerSectionRow {
-  const runtimeCopy = getLedgerRuntimeCopy(locale);
-  const fundingGapLabel =
-    locale === "zh-CN" ? "资金缺口（推导）" : "Funding gap (derived)";
-
-  if (scopeId === "personal") {
-    return {
-      amount: formatCurrencyFromCents(fundingGapCents),
-      id: "funding-gap",
-      label:
-        fundingGapCents > 0 ? fundingGapLabel : runtimeCopy.balance.liabilitiesMetric,
-      note:
-        fundingGapCents > 0
-          ? runtimeCopy.balance.fundingGapNote
-          : runtimeCopy.balance.liabilitiesMetric,
-    };
-  }
-
-  return {
-    amount: formatCurrencyFromCents(fundingGapCents),
-    id: "funding-gap",
-    label:
-      fundingGapCents > 0 ? fundingGapLabel : runtimeCopy.balance.liabilitiesMetric,
-    note:
-      fundingGapCents > 0
-        ? runtimeCopy.balance.fundingGapNote
-        : runtimeCopy.balance.liabilitiesMetric,
-  };
-}
-
-function buildBalanceSheetEquityRow(
-  scopeId: LedgerScopeId,
-  netPositionCents: number,
-  locale: ResolvedLocale,
-): LedgerSectionRow {
-  const runtimeCopy = getLedgerRuntimeCopy(locale);
-
-  if (scopeId === "personal") {
-    return {
-      amount: formatCurrencyFromCents(netPositionCents),
-      id: "net-position",
-      label:
-        netPositionCents >= 0
-          ? runtimeCopy.balance.equityLabel
-          : runtimeCopy.balance.deficitLabel,
-      note: runtimeCopy.balance.equityNote,
-    };
-  }
-
-  return {
-    amount: formatCurrencyFromCents(netPositionCents),
-    id: "owner-equity",
-    label:
-      netPositionCents >= 0
-        ? runtimeCopy.balance.equityLabel
-        : runtimeCopy.balance.deficitLabel,
-    note: runtimeCopy.balance.equityNote,
-  };
-}
-
-function buildBalanceSheetFundingGapLabel(
-  fundingGapCents: number,
-  locale: ResolvedLocale,
-): string {
-  if (fundingGapCents <= 0) {
-    return getLedgerRuntimeCopy(locale).balance.liabilitiesMetric;
-  }
-
-  return getLedgerRuntimeCopy(locale).balance.fundingGapMetric;
-}
-
-function buildBalanceSheetEquationSummary(
-  summary: {
-    businessClosingAssetCents: number;
-    currentYearBusinessProfitCents: number;
-    currentYearPersonalSpendingCents: number;
-    openingBalanceCents: number;
-    personalClosingAssetCents: number;
-  },
-  scopeId: LedgerScopeId,
-  locale: ResolvedLocale,
-): string {
-  const opening = formatCurrencyFromCents(
-    normalizeSignedZeroCents(summary.openingBalanceCents),
-  );
-  const businessMovement = formatCurrencyFromCents(
-    normalizeSignedZeroCents(summary.currentYearBusinessProfitCents),
-  );
-
-  if (scopeId === "business") {
-    return `Opening ${opening} + business movement ${businessMovement} = closing business asset ${formatCurrencyFromCents(
-      normalizeSignedZeroCents(summary.businessClosingAssetCents),
-    )}`;
-  }
-
-  if (locale === "zh-CN") {
-    return `期初 ${opening} + 经营变动 ${businessMovement} - 个人支出 ${formatCurrencyFromCents(
-      normalizeSignedZeroCents(summary.currentYearPersonalSpendingCents),
-    )} = 期末个人资产 ${formatCurrencyFromCents(
-      normalizeSignedZeroCents(summary.personalClosingAssetCents),
-    )}`;
-  }
-
-  return `Opening ${opening} + business movement ${businessMovement} - personal spending ${formatCurrencyFromCents(
-    normalizeSignedZeroCents(summary.currentYearPersonalSpendingCents),
-  )} = closing personal asset ${formatCurrencyFromCents(
-    normalizeSignedZeroCents(summary.personalClosingAssetCents),
-  )}`;
-}
-
-function buildBalanceSheetNetPositionLabel(
-  scopeId: LedgerScopeId,
-  netPositionCents: number,
-  locale: ResolvedLocale,
-): string {
-  if (scopeId === "personal") {
-    if (locale === "zh-CN") {
-      return netPositionCents >= 0
-        ? "所选期间结束时，在扣除当年个人支出后的期末个人资产。这仍然是一个推导出的个人视图，并非完整的资产负债表。"
-        : "所选期间结束时，在扣除当年个人支出后的个人净头寸为负。这仍然是一个推导出的个人视图，并非完整的资产负债表。";
-    }
-
-    return netPositionCents >= 0
-      ? "Closing personal asset as of the selected period end after current-year personal-spending deductions. This remains a limited derived personal view rather than a full asset and debt statement."
-      : "Negative closing personal position as of the selected period end after current-year personal-spending deductions. This remains a limited derived personal view rather than a full asset and debt statement.";
-  }
-
-  if (locale === "zh-CN") {
-    return netPositionCents >= 0
-      ? "所选期间结束时，在扣除当年个人支出前的期末经营资产。"
-      : "所选期间结束时，在扣除当年个人支出前的经营净头寸为负。";
-  }
-
-  return netPositionCents >= 0
-    ? "Closing business asset as of the selected period end before current-year personal-spending deductions."
-    : "Negative closing business position as of the selected period end before current-year personal-spending deductions.";
-}
-
-function normalizeLedgerRows(
-  rows: readonly LedgerRecordRow[],
-  scopeId: LedgerScopeId,
-): (LedgerRecordRow & { effectiveAmountCents: number })[] {
-  return rows
-    .map((row) => ({
-      ...row,
-      effectiveAmountCents: applyScopeAmount(row, scopeId),
-    }))
-    .filter((row) => row.effectiveAmountCents > 0);
-}
-
-function normalizeDerivedRows(
-  rows: readonly LedgerRecordRow[],
-): (LedgerRecordRow & { effectiveAmountCents: number })[] {
-  return rows
-    .map((row) => ({
-      ...row,
-      effectiveAmountCents: applyDerivedAmount(row),
-    }))
-    .filter((row) => row.effectiveAmountCents > 0);
-}
-
-function applyDerivedAmount(row: LedgerRecordRow): number {
-  if (row.recordKind === "personal_spending") {
-    return row.amountCents;
-  }
-
-  return applyBusinessUse(row.amountCents, row.businessUseBps);
-}
-
-function buildSplitBalanceSheetSummary(
-  rows: readonly (LedgerRecordRow & { effectiveAmountCents: number })[],
-  selectedYear: number,
-): {
-  businessClosingAssetCents: number;
-  currentYearBusinessProfitCents: number;
-  currentYearPersonalSpendingCents: number;
-  hasPriorYearActivity: boolean;
-  openingBalanceCents: number;
-  personalClosingAssetCents: number;
-} {
-  const currentYearStart = `${selectedYear}-01-01`;
-  let currentYearBusinessProfitCents = 0;
-  let currentYearPersonalSpendingCents = 0;
-  let hasPriorYearActivity = false;
-  let openingBalanceCents = 0;
-
-  for (const row of rows) {
-    const signedAmountCents =
-      row.recordKind === "income" ? row.effectiveAmountCents : row.effectiveAmountCents * -1;
-    const isPriorYearRow = row.occurredOn < currentYearStart;
-
-    if (isPriorYearRow) {
-      hasPriorYearActivity = true;
-      openingBalanceCents += signedAmountCents;
-      continue;
-    }
-
-    if (row.recordKind === "personal_spending") {
-      currentYearPersonalSpendingCents += row.effectiveAmountCents;
-      continue;
-    }
-
-    currentYearBusinessProfitCents += signedAmountCents;
-  }
-
-  const businessClosingAssetCents =
-    openingBalanceCents + currentYearBusinessProfitCents;
-  const personalClosingAssetCents =
-    businessClosingAssetCents - currentYearPersonalSpendingCents;
-
-  return {
-    businessClosingAssetCents,
-    currentYearBusinessProfitCents,
-    currentYearPersonalSpendingCents,
-    hasPriorYearActivity,
-    openingBalanceCents,
-    personalClosingAssetCents,
-  };
-}
-
-function buildBalanceSheetCarryForwardRows(
-  summary: {
-    businessClosingAssetCents: number;
-    currentYearBusinessProfitCents: number;
-    currentYearPersonalSpendingCents: number;
-    hasPriorYearActivity: boolean;
-    openingBalanceCents: number;
-    personalClosingAssetCents: number;
-  },
-  selectedYear: number,
-  scopeId: LedgerScopeId,
-): LedgerSectionRow[] {
-  const openingBalanceRow: LedgerSectionRow = {
-    amount: formatCurrencyFromCents(normalizeSignedZeroCents(summary.openingBalanceCents)),
-    id: "opening-balance",
-    label: "Opening balance (carried forward)",
-    note:
-      summary.hasPriorYearActivity
-        ? `Derived from the ${selectedYear - 1} closing personal asset carried into both balance-sheet scopes.`
-        : "No prior-year closing personal asset is available, so the opening balance starts at zero.",
-  };
-  const businessProfitRow: LedgerSectionRow = {
-    amount: formatCurrencyFromCents(
-      normalizeSignedZeroCents(summary.currentYearBusinessProfitCents),
-    ),
-    id: "current-year-business-profit",
-    label: "Business profit YTD",
-    note: "Year-to-date business revenue minus business expense from January 1 through the selected period end.",
-  };
-
-  if (scopeId === "business") {
-    return [
-      openingBalanceRow,
-      businessProfitRow,
-      {
-        amount: formatCurrencyFromCents(
-          normalizeSignedZeroCents(summary.businessClosingAssetCents),
-        ),
-        id: "closing-business-asset",
-        label: "Closing business asset",
-        note: "Opening balance plus year-to-date business profit. Current-year personal spending does not reduce this business closing value.",
-      },
-    ];
-  }
-
-  return [
-    openingBalanceRow,
-    businessProfitRow,
-    {
-      amount: formatCurrencyFromCents(
-        normalizeSignedZeroCents(summary.currentYearPersonalSpendingCents * -1),
-      ),
-      id: "current-year-personal-spending",
-      label: "Personal spending deduction YTD",
-      note: "Current-year cumulative personal spending through the selected period end reduces the business asset basis here and in the next carry-forward.",
-    },
-    {
-      amount: formatCurrencyFromCents(
-        normalizeSignedZeroCents(summary.personalClosingAssetCents),
-      ),
-      id: "closing-personal-asset",
-      label: "Closing personal asset",
-      note: "Business asset basis after current-year personal-spending deductions, shown in a limited derived personal view.",
-    },
-  ];
-}
-
-function createEmptyBalanceSheetSnapshot(
-  scopeId: LedgerScopeId,
-  locale: ResolvedLocale,
-): BalanceSheetSnapshot {
-  const runtimeCopy = getLedgerRuntimeCopy(locale);
-
-  return {
-    assetRows: [],
-    carryForwardRows: [],
-    equationSummary: "",
-    equityAmount: formatCurrencyFromCents(0),
-    equityRows: [],
-    liabilityRows: [],
-    metricCards: [
-      {
-        accent: "success",
-        id: "asset-total",
-        label: runtimeCopy.balance.assetMetric,
-        value: formatCurrencyFromCents(0),
-      },
-      {
-        accent: "neutral",
-        id: "funding-gap-total",
-        label: runtimeCopy.balance.liabilitiesMetric,
-        value: formatCurrencyFromCents(0),
-      },
-    ],
-    netPositionLabel:
-      scopeId === "personal"
-        ? runtimeCopy.balance.deficitPosition
-        : runtimeCopy.balance.positivePosition,
-  };
-}
-
 function buildRevenueAccountName(
   sourceLabel: string,
   locale: ResolvedLocale,
@@ -1318,7 +969,9 @@ function buildRevenueAccountName(
 }
 
 function applyBusinessUse(amountCents: number, businessUseBps: number): number {
-  return Math.round((amountCents * normalizeBusinessUseBps(businessUseBps)) / 10_000);
+  return Math.round(
+    (amountCents * normalizeBusinessUseBps(businessUseBps)) / 10_000,
+  );
 }
 
 function normalizeBusinessUseBps(value: number): number {
@@ -1331,10 +984,6 @@ function normalizeBusinessUseBps(value: number): number {
 
 function sumAmounts(values: readonly number[]): number {
   return values.reduce((total, value) => total + value, 0);
-}
-
-function normalizeSignedZeroCents(value: number): number {
-  return value === 0 ? 0 : value;
 }
 
 function formatRangeSummary(
@@ -1367,55 +1016,6 @@ function normalizeLabel(
 
 function padMonth(value: number): string {
   return value.toString().padStart(2, "0");
-}
-
-function buildScopeRecordKinds(scopeId: LedgerScopeId): LedgerRecordRow["recordKind"][] {
-  return scopeId === "personal"
-    ? [...personalLedgerRecordKinds]
-    : [...businessLedgerRecordKinds];
-}
-
-function buildBalanceSheetRecordKinds(): LedgerRecordRow["recordKind"][] {
-  return [...balanceSheetLedgerRecordKinds];
-}
-
-function buildRecordKindsLiteral(
-  recordKinds: readonly LedgerRecordRow["recordKind"][],
-): string {
-  return `(${recordKinds.map((recordKind) => `'${recordKind}'`).join(", ")})`;
-}
-
-async function loadLedgerRowsForRange(
-  database: ReadableStorageDatabase,
-  input: {
-    endDate: string;
-    entityId: string;
-    recordKinds: readonly LedgerRecordRow["recordKind"][];
-    startDate: string;
-  },
-): Promise<LedgerRecordRow[]> {
-  return database.searchRecordsByDateRangeAsync<LedgerRecordRow>({
-    dateRange: {
-      endOn: input.endDate,
-      startOn: input.startDate,
-    },
-    entityId: input.entityId,
-    orderBy: "r.occurred_on DESC, r.created_at DESC, r.record_id DESC",
-    recordKinds: input.recordKinds,
-    recordStatuses: ledgerPostableStatuses,
-    select: `r.record_id AS recordId,
-      r.description,
-      r.memo,
-      r.occurred_on AS occurredOn,
-      r.created_at AS createdAt,
-      r.currency,
-      r.amount_cents AS amountCents,
-      r.record_kind AS recordKind,
-      r.source_label AS sourceLabel,
-      r.target_label AS targetLabel,
-      COALESCE(r.business_use_bps, 10000) AS businessUseBps,
-      r.tax_line_code AS taxLineCode`,
-  });
 }
 
 export const ledgerPostableStatuses = [...accountingPostableRecordStatuses];

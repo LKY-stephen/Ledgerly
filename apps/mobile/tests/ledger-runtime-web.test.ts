@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("expo-document-picker", () => ({
   getDocumentAsync: vi.fn(),
@@ -14,7 +14,7 @@ vi.mock("../src/features/app-shell/storage", () => ({
   loadPersistedGeminiApiKey: vi.fn(async () => ""),
   loadPersistedOpenAiApiKey: vi.fn(async () => ""),
 }));
-
+import * as DocumentPicker from "expo-document-picker";
 import * as ImagePicker from "expo-image-picker";
 import * as remoteParse from "../src/features/ledger/remote-parse";
 
@@ -22,6 +22,7 @@ import {
   approveWriteProposal,
   loadPlannerState,
   parseFile,
+  pickDocumentUploadCandidates,
   pickPhotoUploadCandidates,
   rejectWriteProposal,
   resetLedgerWebRuntimeStateForTests,
@@ -33,6 +34,23 @@ const originalBaseUrl = process.env.EXPO_PUBLIC_OPENAI_BASE_URL;
 const originalModel = process.env.EXPO_PUBLIC_OPENAI_MODEL;
 const originalApiKey = process.env.EXPO_PUBLIC_OPENAI_API_KEY;
 
+beforeEach(() => {
+  const storage = new Map<string, string>();
+
+  vi.stubGlobal("localStorage", {
+    clear: vi.fn(() => {
+      storage.clear();
+    }),
+    getItem: vi.fn((key: string) => storage.get(key) ?? null),
+    removeItem: vi.fn((key: string) => {
+      storage.delete(key);
+    }),
+    setItem: vi.fn((key: string, value: string) => {
+      storage.set(key, String(value));
+    }),
+  } as unknown as Storage);
+});
+
 afterEach(() => {
   process.env.EXPO_PUBLIC_OPENAI_BASE_URL = originalBaseUrl;
   process.env.EXPO_PUBLIC_OPENAI_MODEL = originalModel;
@@ -43,6 +61,35 @@ afterEach(() => {
 });
 
 describe("ledger web upload runtime", () => {
+  it("opens the document picker in single-select mode", async () => {
+    vi.mocked(DocumentPicker.getDocumentAsync).mockResolvedValueOnce({
+      assets: [
+        {
+          mimeType: "application/pdf",
+          name: "march-receipt.pdf",
+          size: 1024,
+          uri: "blob:doc-1",
+        },
+      ],
+      canceled: false,
+    } as never);
+
+    const candidates = await pickDocumentUploadCandidates();
+
+    expect(DocumentPicker.getDocumentAsync).toHaveBeenCalledWith({
+      copyToCacheDirectory: true,
+      multiple: false,
+      type: ["application/pdf", "image/*"],
+    });
+    expect(candidates).toHaveLength(1);
+    expect(candidates[0]).toMatchObject({
+      kind: "document",
+      mimeType: "application/pdf",
+      originalFileName: "march-receipt.pdf",
+      uri: "blob:doc-1",
+    });
+  });
+
   it("picks photo candidates from the image library", async () => {
     vi.mocked(ImagePicker.launchImageLibraryAsync).mockResolvedValueOnce({
       assets: [
@@ -59,6 +106,13 @@ describe("ledger web upload runtime", () => {
 
     const candidates = await pickPhotoUploadCandidates();
 
+    expect(ImagePicker.launchImageLibraryAsync).toHaveBeenCalledWith({
+      allowsEditing: false,
+      allowsMultipleSelection: false,
+      mediaTypes: ["images"],
+      quality: 1,
+      selectionLimit: 1,
+    });
     expect(candidates).toHaveLength(1);
     expect(candidates[0]).toMatchObject({
       kind: "image",
@@ -127,7 +181,11 @@ describe("ledger web upload runtime", () => {
 
     vi.stubGlobal("fetch", fetchMock);
 
-    const result = await parseFile("blob:receipt-1", "receipt.jpg", "image/jpeg");
+    const result = await parseFile(
+      "blob:receipt-1",
+      "receipt.jpg",
+      "image/jpeg",
+    );
 
     expect(result.error).toBeNull();
     expect(result.model).toBe("gpt-4o");
@@ -173,7 +231,11 @@ describe("ledger web upload runtime", () => {
 
     vi.stubGlobal("fetch", fetchMock);
 
-    const result = await parseFile("blob:receipt-err", "receipt.jpg", "image/jpeg");
+    const result = await parseFile(
+      "blob:receipt-err",
+      "receipt.jpg",
+      "image/jpeg",
+    );
 
     expect(result.error).toContain("Rate limit exceeded");
     expect(result.rawJson).toBeNull();

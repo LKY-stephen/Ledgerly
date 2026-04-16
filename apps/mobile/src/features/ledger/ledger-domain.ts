@@ -136,11 +136,9 @@ export interface HomeRecentRecord {
 }
 
 export interface HomeTrendPoint {
+  amountCents: number;
   date: string;
-  expenseCents: number;
-  incomeCents: number;
   label: string;
-  netCents: number;
 }
 
 export function buildStoredUploadFileName(
@@ -450,8 +448,8 @@ export function formatDisplayDate(
   return formatLedgerDisplayDate(dateValue, locale);
 }
 
-export function createTrendPointsFromDailyTotals(
-  totalsByDate: Record<string, { expenseCents: number; incomeCents: number }>,
+export function createTrendPointsFromTotals(
+  totalsByDate: Record<string, number>,
   endingOn: string,
   locale: ResolvedLocale = "en",
 ): HomeTrendPoint[] {
@@ -462,18 +460,22 @@ export function createTrendPointsFromDailyTotals(
     const current = new Date(endDate);
     current.setUTCDate(endDate.getUTCDate() - offset);
     const date = current.toISOString().slice(0, 10);
-    const totals = totalsByDate[date] ?? { expenseCents: 0, incomeCents: 0 };
-
     points.push({
+      amountCents: totalsByDate[date] ?? 0,
       date,
-      expenseCents: totals.expenseCents,
-      incomeCents: totals.incomeCents,
       label: formatTrendPointLabel(date, locale),
-      netCents: totals.incomeCents - totals.expenseCents,
     });
   }
 
   return points;
+}
+
+export function createTrendPointsFromDailyTotals(
+  totalsByDate: Record<string, number>,
+  endingOn: string,
+  locale: ResolvedLocale = "en",
+): HomeTrendPoint[] {
+  return createTrendPointsFromTotals(totalsByDate, endingOn, locale);
 }
 
 function extractFieldCandidates(

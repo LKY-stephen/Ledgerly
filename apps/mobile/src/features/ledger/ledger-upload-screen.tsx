@@ -1,23 +1,24 @@
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useState } from "react";
-import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useEffect, useState } from "react";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { BackHeaderBar } from "../../components/back-header-bar";
 import { CfoAvatar } from "../../components/cfo-avatar";
-import { useResponsive } from "../../hooks/use-responsive";
+import {
+  beginDemoAutoplayStep,
+  isUploadParsePersistDemoEnabled,
+} from "../demo/demo-autoplay";
 import {
   parseFile,
   pickDocumentUploadCandidates,
   pickPhotoUploadCandidates,
-  takeCameraPhoto,
 } from "./ledger-runtime";
 import { useAppShell } from "../app-shell/provider";
 
 export function LedgerUploadScreen() {
   const router = useRouter();
-  const { isExpanded } = useResponsive();
   const { copy, palette, resolvedLocale } = useAppShell();
   const uploadCopy = copy.ledger.upload;
   const [error, setError] = useState<string | null>(null);
@@ -29,19 +30,15 @@ export function LedgerUploadScreen() {
     kind: "idle",
   });
 
-  async function handleImport(
-    source: "camera" | "documents" | "photos",
-  ): Promise<void> {
+  async function handleImport(source: "documents" | "photos"): Promise<void> {
     setIsBusy(true);
     setError(null);
 
     try {
       const candidates =
-        source === "camera"
-          ? await takeCameraPhoto(resolvedLocale)
-          : source === "photos"
-            ? await pickPhotoUploadCandidates(resolvedLocale)
-            : await pickDocumentUploadCandidates();
+        source === "photos"
+          ? await pickPhotoUploadCandidates(resolvedLocale)
+          : await pickDocumentUploadCandidates();
 
       if (!candidates.length) {
         setStatus({ kind: "empty" });
@@ -64,7 +61,6 @@ export function LedgerUploadScreen() {
           rawText: result.rawText,
           model: result.model,
           parseError: result.error ?? "",
-          parserKind: result.parserKind,
         },
         pathname: "/ledger/parse",
       });
@@ -79,6 +75,22 @@ export function LedgerUploadScreen() {
     }
   }
 
+  useEffect(() => {
+    if (isBusy || !isUploadParsePersistDemoEnabled()) {
+      return;
+    }
+
+    if (!beginDemoAutoplayStep("upload")) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      void handleImport("photos");
+    }, 3000);
+
+    return () => clearTimeout(timeout);
+  }, [isBusy]);
+
   const statusText =
     status.kind === "empty"
       ? uploadCopy.emptySelection
@@ -89,32 +101,26 @@ export function LedgerUploadScreen() {
   return (
     <SafeAreaView
       edges={["top", "left", "right"]}
-      style={[styles.safeArea, { backgroundColor: "#F5F6F8" }]}
+      style={[styles.safeArea, { backgroundColor: palette.shell }]}
       testID="ledger-upload-screen"
     >
       <View
         style={[
           styles.appBar,
           {
-            backgroundColor: "#F5F6F8",
+            backgroundColor: palette.shell,
             borderBottomColor: palette.divider,
           },
         ]}
       >
         <BackHeaderBar
-          onBack={() => {
-            if (router.canGoBack()) {
-              router.back();
-            } else {
-              router.replace("/(tabs)/ledger");
-            }
-          }}
+          onBack={() => router.back()}
           palette={palette}
           rightAccessory={<CfoAvatar />}
           title={copy.common.appName}
         />
       </View>
-      <ScrollView contentContainerStyle={[styles.container, isExpanded ? styles.containerWide : null]}>
+      <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.heroBlock}>
           <Text style={[styles.eyebrow, { color: palette.inkMuted }]}>
             {uploadCopy.eyebrow}
@@ -184,36 +190,6 @@ export function LedgerUploadScreen() {
               </View>
             </Pressable>
 
-            {Platform.OS !== "web" && (
-              <Pressable
-                accessibilityRole="button"
-                disabled={isBusy}
-                onPress={() => handleImport("camera")}
-                style={({ pressed }) => [
-                  styles.secondaryButton,
-                  {
-                    backgroundColor: pressed ? palette.paperMuted : palette.paper,
-                    borderColor: palette.border,
-                    opacity: isBusy ? 0.7 : 1,
-                  },
-                ]}
-                testID="ledger-upload-camera-button"
-              >
-                <View style={styles.primaryButtonContent}>
-                  <MaterialCommunityIcons
-                    color={palette.ink}
-                    name="camera-outline"
-                    size={18}
-                  />
-                  <Text
-                    style={[styles.secondaryButtonLabel, { color: palette.ink }]}
-                  >
-                    {uploadCopy.takePhoto}
-                  </Text>
-                </View>
-              </Pressable>
-            )}
-
             <Pressable
               accessibilityRole="button"
               disabled={isBusy}
@@ -260,33 +236,28 @@ export function LedgerUploadScreen() {
 const styles = StyleSheet.create({
   appBar: {
     borderBottomWidth: StyleSheet.hairlineWidth,
-    paddingBottom: 10,
-    paddingHorizontal: 18,
+    paddingBottom: 12,
+    paddingHorizontal: 20,
   },
   buttonStack: {
-    gap: 10,
+    gap: 12,
     width: "100%",
   },
   container: {
-    gap: 14,
-    padding: 18,
-    paddingBottom: 32,
-  },
-  containerWide: {
-    alignSelf: "center",
-    maxWidth: 600,
-    width: "100%",
+    gap: 18,
+    padding: 20,
+    paddingBottom: 34,
   },
   dropCard: {
     alignItems: "center",
-    borderRadius: 18,
+    borderRadius: 28,
     borderWidth: 1,
-    gap: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 20,
-    shadowOffset: { height: 8, width: 0 },
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
+    gap: 14,
+    paddingHorizontal: 18,
+    paddingVertical: 26,
+    shadowOffset: { height: 16, width: 0 },
+    shadowOpacity: 0.12,
+    shadowRadius: 24,
   },
   dropSummary: {
     fontSize: 14,
@@ -294,9 +265,9 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   dropTitle: {
-    fontSize: 22,
+    fontSize: 30,
     fontWeight: "800",
-    lineHeight: 28,
+    lineHeight: 34,
     textAlign: "center",
   },
   eyebrow: {
@@ -306,36 +277,31 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
   },
   heroBlock: {
-    backgroundColor: "#FFFFFF",
-    borderColor: "rgba(0, 32, 69, 0.08)",
-    borderRadius: 18,
-    borderWidth: 1,
-    gap: 8,
-    padding: 16,
+    gap: 10,
   },
   heroSummary: {
-    fontSize: 14,
-    lineHeight: 21,
+    fontSize: 18,
+    lineHeight: 28,
   },
   heroTitle: {
-    fontSize: 24,
+    fontSize: 44,
     fontWeight: "800",
-    letterSpacing: -0.6,
-    lineHeight: 30,
+    letterSpacing: -1.1,
+    lineHeight: 46,
   },
   hint: {
-    fontSize: 12,
-    lineHeight: 17,
+    fontSize: 13,
+    lineHeight: 18,
     textAlign: "center",
   },
   primaryButton: {
     alignItems: "center",
-    borderRadius: 14,
-    height: 44,
+    borderRadius: 999,
+    height: 48,
     justifyContent: "center",
-    shadowOffset: { height: 6, width: 0 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
+    shadowOffset: { height: 10, width: 0 },
+    shadowOpacity: 0.12,
+    shadowRadius: 18,
     width: "100%",
   },
   primaryButtonContent: {
@@ -352,9 +318,9 @@ const styles = StyleSheet.create({
   },
   secondaryButton: {
     alignItems: "center",
-    borderRadius: 14,
+    borderRadius: 999,
     borderWidth: 1,
-    height: 44,
+    height: 48,
     justifyContent: "center",
     width: "100%",
   },
@@ -364,9 +330,9 @@ const styles = StyleSheet.create({
   },
   uploadGlyph: {
     alignItems: "center",
-    borderRadius: 16,
-    height: 56,
+    borderRadius: 999,
+    height: 78,
     justifyContent: "center",
-    width: 56,
+    width: 78,
   },
 });

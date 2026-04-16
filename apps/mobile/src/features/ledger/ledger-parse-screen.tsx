@@ -1,5 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { useEffect, useRef, useState } from "react";
 import {
   Pressable,
   ScrollView,
@@ -12,8 +13,11 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { BackHeaderBar } from "../../components/back-header-bar";
 import { CfoAvatar } from "../../components/cfo-avatar";
-import { useResponsive } from "../../hooks/use-responsive";
 import { useAppShell } from "../app-shell/provider";
+import {
+  beginDemoAutoplayStep,
+  isUploadParsePersistDemoEnabled,
+} from "../demo/demo-autoplay";
 import {
   formatLedgerParseCandidateState,
   formatLedgerParseProposalType,
@@ -23,8 +27,11 @@ import { usePlannerWorkflow } from "./use-planner-workflow";
 
 export function LedgerParseScreen() {
   const router = useRouter();
-  const { isExpanded } = useResponsive();
-  const { copy, palette, profileInfo, resolvedLocale } = useAppShell();
+  const { copy, palette, resolvedLocale } = useAppShell();
+  const scrollViewRef = useRef<ScrollView | null>(null);
+  const latestPlannerResultRef =
+    useRef<ReturnType<typeof usePlannerWorkflow>["plannerResult"]>(null);
+  const latestIsApprovingRef = useRef(false);
   const parseCopy = copy.ledger.parse;
   const params = useLocalSearchParams<{
     fileName?: string;
@@ -33,7 +40,6 @@ export function LedgerParseScreen() {
     model?: string;
     parseError?: string;
     mimeType?: string;
-    parserKind?: string;
   }>();
 
   const fileName = params.fileName ?? parseCopy.unknownFile;
@@ -42,12 +48,9 @@ export function LedgerParseScreen() {
   const model = params.model ?? "";
   const parseError = params.parseError ?? "";
   const mimeType = params.mimeType ?? null;
-  const parserKind = params.parserKind || undefined;
 
   const hasData = rawJson || rawText;
   const formattedJson = formatJson(rawJson);
-  const providerLabel =
-    parserKind === "gemini" ? "Gemini" : parserKind === "infer" ? "Infer API" : "OpenAI";
 
   const parsedRawJson = rawJson ? tryParse(rawJson) : null;
 
@@ -65,8 +68,6 @@ export function LedgerParseScreen() {
     fileName,
     mimeType,
     model,
-    parserKind,
-    profileInfo,
     rawJson: parsedRawJson,
     rawText,
   });
@@ -74,43 +75,149 @@ export function LedgerParseScreen() {
   const canStartPlanner =
     hasData && !parseError && parsedRawJson !== null && !plannerResult;
   const allApproved = plannerResult?.batchState === "approved";
+  const [demoApprovalActive, setDemoApprovalActive] = useState(false);
+
+  useEffect(() => {
+    latestPlannerResultRef.current = plannerResult;
+  }, [plannerResult]);
+
+  useEffect(() => {
+    latestIsApprovingRef.current = isApproving;
+  }, [isApproving]);
+
+  useEffect(() => {
+    if (!canStartPlanner || !isUploadParsePersistDemoEnabled()) {
+      return;
+    }
+
+    if (!beginDemoAutoplayStep("planner")) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      console.log("[demo-autoplay] start planner");
+      void startPlanner();
+    }, 4500);
+
+    return () => clearTimeout(timeout);
+  }, [canStartPlanner, startPlanner]);
+
+  useEffect(() => {
+    if (!plannerResult || allApproved || !isUploadParsePersistDemoEnabled()) {
+      return;
+    }
+
+    if (!beginDemoAutoplayStep("review")) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      console.log("[demo-autoplay] scroll to review");
+      scrollViewRef.current?.scrollTo({ animated: true, y: 980 });
+    }, 3500);
+
+    return () => clearTimeout(timeout);
+  }, [allApproved, plannerResult]);
+
+  useEffect(() => {
+    if (!plannerResult || allApproved || !isUploadParsePersistDemoEnabled()) {
+      return;
+    }
+
+    if (beginDemoAutoplayStep("approve")) {
+      console.log("[demo-autoplay] enable auto-approval");
+      setDemoApprovalActive(true);
+    }
+  }, [allApproved, plannerResult]);
+
+  useEffect(() => {
+    if (
+      !demoApprovalActive ||
+      allApproved ||
+      !isUploadParsePersistDemoEnabled()
+    ) {
+      return;
+    }
+
+    const interval = setInterval(() => {
+      if (latestIsApprovingRef.current) {
+        return;
+      }
+
+      const currentPlannerResult = latestPlannerResultRef.current;
+      const pendingProposal = currentPlannerResult?.writeProposals.find(
+        (proposal) => proposal.state === "pending_approval",
+      );
+
+      if (!pendingProposal) {
+        console.log(
+          "[demo-autoplay] no pending proposal",
+          currentPlannerResult?.writeProposals.map((proposal) => ({
+            id: proposal.writeProposalId,
+            state: proposal.state,
+          })),
+        );
+        return;
+      }
+
+      console.log(
+        "[demo-autoplay] approve pending proposal",
+        pendingProposal.writeProposalId,
+      );
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+      void approveProposal(pendingProposal.writeProposalId);
+    }, 3500);
+
+    return () => clearInterval(interval);
+  }, [allApproved, approveProposal, demoApprovalActive]);
+
+  useEffect(() => {
+    if (!allApproved || !isUploadParsePersistDemoEnabled()) {
+      return;
+    }
+
+    if (!beginDemoAutoplayStep("ledger")) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      console.log("[demo-autoplay] route to ledger");
+      router.replace("/(tabs)/ledger");
+    }, 4500);
+
+    return () => clearTimeout(timeout);
+  }, [allApproved, router]);
 
   return (
     <SafeAreaView
       edges={["top", "left", "right"]}
-      style={[styles.safeArea, { backgroundColor: "#F5F6F8" }]}
+      style={[styles.safeArea, { backgroundColor: palette.shell }]}
       testID="ledger-parse-screen"
     >
       <View
         style={[
           styles.appBar,
           {
-            backgroundColor: "#F5F6F8",
+            backgroundColor: palette.shell,
             borderBottomColor: palette.divider,
           },
         ]}
       >
         <BackHeaderBar
-          onBack={() => {
-            if (router.canGoBack()) {
-              router.back();
-            } else {
-              router.replace("/(tabs)/ledger");
-            }
-          }}
+          onBack={() => router.back()}
           palette={palette}
           rightAccessory={<CfoAvatar />}
           title={copy.common.appName}
         />
       </View>
 
-      <ScrollView contentContainerStyle={[styles.container, isExpanded ? styles.containerWide : null]}>
+      <ScrollView contentContainerStyle={styles.container} ref={scrollViewRef}>
         <View style={styles.heroBlock}>
           <Text style={[styles.eyebrow, { color: palette.inkMuted }]}>
             {parseCopy.heroEyebrow}
           </Text>
           <Text style={[styles.heroTitle, { color: palette.ink }]}>
-            {`${providerLabel} ${parseCopy.heroTitleSuffix}`}
+            {parseCopy.heroTitle}
           </Text>
         </View>
 
@@ -458,17 +565,12 @@ export function LedgerParseScreen() {
 
         <Pressable
           accessibilityRole="button"
-          onPress={() => {
-            if (router.canGoBack()) {
-              router.back();
-            } else {
-              router.replace("/(tabs)/ledger");
-            }
-          }}
+          onPress={() => router.back()}
           style={({ pressed }) => [
             styles.backButton,
             { backgroundColor: pressed ? palette.heroEnd : palette.ink },
           ]}
+          testID="parse-back-to-upload-button"
         >
           <Text
             style={[styles.backButtonLabel, { color: palette.inkOnAccent }]}
@@ -587,20 +689,20 @@ const styles = StyleSheet.create({
   },
   appBar: {
     borderBottomWidth: StyleSheet.hairlineWidth,
-    paddingBottom: 10,
-    paddingHorizontal: 18,
+    paddingBottom: 12,
+    paddingHorizontal: 20,
   },
   approveButton: {
     alignItems: "center",
-    borderRadius: 14,
+    borderRadius: 999,
     flex: 1,
     height: 40,
     justifyContent: "center",
   },
   backButton: {
     alignItems: "center",
-    borderRadius: 14,
-    height: 44,
+    borderRadius: 999,
+    height: 48,
     justifyContent: "center",
     marginTop: 8,
   },
@@ -609,10 +711,10 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   card: {
-    borderRadius: 18,
+    borderRadius: 24,
     borderWidth: 1,
     gap: 8,
-    padding: 16,
+    padding: 18,
   },
   cardHeader: {
     alignItems: "center",
@@ -620,22 +722,17 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   container: {
-    gap: 14,
-    padding: 18,
-    paddingBottom: 36,
-  },
-  containerWide: {
-    alignSelf: "center",
-    maxWidth: 720,
-    width: "100%",
+    gap: 18,
+    padding: 20,
+    paddingBottom: 40,
   },
   editFieldContainer: {
     gap: 4,
   },
   editFieldInput: {
-    borderRadius: 14,
+    borderRadius: 12,
     borderWidth: 1,
-    fontSize: 14,
+    fontSize: 15,
     height: 44,
     paddingHorizontal: 14,
   },
@@ -645,20 +742,18 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
   },
   emptyState: {
-    alignItems: "flex-start",
-    backgroundColor: "#FFFFFF",
-    borderColor: "rgba(0, 32, 69, 0.08)",
-    borderRadius: 18,
-    borderWidth: 1,
-    gap: 8,
-    padding: 18,
+    alignItems: "center",
+    gap: 10,
+    paddingVertical: 40,
   },
   emptySub: {
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 15,
+    lineHeight: 22,
+    maxWidth: 300,
+    textAlign: "center",
   },
   emptyTitle: {
-    fontSize: 18,
+    fontSize: 22,
     fontWeight: "800",
   },
   errorText: {
@@ -677,25 +772,20 @@ const styles = StyleSheet.create({
   },
   fileName: {
     flex: 1,
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: "700",
   },
   heroBlock: {
-    backgroundColor: "#FFFFFF",
-    borderColor: "rgba(0, 32, 69, 0.08)",
-    borderRadius: 18,
-    borderWidth: 1,
-    gap: 8,
-    padding: 16,
+    gap: 10,
   },
   heroTitle: {
-    fontSize: 24,
+    fontSize: 36,
     fontWeight: "800",
-    letterSpacing: -0.5,
-    lineHeight: 30,
+    letterSpacing: -1,
+    lineHeight: 40,
   },
   jsonBox: {
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1,
     minHeight: 200,
     paddingHorizontal: 14,
@@ -712,8 +802,8 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     alignItems: "center",
-    borderRadius: 14,
-    height: 44,
+    borderRadius: 999,
+    height: 48,
     justifyContent: "center",
   },
   primaryButtonLabel: {
@@ -722,22 +812,15 @@ const styles = StyleSheet.create({
   },
   proposalActions: {
     flexDirection: "row",
-    gap: 8,
+    gap: 10,
     marginTop: 4,
   },
   proposalCard: {
-    borderRadius: 18,
+    borderRadius: 20,
     borderWidth: 1,
     gap: 8,
-    marginBottom: 10,
-    padding: 14,
-  },
-  proposalDetailLine: {
-    fontSize: 12,
-    lineHeight: 17,
-  },
-  proposalDetailList: {
-    gap: 4,
+    marginBottom: 12,
+    padding: 16,
   },
   proposalHeader: {
     alignItems: "center",
@@ -748,13 +831,8 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
   },
-  proposalSummary: {
-    fontSize: 14,
-    fontWeight: "600",
-    lineHeight: 19,
-  },
   proposalType: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: "700",
   },
   proposalsSection: {
@@ -762,7 +840,7 @@ const styles = StyleSheet.create({
   },
   rejectButton: {
     alignItems: "center",
-    borderRadius: 14,
+    borderRadius: 999,
     flex: 1,
     height: 40,
     justifyContent: "center",
@@ -771,11 +849,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: 20,
     fontWeight: "800",
   },
   statePill: {
-    borderRadius: 10,
+    borderRadius: 12,
     paddingHorizontal: 10,
     paddingVertical: 4,
   },

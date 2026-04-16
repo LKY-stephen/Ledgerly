@@ -1,4 +1,5 @@
 import * as Crypto from "expo-crypto";
+import { Asset } from "expo-asset";
 import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system/legacy";
 import * as ImagePicker from "expo-image-picker";
@@ -49,12 +50,17 @@ interface UploadCandidate {
   uri: string;
 }
 
+const demoUploadMode = (process.env.EXPO_PUBLIC_DEMO_UPLOAD_MODE ?? "").trim();
+
 export async function pickDocumentUploadCandidates(): Promise<
   UploadCandidate[]
 > {
   const result = await DocumentPicker.getDocumentAsync({
     copyToCacheDirectory: true,
-    multiple: true,
+    // The upload flow only parses one primary file at a time today.
+    // Keeping the picker single-select avoids a multi-step confirm flow that
+    // does not match the downstream runtime.
+    multiple: false,
     type: ["application/pdf", "image/*"],
   });
 
@@ -76,6 +82,12 @@ export async function pickDocumentUploadCandidates(): Promise<
 export async function pickPhotoUploadCandidates(
   locale: ResolvedLocale = "en",
 ): Promise<UploadCandidate[]> {
+  const bundledDemoCandidate = await loadBundledDemoUploadCandidate();
+
+  if (bundledDemoCandidate) {
+    return [bundledDemoCandidate];
+  }
+
   const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
   if (!permission.granted) {
@@ -88,10 +100,10 @@ export async function pickPhotoUploadCandidates(
 
   const result = await ImagePicker.launchImageLibraryAsync({
     allowsEditing: false,
-    allowsMultipleSelection: true,
+    allowsMultipleSelection: false,
     mediaTypes: ["images", "livePhotos"] as never,
     quality: 1,
-    selectionLimit: 0,
+    selectionLimit: 1,
   });
 
   if (result.canceled) {
@@ -137,6 +149,51 @@ export async function pickPhotoUploadCandidates(
   });
 }
 
+async function loadBundledDemoUploadCandidate(): Promise<UploadCandidate | null> {
+  if (demoUploadMode === "local_demo_file") {
+    const demoUri = `${FileSystem.documentDirectory ?? ""}demo-upload.png`;
+    const fileInfo = await FileSystem.getInfoAsync(demoUri);
+
+    if (!fileInfo.exists) {
+      return null;
+    }
+
+    return {
+      evidenceGroupKey: "local-demo-upload",
+      isPrimary: true,
+      kind: "image",
+      mimeType: "image/png",
+      originalFileName: "demo-upload.png",
+      sizeBytes: fileInfo.size ?? null,
+      uri: demoUri,
+    };
+  }
+
+  if (demoUploadMode !== "bundled_1099") {
+    return null;
+  }
+
+  const asset = Asset.fromModule(
+    require("../../../assets/form-1099-nec-page1.png"),
+  );
+  await asset.downloadAsync();
+
+  const uri = asset.localUri ?? asset.uri;
+
+  if (!uri) {
+    return null;
+  }
+
+  return {
+    evidenceGroupKey: "bundled-1099-nec-demo",
+    isPrimary: true,
+    kind: "image",
+    mimeType: "image/png",
+    originalFileName: "form-1099-nec-page1.png",
+    sizeBytes: null,
+    uri,
+  };
+}
 export async function takeCameraPhoto(
   locale: ResolvedLocale = "en",
 ): Promise<UploadCandidate[]> {
@@ -170,7 +227,6 @@ export async function takeCameraPhoto(
     uri: asset.uri,
   }));
 }
-
 export async function importUploadCandidates(
   candidates: UploadCandidate[],
 ): Promise<string[]> {
