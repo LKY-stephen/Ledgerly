@@ -1419,3 +1419,49 @@ async function loadLedgerRowsForRange(
 }
 
 export const ledgerPostableStatuses = [...accountingPostableRecordStatuses];
+
+export async function loadJournalEntries(
+  database: ReadableStorageDatabase,
+  input: {
+    entityId?: string;
+    locale?: ResolvedLocale;
+  } = {},
+): Promise<GeneralLedgerEntry[]> {
+  const entityId = input.entityId ?? defaultEntityId;
+  const locale = input.locale ?? "en";
+  const allRecordKinds: LedgerRecordRow["recordKind"][] = [
+    "income",
+    "expense",
+    "personal_spending",
+  ];
+  const rows = await database.searchRecordsByDateRangeAsync<LedgerRecordRow>({
+    dateRange: {
+      endOn: "9999-12-31",
+      startOn: "0001-01-01",
+    },
+    entityId,
+    orderBy: "r.occurred_on DESC, r.created_at DESC, r.record_id DESC",
+    recordKinds: allRecordKinds,
+    recordStatuses: ledgerPostableStatuses,
+    select: `r.record_id AS recordId,
+      r.description,
+      r.memo,
+      r.occurred_on AS occurredOn,
+      r.created_at AS createdAt,
+      r.currency,
+      r.amount_cents AS amountCents,
+      r.record_kind AS recordKind,
+      r.source_label AS sourceLabel,
+      r.target_label AS targetLabel,
+      COALESCE(r.business_use_bps, 10000) AS businessUseBps,
+      r.tax_line_code AS taxLineCode`,
+  });
+
+  return rows
+    .map((row) => ({
+      ...row,
+      effectiveAmountCents: row.amountCents,
+    }))
+    .filter((row) => row.effectiveAmountCents > 0)
+    .map((row) => buildGeneralLedgerEntry(row, locale));
+}

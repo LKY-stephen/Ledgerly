@@ -17,7 +17,8 @@ import { useAppShell } from "../app-shell/provider";
 
 export function LedgerUploadScreen() {
   const router = useRouter();
-  const { isExpanded } = useResponsive();
+  const { isExpanded, isMedium } = useResponsive();
+  const isWide = isExpanded || isMedium;
   const { copy, palette, resolvedLocale } = useAppShell();
   const uploadCopy = copy.ledger.upload;
   const [error, setError] = useState<string | null>(null);
@@ -114,7 +115,7 @@ export function LedgerUploadScreen() {
           title={copy.common.appName}
         />
       </View>
-      <ScrollView contentContainerStyle={[styles.container, isExpanded ? styles.containerWide : null]}>
+      <ScrollView contentContainerStyle={[styles.container, isWide && styles.containerWide]}>
         <View style={styles.heroBlock}>
           <Text style={[styles.eyebrow, { color: palette.inkMuted }]}>
             {uploadCopy.eyebrow}
@@ -274,7 +275,9 @@ const styles = StyleSheet.create({
   },
   containerWide: {
     alignSelf: "center",
-    maxWidth: 600,
+    maxWidth: 680,
+    paddingHorizontal: 32,
+    paddingVertical: 32,
     width: "100%",
   },
   dropCard: {

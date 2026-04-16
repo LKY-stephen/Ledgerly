@@ -16,7 +16,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { SectionCard } from "@creator-cfo/ui";
 
-import { seedCreatorFinanceDemoLedger } from "../database-demo/seed-database-demo";
+import { seedCreatorFinanceDemoLedger, startNewLedger } from "../database-demo/seed-database-demo";
 import { pickAndImportDatabasePackageAsync } from "../../storage/database-import";
 import { useResponsive } from "../../hooks/use-responsive";
 import {
@@ -927,13 +927,11 @@ export function ProfileScreen() {
                 setStorageSuspended(true);
 
                 try {
-                  const result = await seedCreatorFinanceDemoLedger();
+                  await startNewLedger();
                   bumpStorageRevision();
                   setDatabaseImportMessage({
                     tone: "success",
-                    value:
-                      `${copy.meScreen.databaseDemoSuccess} ${result.recordCount} ` +
-                      copy.meScreen.databaseDemoRecordSuffix,
+                    value: copy.meScreen.databaseDemoSuccess,
                   });
                 } catch (error) {
                   const message =
@@ -957,7 +955,7 @@ export function ProfileScreen() {
                   opacity: isSeedingDemoLedger ? 0.7 : 1,
                 },
               ]}
-              testID="profile-seed-demo-ledger-button"
+              testID="profile-start-new-ledger-button"
             >
               <Text style={[styles.secondaryActionLabel, { color: palette.ink }]}>
                 {isSeedingDemoLedger

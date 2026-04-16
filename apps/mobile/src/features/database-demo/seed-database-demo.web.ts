@@ -1,6 +1,8 @@
-import { getActiveWebDatabase } from "../../storage/web-sqlite";
+import { getActiveWebDatabase, openWebSqliteDatabase } from "../../storage/web-sqlite";
 import { createWritableStorageDatabase } from "@creator-cfo/storage";
 import { replaceCreatorLedgerDemoRecords } from "./creator-ledger-demo-plan";
+import { deleteDatabaseFromIndexedDB } from "../../storage/web-persistence";
+import { initializeLocalDatabase } from "../../storage/database";
 
 export async function seedCreatorFinanceDemoLedger(): Promise<{
   recordCount: number;
@@ -21,4 +23,16 @@ export async function seedCreatorFinanceDemoLedger(): Promise<{
   });
 
   return replaceCreatorLedgerDemoRecords(writableDatabase);
+}
+
+export async function startNewLedger(): Promise<void> {
+  const existingDb = getActiveWebDatabase();
+
+  if (existingDb) {
+    existingDb.close();
+  }
+
+  await deleteDatabaseFromIndexedDB();
+  const newDb = await openWebSqliteDatabase();
+  await initializeLocalDatabase(newDb);
 }

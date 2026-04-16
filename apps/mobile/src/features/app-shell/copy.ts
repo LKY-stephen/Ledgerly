@@ -133,7 +133,6 @@ export interface AppCopy {
     monthlyProfit: string;
     net: string;
     newRecords: string;
-    notificationsLabel: string;
     outflow: string;
     recentActivitySubtitle: string;
     recentActivityTitle: string;
@@ -142,6 +141,18 @@ export interface AppCopy {
     trendEmptyTitle: string;
     trendSubtitle: string;
     trendTitle: string;
+  };
+  journalScreen: {
+    account: string;
+    amount: string;
+    credit: string;
+    date: string;
+    debit: string;
+    description: string;
+    emptySummary: string;
+    emptyTitle: string;
+    subtitle: string;
+    title: string;
   };
   home: {
     cashTitle: string;
@@ -619,16 +630,28 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
       monthlyProfit: "Monthly Profit",
       net: "Net",
       newRecords: "New Records",
-      notificationsLabel: "Notifications",
       outflow: "Outflow",
       recentActivitySubtitle: "Newest records synced from the local ledger",
-      recentActivityTitle: "Recent Activity",
+      recentActivityTitle: "Journal",
       seeAll: "See All",
       trendEmptySummary:
         "Add a posted income record to start the 30-day trend view.",
       trendEmptyTitle: "No income in the last 30 days",
       trendSubtitle: "Built from 30 days of local ledger activity",
-      trendTitle: "30-Day Cash Flow Trend",
+      trendTitle: "30-Day Income & Expense",
+    },
+    journalScreen: {
+      account: "Account",
+      amount: "Amount",
+      credit: "Credit",
+      date: "Date",
+      debit: "Debit",
+      description: "Description",
+      emptySummary:
+        "Upload and confirm receipts to populate the journal with posted entries.",
+      emptyTitle: "No journal entries yet",
+      subtitle: "All posted records",
+      title: "Journal",
     },
     home: {
       cashTitle: "Cash confidence",
@@ -913,13 +936,13 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
       apiSectionTitle: "AI Parse Settings",
       databaseDescription:
         "Import a CFO database package from Files or iCloud Drive. The selected database must keep its evidence files beside it under package-relative paths. On iPhone and iPad, choose the creator-cfo-vault folder, or a folder that contains it, in the folder picker.",
-      databaseDemoAction: "Load Demo Ledger",
+      databaseDemoAction: "Start New Ledger",
       databaseDemoDescription:
-        "Populate this local database with a creator-finance demo ledger so Home and Ledger show realistic balances, activity, and reports.",
-      databaseDemoFailure: "Demo ledger load failed.",
-      databaseDemoInProgress: "Loading demo ledger...",
-      databaseDemoRecordSuffix: "demo records created.",
-      databaseDemoSuccess: "Loaded demo ledger.",
+        "Clear all existing records and start a fresh, empty ledger. This cannot be undone.",
+      databaseDemoFailure: "New ledger creation failed.",
+      databaseDemoInProgress: "Creating new ledger...",
+      databaseDemoRecordSuffix: "records cleared.",
+      databaseDemoSuccess: "New ledger created.",
       databaseImportAction: "Import Database",
       databaseImportCheckedSuffix: "path(s) checked.",
       databaseImportFailure: "Database import failed.",
@@ -1148,16 +1171,27 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
       monthlyProfit: "月度利润",
       net: "净额",
       newRecords: "新增记录",
-      notificationsLabel: "通知",
       outflow: "流出",
       recentActivitySubtitle: "最新记录已从本地账本同步",
-      recentActivityTitle: "最近活动",
+      recentActivityTitle: "日记账",
       seeAll: "查看全部",
       trendEmptySummary:
         "新增一条已入账收入记录后，这里会开始展示近 30 天趋势。",
       trendEmptyTitle: "近 30 天还没有收入",
       trendSubtitle: "基于最近 30 天本地账本动态生成",
-      trendTitle: "30 天收支趋势",
+      trendTitle: "30天收支",
+    },
+    journalScreen: {
+      account: "科目",
+      amount: "金额",
+      credit: "贷方",
+      date: "日期",
+      debit: "借方",
+      description: "描述",
+      emptySummary: "上传并确认票据后，日记账会展示已入账的分录。",
+      emptyTitle: "暂无日记账",
+      subtitle: "全部已入账记录",
+      title: "日记账",
     },
     home: {
       cashTitle: "现金把控",
@@ -1428,13 +1462,13 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
       apiSectionTitle: "AI 解析设置",
       databaseDescription:
         "从文件或 iCloud Drive 导入一个 CFO 数据库包。所选数据库必须把凭证文件按相对路径放在数据库旁边。在 iPhone 和 iPad 上，请在文件夹选择器里选择 creator-cfo-vault 文件夹，或选择包含它的上级文件夹。",
-      databaseDemoAction: "导入演示账本",
+      databaseDemoAction: "新建账本",
       databaseDemoDescription:
-        "向当前本地数据库注入一组创作者财务演示记录，让首页与记账页直接展示真实汇总、流水和报表效果。",
-      databaseDemoFailure: "演示账本导入失败。",
-      databaseDemoInProgress: "正在导入演示账本...",
-      databaseDemoRecordSuffix: "条演示记录已创建。",
-      databaseDemoSuccess: "演示账本导入成功。",
+        "清除所有已有记录，创建一个全新的空账本。此操作不可撤销。",
+      databaseDemoFailure: "新建账本失败。",
+      databaseDemoInProgress: "正在新建账本...",
+      databaseDemoRecordSuffix: "条记录已清除。",
+      databaseDemoSuccess: "新账本已创建。",
       databaseImportAction: "导入数据库",
       databaseImportCheckedSuffix: "个路径已检查。",
       databaseImportFailure: "数据库导入失败。",

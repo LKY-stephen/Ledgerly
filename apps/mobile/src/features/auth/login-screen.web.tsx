@@ -2,12 +2,14 @@ import { Redirect, useRouter } from "expo-router";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { useResponsive } from "../../hooks/use-responsive";
 import { LaunchScreen } from "../app-shell/launch-screen";
 import { useAppShell } from "../app-shell/provider";
 import { resolveEntryHref } from "../app-shell/storage-entry";
 
 export function LoginScreen() {
   const router = useRouter();
+  const { isExpanded, isMedium } = useResponsive();
   const {
     continueAsGuest,
     copy,
@@ -16,6 +18,7 @@ export function LoginScreen() {
     session,
     storageGateState,
   } = useAppShell();
+  const isWide = isExpanded || isMedium;
 
   const redirectHref = resolveEntryHref({
     isHydrated,
@@ -38,7 +41,7 @@ export function LoginScreen() {
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: palette.paper }]}>
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView contentContainerStyle={[styles.container, isWide && styles.containerWide]}>
         <View style={styles.topBlock}>
           <Text style={[styles.brandTitle, { color: palette.ink }]}>
             {copy.common.appName}
@@ -182,8 +185,8 @@ export function LoginScreen() {
 
 const styles = StyleSheet.create({
   actions: {
+    alignSelf: "stretch",
     gap: 12,
-    width: "100%",
   },
   brandSubtitle: {
     fontSize: 18,
@@ -206,6 +209,14 @@ const styles = StyleSheet.create({
     gap: 22,
     padding: 24,
     paddingBottom: 36,
+  },
+  containerWide: {
+    alignSelf: "center",
+    justifyContent: "center",
+    maxWidth: 520,
+    paddingHorizontal: 40,
+    paddingVertical: 48,
+    width: "100%",
   },
   heroArt: {
     borderRadius: 34,
@@ -295,11 +306,11 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   privacyCard: {
+    alignSelf: "stretch",
     borderTopWidth: 1,
     gap: 14,
     marginTop: 16,
     paddingTop: 26,
-    width: "100%",
   },
   privacyEyebrow: {
     fontSize: 18,

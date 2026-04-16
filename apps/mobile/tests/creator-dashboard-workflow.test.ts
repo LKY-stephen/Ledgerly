@@ -200,25 +200,21 @@ describe("creator dashboard workflow", () => {
     expect(snapshot.hasMore).toBe(true);
     expect(snapshot.trend.find((point) => point.date === "2026-04-18")).toEqual(
       {
+        amountCents: 115_000,
         date: "2026-04-18",
-        expenseCents: 0,
-        incomeCents: 115_000,
         label: "Apr 18",
-        netCents: 115_000,
       },
     );
     expect(snapshot.trend.find((point) => point.date === "2026-04-12")).toEqual(
       {
+        amountCents: 8_800,
         date: "2026-04-12",
-        expenseCents: 8_800,
-        incomeCents: 0,
         label: "Apr 12",
-        netCents: -8_800,
       },
     );
   });
 
-  it("anchors the home trend window to the latest record date when no explicit now is provided", async () => {
+  it("builds a 30-day trend window ending on the given now date", async () => {
     const database = createStorageDatabase();
     const writableDatabase = createWritableDatabase(database);
     await ensureDefaultEntity(writableDatabase, "2026-01-01T08:00:00.000Z");
@@ -226,13 +222,12 @@ describe("creator dashboard workflow", () => {
 
     const snapshot = await loadHomeSnapshot(writableDatabase, {
       limit: 3,
+      now: "2026-04-18",
     });
 
     expect(snapshot.trend).toHaveLength(30);
     expect(snapshot.trend.at(-1)?.date).toBe("2026-04-18");
-    expect(snapshot.trend.at(-1)?.incomeCents).toBe(115_000);
-    expect(snapshot.trend.at(-1)?.expenseCents).toBe(0);
-    expect(snapshot.trend.at(-1)?.netCents).toBe(115_000);
+    expect(snapshot.trend.at(-1)?.amountCents).toBe(115_000);
     expect(snapshot.recentRecords[0]?.description).toBe(
       "Affiliate network payout",
     );
@@ -299,7 +294,6 @@ describe("creator dashboard workflow", () => {
 
     const homeSnapshot = await loadHomeSnapshot(writableDatabase, {
       limit: 3,
-      locale: "zh-CN",
       now: "2026-04-20",
       offset: 0,
     });
@@ -311,7 +305,7 @@ describe("creator dashboard workflow", () => {
 
     expect(
       homeSnapshot.trend.find((point) => point.date === "2026-04-18")?.label,
-    ).toBe("4/18");
+    ).toBe("Apr 18");
     expect(ledgerSnapshot.selectedPeriod.label).toBe("2026年4月");
     expect(ledgerSnapshot.selectedPeriod.summary).toBe(
       "2026年4月01日 - 2026年4月30日",

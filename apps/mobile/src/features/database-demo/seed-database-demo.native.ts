@@ -14,3 +14,12 @@ export async function seedCreatorFinanceDemoLedger(): Promise<{
     return result ?? { recordCount: 0 };
   });
 }
+
+export async function startNewLedger(): Promise<void> {
+  return withWritableLocalDatabase(async ({ database }) => {
+    await database.execAsync("DELETE FROM records;");
+    await database.execAsync("DELETE FROM upload_batches;");
+    await database.execAsync("DELETE FROM evidence;");
+    await database.execAsync("DELETE FROM planner_runs;");
+  });
+}

@@ -327,7 +327,6 @@ export async function parseFile(
 export async function loadHomeScreenSnapshot(
   input: {
     limit?: number;
-    locale?: ResolvedLocale;
     now?: string;
     offset?: number;
   } = {},
@@ -858,4 +857,16 @@ function emptyReviewValues(): LedgerReviewValues {
     target: "",
     taxCategory: "",
   };
+}
+
+export async function loadJournalScreenEntries(
+  input: { locale?: string } = {},
+): Promise<import("./ledger-reporting").GeneralLedgerEntry[]> {
+  const { loadJournalEntries } = await import("./ledger-reporting");
+
+  return withWritableLocalDatabase(async ({ writableDatabase }) =>
+    loadJournalEntries(writableDatabase, {
+      locale: (input.locale as "en" | "zh-CN") ?? "en",
+    }),
+  );
 }

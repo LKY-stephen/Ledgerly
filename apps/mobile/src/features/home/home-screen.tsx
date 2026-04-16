@@ -51,9 +51,6 @@ export function HomeScreen() {
     snapshot,
   } = useHomeScreenData();
   const screenCopy = copy.homeScreen;
-  const hasTrendActivity = snapshot.trend.some(
-    (point) => point.incomeCents > 0 || point.expenseCents > 0,
-  );
   const [selectedTrendDate, setSelectedTrendDate] = useState<string | null>(
     null,
   );
@@ -62,16 +59,13 @@ export function HomeScreen() {
   const outflowLabel = formatCurrencyFromCents(snapshot.metrics.outflowCents);
   const netLabel = formatCurrencyFromCents(snapshot.metrics.netCents);
   const chartPeak = Math.max(
-    ...snapshot.trend.flatMap((point) => [
-      point.incomeCents,
-      point.expenseCents,
-    ]),
+    ...snapshot.trend.map((point) => point.amountCents),
     1,
   );
   const defaultTrendDate = useMemo(() => {
     const latestWithActivity = [...snapshot.trend]
       .reverse()
-      .find((point) => point.incomeCents > 0 || point.expenseCents > 0);
+      .find((point) => point.amountCents > 0);
 
     return (
       latestWithActivity?.date ??
@@ -134,18 +128,6 @@ export function HomeScreen() {
                 <Ionicons color="#002045" name="refresh-outline" size={18} />
               </Pressable>
             ) : null}
-            <Pressable
-              accessibilityLabel={screenCopy.notificationsLabel}
-              accessibilityRole="button"
-              onPress={() => router.push("/discover")}
-              style={({ pressed }) => [
-                styles.notificationButton,
-                { backgroundColor: pressed ? "#ECECE8" : "#F4F4F2" },
-              ]}
-            >
-              <Ionicons color="#002045" name="notifications-outline" size={18} />
-              <View style={styles.notificationDot} />
-            </Pressable>
           </View>
         </View>
 
@@ -206,8 +188,7 @@ export function HomeScreen() {
                 </View>
               </View>
 
-              {hasTrendActivity ? (
-                <View style={styles.trendPanel}>
+              <View style={styles.trendPanel}>
                   {selectedTrendPoint ? (
                     <View style={styles.trendTooltip}>
                       <View style={styles.trendTooltipHeader}>
@@ -220,14 +201,12 @@ export function HomeScreen() {
                         <Text
                           style={[
                             styles.trendTooltipNet,
-                            selectedTrendPoint.netCents >= 0
-                              ? styles.trendTooltipNetPositive
-                              : styles.trendTooltipNetNegative,
+                            styles.trendTooltipNetPositive,
                           ]}
                         >
                           {screenCopy.net}:{" "}
                           {formatSignedCurrencyFromCents(
-                            selectedTrendPoint.netCents,
+                            selectedTrendPoint.amountCents,
                           )}
                         </Text>
                       </View>
@@ -243,7 +222,7 @@ export function HomeScreen() {
                             ]}
                           >
                             {formatCurrencyFromCents(
-                              selectedTrendPoint.incomeCents,
+                              selectedTrendPoint.amountCents,
                             )}
                           </Text>
                         </View>
@@ -257,9 +236,7 @@ export function HomeScreen() {
                               styles.trendTooltipMetricExpense,
                             ]}
                           >
-                            {formatCurrencyFromCents(
-                              selectedTrendPoint.expenseCents,
-                            )}
+                            {formatCurrencyFromCents(0)}
                           </Text>
                         </View>
                       </View>
@@ -324,33 +301,6 @@ export function HomeScreen() {
                     )}
                   </View>
                 </View>
-              ) : (
-                <View style={styles.trendEmptyState}>
-                  <View style={styles.trendEmptyIconWrap}>
-                    <Ionicons color="#002045" name="bar-chart-outline" size={18} />
-                  </View>
-                  <View style={styles.trendEmptyCopy}>
-                    <Text style={styles.trendEmptyTitle}>
-                      {screenCopy.trendEmptyTitle}
-                    </Text>
-                    <Text style={styles.trendEmptySummary}>
-                      {screenCopy.trendEmptySummary}
-                    </Text>
-                  </View>
-                  <Pressable
-                    accessibilityRole="button"
-                    onPress={() => router.push("/ledger/upload")}
-                    style={({ pressed }) => [
-                      styles.secondaryActionButton,
-                      pressed ? styles.secondaryActionButtonPressed : null,
-                    ]}
-                  >
-                    <Text style={styles.secondaryActionLabel}>
-                      {screenCopy.newRecords}
-                    </Text>
-                  </Pressable>
-                </View>
-              )}
             </View>
           </View>
 
@@ -366,7 +316,7 @@ export function HomeScreen() {
               </View>
               <Pressable
                 accessibilityRole="button"
-                onPress={() => router.push("/(tabs)/ledger")}
+                onPress={() => router.push("/journal")}
               >
                 <Text style={styles.seeAllLink}>{screenCopy.seeAll}</Text>
               </Pressable>
@@ -495,15 +445,12 @@ function TrendBar({
 }) {
   const chartHeight = 148;
   const incomeHeight =
-    peak > 0 && bar.incomeCents > 0
-      ? Math.max(12, Math.round((bar.incomeCents / peak) * chartHeight))
+    peak > 0 && bar.amountCents > 0
+      ? Math.max(12, Math.round((bar.amountCents / peak) * chartHeight))
       : 0;
-  const expenseHeight =
-    peak > 0 && bar.expenseCents > 0
-      ? Math.max(12, Math.round((bar.expenseCents / peak) * chartHeight))
-      : 0;
-  const hasIncome = bar.incomeCents > 0;
-  const hasExpense = bar.expenseCents > 0;
+  const expenseHeight = 0;
+  const hasIncome = bar.amountCents > 0;
+  const hasExpense = false;
   const hasActivity = hasIncome || hasExpense;
 
   return (
@@ -870,15 +817,6 @@ const styles = StyleSheet.create({
     position: "relative",
     width: 36,
   },
-  notificationDot: {
-    backgroundColor: "#BA1A1A",
-    borderRadius: 999,
-    height: 7,
-    position: "absolute",
-    right: 10,
-    top: 10,
-    width: 7,
-  },
   profitCard: {
     backgroundColor: "#FFFFFF",
     borderColor: "rgba(196, 198, 207, 0.18)",
@@ -940,25 +878,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     lineHeight: 20,
   },
-  trendEmptyCopy: {
-    flex: 1,
-    gap: 4,
-    minWidth: 0,
-  },
-  trendEmptyIconWrap: {
-    alignItems: "center",
-    backgroundColor: "rgba(0, 32, 69, 0.06)",
-    borderRadius: 18,
-    height: 40,
-    justifyContent: "center",
-    width: 40,
-  },
-  trendEmptyState: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: 12,
-    minHeight: 88,
-  },
   trendTooltipHeader: {
     alignItems: "center",
     flexDirection: "row",
@@ -1005,17 +924,6 @@ const styles = StyleSheet.create({
   },
   trendTooltipNetPositive: {
     color: "#3F7A4D",
-  },
-  trendEmptySummary: {
-    color: "#74777F",
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  trendEmptyTitle: {
-    color: "#002045",
-    fontSize: 16,
-    fontWeight: "700",
-    lineHeight: 22,
   },
   safeArea: {
     backgroundColor: "#F5F6F8",

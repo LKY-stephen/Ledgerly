@@ -50,7 +50,7 @@ export function useHomeScreenData() {
     setError(null);
 
     try {
-      const nextSnapshot = await loadHomeScreenSnapshot({ locale: resolvedLocale });
+      const nextSnapshot = await loadHomeScreenSnapshot();
       setSnapshot(nextSnapshot);
     } catch (nextError: unknown) {
       setError(
@@ -76,7 +76,6 @@ export function useHomeScreenData() {
 
     try {
       const nextSnapshot = await loadHomeScreenSnapshot({
-        locale: resolvedLocale,
         offset: snapshot.recentRecords.length,
       });
       setSnapshot((current) => ({

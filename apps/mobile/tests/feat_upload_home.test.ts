@@ -132,20 +132,16 @@ describe("feat_upload home aggregation", () => {
     expect(
       firstPage.trend.find((point) => point.date === "2026-04-18"),
     ).toEqual({
+      amountCents: 8_900,
       date: "2026-04-18",
-      expenseCents: 0,
-      incomeCents: 8_900,
       label: "Apr 18",
-      netCents: 8_900,
     });
     expect(
       firstPage.trend.find((point) => point.date === "2026-04-10"),
     ).toEqual({
+      amountCents: 4_200,
       date: "2026-04-10",
-      expenseCents: 4_200,
-      incomeCents: 0,
       label: "Apr 10",
-      netCents: -4_200,
     });
     expect(firstPage.recentRecords).toHaveLength(2);
     expect(firstPage.hasMore).toBe(true);
@@ -153,7 +149,7 @@ describe("feat_upload home aggregation", () => {
     expect(secondPage.hasMore).toBe(false);
   });
 
-  it("splits same-day income and outflow into separate trend totals", async () => {
+  it("aggregates same-day income and outflow into combined trend totals", async () => {
     const database = createStorageDatabase();
     const writableDatabase = createWritableDatabase(database);
     await ensureDefaultEntity(writableDatabase, "2026-04-01T08:00:00.000Z");
@@ -207,20 +203,16 @@ describe("feat_upload home aggregation", () => {
 
     expect(snapshot.trend.find((point) => point.date === "2026-04-18")).toEqual(
       {
+        amountCents: 12_100,
         date: "2026-04-18",
-        expenseCents: 2_600,
-        incomeCents: 9_500,
         label: "Apr 18",
-        netCents: 6_900,
       },
     );
     expect(snapshot.trend.find((point) => point.date === "2026-04-19")).toEqual(
       {
+        amountCents: 0,
         date: "2026-04-19",
-        expenseCents: 0,
-        incomeCents: 0,
         label: "Apr 19",
-        netCents: 0,
       },
     );
   });
