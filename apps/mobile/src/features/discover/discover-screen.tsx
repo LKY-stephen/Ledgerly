@@ -65,7 +65,6 @@ export function DiscoverScreen() {
     <SafeAreaView
       edges={["top", "left", "right"]}
       style={[styles.safeArea, { backgroundColor: palette.shell }]}
-      testID="discover-screen"
     >
       <FlatList
         contentContainerStyle={styles.container}
@@ -100,7 +99,6 @@ export function DiscoverScreen() {
                       borderColor: palette.border,
                     },
                   ]}
-                  testID="discover-load-more-button"
                 >
                   {isLoadingMore ? (
                     <ActivityIndicator color={palette.accent} />
@@ -164,7 +162,6 @@ export function DiscoverScreen() {
                 shadowColor: palette.shadow,
               },
             ]}
-            testID="discover-card"
           >
             <View style={styles.cardTop}>
               <View

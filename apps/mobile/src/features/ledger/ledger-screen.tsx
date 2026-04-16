@@ -37,11 +37,8 @@ export function LedgerScreen() {
   const { copy, palette } = useAppShell();
   const screenCopy = copy.ledgerScreen;
   const [isSelectorOpen, setIsSelectorOpen] = useState(false);
-  const [pickerStep, setPickerStep] = useState<"month" | "quarter" | "year">(
-    "year",
-  );
-  const [draftQuarterId, setDraftQuarterId] =
-    useState<LedgerQuarterSegmentId | null>(null);
+  const [pickerStep, setPickerStep] = useState<"month" | "quarter" | "year">("year");
+  const [draftQuarterId, setDraftQuarterId] = useState<LedgerQuarterSegmentId | null>(null);
   const [draftYearId, setDraftYearId] = useState<string>("");
   const {
     error,
@@ -83,6 +80,11 @@ export function LedgerScreen() {
       label: screenCopy.scopes.personal,
     },
   ];
+  const rangeHint = hasSelectablePeriods
+    ? formatYearAvailability(snapshot.yearOptions.length, screenCopy)
+    : selectedScope === "personal"
+      ? screenCopy.range.noPersonal
+      : screenCopy.range.noBusiness;
   const selectedQuarterId = useMemo(
     () => getQuarterIdForSegment(selectedPeriod.segmentId),
     [selectedPeriod.segmentId],
@@ -91,10 +93,7 @@ export function LedgerScreen() {
     () =>
       draftQuarterId
         ? snapshot.periodOptions.filter(
-            (option) =>
-              option.year === Number(draftYearId) &&
-              option.segmentId.startsWith("m") &&
-              getQuarterIdForSegment(option.segmentId) === draftQuarterId,
+            (option) => option.year === Number(draftYearId) && option.segmentId.startsWith("m") && getQuarterIdForSegment(option.segmentId) === draftQuarterId,
           )
         : [],
     [draftQuarterId, draftYearId, snapshot.periodOptions],
@@ -135,10 +134,7 @@ export function LedgerScreen() {
   };
 
   const handleWholeYearChoice = (yearId: string) => {
-    const nextPeriodId = buildLedgerPeriodIdForYearAndSegment(
-      yearId,
-      "full-year",
-    );
+    const nextPeriodId = buildLedgerPeriodIdForYearAndSegment(yearId, "full-year");
 
     if (!nextPeriodId) {
       return;
@@ -154,10 +150,7 @@ export function LedgerScreen() {
   };
 
   const handleWholeQuarterChoice = (quarterId: LedgerQuarterSegmentId) => {
-    const nextPeriodId = buildLedgerPeriodIdForYearAndSegment(
-      draftYearId,
-      quarterId,
-    );
+    const nextPeriodId = buildLedgerPeriodIdForYearAndSegment(draftYearId, quarterId);
 
     if (!nextPeriodId) {
       return;
@@ -180,9 +173,7 @@ export function LedgerScreen() {
     >
       <ScrollView
         contentContainerStyle={styles.container}
-        refreshControl={
-          <RefreshControl onRefresh={refresh} refreshing={isRefreshing} />
-        }
+        refreshControl={<RefreshControl onRefresh={refresh} refreshing={isRefreshing} />}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.topRow}>
@@ -192,88 +183,102 @@ export function LedgerScreen() {
               {copy.common.appName}
             </Text>
           </View>
+          <View style={styles.headerBadge}>
+            <Text style={styles.headerBadgeLabel}>
+              {selectedScope === "personal" ? screenCopy.badge.personal : screenCopy.badge.business}
+            </Text>
+          </View>
         </View>
 
-        <View style={styles.topControls}>
-          <View style={styles.periodHeader}>
-            <Pressable
-              accessibilityRole="button"
-              disabled={!hasSelectablePeriods}
-              onPress={hasSelectablePeriods ? openSelector : undefined}
-              style={({ pressed }) => [
-                styles.periodCard,
-                !hasSelectablePeriods ? styles.periodCardDisabled : null,
-                pressed && hasSelectablePeriods
-                  ? styles.periodCardPressed
-                  : null,
-              ]}
-              testID="ledger-period-picker-button"
-            >
-              <View style={styles.periodCopy}>
-                <Text style={styles.periodEyebrow}>
-                  {screenCopy.range.reportingRange}
-                </Text>
-                <Text
-                  adjustsFontSizeToFit
-                  minimumFontScale={0.8}
-                  numberOfLines={1}
-                  style={styles.periodTitle}
-                >
-                  {selectedPeriod.label}
-                </Text>
-                <Text style={styles.periodSummary}>
-                  {selectedPeriod.summary}
-                </Text>
-              </View>
-              <Ionicons color="#002045" name="chevron-forward" size={18} />
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => router.push("/ledger/upload")}
-              style={({ pressed }) => [
-                styles.utilityButton,
-                pressed ? styles.utilityButtonPressed : null,
-              ]}
-              testID="ledger-upload-button"
-            >
-              <Ionicons color="#002045" name="cloud-upload-outline" size={18} />
-            </Pressable>
+        <View style={styles.periodHeader}>
+          <View style={styles.periodCopy}>
+            <Text style={styles.periodEyebrow}>{screenCopy.range.reportingRange}</Text>
+            <Text style={styles.periodTitle}>{selectedPeriod.label}</Text>
+            <Text style={styles.periodSummary}>{selectedPeriod.summary}</Text>
           </View>
 
-          <View style={styles.scopeSwitch} testID="ledger-scope-switch">
-            {ledgerScopes.map((scope) => {
-              const isActive = scope.id === selectedScope;
+          <View style={styles.utilityPanel}>
+            <View style={styles.utilityActions}>
+              <Pressable
+                accessibilityRole="button"
+                disabled={!hasSelectablePeriods}
+                onPress={hasSelectablePeriods ? openSelector : undefined}
+                style={({ pressed }) => [
+                  styles.utilityButton,
+                  !hasSelectablePeriods ? styles.utilityButtonDisabled : null,
+                  pressed && hasSelectablePeriods ? styles.utilityButtonPressed : null,
+                ]}
+                testID="ledger-period-picker-button"
+              >
+                <Ionicons color="#002045" name="calendar-outline" size={18} />
+              </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => router.push("/ledger/upload")}
+                style={({ pressed }) => [
+                  styles.utilityButton,
+                  pressed ? styles.utilityButtonPressed : null,
+                ]}
+                testID="ledger-upload-button"
+              >
+                <Ionicons color="#002045" name="cloud-upload-outline" size={18} />
+              </Pressable>
+            </View>
+            <View style={styles.scopeSwitch} testID="ledger-scope-switch">
+              {ledgerScopes.map((scope) => {
+                const isActive = scope.id === selectedScope;
 
-              return (
-                <Pressable
-                  key={scope.id}
-                  accessibilityLabel={scope.accessibilityLabel}
-                  accessibilityRole="button"
-                  onPress={() => selectScope(scope.id)}
-                  style={({ pressed }) => [
-                    styles.scopePill,
-                    isActive ? styles.scopePillActive : null,
-                    pressed ? styles.scopePillPressed : null,
-                  ]}
-                >
-                  <Ionicons
-                    color={isActive ? "#FFFFFF" : "rgba(0, 32, 69, 0.6)"}
-                    name={scope.icon}
-                    size={15}
-                  />
-                  <Text
-                    style={[
-                      styles.scopePillLabel,
-                      isActive ? styles.scopePillLabelActive : null,
+                return (
+                  <Pressable
+                    key={scope.id}
+                    accessibilityLabel={scope.accessibilityLabel}
+                    accessibilityRole="button"
+                    onPress={() => selectScope(scope.id)}
+                    style={({ pressed }) => [
+                      styles.scopePill,
+                      isActive ? styles.scopePillActive : null,
+                      pressed ? styles.scopePillPressed : null,
                     ]}
                   >
-                    {scope.label}
-                  </Text>
-                </Pressable>
-              );
-            })}
+                    <Ionicons
+                      color={isActive ? "#FFFFFF" : "rgba(0, 32, 69, 0.6)"}
+                      name={scope.icon}
+                      size={15}
+                    />
+                    <Text
+                      style={[
+                        styles.scopePillLabel,
+                        isActive ? styles.scopePillLabelActive : null,
+                      ]}
+                    >
+                      {scope.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
           </View>
         </View>
+
+        <Pressable
+          accessibilityRole="button"
+          disabled={!hasSelectablePeriods}
+          onPress={hasSelectablePeriods ? openSelector : undefined}
+          style={({ pressed }) => [
+            styles.periodSummaryCard,
+            !hasSelectablePeriods ? styles.periodSummaryCardDisabled : null,
+            pressed && hasSelectablePeriods ? styles.periodSummaryCardPressed : null,
+          ]}
+        >
+          <View style={styles.periodSummaryCardCopy}>
+            <Text style={styles.periodSummaryCardLabel}>{screenCopy.range.selectedRange}</Text>
+            <Text style={styles.periodSummaryCardValue}>
+              {formatPopupSelection(selectedPeriod, screenCopy)}
+            </Text>
+            <Text style={styles.periodSummaryCardDetail}>{rangeHint}</Text>
+          </View>
+          <Ionicons color="#002045" name="chevron-forward" size={18} />
+        </Pressable>
 
         <View style={styles.segmentedControl}>
           {ledgerViews.map((tab) => {
@@ -309,11 +314,7 @@ export function LedgerScreen() {
           />
         ) : error ? (
           <StatusCard
-            actionLabel={
-              isRefreshing
-                ? screenCopy.sections.retrying
-                : screenCopy.sections.retry
-            }
+            actionLabel={isRefreshing ? screenCopy.sections.retrying : screenCopy.sections.retry}
             body={error}
             disabled={isRefreshing}
             onPress={() => {
@@ -366,6 +367,15 @@ export function LedgerScreen() {
               ) : (
                 <>
                   <MetricGrid cards={snapshot.balanceSheet.metricCards} />
+                  <View style={styles.equationCard}>
+                    <Text style={styles.equationEyebrow}>{screenCopy.sections.equation}</Text>
+                    <Text style={styles.equationTitle}>
+                      {snapshot.balanceSheet.equationSummary}
+                    </Text>
+                    <Text style={styles.equationSummary}>
+                      {snapshot.balanceSheet.netPositionLabel}
+                    </Text>
+                  </View>
                   <SectionCard
                     rows={snapshot.balanceSheet.assetRows}
                     title={screenCopy.sections.assets}
@@ -378,17 +388,6 @@ export function LedgerScreen() {
                     rows={snapshot.balanceSheet.equityRows}
                     title={screenCopy.sections.equity}
                   />
-                  <View style={styles.equationCard}>
-                    <Text style={styles.equationEyebrow}>
-                      {screenCopy.sections.equation}
-                    </Text>
-                    <Text style={styles.equationTitle}>
-                      {snapshot.balanceSheet.equationSummary}
-                    </Text>
-                    <Text style={styles.equationSummary}>
-                      {snapshot.balanceSheet.netPositionLabel}
-                    </Text>
-                  </View>
                 </>
               )
             ) : null}
@@ -405,6 +404,15 @@ export function LedgerScreen() {
               ) : (
                 <>
                   <MetricGrid cards={snapshot.profitAndLoss.metricCards} />
+                  <View style={styles.equationCard}>
+                    <Text style={styles.equationEyebrow}>{screenCopy.sections.netIncome}</Text>
+                    <Text style={styles.netIncomeValue}>
+                      {snapshot.profitAndLoss.netIncomeLabel}
+                    </Text>
+                    <Text style={styles.equationSummary}>
+                      {screenCopy.sections.netIncomeSummary}
+                    </Text>
+                  </View>
                   <SectionCard
                     rows={snapshot.profitAndLoss.revenueRows}
                     title={screenCopy.sections.revenue}
@@ -413,22 +421,6 @@ export function LedgerScreen() {
                     rows={snapshot.profitAndLoss.expenseRows}
                     title={screenCopy.sections.expenses}
                   />
-                  <View style={styles.equationCard}>
-                    <Text style={styles.equationEyebrow}>
-                      {screenCopy.sections.netIncome}
-                    </Text>
-                    <Text
-                      adjustsFontSizeToFit
-                      minimumFontScale={0.7}
-                      numberOfLines={1}
-                      style={styles.netIncomeValue}
-                    >
-                      {snapshot.profitAndLoss.netIncomeLabel}
-                    </Text>
-                    <Text style={styles.equationSummary}>
-                      {screenCopy.sections.netIncomeSummary}
-                    </Text>
-                  </View>
                 </>
               )
             ) : null}
@@ -519,12 +511,8 @@ function LedgerPeriodPickerModal({
         <View style={styles.modalCard}>
           <View style={styles.modalHeader}>
             <View style={styles.modalHeaderCopy}>
-              <Text style={styles.modalEyebrow}>
-                {screenCopy.modal.pickerEyebrow}
-              </Text>
-              <Text style={styles.modalTitle}>
-                {screenCopy.modal.chooseRange}
-              </Text>
+              <Text style={styles.modalEyebrow}>{screenCopy.modal.pickerEyebrow}</Text>
+              <Text style={styles.modalTitle}>{screenCopy.modal.chooseRange}</Text>
               <Text style={styles.modalSummary}>
                 {currentPeriod.label} · {currentPeriod.summary}
               </Text>
@@ -542,25 +530,14 @@ function LedgerPeriodPickerModal({
           </View>
 
           <View style={styles.modalStepRail}>
-            <StepPill
-              active={pickerStep === "year"}
-              label={screenCopy.modal.stepYear}
-            />
-            <StepPill
-              active={pickerStep === "quarter"}
-              label={screenCopy.modal.stepQuarter}
-            />
-            <StepPill
-              active={pickerStep === "month"}
-              label={screenCopy.modal.stepMonth}
-            />
+            <StepPill active={pickerStep === "year"} label={screenCopy.modal.stepYear} />
+            <StepPill active={pickerStep === "quarter"} label={screenCopy.modal.stepQuarter} />
+            <StepPill active={pickerStep === "month"} label={screenCopy.modal.stepMonth} />
           </View>
 
           {pickerStep === "year" ? (
             <>
-              <Text style={styles.modalSectionTitle}>
-                {screenCopy.modal.yearTitle}
-              </Text>
+              <Text style={styles.modalSectionTitle}>{screenCopy.modal.yearTitle}</Text>
               <View style={styles.modalGrid}>
                 {yearOptions.map((option) => (
                   <View key={option.id} style={styles.modalGridCell}>
@@ -569,18 +546,14 @@ function LedgerPeriodPickerModal({
                       onPress={() => onYearChoice(option.id)}
                       style={({ pressed }) => [
                         styles.modalBlock,
-                        option.id === String(currentPeriod.year)
-                          ? styles.modalBlockActive
-                          : null,
+                        option.id === String(currentPeriod.year) ? styles.modalBlockActive : null,
                         pressed ? styles.modalBlockPressed : null,
                       ]}
                     >
                       <Text
                         style={[
                           styles.modalBlockTitle,
-                          option.id === String(currentPeriod.year)
-                            ? styles.modalBlockTitleActive
-                            : null,
+                          option.id === String(currentPeriod.year) ? styles.modalBlockTitleActive : null,
                         ]}
                       >
                         {option.label}
@@ -588,9 +561,7 @@ function LedgerPeriodPickerModal({
                       <Text
                         style={[
                           styles.modalBlockNote,
-                          option.id === String(currentPeriod.year)
-                            ? styles.modalBlockNoteActive
-                            : null,
+                          option.id === String(currentPeriod.year) ? styles.modalBlockNoteActive : null,
                         ]}
                       >
                         {screenCopy.modal.openQuarters}
@@ -616,9 +587,7 @@ function LedgerPeriodPickerModal({
 
           {pickerStep === "quarter" ? (
             <>
-              <Text style={styles.modalSectionTitle}>
-                {screenCopy.modal.quarterTitle}
-              </Text>
+              <Text style={styles.modalSectionTitle}>{screenCopy.modal.quarterTitle}</Text>
               <Text style={styles.modalSectionSummary}>
                 {screenCopy.modal.quarterHint}
               </Text>
@@ -633,9 +602,7 @@ function LedgerPeriodPickerModal({
                 <Text style={styles.modalDefaultChoiceTitle}>
                   {draftYearId} · {screenCopy.range.fullYear}
                 </Text>
-                <Text style={styles.modalDefaultChoiceNote}>
-                  {screenCopy.modal.reviewFullYear}
-                </Text>
+                <Text style={styles.modalDefaultChoiceNote}>{screenCopy.modal.reviewFullYear}</Text>
               </Pressable>
               <View style={styles.modalGrid}>
                 {quarterOptions.map((quarterOption) => (
@@ -645,18 +612,14 @@ function LedgerPeriodPickerModal({
                       onPress={() => onQuarterChoice(quarterOption.id)}
                       style={({ pressed }) => [
                         styles.modalBlock,
-                        quarterOption.id === draftQuarterId
-                          ? styles.modalBlockActive
-                          : null,
+                        quarterOption.id === draftQuarterId ? styles.modalBlockActive : null,
                         pressed ? styles.modalBlockPressed : null,
                       ]}
                     >
                       <Text
                         style={[
                           styles.modalBlockTitle,
-                          quarterOption.id === draftQuarterId
-                            ? styles.modalBlockTitleActive
-                            : null,
+                          quarterOption.id === draftQuarterId ? styles.modalBlockTitleActive : null,
                         ]}
                       >
                         {quarterOption.label}
@@ -664,9 +627,7 @@ function LedgerPeriodPickerModal({
                       <Text
                         style={[
                           styles.modalBlockNote,
-                          quarterOption.id === draftQuarterId
-                            ? styles.modalBlockNoteActive
-                            : null,
+                          quarterOption.id === draftQuarterId ? styles.modalBlockNoteActive : null,
                         ]}
                       >
                         {screenCopy.modal.openMonths}
@@ -692,9 +653,7 @@ function LedgerPeriodPickerModal({
 
           {pickerStep === "month" ? (
             <>
-              <Text style={styles.modalSectionTitle}>
-                {screenCopy.modal.monthTitle}
-              </Text>
+              <Text style={styles.modalSectionTitle}>{screenCopy.modal.monthTitle}</Text>
               <Text style={styles.modalSectionSummary}>
                 {screenCopy.modal.monthHint}
               </Text>
@@ -708,8 +667,7 @@ function LedgerPeriodPickerModal({
                   ]}
                 >
                   <Text style={styles.modalDefaultChoiceTitle}>
-                    {draftQuarterId.toUpperCase()} {draftYearId} ·{" "}
-                    {screenCopy.range.fullQuarter}
+                    {draftQuarterId.toUpperCase()} {draftYearId} · {screenCopy.range.fullQuarter}
                   </Text>
                   <Text style={styles.modalDefaultChoiceNote}>
                     {screenCopy.modal.reviewFullQuarter}
@@ -724,9 +682,7 @@ function LedgerPeriodPickerModal({
                     onPress={() => onMonthChoice(period)}
                     style={({ pressed }) => [
                       styles.modalBlock,
-                      period.id === currentPeriod.id
-                        ? styles.modalBlockActive
-                        : null,
+                      period.id === currentPeriod.id ? styles.modalBlockActive : null,
                       styles.modalMonthBlock,
                       pressed ? styles.modalBlockPressed : null,
                     ]}
@@ -734,9 +690,7 @@ function LedgerPeriodPickerModal({
                     <Text
                       style={[
                         styles.modalBlockTitle,
-                        period.id === currentPeriod.id
-                          ? styles.modalBlockTitleActive
-                          : null,
+                        period.id === currentPeriod.id ? styles.modalBlockTitleActive : null,
                       ]}
                     >
                       {period.label}
@@ -744,9 +698,7 @@ function LedgerPeriodPickerModal({
                     <Text
                       style={[
                         styles.modalBlockNote,
-                        period.id === currentPeriod.id
-                          ? styles.modalBlockNoteActive
-                          : null,
+                        period.id === currentPeriod.id ? styles.modalBlockNoteActive : null,
                       ]}
                     >
                       {period.summary}
@@ -764,15 +716,8 @@ function LedgerPeriodPickerModal({
 
 function StepPill({ active, label }: { active: boolean; label: string }) {
   return (
-    <View
-      style={[styles.modalStepPill, active ? styles.modalStepPillActive : null]}
-    >
-      <Text
-        style={[
-          styles.modalStepLabel,
-          active ? styles.modalStepLabelActive : null,
-        ]}
-      >
+    <View style={[styles.modalStepPill, active ? styles.modalStepPillActive : null]}>
+      <Text style={[styles.modalStepLabel, active ? styles.modalStepLabelActive : null]}>
         {label}
       </Text>
     </View>
@@ -782,43 +727,52 @@ function StepPill({ active, label }: { active: boolean; label: string }) {
 function getQuarterIdForSegment(
   segmentId: LedgerPeriodOption["segmentId"],
 ): LedgerQuarterSegmentId | null {
-  if (
-    segmentId === "q1" ||
-    segmentId === "m01" ||
-    segmentId === "m02" ||
-    segmentId === "m03"
-  ) {
+  if (segmentId === "q1" || segmentId === "m01" || segmentId === "m02" || segmentId === "m03") {
     return "q1";
   }
 
-  if (
-    segmentId === "q2" ||
-    segmentId === "m04" ||
-    segmentId === "m05" ||
-    segmentId === "m06"
-  ) {
+  if (segmentId === "q2" || segmentId === "m04" || segmentId === "m05" || segmentId === "m06") {
     return "q2";
   }
 
-  if (
-    segmentId === "q3" ||
-    segmentId === "m07" ||
-    segmentId === "m08" ||
-    segmentId === "m09"
-  ) {
+  if (segmentId === "q3" || segmentId === "m07" || segmentId === "m08" || segmentId === "m09") {
     return "q3";
   }
 
-  if (
-    segmentId === "q4" ||
-    segmentId === "m10" ||
-    segmentId === "m11" ||
-    segmentId === "m12"
-  ) {
+  if (segmentId === "q4" || segmentId === "m10" || segmentId === "m11" || segmentId === "m12") {
     return "q4";
   }
 
   return null;
+}
+
+function formatYearAvailability(
+  yearCount: number,
+  screenCopy: ReturnType<typeof useAppShell>["copy"]["ledgerScreen"],
+): string {
+  return `${yearCount} ${
+    yearCount === 1 ? screenCopy.range.yearsAvailableSingular : screenCopy.range.yearsAvailablePlural
+  }`;
+}
+
+function formatPopupSelection(
+  period: LedgerPeriodOption,
+  screenCopy: ReturnType<typeof useAppShell>["copy"]["ledgerScreen"],
+): string {
+  if (period.year < 1) {
+    return period.label;
+  }
+
+  if (period.segmentId === "full-year") {
+    return `${period.year} · ${screenCopy.range.fullYear}`;
+  }
+
+  if (period.segmentId.startsWith("q")) {
+    return period.label;
+  }
+
+  const quarterId = getQuarterIdForSegment(period.segmentId);
+  return quarterId ? `${period.label} ${period.year} · ${quarterId.toUpperCase()}` : period.label;
 }
 
 function MetricGrid({ cards }: { cards: readonly LedgerMetricCard[] }) {
@@ -826,17 +780,8 @@ function MetricGrid({ cards }: { cards: readonly LedgerMetricCard[] }) {
     <View style={styles.metricGrid}>
       {cards.map((card) => (
         <View key={card.id} style={styles.metricCard}>
-          <Text numberOfLines={2} style={styles.metricLabel}>
-            {card.label}
-          </Text>
-          <Text
-            adjustsFontSizeToFit
-            minimumFontScale={0.62}
-            numberOfLines={1}
-            style={styles.metricValue}
-          >
-            {card.value}
-          </Text>
+          <Text style={styles.metricLabel}>{card.label}</Text>
+          <Text style={styles.metricValue}>{card.value}</Text>
           <View
             style={[
               styles.metricAccentBar,
@@ -854,21 +799,8 @@ function MetricGrid({ cards }: { cards: readonly LedgerMetricCard[] }) {
 }
 
 function GeneralLedgerCard({ entry }: { entry: GeneralLedgerEntry }) {
-  const cardToneStyle =
-    entry.kind === "income"
-      ? styles.transactionCardIncome
-      : entry.kind === "personal"
-        ? styles.transactionCardPersonal
-        : styles.transactionCardExpense;
-  const amountToneStyle =
-    entry.kind === "income"
-      ? styles.transactionAmountIncome
-      : entry.kind === "personal"
-        ? styles.transactionAmountPersonal
-        : styles.transactionAmountExpense;
-
   return (
-    <View style={[styles.transactionCard, cardToneStyle]}>
+    <View style={styles.transactionCard}>
       <View style={styles.transactionHeader}>
         <View style={styles.transactionLeft}>
           <View
@@ -883,78 +815,43 @@ function GeneralLedgerCard({ entry }: { entry: GeneralLedgerEntry }) {
           >
             <Ionicons
               color={entry.kind === "income" ? "#45664A" : "#BA1A1A"}
-              name={
-                entry.kind === "income"
-                  ? "arrow-down-outline"
-                  : "arrow-up-outline"
-              }
+              name={entry.kind === "income" ? "arrow-down-outline" : "arrow-up-outline"}
               size={18}
             />
           </View>
           <View style={styles.transactionCopy}>
-            <Text numberOfLines={2} style={styles.transactionTitle}>
-              {entry.title}
-            </Text>
-            <Text numberOfLines={2} style={styles.transactionMeta}>
-              {entry.subtitle}
-            </Text>
+            <Text style={styles.transactionTitle}>{entry.title}</Text>
+            <Text style={styles.transactionMeta}>{entry.subtitle}</Text>
           </View>
         </View>
         <View style={styles.transactionRight}>
-          <Text
-            adjustsFontSizeToFit
-            minimumFontScale={0.72}
-            numberOfLines={1}
-            style={[styles.transactionAmount, amountToneStyle]}
-          >
-            {entry.amount}
-          </Text>
+          <Text style={styles.transactionAmount}>{entry.amount}</Text>
           <Text style={styles.transactionSource}>{entry.dateLabel}</Text>
         </View>
       </View>
 
       <View style={styles.postingLineStack}>
-        {entry.lines.map((line, index) => (
-          <PostingLine isFirst={index === 0} key={line.id} line={line} />
+        {entry.lines.map((line) => (
+          <PostingLine key={line.id} line={line} />
         ))}
       </View>
     </View>
   );
 }
 
-function PostingLine({
-  isFirst,
-  line,
-}: {
-  isFirst: boolean;
-  line: GeneralLedgerPostingLine;
-}) {
+function PostingLine({ line }: { line: GeneralLedgerPostingLine }) {
   const { copy } = useAppShell();
   const isDebit = line.side === "debit";
 
   return (
-    <View
-      style={[styles.postingLineRow, !isFirst ? styles.listRowSplit : null]}
-    >
+    <View style={styles.postingLineRow}>
       <View style={styles.postingLineCopy}>
-        <Text numberOfLines={1} style={styles.postingLineTitle}>
-          {isDebit
-            ? copy.ledgerScreen.sections.debit
-            : copy.ledgerScreen.sections.credit}{" "}
-          · {line.accountName}
+        <Text style={styles.postingLineTitle}>
+          {isDebit ? copy.ledgerScreen.sections.debit : copy.ledgerScreen.sections.credit} · {line.accountName}
         </Text>
-        <Text numberOfLines={2} style={styles.postingLineDetail}>
-          {line.detail}
-        </Text>
+        <Text style={styles.postingLineDetail}>{line.detail}</Text>
       </View>
-      <Text
-        adjustsFontSizeToFit
-        minimumFontScale={0.72}
-        numberOfLines={1}
-        style={styles.postingLineAmount}
-      >
-        {line.amount}
-      </Text>
+      <Text style={styles.postingLineAmount}>{line.amount}</Text>
     </View>
   );
 }
@@ -968,31 +865,15 @@ function SectionCard({
 }) {
   return (
     <View style={styles.sheetCard}>
-      <View style={styles.sheetHeader}>
-        <Text style={styles.sheetTitle}>{title}</Text>
-      </View>
+      <Text style={styles.sheetTitle}>{title}</Text>
       <View style={styles.sheetRowStack}>
-        {rows.map((row, index) => (
-          <View
-            key={row.id}
-            style={[styles.sheetRow, index > 0 ? styles.listRowSplit : null]}
-          >
+        {rows.map((row) => (
+          <View key={row.id} style={styles.sheetRow}>
             <View style={styles.sheetCopy}>
-              <Text numberOfLines={2} style={styles.sheetLabel}>
-                {row.label}
-              </Text>
-              <Text numberOfLines={3} style={styles.sheetNote}>
-                {row.note}
-              </Text>
+              <Text style={styles.sheetLabel}>{row.label}</Text>
+              <Text style={styles.sheetNote}>{row.note}</Text>
             </View>
-            <Text
-              adjustsFontSizeToFit
-              minimumFontScale={0.72}
-              numberOfLines={1}
-              style={styles.sheetAmount}
-            >
-              {row.amount}
-            </Text>
+            <Text style={styles.sheetAmount}>{row.amount}</Text>
           </View>
         ))}
       </View>
@@ -1047,10 +928,10 @@ const styles = StyleSheet.create({
   },
   container: {
     backgroundColor: "#F9F9F7",
-    gap: 14,
+    gap: 16,
     paddingBottom: 32,
     paddingHorizontal: 24,
-    paddingTop: 14,
+    paddingTop: 16,
   },
   endCap: {
     alignItems: "center",
@@ -1075,10 +956,10 @@ const styles = StyleSheet.create({
   equationCard: {
     backgroundColor: "#FFFDF8",
     borderColor: "rgba(0, 32, 69, 0.08)",
-    borderRadius: 20,
+    borderRadius: 24,
     borderWidth: 1,
-    gap: 8,
-    padding: 18,
+    gap: 10,
+    padding: 20,
   },
   equationEyebrow: {
     color: "rgba(0, 32, 69, 0.5)",
@@ -1094,15 +975,26 @@ const styles = StyleSheet.create({
   },
   equationTitle: {
     color: "#002045",
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: "700",
-    lineHeight: 28,
+    lineHeight: 30,
+  },
+  headerBadge: {
+    backgroundColor: "rgba(0, 32, 69, 0.06)",
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  headerBadgeLabel: {
+    color: "#002045",
+    fontSize: 12,
+    fontWeight: "700",
   },
   metricAccentBar: {
     borderBottomRightRadius: 999,
     borderTopRightRadius: 999,
-    bottom: 18,
-    height: 40,
+    bottom: 24,
+    height: 46,
     left: 0,
     position: "absolute",
     width: 4,
@@ -1119,15 +1011,14 @@ const styles = StyleSheet.create({
   metricCard: {
     backgroundColor: "#FFFFFF",
     borderColor: "rgba(0, 32, 69, 0.08)",
-    borderRadius: 20,
+    borderRadius: 24,
     borderWidth: 1,
     flex: 1,
-    gap: 6,
-    minHeight: 114,
-    minWidth: 0,
+    gap: 8,
+    minHeight: 126,
     overflow: "hidden",
-    paddingHorizontal: 18,
-    paddingVertical: 18,
+    paddingHorizontal: 20,
+    paddingVertical: 24,
   },
   metricGrid: {
     flexDirection: "row",
@@ -1141,15 +1032,12 @@ const styles = StyleSheet.create({
   },
   metricValue: {
     color: "#002045",
-    flexShrink: 1,
-    fontVariant: ["tabular-nums"],
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: "800",
-    lineHeight: 30,
+    lineHeight: 34,
   },
   netIncomeValue: {
     color: "#002045",
-    fontVariant: ["tabular-nums"],
     fontSize: 28,
     fontWeight: "800",
   },
@@ -1364,32 +1252,53 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
   },
   periodHeader: {
-    alignItems: "stretch",
+    alignItems: "flex-start",
     flexDirection: "row",
-    gap: 10,
+    gap: 12,
     justifyContent: "space-between",
-  },
-  periodCard: {
-    alignItems: "center",
-    backgroundColor: "#FFFDF8",
-    borderColor: "rgba(0, 32, 69, 0.08)",
-    borderRadius: 18,
-    borderWidth: 1,
-    flex: 1,
-    flexDirection: "row",
-    gap: 10,
-    justifyContent: "space-between",
-    minHeight: 92,
-    padding: 14,
-  },
-  periodCardDisabled: {
-    opacity: 0.72,
-  },
-  periodCardPressed: {
-    opacity: 0.92,
   },
   periodSelectorContent: {
     paddingRight: 14,
+  },
+  periodSummaryCard: {
+    alignItems: "center",
+    backgroundColor: "#FFFDF8",
+    borderColor: "rgba(0, 32, 69, 0.08)",
+    borderRadius: 20,
+    borderWidth: 1,
+    flexDirection: "row",
+    gap: 12,
+    justifyContent: "space-between",
+    padding: 16,
+  },
+  periodSummaryCardDisabled: {
+    opacity: 0.72,
+  },
+  periodSummaryCardCopy: {
+    flex: 1,
+    gap: 4,
+  },
+  periodSummaryCardDetail: {
+    color: "rgba(0, 32, 69, 0.55)",
+    fontSize: 12,
+    lineHeight: 17,
+    textTransform: "none",
+  },
+  periodSummaryCardLabel: {
+    color: "rgba(0, 32, 69, 0.5)",
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 1,
+    textTransform: "uppercase",
+  },
+  periodSummaryCardPressed: {
+    opacity: 0.92,
+  },
+  periodSummaryCardValue: {
+    color: "#002045",
+    fontSize: 18,
+    fontWeight: "800",
+    lineHeight: 24,
   },
   yearChip: {
     backgroundColor: "#FFFFFF",
@@ -1409,48 +1318,40 @@ const styles = StyleSheet.create({
   },
   periodSummary: {
     color: "rgba(0, 32, 69, 0.62)",
-    fontSize: 12,
-    lineHeight: 17,
+    fontSize: 13,
+    lineHeight: 18,
   },
   periodTitle: {
     color: "#002045",
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: "800",
-    lineHeight: 30,
+    lineHeight: 34,
   },
   postingLineAmount: {
     color: "#002045",
-    flexShrink: 0,
-    fontVariant: ["tabular-nums"],
     fontSize: 13,
     fontWeight: "700",
-    maxWidth: "34%",
-    textAlign: "right",
   },
   postingLineCopy: {
     flex: 1,
     gap: 2,
-    minWidth: 0,
   },
   postingLineDetail: {
     color: "rgba(0, 32, 69, 0.55)",
     fontSize: 12,
     lineHeight: 17,
   },
-  listRowSplit: {
-    borderTopColor: "rgba(0, 32, 69, 0.08)",
-    borderTopWidth: 1,
-  },
   postingLineRow: {
     alignItems: "center",
     flexDirection: "row",
     gap: 12,
     justifyContent: "space-between",
-    paddingVertical: 10,
   },
   postingLineStack: {
     borderTopColor: "rgba(0, 32, 69, 0.08)",
     borderTopWidth: 1,
+    gap: 10,
+    paddingTop: 14,
   },
   postingLineTitle: {
     color: "#002045",
@@ -1462,7 +1363,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   sectionHeader: {
-    alignItems: "flex-end",
+    alignItems: "center",
     flexDirection: "row",
     justifyContent: "space-between",
   },
@@ -1472,67 +1373,59 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   sectionStack: {
-    gap: 12,
+    gap: 14,
   },
   sectionTitle: {
     color: "#002045",
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: "800",
   },
   segmentedControl: {
-    backgroundColor: "#FFFFFF",
-    borderColor: "rgba(0, 32, 69, 0.08)",
-    borderRadius: 18,
-    borderWidth: 1,
+    backgroundColor: "#ECEAE3",
+    borderRadius: 22,
     flexDirection: "row",
-    gap: 4,
-    padding: 4,
+    gap: 6,
+    padding: 6,
   },
   segmentedItem: {
-    borderRadius: 14,
+    borderRadius: 16,
     flex: 1,
-    minHeight: 42,
+    minHeight: 50,
     paddingHorizontal: 10,
-    paddingVertical: 10,
+    paddingVertical: 12,
   },
   segmentedItemActive: {
-    backgroundColor: "#002045",
+    backgroundColor: "#FFFFFF",
+    shadowColor: "#002045",
+    shadowOffset: { height: 10, width: 0 },
+    shadowOpacity: 0.08,
+    shadowRadius: 18,
   },
   segmentedLabel: {
     color: "rgba(0, 32, 69, 0.5)",
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: "700",
     textAlign: "center",
   },
   segmentedLabelActive: {
-    color: "#FFFFFF",
+    color: "#002045",
   },
   sheetAmount: {
     color: "#002045",
-    flexShrink: 0,
-    fontVariant: ["tabular-nums"],
     fontSize: 15,
     fontWeight: "800",
-    maxWidth: "36%",
-    textAlign: "right",
   },
   sheetCard: {
     backgroundColor: "#FFFFFF",
     borderColor: "rgba(0, 32, 69, 0.08)",
-    borderRadius: 20,
+    borderRadius: 24,
     borderWidth: 1,
-    overflow: "hidden",
+    gap: 16,
+    padding: 20,
   },
   sheetCopy: {
     flex: 1,
     gap: 4,
-    minWidth: 0,
-  },
-  sheetHeader: {
-    borderBottomColor: "rgba(0, 32, 69, 0.08)",
-    borderBottomWidth: 1,
-    paddingHorizontal: 18,
-    paddingVertical: 16,
   },
   sheetLabel: {
     color: "#002045",
@@ -1549,15 +1442,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 12,
     justifyContent: "space-between",
-    paddingHorizontal: 18,
-    paddingVertical: 14,
   },
   sheetRowStack: {
-    gap: 0,
+    gap: 14,
   },
   sheetTitle: {
     color: "#002045",
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: "800",
   },
   statusBody: {
@@ -1586,10 +1477,10 @@ const styles = StyleSheet.create({
   statusCard: {
     backgroundColor: "#FFFFFF",
     borderColor: "rgba(0, 32, 69, 0.08)",
-    borderRadius: 20,
+    borderRadius: 24,
     borderWidth: 1,
     gap: 10,
-    padding: 18,
+    padding: 20,
   },
   statusTitle: {
     color: "#002045",
@@ -1603,53 +1494,26 @@ const styles = StyleSheet.create({
   },
   transactionAmount: {
     color: "#002045",
-    fontVariant: ["tabular-nums"],
     fontSize: 16,
     fontWeight: "800",
-    textAlign: "right",
-  },
-  transactionAmountExpense: {
-    color: "#002045",
-  },
-  transactionAmountIncome: {
-    color: "#45664A",
-  },
-  transactionAmountPersonal: {
-    color: "#8A4B14",
   },
   transactionCard: {
     backgroundColor: "#FFFFFF",
     borderColor: "rgba(0, 32, 69, 0.08)",
-    borderRadius: 20,
+    borderRadius: 24,
     borderWidth: 1,
-    overflow: "hidden",
-  },
-  transactionCardExpense: {
-    borderLeftColor: "rgba(186, 26, 26, 0.18)",
-    borderLeftWidth: 4,
-  },
-  transactionCardIncome: {
-    borderLeftColor: "rgba(69, 102, 74, 0.24)",
-    borderLeftWidth: 4,
-  },
-  transactionCardPersonal: {
-    borderLeftColor: "rgba(138, 75, 20, 0.22)",
-    borderLeftWidth: 4,
+    gap: 16,
+    padding: 18,
   },
   transactionCopy: {
     flex: 1,
     gap: 4,
-    minWidth: 0,
   },
   transactionHeader: {
     alignItems: "flex-start",
-    borderBottomColor: "rgba(0, 32, 69, 0.08)",
-    borderBottomWidth: 1,
     flexDirection: "row",
-    gap: 12,
+    gap: 14,
     justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 14,
   },
   transactionIconExpense: {
     backgroundColor: "rgba(255, 218, 214, 0.28)",
@@ -1662,16 +1526,15 @@ const styles = StyleSheet.create({
   },
   transactionIconWrap: {
     alignItems: "center",
-    borderRadius: 16,
-    height: 40,
+    borderRadius: 18,
+    height: 42,
     justifyContent: "center",
-    width: 40,
+    width: 42,
   },
   transactionLeft: {
     flex: 1,
     flexDirection: "row",
     gap: 12,
-    minWidth: 0,
   },
   transactionMeta: {
     color: "rgba(0, 32, 69, 0.55)",
@@ -1681,34 +1544,37 @@ const styles = StyleSheet.create({
   transactionRight: {
     alignItems: "flex-end",
     gap: 4,
-    maxWidth: "34%",
-    minWidth: 92,
   },
   transactionSource: {
     color: "rgba(0, 32, 69, 0.45)",
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: "600",
   },
   transactionTitle: {
     color: "#002045",
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: "800",
-    lineHeight: 19,
+    lineHeight: 20,
   },
-  topControls: {
+  utilityActions: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 10,
+  },
+  utilityPanel: {
+    alignItems: "flex-end",
     gap: 10,
   },
   scopePill: {
     alignItems: "center",
-    borderRadius: 12,
-    flex: 1,
+    borderRadius: 14,
     flexDirection: "row",
     gap: 6,
     justifyContent: "center",
-    minHeight: 34,
+    minHeight: 36,
     minWidth: 0,
     paddingHorizontal: 10,
-    paddingVertical: 7,
+    paddingVertical: 8,
   },
   scopePillActive: {
     backgroundColor: "#002045",
@@ -1727,22 +1593,25 @@ const styles = StyleSheet.create({
   scopeSwitch: {
     backgroundColor: "#FFFFFF",
     borderColor: "rgba(0, 32, 69, 0.08)",
-    borderRadius: 16,
+    borderRadius: 18,
     borderWidth: 1,
     flexDirection: "row",
     gap: 4,
-    minHeight: 44,
-    padding: 5,
+    minHeight: 48,
+    padding: 6,
   },
   utilityButton: {
     alignItems: "center",
     backgroundColor: "#FFFFFF",
     borderColor: "rgba(0, 32, 69, 0.08)",
-    borderRadius: 16,
+    borderRadius: 18,
     borderWidth: 1,
-    height: 52,
+    height: 48,
     justifyContent: "center",
-    width: 52,
+    width: 48,
+  },
+  utilityButtonDisabled: {
+    opacity: 0.55,
   },
   utilityButtonPressed: {
     backgroundColor: "#F0F4F8",

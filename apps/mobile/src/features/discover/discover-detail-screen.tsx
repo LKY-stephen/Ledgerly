@@ -25,10 +25,7 @@ export function DiscoverDetailScreen() {
   const article = getNewsArticleBySlug(resolveSlug(slug), resolvedLocale);
 
   return (
-    <SafeAreaView
-      style={[styles.safeArea, { backgroundColor: palette.shell }]}
-      testID="discover-detail-screen"
-    >
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: palette.shell }]}>
       <View
         style={[
           styles.appBar,

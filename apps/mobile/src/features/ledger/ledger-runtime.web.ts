@@ -67,8 +67,7 @@ export async function pickDocumentUploadCandidates(): Promise<
 > {
   const result = await DocumentPicker.getDocumentAsync({
     copyToCacheDirectory: true,
-    // The current upload flow only consumes one primary file at a time.
-    multiple: false,
+    multiple: true,
     type: ["application/pdf", "image/*"],
   });
 
@@ -94,10 +93,10 @@ export async function pickPhotoUploadCandidates(
 
   const result = await ImagePicker.launchImageLibraryAsync({
     allowsEditing: false,
-    allowsMultipleSelection: false,
+    allowsMultipleSelection: true,
     mediaTypes: ["images"] as never,
     quality: 1,
-    selectionLimit: 1,
+    selectionLimit: 0,
   });
 
   if (result.canceled) {

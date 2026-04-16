@@ -8,12 +8,10 @@ interface AnimatedTabBarButtonProps extends BottomTabBarButtonProps {
 }
 
 export function TabBarIcon({
-  accessibilityLabel,
   accessibilityState,
   children,
   onLongPress,
   onPress,
-  testID,
 }: AnimatedTabBarButtonProps) {
   const focused = accessibilityState?.selected ?? false;
   const scale = useRef(new Animated.Value(focused ? 1 : 0.98)).current;
@@ -56,7 +54,6 @@ export function TabBarIcon({
 
   return (
     <Pressable
-      accessibilityLabel={accessibilityLabel}
       accessibilityRole="button"
       accessibilityState={accessibilityState}
       onLongPress={onLongPress}
@@ -65,7 +62,6 @@ export function TabBarIcon({
         onPress?.(event);
       }}
       style={styles.pressable}
-      testID={testID}
     >
       <Animated.View
         style={[

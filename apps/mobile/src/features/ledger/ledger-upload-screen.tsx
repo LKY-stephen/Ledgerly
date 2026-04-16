@@ -1,15 +1,11 @@
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { BackHeaderBar } from "../../components/back-header-bar";
 import { CfoAvatar } from "../../components/cfo-avatar";
-import {
-  beginDemoAutoplayStep,
-  isUploadParsePersistDemoEnabled,
-} from "../demo/demo-autoplay";
 import {
   parseFile,
   pickDocumentUploadCandidates,
@@ -74,22 +70,6 @@ export function LedgerUploadScreen() {
       setIsBusy(false);
     }
   }
-
-  useEffect(() => {
-    if (isBusy || !isUploadParsePersistDemoEnabled()) {
-      return;
-    }
-
-    if (!beginDemoAutoplayStep("upload")) {
-      return;
-    }
-
-    const timeout = setTimeout(() => {
-      void handleImport("photos");
-    }, 3000);
-
-    return () => clearTimeout(timeout);
-  }, [isBusy]);
 
   const statusText =
     status.kind === "empty"

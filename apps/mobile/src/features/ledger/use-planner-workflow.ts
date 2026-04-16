@@ -72,31 +72,18 @@ export function usePlannerWorkflow(input: {
       setError(null);
 
       try {
-        console.log("[demo-autoplay] approveProposal start", {
-          batchId: plannerResult.batchId,
-          review,
-          writeProposalId,
-        });
         const result = await approveWriteProposal(
           plannerResult.batchId,
           writeProposalId,
           review,
         );
 
-        console.log("[demo-autoplay] approveProposal success", {
-          batchState: result.batchState,
-          proposals: result.writeProposals.map((proposal) => ({
-            id: proposal.writeProposalId,
-            state: proposal.state,
-          })),
-        });
         setPlannerResult(result);
 
         if (result.reviewValues) {
           setReview(result.reviewValues);
         }
       } catch (err) {
-        console.log("[demo-autoplay] approveProposal error", err);
         setError(err instanceof Error ? err.message : parseCopy.approvalFailed);
       } finally {
         setIsApproving(false);
