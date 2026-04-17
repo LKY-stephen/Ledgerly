@@ -156,7 +156,6 @@ export function ProfileScreen() {
     localePreference,
     openAiApiKey,
     palette,
-    parseApiBaseUrl,
     refreshStorageGateState,
     profileInfo,
     session,
@@ -169,7 +168,6 @@ export function ProfileScreen() {
     setStorageSuspended,
     setLocalePreference,
     setOpenAiApiKey,
-    setParseApiBaseUrl,
     setProfileInfo,
     setThemePreference,
     signOut,
@@ -184,7 +182,6 @@ export function ProfileScreen() {
   const [isOpenAiKeyVisible, setIsOpenAiKeyVisible] = useState(false);
   const [isGeminiKeyVisible, setIsGeminiKeyVisible] = useState(false);
   const [isInferKeyVisible, setIsInferKeyVisible] = useState(false);
-  const [baseUrlDraft, setBaseUrlDraft] = useState(parseApiBaseUrl);
   const [draftProfile, setDraftProfile] = useState<ProfileInfo>(profileInfo);
   const [databaseImportMessage, setDatabaseImportMessage] = useState<{
     tone: "error" | "success";
@@ -264,9 +261,6 @@ export function ProfileScreen() {
     setInferModelDraft(inferModel);
   }, [inferModel]);
 
-  useEffect(() => {
-    setBaseUrlDraft(parseApiBaseUrl);
-  }, [parseApiBaseUrl]);
 
   useEffect(() => {
     setDraftProfile(profileInfo);
@@ -314,7 +308,6 @@ export function ProfileScreen() {
       }
 
       await Promise.all([
-        setParseApiBaseUrl(baseUrlDraft),
         setOpenAiApiKey(normalized),
         setAiProvider("openai"),
       ]);
@@ -345,10 +338,7 @@ export function ProfileScreen() {
     }
 
     if (isGeminiOAuth) {
-      await Promise.all([
-        setParseApiBaseUrl(baseUrlDraft),
-        setAiProvider("gemini"),
-      ]);
+      await setAiProvider("gemini");
       return;
     }
 
@@ -360,7 +350,6 @@ export function ProfileScreen() {
     }
 
     await Promise.all([
-      setParseApiBaseUrl(baseUrlDraft),
       setGeminiApiKey(normalized),
       setAiProvider("gemini"),
     ]);
@@ -599,31 +588,6 @@ export function ProfileScreen() {
               />
             </View>
           </View>
-
-          {aiProviderDraft !== "infer" && (
-            <View style={styles.fieldBlock}>
-              <Text style={[styles.fieldLabel, { color: palette.inkMuted }]}>
-                {copy.meScreen.apiBaseUrlLabel}
-              </Text>
-              <TextInput
-                autoCapitalize="none"
-                autoCorrect={false}
-                onChangeText={setBaseUrlDraft}
-                placeholder={copy.meScreen.apiBaseUrlPlaceholder}
-                placeholderTextColor={palette.inkMuted}
-                style={[
-                  styles.input,
-                  {
-                    backgroundColor: palette.paperMuted,
-                    borderColor: palette.border,
-                    color: palette.ink,
-                  },
-                ]}
-                testID="profile-api-base-url-input"
-                value={baseUrlDraft}
-              />
-            </View>
-          )}
 
           {aiProviderDraft === "openai" && (
             <ApiKeyField

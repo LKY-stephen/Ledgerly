@@ -200,11 +200,6 @@ export function LedgerScreen() {
                 <Ionicons color="#002045" name="refresh-outline" size={16} />
               </Pressable>
             ) : null}
-            <View style={styles.headerBadge}>
-              <Text style={styles.headerBadgeLabel}>
-                {selectedScope === "personal" ? screenCopy.badge.personal : screenCopy.badge.business}
-              </Text>
-            </View>
           </View>
         </View>
 
