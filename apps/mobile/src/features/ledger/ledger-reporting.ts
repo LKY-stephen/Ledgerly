@@ -16,7 +16,6 @@ import {
   formatLedgerQuarterTitle,
   formatLedgerRangeSummary,
   formatLedgerRecordCount,
-  formatLedgerReferenceSubtitle,
   type GeneralLedgerEntryKind,
   getLedgerRuntimeCopy,
 } from "./ledger-localization";
@@ -411,16 +410,8 @@ export function buildLedgerSnapshotFromRows(
   const normalizedProfitLossRows = normalizeDerivedRows(input.profitLossRows ?? rows);
   const normalizedBalanceSheetRows = normalizeDerivedRows(input.balanceSheetRows ?? rows);
   const hasBalanceSheetData = normalizedBalanceSheetRows.length > 0;
-  const incomeRows = normalizedRows.filter((row) => row.recordKind === "income");
-  const expenseRows = normalizedRows.filter((row) => row.recordKind === "expense");
   const personalRows = normalizedRows.filter(
     (row) => row.recordKind === "personal_spending",
-  );
-  const incomeTotalCents = sumAmounts(
-    incomeRows.map((row) => row.effectiveAmountCents),
-  );
-  const expenseTotalCents = sumAmounts(
-    expenseRows.map((row) => row.effectiveAmountCents),
   );
   const personalTotalCents = sumAmounts(
     personalRows.map((row) => row.effectiveAmountCents),
@@ -1174,7 +1165,6 @@ function buildBalanceSheetSnapshot(
     input.scopeId === "business"
       ? summary.businessClosingAssetCents
       : summary.personalClosingAssetCents;
-  const businessAssetTotalCents = Math.max(summary.businessClosingAssetCents, 0);
   const assetTotalCents = Math.max(closingAssetCents, 0);
   const fundingGapCents = Math.max(closingAssetCents * -1, 0);
   const carryForwardRows = buildBalanceSheetCarryForwardRows(
@@ -1757,20 +1747,6 @@ function buildOwnerBalanceResultLabel(
 
 function buildLeftOwnerBalanceLabel(locale: ResolvedLocale): string {
   return locale === "zh-CN" ? "剩余所有者余额" : "Left owner balance";
-}
-
-function buildRevenueAccountName(
-  sourceLabel: string,
-  locale: ResolvedLocale,
-): string {
-  const runtimeCopy = getLedgerRuntimeCopy(locale);
-  const normalized = normalizeLabel(sourceLabel, locale);
-
-  if (normalized === runtimeCopy.common.unlabeledRecord) {
-    return runtimeCopy.journal.creatorRevenue;
-  }
-
-  return `${normalized}${runtimeCopy.journal.revenueSuffix}`;
 }
 function applyBusinessUse(amountCents: number, businessUseBps: number): number {
   return Math.round((amountCents * normalizeBusinessUseBps(businessUseBps)) / 10_000);

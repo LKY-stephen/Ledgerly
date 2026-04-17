@@ -28,11 +28,8 @@ import {
   deriveCandidateState,
   type PlannerReadResults,
 } from "./workflow-planner";
-import {
-  homeRecentPageSize,
-  type HomeRecentRecord,
-} from "./ledger-domain";
 import type { HomeSnapshot, JournalListSnapshot } from "../home/home-data";
+import type { GeneralLedgerEntry } from "./ledger-reporting";
 import { loadHomeSnapshot, loadJournalListSnapshot } from "../home/home-data";
 import { getActiveWebDatabase, openWebSqliteDatabase } from "../../storage/web-sqlite";
 import { initializeLocalDatabase } from "../../storage/database";
@@ -755,7 +752,7 @@ export function resetLedgerWebRuntimeStateForTests() {
 
 export async function loadJournalScreenEntries(
   input: { locale?: string } = {},
-): Promise<import("./ledger-reporting").GeneralLedgerEntry[]> {
+): Promise<GeneralLedgerEntry[]> {
   const { loadJournalEntries } = await import("./ledger-reporting");
   let db = getActiveWebDatabase();
 

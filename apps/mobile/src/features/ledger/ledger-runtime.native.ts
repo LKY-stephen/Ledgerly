@@ -39,6 +39,7 @@ import {
   type HomeSnapshot,
   type JournalListSnapshot,
 } from "../home/home-data";
+import type { GeneralLedgerEntry } from "./ledger-reporting";
 import type { ResolvedLocale } from "../app-shell/types";
 import { getActivePackageRootDirectory } from "../../storage/package-environment.native";
 import { buildPackageAbsolutePath } from "../../storage/package-paths";
@@ -877,7 +878,7 @@ function emptyReviewValues(): LedgerReviewValues {
 
 export async function loadJournalScreenEntries(
   input: { locale?: string } = {},
-): Promise<import("./ledger-reporting").GeneralLedgerEntry[]> {
+): Promise<GeneralLedgerEntry[]> {
   const { loadJournalEntries } = await import("./ledger-reporting");
 
   return withWritableLocalDatabase(async ({ writableDatabase }) =>

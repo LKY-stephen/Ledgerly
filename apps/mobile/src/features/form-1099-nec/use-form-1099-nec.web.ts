@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 
 import {
   buildForm1099NecSnapshot,
-  formatCurrencyLabel,
   type Form1099NecDatabaseSnapshot,
   type Form1099NecRecipientPreview,
 } from "./form-1099-nec-model";
@@ -11,17 +10,6 @@ import type { WebSqliteDatabase } from "../../storage/web-sqlite";
 
 interface EntityRow {
   legalName: string;
-}
-
-interface RecipientRow {
-  counterpartyId: string;
-  currency: string | null;
-  displayName: string | null;
-  grossAmountCents: number;
-  legalName: string;
-  recordCount: number;
-  taxIdMasked: string | null;
-  withholdingAmountCents: number;
 }
 
 export interface UseForm1099NecResult {

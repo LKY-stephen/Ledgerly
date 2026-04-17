@@ -6,8 +6,6 @@ import {
   type ReceiptPlannerPayload,
 } from "@creator-cfo/schemas";
 
-import { Platform } from "react-native";
-
 import { loadPersistedAiProvider, loadPersistedGeminiApiKey, loadPersistedGeminiAuthMode, loadPersistedInferApiKey, loadPersistedInferBaseUrl, loadPersistedInferModel, loadPersistedOpenAiApiKey } from "../app-shell/storage";
 import type { AiProvider, GeminiAuthMode } from "../app-shell/types";
 import { getValidGoogleAccessToken } from "../auth/google-token-runtime";
@@ -810,7 +808,7 @@ async function performOpenAiRequest(
       store: false,
     });
 
-    const useProxy = Platform.OS === "web" && !isFirstPartyApiHost(settings.baseUrl);
+    const useProxy = isWebRuntime() && !isFirstPartyApiHost(settings.baseUrl);
     const proxyUrl =
       typeof window !== "undefined" && window.location.hostname === "localhost"
         ? "http://localhost:19007"
@@ -845,6 +843,10 @@ async function performOpenAiRequest(
   } finally {
     clearTimeout(timeoutId);
   }
+}
+
+function isWebRuntime(): boolean {
+  return typeof window !== "undefined" && typeof document !== "undefined";
 }
 
 function getFallbackModels(provider: AiProvider, model: string): string[] {
