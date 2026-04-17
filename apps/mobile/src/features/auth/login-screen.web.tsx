@@ -39,9 +39,178 @@ export function LoginScreen() {
     router.replace("/");
   };
 
+  if (isWide) {
+    return (
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: palette.paper }]}>
+        <View style={styles.splitLayout}>
+          <View style={[styles.leftPanel, { backgroundColor: palette.paper }]}>
+            <View style={styles.leftPanelInner}>
+              <View style={styles.topBlock}>
+                <Text style={[styles.brandTitleWide, { color: palette.ink }]}>
+                  {copy.common.appName}
+                </Text>
+                <Text style={[styles.brandSubtitleWide, { color: palette.inkMuted }]}>
+                  {copy.login.brandSubtitle}
+                </Text>
+              </View>
+
+              <View
+                style={[
+                  styles.heroArt,
+                  {
+                    backgroundColor: palette.heroEnd,
+                    shadowColor: palette.shadow,
+                  },
+                ]}
+              >
+                <View
+                  style={[
+                    styles.heroGlow,
+                    { backgroundColor: palette.shellElevated },
+                  ]}
+                />
+                <View style={styles.heroDesk} />
+                <View style={styles.heroLaptop}>
+                  <View
+                    style={[
+                      styles.heroLaptopScreen,
+                      { backgroundColor: palette.paper },
+                    ]}
+                  />
+                </View>
+                <View
+                  style={[
+                    styles.heroPill,
+                    styles.heroPillTop,
+                    { backgroundColor: palette.paper },
+                  ]}
+                >
+                  <View
+                    style={[styles.pillDot, { backgroundColor: palette.accent }]}
+                  />
+                  <Text style={[styles.heroPillLabel, { color: palette.ink }]}>
+                    {copy.login.signals[0]}
+                  </Text>
+                </View>
+                <View
+                  style={[
+                    styles.heroPill,
+                    styles.heroPillMiddle,
+                    { backgroundColor: palette.paper },
+                  ]}
+                >
+                  <View
+                    style={[styles.pillDot, { backgroundColor: palette.accent }]}
+                  />
+                  <Text style={[styles.heroPillLabel, { color: palette.ink }]}>
+                    {copy.login.signals[1]}
+                  </Text>
+                </View>
+                <View
+                  style={[
+                    styles.heroPill,
+                    styles.heroPillBottom,
+                    { backgroundColor: palette.paper },
+                  ]}
+                >
+                  <View
+                    style={[styles.pillDot, { backgroundColor: palette.accent }]}
+                  />
+                  <Text style={[styles.heroPillLabel, { color: palette.ink }]}>
+                    {copy.login.signals[2]}
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.privacyMetrics}>
+                <View
+                  style={[
+                    styles.privacyChip,
+                    { backgroundColor: palette.paperMuted, borderColor: palette.border },
+                  ]}
+                >
+                  <View style={[styles.statusDot, { backgroundColor: palette.accent }]} />
+                  <Text style={[styles.privacyChipLabel, { color: palette.inkMuted }]}>
+                    {copy.login.privacyMetrics[0]}
+                  </Text>
+                </View>
+                <View
+                  style={[
+                    styles.privacyChip,
+                    { backgroundColor: palette.paperMuted, borderColor: palette.border },
+                  ]}
+                >
+                  <View style={[styles.statusDot, { backgroundColor: palette.accent }]} />
+                  <Text style={[styles.privacyChipLabel, { color: palette.inkMuted }]}>
+                    {copy.login.privacyMetrics[1]}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </View>
+
+          <View style={[styles.rightPanel, { backgroundColor: palette.paperMuted }]}>
+            <View style={styles.rightPanelInner}>
+              <Text style={[styles.privacyEyebrow, { color: palette.accent }]}>
+                {copy.login.eyebrow}
+              </Text>
+              <Text style={[styles.loginTitle, { color: palette.ink }]}>
+                {copy.login.title}
+              </Text>
+              <Text style={[styles.loginBody, { color: palette.inkMuted }]}>
+                {copy.login.body}
+              </Text>
+
+              <View style={styles.actionsWide}>
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={handleGuestMode}
+                  style={({ pressed }) => [
+                    styles.primaryButton,
+                    {
+                      backgroundColor: pressed ? palette.heroEnd : palette.ink,
+                      shadowColor: palette.shadow,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[styles.primaryLabel, { color: palette.inkOnAccent }]}
+                  >
+                    {copy.login.skip}
+                  </Text>
+                </Pressable>
+              </View>
+
+              <Text style={[styles.caption, { color: palette.inkMuted }]}>
+                {copy.login.caption}
+              </Text>
+
+              <View
+                style={[
+                  styles.statusPanel,
+                  {
+                    backgroundColor: palette.paper,
+                    borderColor: palette.border,
+                  },
+                ]}
+              >
+                <View
+                  style={[styles.statusDot, { backgroundColor: palette.accent }]}
+                />
+                <Text style={[styles.statusText, { color: palette.inkMuted }]}>
+                  {copy.login.appleHint}
+                </Text>
+              </View>
+            </View>
+          </View>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: palette.paper }]}>
-      <ScrollView contentContainerStyle={[styles.container, isWide && styles.containerWide]}>
+      <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.topBlock}>
           <Text style={[styles.brandTitle, { color: palette.ink }]}>
             {copy.common.appName}
@@ -188,19 +357,35 @@ const styles = StyleSheet.create({
     alignSelf: "stretch",
     gap: 12,
   },
+  actionsWide: {
+    alignSelf: "stretch",
+    gap: 12,
+    marginTop: 8,
+  },
   brandSubtitle: {
     fontSize: 18,
     fontWeight: "600",
     lineHeight: 26,
+  },
+  brandSubtitleWide: {
+    fontSize: 20,
+    fontWeight: "600",
+    lineHeight: 28,
   },
   brandTitle: {
     fontSize: 36,
     fontWeight: "800",
     lineHeight: 40,
   },
+  brandTitleWide: {
+    fontSize: 42,
+    fontWeight: "800",
+    lineHeight: 48,
+    letterSpacing: -0.8,
+  },
   caption: {
-    fontSize: 16,
-    lineHeight: 22,
+    fontSize: 14,
+    lineHeight: 20,
     textAlign: "center",
   },
   container: {
@@ -209,14 +394,6 @@ const styles = StyleSheet.create({
     gap: 22,
     padding: 24,
     paddingBottom: 36,
-  },
-  containerWide: {
-    alignSelf: "center",
-    justifyContent: "center",
-    maxWidth: 520,
-    paddingHorizontal: 40,
-    paddingVertical: 48,
-    width: "100%",
   },
   heroArt: {
     borderRadius: 34,
@@ -290,6 +467,30 @@ const styles = StyleSheet.create({
     bottom: 116,
     left: 22,
   },
+  leftPanel: {
+    flex: 55,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 48,
+    paddingVertical: 40,
+  },
+  leftPanelInner: {
+    gap: 28,
+    maxWidth: 560,
+    width: "100%",
+  },
+  loginBody: {
+    fontSize: 16,
+    lineHeight: 26,
+    textAlign: "center",
+  },
+  loginTitle: {
+    fontSize: 28,
+    fontWeight: "800",
+    letterSpacing: -0.5,
+    lineHeight: 36,
+    textAlign: "center",
+  },
   pillDot: {
     borderRadius: 999,
     height: 10,
@@ -297,9 +498,12 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     alignItems: "center",
-    borderRadius: 999,
+    borderRadius: 14,
     height: 52,
     justifyContent: "center",
+    shadowOffset: { height: 6, width: 0 },
+    shadowOpacity: 0.1,
+    shadowRadius: 14,
   },
   primaryLabel: {
     fontSize: 16,
@@ -312,10 +516,24 @@ const styles = StyleSheet.create({
     marginTop: 16,
     paddingTop: 26,
   },
+  privacyChip: {
+    alignItems: "center",
+    borderRadius: 12,
+    borderWidth: 1,
+    flexDirection: "row",
+    gap: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  privacyChipLabel: {
+    fontSize: 12,
+    fontWeight: "700",
+    letterSpacing: 0.6,
+  },
   privacyEyebrow: {
-    fontSize: 18,
+    fontSize: 12,
     fontWeight: "800",
-    letterSpacing: 1.2,
+    letterSpacing: 1.4,
     textAlign: "center",
     textTransform: "uppercase",
   },
@@ -329,15 +547,34 @@ const styles = StyleSheet.create({
   },
   privacyMetrics: {
     flexDirection: "row",
-    gap: 14,
+    gap: 12,
   },
   privacySummary: {
     fontSize: 16,
     lineHeight: 24,
     textAlign: "center",
   },
+  rightPanel: {
+    flex: 45,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 48,
+    paddingVertical: 40,
+    borderLeftWidth: 1,
+    borderLeftColor: "rgba(0, 32, 69, 0.06)",
+  },
+  rightPanelInner: {
+    alignItems: "center",
+    gap: 20,
+    maxWidth: 440,
+    width: "100%",
+  },
   safeArea: {
     flex: 1,
+  },
+  splitLayout: {
+    flex: 1,
+    flexDirection: "row",
   },
   statusDot: {
     borderRadius: 999,
@@ -346,12 +583,13 @@ const styles = StyleSheet.create({
   },
   statusPanel: {
     alignItems: "center",
-    borderRadius: 18,
+    borderRadius: 14,
     borderWidth: 1,
     flexDirection: "row",
     gap: 10,
     paddingHorizontal: 14,
     paddingVertical: 12,
+    width: "100%",
   },
   statusText: {
     flex: 1,

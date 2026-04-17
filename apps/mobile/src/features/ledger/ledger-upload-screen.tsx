@@ -115,81 +115,129 @@ export function LedgerUploadScreen() {
           title={copy.common.appName}
         />
       </View>
-      <ScrollView contentContainerStyle={[styles.container, isWide && styles.containerWide]}>
-        <View style={styles.heroBlock}>
-          <Text style={[styles.eyebrow, { color: palette.inkMuted }]}>
-            {uploadCopy.eyebrow}
-          </Text>
-          <Text style={[styles.heroTitle, { color: palette.ink }]}>
-            {uploadCopy.title}
-          </Text>
-          <Text style={[styles.heroSummary, { color: palette.inkMuted }]}>
-            {uploadCopy.summary}
-          </Text>
-        </View>
+      <ScrollView
+        contentContainerStyle={[
+          styles.container,
+          isWide && styles.containerWide,
+        ]}
+      >
+        <View style={isWide ? styles.wideRow : null}>
+          <View style={[styles.heroBlock, isWide && styles.heroBlockWide]}>
+            <Text style={[styles.eyebrow, { color: palette.inkMuted }]}>
+              {uploadCopy.eyebrow}
+            </Text>
+            <Text
+              style={[
+                styles.heroTitle,
+                isWide && styles.heroTitleWide,
+                { color: palette.ink },
+              ]}
+            >
+              {uploadCopy.title}
+            </Text>
+            <Text
+              style={[
+                styles.heroSummary,
+                isWide && styles.heroSummaryWide,
+                { color: palette.inkMuted },
+              ]}
+            >
+              {uploadCopy.summary}
+            </Text>
+          </View>
 
-        <View
-          style={[
-            styles.dropCard,
-            {
-              backgroundColor: palette.shellElevated,
-              borderColor: palette.border,
-              shadowColor: palette.shadow,
-            },
-          ]}
-        >
           <View
             style={[
-              styles.uploadGlyph,
-              { backgroundColor: palette.accentSoft },
+              styles.dropCard,
+              isWide && styles.dropCardWide,
+              {
+                backgroundColor: palette.shellElevated,
+                borderColor: palette.border,
+                shadowColor: palette.shadow,
+              },
             ]}
           >
-            <Feather color={palette.accent} name="upload-cloud" size={26} />
-          </View>
-          <Text style={[styles.dropTitle, { color: palette.ink }]}>
-            {uploadCopy.uploadCardTitle}
-          </Text>
-          <Text style={[styles.dropSummary, { color: palette.inkMuted }]}>
-            {uploadCopy.uploadCardSummary}
-          </Text>
-
-          <View style={styles.buttonStack}>
-            <Pressable
-              accessibilityRole="button"
-              disabled={isBusy}
-              onPress={() => handleImport("photos")}
-              style={({ pressed }) => [
-                styles.primaryButton,
-                {
-                  backgroundColor: pressed ? palette.heroEnd : palette.ink,
-                  opacity: isBusy ? 0.7 : 1,
-                  shadowColor: palette.shadow,
-                },
+            <View
+              style={[
+                styles.uploadGlyph,
+                { backgroundColor: palette.accentSoft },
               ]}
-              testID="ledger-upload-select-photos-button"
             >
-              <View style={styles.primaryButtonContent}>
-                <MaterialCommunityIcons
-                  color={palette.inkOnAccent}
-                  name="image-multiple-outline"
-                  size={18}
-                />
-                <Text
-                  style={[
-                    styles.primaryButtonLabel,
-                    { color: palette.inkOnAccent },
-                  ]}
-                >
-                  {isBusy ? uploadCopy.parsing : uploadCopy.selectPhotos}
-                </Text>
-              </View>
-            </Pressable>
+              <Feather color={palette.accent} name="upload-cloud" size={26} />
+            </View>
+            <Text style={[styles.dropTitle, { color: palette.ink }]}>
+              {uploadCopy.uploadCardTitle}
+            </Text>
+            <Text style={[styles.dropSummary, { color: palette.inkMuted }]}>
+              {uploadCopy.uploadCardSummary}
+            </Text>
 
-            {Platform.OS !== "web" && (
+            <View style={[styles.buttonStack, isWide && styles.buttonStackWide]}>
               <Pressable
                 accessibilityRole="button"
                 disabled={isBusy}
-                onPress={() => handleImport("camera")}
+                onPress={() => handleImport("photos")}
+                style={({ pressed }) => [
+                  styles.primaryButton,
+                  {
+                    backgroundColor: pressed ? palette.heroEnd : palette.ink,
+                    opacity: isBusy ? 0.7 : 1,
+                    shadowColor: palette.shadow,
+                  },
+                ]}
+                testID="ledger-upload-select-photos-button"
+              >
+                <View style={styles.primaryButtonContent}>
+                  <MaterialCommunityIcons
+                    color={palette.inkOnAccent}
+                    name="image-multiple-outline"
+                    size={18}
+                  />
+                  <Text
+                    style={[
+                      styles.primaryButtonLabel,
+                      { color: palette.inkOnAccent },
+                    ]}
+                  >
+                    {isBusy ? uploadCopy.parsing : uploadCopy.selectPhotos}
+                  </Text>
+                </View>
+              </Pressable>
+
+              {Platform.OS !== "web" && (
+                <Pressable
+                  accessibilityRole="button"
+                  disabled={isBusy}
+                  onPress={() => handleImport("camera")}
+                  style={({ pressed }) => [
+                    styles.secondaryButton,
+                    {
+                      backgroundColor: pressed ? palette.paperMuted : palette.paper,
+                      borderColor: palette.border,
+                      opacity: isBusy ? 0.7 : 1,
+                    },
+                  ]}
+                  testID="ledger-upload-camera-button"
+                >
+                  <View style={styles.primaryButtonContent}>
+                    <MaterialCommunityIcons
+                      color={palette.ink}
+                      name="camera-outline"
+                      size={18}
+                    />
+                    <Text
+                      style={[styles.secondaryButtonLabel, { color: palette.ink }]}
+                    >
+                      {uploadCopy.takePhoto}
+                    </Text>
+                  </View>
+                </Pressable>
+              )}
+
+              <Pressable
+                accessibilityRole="button"
+                disabled={isBusy}
+                onPress={() => handleImport("documents")}
                 style={({ pressed }) => [
                   styles.secondaryButton,
                   {
@@ -198,60 +246,32 @@ export function LedgerUploadScreen() {
                     opacity: isBusy ? 0.7 : 1,
                   },
                 ]}
-                testID="ledger-upload-camera-button"
+                testID="ledger-upload-select-button"
               >
                 <View style={styles.primaryButtonContent}>
                   <MaterialCommunityIcons
                     color={palette.ink}
-                    name="camera-outline"
+                    name="file-upload-outline"
                     size={18}
                   />
                   <Text
                     style={[styles.secondaryButtonLabel, { color: palette.ink }]}
                   >
-                    {uploadCopy.takePhoto}
+                    {uploadCopy.selectFiles}
                   </Text>
                 </View>
               </Pressable>
-            )}
+            </View>
 
-            <Pressable
-              accessibilityRole="button"
-              disabled={isBusy}
-              onPress={() => handleImport("documents")}
-              style={({ pressed }) => [
-                styles.secondaryButton,
-                {
-                  backgroundColor: pressed ? palette.paperMuted : palette.paper,
-                  borderColor: palette.border,
-                  opacity: isBusy ? 0.7 : 1,
-                },
+            <Text
+              style={[
+                styles.hint,
+                { color: error ? "#BA1A1A" : palette.inkMuted },
               ]}
-              testID="ledger-upload-select-button"
             >
-              <View style={styles.primaryButtonContent}>
-                <MaterialCommunityIcons
-                  color={palette.ink}
-                  name="file-upload-outline"
-                  size={18}
-                />
-                <Text
-                  style={[styles.secondaryButtonLabel, { color: palette.ink }]}
-                >
-                  {uploadCopy.selectFiles}
-                </Text>
-              </View>
-            </Pressable>
+              {error ?? statusText}
+            </Text>
           </View>
-
-          <Text
-            style={[
-              styles.hint,
-              { color: error ? "#BA1A1A" : palette.inkMuted },
-            ]}
-          >
-            {error ?? statusText}
-          </Text>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -268,17 +288,19 @@ const styles = StyleSheet.create({
     gap: 10,
     width: "100%",
   },
+  buttonStackWide: {
+    alignSelf: "center",
+    maxWidth: 380,
+  },
   container: {
     gap: 14,
     padding: 18,
     paddingBottom: 32,
   },
   containerWide: {
-    alignSelf: "center",
-    maxWidth: 680,
-    paddingHorizontal: 32,
-    paddingVertical: 32,
-    width: "100%",
+    flex: 1,
+    paddingHorizontal: 40,
+    paddingVertical: 40,
   },
   dropCard: {
     alignItems: "center",
@@ -290,6 +312,12 @@ const styles = StyleSheet.create({
     shadowOffset: { height: 8, width: 0 },
     shadowOpacity: 0.08,
     shadowRadius: 16,
+  },
+  dropCardWide: {
+    flex: 1,
+    justifyContent: "center",
+    paddingHorizontal: 32,
+    paddingVertical: 32,
   },
   dropSummary: {
     fontSize: 14,
@@ -316,15 +344,30 @@ const styles = StyleSheet.create({
     gap: 8,
     padding: 16,
   },
+  heroBlockWide: {
+    flex: 1,
+    justifyContent: "center",
+    padding: 32,
+    gap: 12,
+  },
   heroSummary: {
     fontSize: 14,
     lineHeight: 21,
+  },
+  heroSummaryWide: {
+    fontSize: 16,
+    lineHeight: 26,
   },
   heroTitle: {
     fontSize: 24,
     fontWeight: "800",
     letterSpacing: -0.6,
     lineHeight: 30,
+  },
+  heroTitleWide: {
+    fontSize: 30,
+    lineHeight: 38,
+    letterSpacing: -0.8,
   },
   hint: {
     fontSize: 12,
@@ -334,7 +377,7 @@ const styles = StyleSheet.create({
   primaryButton: {
     alignItems: "center",
     borderRadius: 14,
-    height: 44,
+    height: 48,
     justifyContent: "center",
     shadowOffset: { height: 6, width: 0 },
     shadowOpacity: 0.08,
@@ -357,13 +400,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderRadius: 14,
     borderWidth: 1,
-    height: 44,
+    height: 48,
     justifyContent: "center",
     width: "100%",
   },
   secondaryButtonLabel: {
     fontSize: 15,
     fontWeight: "700",
+  },
+  wideRow: {
+    flex: 1,
+    flexDirection: "row",
+    gap: 32,
   },
   uploadGlyph: {
     alignItems: "center",
