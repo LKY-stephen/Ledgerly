@@ -69,6 +69,9 @@ module.exports = () => {
     ...baseConfig,
     extra: {
       ...baseConfig.extra,
+      inferApiKey: process.env.EXPO_PUBLIC_INFER_API_KEY ?? "",
+      inferBaseUrl: process.env.EXPO_PUBLIC_INFER_BASE_URL ?? "",
+      inferModel: process.env.EXPO_PUBLIC_INFER_MODEL ?? "",
       openAiBaseUrl: process.env.EXPO_PUBLIC_OPENAI_BASE_URL ?? "",
       openAiModel: process.env.EXPO_PUBLIC_OPENAI_MODEL ?? "",
     },

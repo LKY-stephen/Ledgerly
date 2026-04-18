@@ -228,7 +228,11 @@ export async function loadPersistedInferApiKey(): Promise<string> {
     return runtimeOverrides.inferApiKey ?? "";
   }
 
-  return String((await AsyncStorage.getItem(STORAGE_KEYS.inferApiKey)) ?? "").trim();
+  const stored = String((await AsyncStorage.getItem(STORAGE_KEYS.inferApiKey)) ?? "").trim();
+
+  if (stored) return stored;
+
+  return (process.env.EXPO_PUBLIC_INFER_API_KEY ?? "").trim();
 }
 
 export async function persistInferBaseUrl(value: string) {
@@ -248,9 +252,13 @@ export async function loadPersistedInferBaseUrl(): Promise<string> {
     return runtimeOverrides.inferBaseUrl ?? "";
   }
 
-  return String((await AsyncStorage.getItem(STORAGE_KEYS.inferBaseUrl)) ?? "")
+  const stored = String((await AsyncStorage.getItem(STORAGE_KEYS.inferBaseUrl)) ?? "")
     .trim()
     .replace(/\/+$/g, "");
+
+  if (stored) return stored;
+
+  return (process.env.EXPO_PUBLIC_INFER_BASE_URL ?? "").trim().replace(/\/+$/g, "");
 }
 
 export async function persistInferModel(value: string) {
@@ -270,7 +278,11 @@ export async function loadPersistedInferModel(): Promise<string> {
     return runtimeOverrides.inferModel ?? "";
   }
 
-  return String((await AsyncStorage.getItem(STORAGE_KEYS.inferModel)) ?? "").trim();
+  const stored = String((await AsyncStorage.getItem(STORAGE_KEYS.inferModel)) ?? "").trim();
+
+  if (stored) return stored;
+
+  return (process.env.EXPO_PUBLIC_INFER_MODEL ?? "").trim();
 }
 
 export async function persistGeminiAuthMode(value: GeminiAuthMode) {
