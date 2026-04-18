@@ -20,6 +20,7 @@ import {
   type ImportedEvidenceBundle,
   type ImportedEvidenceFile,
   type LedgerReviewValues,
+  type ProposalApprovalOptions,
   type WorkflowCandidateRecord,
   type WorkflowWriteProposalItem,
 } from "./ledger-domain";
@@ -547,6 +548,7 @@ export async function approveWriteProposal(
   batchId: string,
   writeProposalId: string,
   review?: LedgerReviewValues,
+  options?: ProposalApprovalOptions,
 ): Promise<PlannerResult> {
   const { approveWorkflowWriteProposal } = await import("./ledger-store");
 
@@ -564,6 +566,7 @@ export async function approveWriteProposal(
 
     await approveWorkflowWriteProposal(writableDatabase, {
       evidenceId: batch.evidenceId,
+      options,
       review,
       updatedAt: now,
       writeProposalId,

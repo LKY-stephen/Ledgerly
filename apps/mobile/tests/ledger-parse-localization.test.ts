@@ -17,6 +17,9 @@ describe("ledger parse localization", () => {
     expect(
       formatLedgerParseProposalType("persist_candidate_record", "zh-CN"),
     ).toBe("写入候选记录");
+    expect(
+      formatLedgerParseProposalType("resolve_duplicate_receipt", "zh-CN"),
+    ).toBe("处理重复票据");
   });
 
   it("keeps english parse workflow labels readable", () => {
@@ -26,6 +29,9 @@ describe("ledger parse localization", () => {
     expect(formatLedgerParseWorkflowState("executed", "en")).toBe("Executed");
     expect(formatLedgerParseProposalType("create_counterparty", "en")).toBe(
       "Create Counterparty",
+    );
+    expect(formatLedgerParseProposalType("merge_counterparty", "en")).toBe(
+      "Merge Counterparty",
     );
   });
 });

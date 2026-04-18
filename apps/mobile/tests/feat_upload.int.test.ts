@@ -891,6 +891,16 @@ describe("feat_upload data flow", () => {
     const duplicateProposal = evidence?.writeProposals.find((proposal) => proposal.proposalType === "resolve_duplicate_receipt");
     expect(duplicateProposal?.payload).toMatchObject({
       duplicateReceiptLabel: "receipt-2026-02-27.pdf",
+      matchedRecords: [
+        expect.objectContaining({
+          amountCents: 5299,
+          date: "2026-02-27",
+          description: "Apple Store accessories",
+          recordId: "record-existing-1",
+          sourceLabel: "Business Card",
+          targetLabel: "Apple Store",
+        }),
+      ],
       overlapEntryCount: 5,
     });
 
@@ -910,5 +920,146 @@ describe("feat_upload data flow", () => {
     expect(
       mergedEvidence?.writeProposals.find((proposal) => proposal.proposalType === "persist_candidate_record")?.state,
     ).toBe("rejected");
+  });
+
+  it("replaces the older duplicate record set when the operator keeps the new record", async () => {
+    const database = createStorageDatabase();
+    const writableDatabase = createWritableDatabase(database);
+    const bundle = createReceiptBundle({
+      batchId: "batch-duplicate-keep-new",
+      capturedAt: "2026-02-27T10:30:00.000Z",
+      evidenceId: "evidence-duplicate-keep-new",
+      fileName: "receipt-feb-27-keep-new.pdf",
+      filePath: "evidence-objects/entity-main/uploads/2026/02/receipt-feb-27-keep-new.pdf",
+    });
+
+    await ensureDefaultEntity(writableDatabase, bundle.capturedAt);
+    await insertImportedEvidenceBundle(writableDatabase, bundle);
+    await seedCounterparty(writableDatabase, {
+      counterpartyId: "counterparty-source-existing",
+      displayName: "Business Card",
+      role: "source",
+    });
+    await seedCounterparty(writableDatabase, {
+      counterpartyId: "counterparty-target-existing",
+      displayName: "Apple Store",
+      role: "target",
+    });
+    await seedConflictingReceiptEvidence(database, writableDatabase);
+
+    await updateEvidenceExtraction(writableDatabase, {
+      evidenceId: bundle.evidenceId,
+      extractedData: buildRemoteExtractedData({
+        fileName: bundle.files[0]!.originalFileName,
+        parsePayload: {
+          candidates: {
+            amountCents: 5299,
+            category: "expense",
+            date: "2026-02-27",
+            description: "Apple Store accessories",
+            notes: null,
+            source: "Business Card",
+            target: "Apple Store",
+            taxCategory: "office",
+          },
+          fields: {
+            amountCents: 5299,
+            category: "expense",
+            date: "2026-02-27",
+            description: "Apple Store accessories",
+            notes: null,
+            source: "Business Card",
+            target: "Apple Store",
+            taxCategory: "office",
+          },
+          model: "gpt-5",
+          parser: "openai_gpt",
+          rawSummary: "Apple Store receipt",
+          rawText: "Apple Store 02/27/2026 $52.99",
+          warnings: [],
+        },
+        scheme: {},
+        sourceLabel: "OpenAI GPT",
+      }),
+      parseStatus: "pending",
+    });
+
+    await createUploadBatch(writableDatabase, {
+      batchId: bundle.batchId,
+      createdAt: bundle.capturedAt,
+      evidenceId: bundle.evidenceId,
+      sourceSystem: "feat-upload-test",
+      state: "parse_complete",
+    });
+    await createExtractionRun(writableDatabase, {
+      batchId: bundle.batchId,
+      createdAt: bundle.capturedAt,
+      evidenceId: bundle.evidenceId,
+      extractionRunId: "extraction-duplicate-keep-new",
+    });
+    await createPlannerRun(writableDatabase, {
+      batchId: bundle.batchId,
+      createdAt: bundle.capturedAt,
+      evidenceId: bundle.evidenceId,
+      extractionRunId: "extraction-duplicate-keep-new",
+      plannerRunId: "planner-duplicate-keep-new",
+    });
+
+    const evidenceBeforeSave = await loadEvidenceById(writableDatabase, bundle.evidenceId);
+    expect(evidenceBeforeSave).not.toBeNull();
+
+    await savePlannerArtifacts(writableDatabase, {
+      batchId: bundle.batchId,
+      createdAt: bundle.capturedAt,
+      evidence: evidenceBeforeSave!,
+      plannerRunId: "planner-duplicate-keep-new",
+      remotePlan: createPlannerPayload(bundle.evidenceId),
+    });
+
+    const evidence = await loadEvidenceById(writableDatabase, bundle.evidenceId);
+    const duplicateProposal = evidence?.writeProposals.find((proposal) => proposal.proposalType === "resolve_duplicate_receipt");
+
+    await approveWorkflowWriteProposal(writableDatabase, {
+      evidenceId: bundle.evidenceId,
+      options: {
+        duplicateResolution: { keepMode: "keep_new" },
+      },
+      review: {
+        amount: "52.99",
+        category: "expense",
+        date: "2026-02-27",
+        description: "Apple Store accessories",
+        notes: "keep new duplicate",
+        source: "Business Card",
+        target: "Apple Store",
+        taxCategory: "office",
+      },
+      updatedAt: "2026-02-27T10:35:00.000Z",
+      writeProposalId: duplicateProposal!.writeProposalId,
+    });
+
+    const finalEvidence = await loadEvidenceById(writableDatabase, bundle.evidenceId);
+    const totalRecords = database
+      .prepare("SELECT COUNT(*) AS count FROM records;")
+      .get() as { count: number };
+    const replacedOlderRecords = database
+      .prepare("SELECT COUNT(*) AS count FROM records WHERE record_id LIKE 'record-existing-%';")
+      .get() as { count: number };
+    const linkedCurrentEvidence = database
+      .prepare("SELECT COUNT(*) AS count FROM record_evidence_links WHERE evidence_id = ?;")
+      .get(bundle.evidenceId) as { count: number };
+    const linkedExistingEvidence = database
+      .prepare("SELECT COUNT(*) AS count FROM record_evidence_links WHERE evidence_id = ?;")
+      .get("evidence-existing-duplicate") as { count: number };
+
+    expect(totalRecords.count).toBe(1);
+    expect(replacedOlderRecords.count).toBe(0);
+    expect(linkedCurrentEvidence.count).toBe(1);
+    expect(linkedExistingEvidence.count).toBe(1);
+    expect(finalEvidence?.batchState).toBe("approved");
+    expect(finalEvidence?.candidateRecords[0]?.state).toBe("persisted_final");
+    expect(finalEvidence?.candidateRecords[0]?.recordId).toBe(
+      `record-${bundle.evidenceId}`,
+    );
   });
 });

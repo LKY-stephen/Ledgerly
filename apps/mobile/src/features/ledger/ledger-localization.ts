@@ -39,6 +39,8 @@ interface LedgerRuntimeCopy {
     groupedExpenseNote: string;
     groupedIncomeNote: string;
     incomeRecordKind: string;
+    nonBusinessIncomeMetric: string;
+    nonBusinessIncomeRecordKind: string;
     operatingExpense: string;
     personalRecordKind: string;
     personalSpendAccount: string;
@@ -98,6 +100,8 @@ const runtimeCopyByLocale: Record<ResolvedLocale, LedgerRuntimeCopy> = {
       groupedExpenseNote: "Grouped by recorded target label for posted or reconciled expense outflows.",
       groupedIncomeNote: "Grouped by recorded source label for posted or reconciled inflows.",
       incomeRecordKind: "Income",
+      nonBusinessIncomeMetric: "Non-Business Income",
+      nonBusinessIncomeRecordKind: "Non-Business Income",
       operatingExpense: "Operating Expense",
       personalRecordKind: "Personal",
       personalSpendAccount: "Personal Spending",
@@ -152,6 +156,8 @@ const runtimeCopyByLocale: Record<ResolvedLocale, LedgerRuntimeCopy> = {
       groupedExpenseNote: "按已入账或已核对的支出去向标签汇总。",
       groupedIncomeNote: "按已入账或已核对的收入来源标签汇总。",
       incomeRecordKind: "收入",
+      nonBusinessIncomeMetric: "非经营收入",
+      nonBusinessIncomeRecordKind: "非经营收入",
       operatingExpense: "经营支出",
       personalRecordKind: "个人",
       personalSpendAccount: "个人支出",

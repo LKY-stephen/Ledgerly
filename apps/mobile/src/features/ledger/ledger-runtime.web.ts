@@ -19,6 +19,7 @@ import {
   buildRemoteExtractedData,
   defaultEntityId,
   type LedgerReviewValues,
+  type ProposalApprovalOptions,
   type WorkflowCandidateRecord,
   type WorkflowWriteProposalItem,
 } from "./ledger-domain";
@@ -335,6 +336,7 @@ export async function approveWriteProposal(
   batchId: string,
   writeProposalId: string,
   review?: LedgerReviewValues,
+  options?: ProposalApprovalOptions,
 ): Promise<PlannerResult> {
   const state = plannerStateStore.get(batchId);
 
@@ -383,9 +385,123 @@ export async function approveWriteProposal(
   }
 
   if (proposal.proposalType === "resolve_duplicate_receipt") {
-    if (state.candidateRecords[0]) {
-      state.candidateRecords[0].state = "approved";
-      state.candidateRecords[0].updatedAt = proposal.updatedAt;
+    const keepMode =
+      options?.duplicateResolution?.keepMode === "keep_new"
+        ? "keep_new"
+        : "keep_existing";
+    const candidate = state.candidateRecords[0];
+
+    if (candidate && keepMode === "keep_new") {
+      const finalReview = review ?? candidate.reviewValues;
+      const amountCents = Math.round(
+        Number.parseFloat(finalReview.amount.replace(/[^0-9.]+/g, "")) * 100,
+      );
+
+      candidate.payload = {
+        ...candidate.payload,
+        amountCents: Number.isFinite(amountCents) ? amountCents : candidate.payload.amountCents,
+        date: finalReview.date.trim() || candidate.payload.date,
+        description: finalReview.description.trim() || candidate.payload.description,
+        sourceLabel: finalReview.source.trim() || candidate.payload.sourceLabel,
+        targetLabel: finalReview.target.trim() || candidate.payload.targetLabel,
+        taxCategoryCode: finalReview.taxCategory.trim() || null,
+      };
+      candidate.reviewValues = finalReview;
+      candidate.state = "persisted_final";
+      candidate.updatedAt = proposal.updatedAt;
+      state.reviewValues = finalReview;
+
+      const db = getActiveWebDatabase();
+
+      if (db && finalReview.amount && finalReview.date && finalReview.description) {
+        const matchedRecordIds = readStringArray(proposal.payload.matchedRecordIds);
+        const placeholders = matchedRecordIds.map(() => "?").join(", ");
+        const linkedEvidenceIds =
+          matchedRecordIds.length > 0
+            ? (
+                await db.getAllAsync<{ evidenceId: string }>(
+                  `SELECT DISTINCT evidence_id AS evidenceId
+                   FROM record_evidence_links
+                   WHERE record_id IN (${placeholders})
+                   ORDER BY evidence_id ASC;`,
+                  ...matchedRecordIds,
+                )
+              ).map((row) => row.evidenceId)
+            : [
+                readFirstString(
+                  proposal.payload.conflictEvidenceId,
+                  proposal.payload.duplicateEvidenceId,
+                ) ?? "",
+              ];
+        const evidenceIds = dedupeStrings([state.evidenceId, ...linkedEvidenceIds]);
+        const userClassification =
+          finalReview.category === "income"
+            ? ("income" as const)
+            : finalReview.category === "non_business_income"
+              ? ("non_business_income" as const)
+              : finalReview.category === "spending"
+                ? ("personal_spending" as const)
+                : ("expense" as const);
+        const writableDb = createWritableStorageDatabase({
+          getAllAsync: <Row>(source: string, ...params: unknown[]) =>
+            db.getAllAsync<Row>(source, ...(params as [])),
+          getFirstAsync: <Row>(source: string, ...params: unknown[]) =>
+            db.getFirstAsync<Row>(source, ...(params as [])),
+          runAsync: (source: string, ...params: unknown[]) =>
+            db.runAsync(source, ...(params as [])),
+        });
+
+        try {
+          if (matchedRecordIds.length > 0) {
+            await db.runAsync(
+              `DELETE FROM record_evidence_links
+               WHERE record_id IN (${placeholders});`,
+              ...matchedRecordIds,
+            );
+            await db.runAsync(
+              `DELETE FROM record_entry_classifications
+               WHERE record_id IN (${placeholders});`,
+              ...matchedRecordIds,
+            );
+            await db.runAsync(
+              `DELETE FROM records
+               WHERE record_id IN (${placeholders});`,
+              ...matchedRecordIds,
+            );
+          }
+
+          const resolvedEntry = resolveStandardReceiptEntry(
+            {
+              amountCents,
+              currency: "USD",
+              description: finalReview.description.trim(),
+              entityId: defaultEntityId,
+              evidenceIds,
+              memo: finalReview.notes?.trim() || null,
+              occurredOn: finalReview.date.trim(),
+              source: finalReview.source?.trim() || "",
+              target: finalReview.target?.trim() || "",
+              userClassification,
+            },
+            {
+              createdAt: proposal.updatedAt,
+              recordId: candidate.recordId ?? `record-${state.evidenceId}`,
+              sourceCounterpartyId: candidate.payload?.sourceCounterpartyId ?? null,
+              sourceSystem: "ledger-upload-workflow",
+              targetCounterpartyId: candidate.payload?.targetCounterpartyId ?? null,
+              updatedAt: proposal.updatedAt,
+            },
+          );
+
+          await persistResolvedStandardReceiptEntry(writableDb, resolvedEntry);
+          candidate.recordId = resolvedEntry.record.recordId;
+        } catch (error) {
+          console.error("[web] Failed to replace older duplicate records:", error);
+        }
+      }
+    } else if (candidate) {
+      candidate.state = "approved";
+      candidate.updatedAt = proposal.updatedAt;
     }
 
     for (const item of state.writeProposals) {
@@ -426,6 +542,8 @@ export async function approveWriteProposal(
       const userClassification =
         finalReview.category === "income"
           ? ("income" as const)
+          : finalReview.category === "non_business_income"
+            ? ("non_business_income" as const)
           : finalReview.category === "spending"
             ? ("personal_spending" as const)
             : ("expense" as const);
@@ -734,6 +852,20 @@ function readFirstString(...values: unknown[]): string | null {
   }
 
   return null;
+}
+
+function readStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.filter(
+    (item): item is string => typeof item === "string" && item.trim().length > 0,
+  );
+}
+
+function dedupeStrings(values: string[]): string[] {
+  return [...new Set(values.filter((value) => value.trim().length > 0))];
 }
 
 function inferUploadKind(

@@ -257,25 +257,33 @@ export function LedgerScreen() {
                     onPress={() => selectScope(scope.id)}
                     style={({ pressed }) => [
                       styles.scopePill,
+                      !isActive && pressed
+                        ? { backgroundColor: palette.paperMuted }
+                        : null,
                       isActive
                         ? [
                             styles.scopePillActive,
-                            { backgroundColor: primaryButton.background },
+                            {
+                              backgroundColor: primaryButton.background,
+                              borderColor: primaryButton.border,
+                              borderWidth: 1,
+                            },
                           ]
                         : null,
                       pressed ? styles.scopePillPressed : null,
                     ]}
                   >
                     <Ionicons
-                      color={isActive ? primaryButton.text : palette.inkMuted}
+                      color={isActive ? primaryButton.text : palette.ink}
                       name={scope.icon}
                       size={15}
                     />
                     <Text
                       style={[
                         styles.scopePillLabel,
-                        { color: isActive ? primaryButton.text : palette.inkMuted },
-                        isActive ? styles.scopePillLabelActive : null,
+                        {
+                          color: isActive ? primaryButton.text : palette.ink,
+                        },
                       ]}
                     >
                       {scope.label}
@@ -300,12 +308,19 @@ export function LedgerScreen() {
                   key={tab.id}
                   accessibilityRole="button"
                   onPress={() => selectView(tab.id)}
-                  style={[
+                  style={({ pressed }) => [
                     styles.segmentedItem,
+                    !isActive && pressed
+                      ? { backgroundColor: palette.paperMuted }
+                      : null,
                     isActive
                       ? [
                           styles.segmentedItemActive,
-                          { backgroundColor: primaryButton.background },
+                          {
+                            backgroundColor: primaryButton.background,
+                            borderColor: primaryButton.border,
+                            borderWidth: 1,
+                          },
                         ]
                       : null,
                   ]}
@@ -313,8 +328,9 @@ export function LedgerScreen() {
                   <Text
                     style={[
                       styles.segmentedLabel,
-                      { color: isActive ? primaryButton.text : palette.inkMuted },
-                      isActive ? styles.segmentedLabelActive : null,
+                      {
+                        color: isActive ? primaryButton.text : palette.ink,
+                      },
                     ]}
                   >
                     {tab.label}
@@ -428,19 +444,31 @@ export function LedgerScreen() {
                     rows={snapshot.profitAndLoss.expenseRows}
                     title={screenCopy.sections.expenses}
                   />
-                  <View style={styles.equationCard}>
-                    <Text style={styles.equationEyebrow}>
+                  <View
+                    style={[
+                      styles.equationCard,
+                      {
+                        backgroundColor: palette.paper,
+                        borderColor: palette.border,
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={[styles.equationEyebrow, { color: palette.inkMuted }]}
+                    >
                       {screenCopy.sections.netIncome}
                     </Text>
                     <Text
                       adjustsFontSizeToFit
                       minimumFontScale={0.7}
                       numberOfLines={1}
-                      style={styles.netIncomeValue}
+                      style={[styles.netIncomeValue, { color: palette.ink }]}
                     >
                       {snapshot.profitAndLoss.netIncomeLabel}
                     </Text>
-                    <Text style={styles.equationSummary}>
+                    <Text
+                      style={[styles.equationSummary, { color: palette.inkMuted }]}
+                    >
                       {screenCopy.sections.netIncomeSummary}
                     </Text>
                   </View>
@@ -456,8 +484,18 @@ export function LedgerScreen() {
         />
 
         <View style={styles.endCap}>
-          <View style={styles.endCapBar} />
-          <Text style={styles.endCapLabel}>
+          <View
+            style={[
+              styles.endCapBar,
+              {
+                backgroundColor: withAlpha(
+                  palette.ink,
+                  palette.name === "dark" ? 0.18 : 0.1,
+                ),
+              },
+            ]}
+          />
+          <Text style={[styles.endCapLabel, { color: palette.inkMuted }]}>
             {snapshot.hasData
               ? `${selectedScope === "personal" ? screenCopy.footer.personalRange : screenCopy.footer.reportingRange} · ${selectedPeriod.summary}`
               : selectedScope === "personal"
@@ -525,6 +563,9 @@ function LedgerPeriodPickerModal({
   screenCopy: ReturnType<typeof useAppShell>["copy"]["ledgerScreen"];
   yearOptions: readonly { id: string; label: string; year: number }[];
 }) {
+  const { palette } = useAppShell();
+  const primaryButton = getButtonColors(palette, "primary");
+
   return (
     <Modal
       animationType="fade"
@@ -533,18 +574,33 @@ function LedgerPeriodPickerModal({
       transparent
       visible={isOpen}
     >
-      <View style={styles.modalBackdrop}>
+      <View
+        style={[
+          styles.modalBackdrop,
+          {
+            backgroundColor: withAlpha(
+              palette.ink,
+              palette.name === "dark" ? 0.52 : 0.28,
+            ),
+          },
+        ]}
+      >
         <Pressable onPress={onClose} style={StyleSheet.absoluteFillObject} />
-        <View style={styles.modalCard}>
+        <View
+          style={[
+            styles.modalCard,
+            { backgroundColor: palette.shellMuted },
+          ]}
+        >
           <View style={styles.modalHeader}>
             <View style={styles.modalHeaderCopy}>
-              <Text style={styles.modalEyebrow}>
+              <Text style={[styles.modalEyebrow, { color: palette.inkMuted }]}>
                 {screenCopy.modal.pickerEyebrow}
               </Text>
-              <Text style={styles.modalTitle}>
+              <Text style={[styles.modalTitle, { color: palette.ink }]}>
                 {screenCopy.modal.chooseRange}
               </Text>
-              <Text style={styles.modalSummary}>
+              <Text style={[styles.modalSummary, { color: palette.inkMuted }]}>
                 {currentPeriod.label} · {currentPeriod.summary}
               </Text>
             </View>
@@ -553,10 +609,13 @@ function LedgerPeriodPickerModal({
               onPress={onClose}
               style={({ pressed }) => [
                 styles.modalCloseButton,
-                pressed ? styles.utilityButtonPressed : null,
+                {
+                  backgroundColor: pressed ? palette.paperMuted : palette.paper,
+                  borderColor: palette.border,
+                },
               ]}
             >
-              <Ionicons color="#002045" name="close" size={18} />
+              <Ionicons color={palette.ink} name="close" size={18} />
             </Pressable>
           </View>
 
@@ -577,7 +636,7 @@ function LedgerPeriodPickerModal({
 
           {pickerStep === "year" ? (
             <>
-              <Text style={styles.modalSectionTitle}>
+              <Text style={[styles.modalSectionTitle, { color: palette.ink }]}>
                 {screenCopy.modal.yearTitle}
               </Text>
               <View style={styles.modalGrid}>
@@ -588,8 +647,18 @@ function LedgerPeriodPickerModal({
                       onPress={() => onYearChoice(option.id)}
                       style={({ pressed }) => [
                         styles.modalBlock,
+                        {
+                          backgroundColor: palette.paper,
+                          borderColor: palette.border,
+                        },
                         option.id === String(currentPeriod.year)
-                          ? styles.modalBlockActive
+                          ? [
+                              styles.modalBlockActive,
+                              {
+                                backgroundColor: primaryButton.background,
+                                borderColor: primaryButton.border,
+                              },
+                            ]
                           : null,
                         pressed ? styles.modalBlockPressed : null,
                       ]}
@@ -597,9 +666,12 @@ function LedgerPeriodPickerModal({
                       <Text
                         style={[
                           styles.modalBlockTitle,
-                          option.id === String(currentPeriod.year)
-                            ? styles.modalBlockTitleActive
-                            : null,
+                          {
+                            color:
+                              option.id === String(currentPeriod.year)
+                                ? primaryButton.text
+                                : palette.ink,
+                          },
                         ]}
                       >
                         {option.label}
@@ -607,9 +679,12 @@ function LedgerPeriodPickerModal({
                       <Text
                         style={[
                           styles.modalBlockNote,
-                          option.id === String(currentPeriod.year)
-                            ? styles.modalBlockNoteActive
-                            : null,
+                          {
+                            color:
+                              option.id === String(currentPeriod.year)
+                                ? withAlpha(primaryButton.text, 0.82)
+                                : palette.inkMuted,
+                          },
                         ]}
                       >
                         {screenCopy.modal.openQuarters}
@@ -620,10 +695,17 @@ function LedgerPeriodPickerModal({
                       onPress={() => onWholeYearChoice(option.id)}
                       style={({ pressed }) => [
                         styles.modalSubAction,
+                        {
+                          backgroundColor: pressed
+                            ? palette.paperMuted
+                            : palette.shellElevated,
+                        },
                         pressed ? styles.modalSubActionPressed : null,
                       ]}
                     >
-                      <Text style={styles.modalSubActionLabel}>
+                      <Text
+                        style={[styles.modalSubActionLabel, { color: palette.ink }]}
+                      >
                         {option.label} · {screenCopy.range.fullYear}
                       </Text>
                     </Pressable>
@@ -635,10 +717,12 @@ function LedgerPeriodPickerModal({
 
           {pickerStep === "quarter" ? (
             <>
-              <Text style={styles.modalSectionTitle}>
+              <Text style={[styles.modalSectionTitle, { color: palette.ink }]}>
                 {screenCopy.modal.quarterTitle}
               </Text>
-              <Text style={styles.modalSectionSummary}>
+              <Text
+                style={[styles.modalSectionSummary, { color: palette.inkMuted }]}
+              >
                 {screenCopy.modal.quarterHint}
               </Text>
               <Pressable
@@ -646,13 +730,21 @@ function LedgerPeriodPickerModal({
                 onPress={() => onWholeYearChoice(draftYearId)}
                 style={({ pressed }) => [
                   styles.modalDefaultChoice,
+                  {
+                    backgroundColor: palette.paper,
+                    borderColor: palette.border,
+                  },
                   pressed ? styles.modalDefaultChoicePressed : null,
                 ]}
               >
-                <Text style={styles.modalDefaultChoiceTitle}>
+                <Text
+                  style={[styles.modalDefaultChoiceTitle, { color: palette.ink }]}
+                >
                   {draftYearId} · {screenCopy.range.fullYear}
                 </Text>
-                <Text style={styles.modalDefaultChoiceNote}>
+                <Text
+                  style={[styles.modalDefaultChoiceNote, { color: palette.inkMuted }]}
+                >
                   {screenCopy.modal.reviewFullYear}
                 </Text>
               </Pressable>
@@ -664,8 +756,18 @@ function LedgerPeriodPickerModal({
                       onPress={() => onQuarterChoice(quarterOption.id)}
                       style={({ pressed }) => [
                         styles.modalBlock,
+                        {
+                          backgroundColor: palette.paper,
+                          borderColor: palette.border,
+                        },
                         quarterOption.id === draftQuarterId
-                          ? styles.modalBlockActive
+                          ? [
+                              styles.modalBlockActive,
+                              {
+                                backgroundColor: primaryButton.background,
+                                borderColor: primaryButton.border,
+                              },
+                            ]
                           : null,
                         pressed ? styles.modalBlockPressed : null,
                       ]}
@@ -673,9 +775,12 @@ function LedgerPeriodPickerModal({
                       <Text
                         style={[
                           styles.modalBlockTitle,
-                          quarterOption.id === draftQuarterId
-                            ? styles.modalBlockTitleActive
-                            : null,
+                          {
+                            color:
+                              quarterOption.id === draftQuarterId
+                                ? primaryButton.text
+                                : palette.ink,
+                          },
                         ]}
                       >
                         {quarterOption.label}
@@ -683,9 +788,12 @@ function LedgerPeriodPickerModal({
                       <Text
                         style={[
                           styles.modalBlockNote,
-                          quarterOption.id === draftQuarterId
-                            ? styles.modalBlockNoteActive
-                            : null,
+                          {
+                            color:
+                              quarterOption.id === draftQuarterId
+                                ? withAlpha(primaryButton.text, 0.82)
+                                : palette.inkMuted,
+                          },
                         ]}
                       >
                         {screenCopy.modal.openMonths}
@@ -696,10 +804,17 @@ function LedgerPeriodPickerModal({
                       onPress={() => onWholeQuarterChoice(quarterOption.id)}
                       style={({ pressed }) => [
                         styles.modalSubAction,
+                        {
+                          backgroundColor: pressed
+                            ? palette.paperMuted
+                            : palette.shellElevated,
+                        },
                         pressed ? styles.modalSubActionPressed : null,
                       ]}
                     >
-                      <Text style={styles.modalSubActionLabel}>
+                      <Text
+                        style={[styles.modalSubActionLabel, { color: palette.ink }]}
+                      >
                         {quarterOption.label} · {screenCopy.range.fullQuarter}
                       </Text>
                     </Pressable>
@@ -711,10 +826,12 @@ function LedgerPeriodPickerModal({
 
           {pickerStep === "month" ? (
             <>
-              <Text style={styles.modalSectionTitle}>
+              <Text style={[styles.modalSectionTitle, { color: palette.ink }]}>
                 {screenCopy.modal.monthTitle}
               </Text>
-              <Text style={styles.modalSectionSummary}>
+              <Text
+                style={[styles.modalSectionSummary, { color: palette.inkMuted }]}
+              >
                 {screenCopy.modal.monthHint}
               </Text>
               {draftQuarterId ? (
@@ -723,14 +840,22 @@ function LedgerPeriodPickerModal({
                   onPress={() => onWholeQuarterChoice(draftQuarterId)}
                   style={({ pressed }) => [
                     styles.modalDefaultChoice,
+                    {
+                      backgroundColor: palette.paper,
+                      borderColor: palette.border,
+                    },
                     pressed ? styles.modalDefaultChoicePressed : null,
                   ]}
                 >
-                  <Text style={styles.modalDefaultChoiceTitle}>
+                  <Text
+                    style={[styles.modalDefaultChoiceTitle, { color: palette.ink }]}
+                  >
                     {draftQuarterId.toUpperCase()} {draftYearId} ·{" "}
                     {screenCopy.range.fullQuarter}
                   </Text>
-                  <Text style={styles.modalDefaultChoiceNote}>
+                  <Text
+                    style={[styles.modalDefaultChoiceNote, { color: palette.inkMuted }]}
+                  >
                     {screenCopy.modal.reviewFullQuarter}
                   </Text>
                 </Pressable>
@@ -743,8 +868,18 @@ function LedgerPeriodPickerModal({
                     onPress={() => onMonthChoice(period)}
                     style={({ pressed }) => [
                       styles.modalBlock,
+                      {
+                        backgroundColor: palette.paper,
+                        borderColor: palette.border,
+                      },
                       period.id === currentPeriod.id
-                        ? styles.modalBlockActive
+                        ? [
+                            styles.modalBlockActive,
+                            {
+                              backgroundColor: primaryButton.background,
+                              borderColor: primaryButton.border,
+                            },
+                          ]
                         : null,
                       styles.modalMonthBlock,
                       pressed ? styles.modalBlockPressed : null,
@@ -753,9 +888,12 @@ function LedgerPeriodPickerModal({
                     <Text
                       style={[
                         styles.modalBlockTitle,
-                        period.id === currentPeriod.id
-                          ? styles.modalBlockTitleActive
-                          : null,
+                        {
+                          color:
+                            period.id === currentPeriod.id
+                              ? primaryButton.text
+                              : palette.ink,
+                        },
                       ]}
                     >
                       {period.label}
@@ -763,9 +901,12 @@ function LedgerPeriodPickerModal({
                     <Text
                       style={[
                         styles.modalBlockNote,
-                        period.id === currentPeriod.id
-                          ? styles.modalBlockNoteActive
-                          : null,
+                        {
+                          color:
+                            period.id === currentPeriod.id
+                              ? withAlpha(primaryButton.text, 0.82)
+                              : palette.inkMuted,
+                        },
                       ]}
                     >
                       {period.summary}
@@ -886,11 +1027,14 @@ function MetricGrid({ cards }: { cards: readonly LedgerMetricCard[] }) {
           <View
             style={[
               styles.metricAccentBar,
-              card.accent === "danger"
-                ? styles.metricAccentDanger
-                : card.accent === "neutral"
-                  ? styles.metricAccentNeutral
-                  : styles.metricAccentSuccess,
+              {
+                backgroundColor:
+                  card.accent === "danger"
+                    ? palette.destructive
+                    : card.accent === "neutral"
+                      ? palette.ink
+                      : palette.success,
+              },
             ]}
           />
         </View>
@@ -907,25 +1051,24 @@ function GeneralLedgerCard({
   onSelectEntry: (entry: GeneralLedgerEntry) => void;
 }) {
   const { palette } = useAppShell();
-  const cardToneStyle =
-    entry.kind === "income"
-      ? styles.transactionCardIncome
-      : entry.kind === "personal"
-        ? styles.transactionCardPersonal
-        : styles.transactionCardExpense;
-  const amountToneStyle =
-    entry.kind === "income"
-      ? styles.transactionAmountIncome
-      : entry.kind === "personal"
-        ? styles.transactionAmountPersonal
-        : styles.transactionAmountExpense;
 
   return (
     <View
       style={[
         styles.transactionCard,
-        cardToneStyle,
-        { backgroundColor: palette.paper, borderColor: palette.border },
+        {
+          backgroundColor: palette.paper,
+          borderColor: palette.border,
+          borderLeftColor:
+            entry.kind === "income"
+              ? withAlpha(palette.success, palette.name === "dark" ? 0.45 : 0.24)
+              : entry.kind === "personal"
+                ? withAlpha(palette.accent, palette.name === "dark" ? 0.42 : 0.22)
+                : withAlpha(
+                    palette.destructive,
+                    palette.name === "dark" ? 0.45 : 0.18,
+                  ),
+        },
       ]}
     >
       <View style={[styles.transactionHeader, { borderBottomColor: palette.divider }]}>
@@ -975,7 +1118,6 @@ function GeneralLedgerCard({
             numberOfLines={1}
             style={[
               styles.transactionAmount,
-              amountToneStyle,
               {
                 color:
                   entry.kind === "income"
@@ -1020,6 +1162,7 @@ function PostingLine({
   const { copy, palette, resolvedLocale } = useAppShell();
   const isDebit = line.side === "debit";
   const positive = isPositivePostingLine(line, resolvedLocale);
+  const postingAccent = positive ? palette.success : palette.destructive;
 
   return (
     <Pressable
@@ -1054,9 +1197,7 @@ function PostingLine({
           numberOfLines={1}
           style={[
             styles.postingLineAmount,
-            positive
-              ? styles.postingLineAmountPositive
-              : styles.postingLineAmountNegative,
+            { color: postingAccent },
           ]}
         >
           {formatSignedCurrencyLabel(line.amount, positive)}
@@ -1104,9 +1245,21 @@ function GroupedEntryDetailModal({
       transparent
       visible
     >
-      <View style={styles.modalBackdrop}>
+      <View
+        style={[
+          styles.modalBackdrop,
+          {
+            backgroundColor: withAlpha(
+              palette.ink,
+              palette.name === "dark" ? 0.52 : 0.28,
+            ),
+          },
+        ]}
+      >
         <Pressable onPress={onClose} style={StyleSheet.absoluteFillObject} />
-        <View style={[styles.recordModalCard, { backgroundColor: palette.shellMuted }]}>
+        <View
+          style={[styles.recordModalCard, { backgroundColor: palette.shellMuted }]}
+        >
           <View style={styles.modalHeader}>
             <View style={styles.modalHeaderCopy}>
               <Text style={[styles.modalEyebrow, { color: palette.inkMuted }]}>{recordCopy.title}</Text>
@@ -1120,8 +1273,10 @@ function GroupedEntryDetailModal({
               onPress={onClose}
               style={({ pressed }) => [
                 styles.modalCloseButton,
-                { backgroundColor: palette.paper, borderColor: palette.border },
-                pressed ? styles.utilityButtonPressed : null,
+                {
+                  backgroundColor: pressed ? palette.paperMuted : palette.paper,
+                  borderColor: palette.border,
+                },
               ]}
             >
               <Ionicons color={palette.ink} name="close" size={18} />
@@ -1175,9 +1330,11 @@ function GroupedEntryDetailModal({
                     <Text
                       style={[
                         styles.groupedRecordAmount,
-                        isPositiveSignal(line, isOwnerGroup)
-                          ? styles.groupedRecordAmountPositive
-                          : styles.groupedRecordAmountNegative,
+                        {
+                          color: isPositiveSignal(line, isOwnerGroup)
+                            ? palette.success
+                            : palette.destructive,
+                        },
                       ]}
                     >
                       {formatSignedCurrencyLabel(
@@ -1242,6 +1399,11 @@ function GeneralLedgerEquationCard({
             <Text
               style={[
                 styles.equationBreakdownAmount,
+                row.accent === "danger"
+                  ? styles.equationBreakdownAmountDanger
+                  : row.accent === "success"
+                    ? styles.equationBreakdownAmountSuccess
+                    : null,
                 {
                   color:
                     row.accent === "danger"
@@ -1250,11 +1412,6 @@ function GeneralLedgerEquationCard({
                         ? palette.success
                         : palette.ink,
                 },
-                row.accent === "danger"
-                  ? styles.equationBreakdownAmountDanger
-                  : row.accent === "success"
-                    ? styles.equationBreakdownAmountSuccess
-                    : null,
               ]}
             >
               {row.value}
@@ -1918,7 +2075,6 @@ const styles = StyleSheet.create({
     fontVariant: ["tabular-nums"],
     fontSize: 11,
     fontWeight: "800",
-    width: "100%",
     textAlign: "right",
   },
   postingLineAmountNegative: {
@@ -1959,8 +2115,9 @@ const styles = StyleSheet.create({
   },
   postingLineRight: {
     alignItems: "flex-end",
-    gap: 2,
-    maxWidth: "52%",
+    gap: 4,
+    minWidth: 116,
+    width: 116,
   },
   postingLineStack: {
     borderTopColor: "rgba(0, 32, 69, 0.08)",

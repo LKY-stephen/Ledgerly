@@ -16,8 +16,12 @@ export function formatLedgerParseProposalType(
   switch (proposalType) {
     case "create_counterparty":
       return copy.proposalTypeCreateCounterparty;
+    case "merge_counterparty":
+      return copy.proposalTypeMergeCounterparty;
     case "persist_candidate_record":
       return copy.proposalTypePersistCandidateRecord;
+    case "resolve_duplicate_receipt":
+      return copy.proposalTypeResolveDuplicateReceipt;
     case "update_candidate_record":
       return copy.proposalTypeUpdateCandidateRecord;
     case "update_workflow_state":

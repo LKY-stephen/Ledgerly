@@ -40,7 +40,7 @@ export async function loadHomeSnapshot(
     `SELECT MAX(occurred_on) AS latestOn
       FROM records
       WHERE entity_id = ?
-        AND record_kind IN ('income', 'expense', 'personal_spending');`,
+        AND record_kind IN ('income', 'non_business_income', 'expense', 'personal_spending');`,
     entityId,
   );
   const latestRecordDate = latestRecordRow?.latestOn ?? null;
@@ -65,7 +65,7 @@ export async function loadHomeSnapshot(
         startOn: monthStart,
       },
       entityId,
-      select: `COALESCE(SUM(CASE WHEN r.record_kind = 'income' THEN r.amount_cents ELSE 0 END), 0) AS incomeCents,
+      select: `COALESCE(SUM(CASE WHEN r.record_kind IN ('income', 'non_business_income') THEN r.amount_cents ELSE 0 END), 0) AS incomeCents,
         COALESCE(SUM(CASE WHEN r.record_kind IN ('expense', 'personal_spending') THEN r.amount_cents ELSE 0 END), 0) AS outflowCents`,
     })) ?? { incomeCents: 0, outflowCents: 0 };
   const trendRows = await database.searchRecordsByDateRangeAsync<{
@@ -79,7 +79,7 @@ export async function loadHomeSnapshot(
     entityId,
     groupBy: "r.occurred_on",
     orderBy: "r.occurred_on ASC",
-    recordKinds: ["income", "expense", "personal_spending"],
+    recordKinds: ["income", "non_business_income", "expense", "personal_spending"],
     select: `r.occurred_on AS occurredOn,
       COALESCE(SUM(r.amount_cents), 0) AS amountCents`,
   });

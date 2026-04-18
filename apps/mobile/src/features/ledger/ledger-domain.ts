@@ -24,7 +24,28 @@ import {
 export const defaultEntityId = "entity-main";
 export const homeRecentPageSize = 8;
 
-export type LedgerCategory = "expense" | "income" | "spending";
+export type LedgerCategory =
+  | "expense"
+  | "income"
+  | "non_business_income"
+  | "spending";
+
+export type DuplicateMergeKeepMode = "keep_existing" | "keep_new";
+
+export interface DuplicateMatchedRecordSummary {
+  amountCents: number;
+  date: string;
+  description: string;
+  recordId: string;
+  sourceLabel: string;
+  targetLabel: string;
+}
+
+export interface ProposalApprovalOptions {
+  duplicateResolution?: {
+    keepMode: DuplicateMergeKeepMode;
+  };
+}
 
 export interface LedgerReviewValues {
   amount: string;
@@ -129,7 +150,7 @@ export interface HomeRecentRecord {
   description: string;
   occurredOn: string;
   recordId: string;
-  recordKind: "expense" | "income" | "personal_spending";
+  recordKind: "expense" | "income" | "non_business_income" | "personal_spending";
   sourceLabel: string;
   targetLabel: string;
 }
@@ -347,7 +368,11 @@ export function deriveReviewValues(
 export function deriveLedgerCategory(
   candidates: EvidenceFieldCandidates | undefined,
 ): LedgerCategory {
-  const category = candidates?.category?.trim().toLowerCase();
+  const category = candidates?.category?.trim().toLowerCase().replace(/[\s-]+/g, "_");
+
+  if (category === "non_business_income") {
+    return "non_business_income";
+  }
 
   if (category === "income") {
     return "income";

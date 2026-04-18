@@ -442,6 +442,7 @@ const structuredMaintenanceStatements = [
     'legacy',
     CASE
       WHEN record_kind = 'income' THEN 'income'
+      WHEN record_kind = 'non_business_income' THEN 'non_business_income'
       WHEN record_kind = 'expense' THEN 'expense'
       WHEN record_kind = 'personal_spending' THEN 'personal_spending'
       ELSE 'other'

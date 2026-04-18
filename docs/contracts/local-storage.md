@@ -58,6 +58,12 @@ The `records` table is the canonical local-first finance record. It stores:
 - resolved links and user-owned classification: `source_counterparty_id`, `target_counterparty_id`, `record_kind`, `category_code`, `subcategory_code`, `tax_category_code`, `tax_line_code`, `business_use_bps`
 - timestamps: `created_at`, `updated_at`
 
+Current simplified receipt semantics:
+
+- `record_kind = 'income'` remains the business-income path that feeds business views and current business tax projections.
+- `record_kind = 'non_business_income'` represents personal-side income that stays out of the Biz tab while still counting toward personal income totals.
+- `record_kind = 'personal_spending'` remains excluded from business tax totals and reduces the derived personal view.
+
 The `evidences` table now tracks upload and parse lifecycle state in addition to sparse captured fields. It stores:
 
 - identity and ownership: `evidence_id`, `entity_id`, `evidence_kind`

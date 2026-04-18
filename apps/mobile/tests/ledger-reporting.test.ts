@@ -22,7 +22,7 @@ interface FakeLedgerRecordRow {
   memo: string | null;
   occurredOn: string;
   recordId: string;
-  recordKind: "expense" | "income" | "personal_spending";
+  recordKind: "expense" | "income" | "non_business_income" | "personal_spending";
   recordStatus: string;
   sourceLabel: string;
   targetLabel: string;
@@ -420,6 +420,116 @@ describe("ledger reporting", () => {
     expect(personalSnapshot.balanceSheet.netPositionLabel).toContain(
       "limited derived personal view rather than a full asset and debt statement",
     );
+  });
+
+  it("keeps non-business income out of business totals while adding it to personal totals", async () => {
+    const database = createFakeLedgerDatabase([
+      {
+        amountCents: 100_000,
+        businessUseBps: 10_000,
+        createdAt: "2026-04-02T10:00:00Z",
+        currency: "USD",
+        description: "Brand sponsorship",
+        entityId: "entity-main",
+        memo: null,
+        occurredOn: "2026-04-02",
+        recordId: "record-income-april",
+        recordKind: "income",
+        recordStatus: "posted",
+        sourceLabel: "BrandCo",
+        targetLabel: "Creator CFO",
+        taxLineCode: "line1",
+      },
+      {
+        amountCents: 30_000,
+        businessUseBps: 10_000,
+        createdAt: "2026-04-03T10:00:00Z",
+        currency: "USD",
+        description: "Office tools",
+        entityId: "entity-main",
+        memo: null,
+        occurredOn: "2026-04-03",
+        recordId: "record-expense-april",
+        recordKind: "expense",
+        recordStatus: "posted",
+        sourceLabel: "Creator CFO",
+        targetLabel: "Tools Inc",
+        taxLineCode: "line27a",
+      },
+      {
+        amountCents: 20_000,
+        businessUseBps: 10_000,
+        createdAt: "2026-04-04T10:00:00Z",
+        currency: "USD",
+        description: "Bank interest",
+        entityId: "entity-main",
+        memo: null,
+        occurredOn: "2026-04-04",
+        recordId: "record-non-business-income",
+        recordKind: "non_business_income",
+        recordStatus: "posted",
+        sourceLabel: "Bank",
+        targetLabel: "Personal checking",
+        taxLineCode: null,
+      },
+      {
+        amountCents: 10_000,
+        businessUseBps: 10_000,
+        createdAt: "2026-04-05T10:00:00Z",
+        currency: "USD",
+        description: "Personal dinner",
+        entityId: "entity-main",
+        memo: null,
+        occurredOn: "2026-04-05",
+        recordId: "record-personal-april",
+        recordKind: "personal_spending",
+        recordStatus: "posted",
+        sourceLabel: "Creator CFO",
+        targetLabel: "Cafe",
+        taxLineCode: null,
+      },
+    ]);
+
+    const businessSnapshot = await loadLedgerSnapshot(database, {
+      now: "2026-04-05",
+      preferredPeriodId: buildLedgerPeriodId(2026, "m04"),
+    });
+    const personalSnapshot = await loadLedgerSnapshot(database, {
+      now: "2026-04-05",
+      preferredPeriodId: buildLedgerPeriodId(2026, "m04"),
+      scopeId: "personal",
+    });
+
+    expect(businessSnapshot.profitAndLoss.metricCards.map((card) => card.value)).toEqual([
+      "$1,000.00",
+      "$300.00",
+    ]);
+    expect(businessSnapshot.profitAndLoss.netIncomeLabel).toBe("$700.00");
+    expect(businessSnapshot.balanceSheet.carryForwardRows.map((row) => row.amount)).toEqual([
+      "$0.00",
+      "$700.00",
+      "$700.00",
+    ]);
+
+    expect(personalSnapshot.profitAndLoss.metricCards.map((card) => card.value)).toEqual([
+      "$700.00",
+      "$200.00",
+      "$100.00",
+    ]);
+    expect(personalSnapshot.profitAndLoss.netIncomeLabel).toBe("$800.00");
+    expect(personalSnapshot.generalLedger.equation.rows.map((row) => row.value)).toEqual([
+      "$700.00",
+      "$200.00",
+      "-$100.00",
+      "$800.00",
+    ]);
+    expect(personalSnapshot.balanceSheet.carryForwardRows.map((row) => row.amount)).toEqual([
+      "$0.00",
+      "$700.00",
+      "$200.00",
+      "-$100.00",
+      "$800.00",
+    ]);
   });
 
   it("carries prior business activity into a later business balance sheet without changing the later period slice", async () => {
@@ -1293,8 +1403,8 @@ function createFakeLedgerDatabase(
 }
 
 function getAllowedKindsFromLiteralQuery(source: string): FakeLedgerRecordRow["recordKind"][] {
-  if (source.includes("('income', 'expense', 'personal_spending')")) {
-    return ["income", "expense", "personal_spending"];
+  if (source.includes("('income', 'non_business_income', 'expense', 'personal_spending')")) {
+    return ["income", "non_business_income", "expense", "personal_spending"];
   }
 
   if (source.includes("('personal_spending')")) {

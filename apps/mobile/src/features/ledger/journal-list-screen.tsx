@@ -105,7 +105,9 @@ export function JournalListScreen() {
             </View>
           ) : (
             snapshot.records.map((item, index) => {
-              const income = item.recordKind === "income";
+              const income =
+                item.recordKind === "income" ||
+                item.recordKind === "non_business_income";
               const accent = income
                 ? palette.success
                 : item.recordKind === "personal_spending"

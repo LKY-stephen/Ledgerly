@@ -1,7 +1,15 @@
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+  Image,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { BackHeaderBar } from "../../components/back-header-bar";
@@ -13,8 +21,17 @@ import {
   pickPhotoUploadCandidates,
   takeCameraPhoto,
 } from "./ledger-runtime";
+import { formatUploadCandidateSize } from "./ledger-ui-copy";
 import { useAppShell } from "../app-shell/provider";
 import { getButtonColors, getFeedbackColors } from "../app-shell/theme-utils";
+
+interface SelectedUploadCandidate {
+  kind: "document" | "image" | "live_photo" | "video";
+  mimeType: string | null;
+  originalFileName: string;
+  sizeBytes: number | null;
+  uri: string;
+}
 
 export function LedgerUploadScreen() {
   const router = useRouter();
@@ -26,12 +43,9 @@ export function LedgerUploadScreen() {
   const primaryButton = getButtonColors(palette, "primary");
   const [error, setError] = useState<string | null>(null);
   const [isBusy, setIsBusy] = useState(false);
-  const [status, setStatus] = useState<{
-    fileName?: string;
-    kind: "empty" | "idle" | "parsing";
-  }>({
-    kind: "idle",
-  });
+  const [status, setStatus] = useState<"empty" | "idle">("idle");
+  const [selectedCandidate, setSelectedCandidate] =
+    useState<SelectedUploadCandidate | null>(null);
 
   async function handleImport(
     source: "camera" | "documents" | "photos",
@@ -48,27 +62,55 @@ export function LedgerUploadScreen() {
             : await pickDocumentUploadCandidates();
 
       if (!candidates.length) {
-        setStatus({ kind: "empty" });
+        setSelectedCandidate(null);
+        setStatus("empty");
         return;
       }
 
       const first = candidates[0]!;
-      setStatus({ fileName: first.originalFileName, kind: "parsing" });
+      setSelectedCandidate({
+        kind: first.kind,
+        mimeType: first.mimeType,
+        originalFileName: first.originalFileName,
+        sizeBytes: first.sizeBytes,
+        uri: first.uri,
+      });
+      setStatus("idle");
+    } catch (nextError: unknown) {
+      setError(
+        nextError instanceof Error
+          ? nextError.message
+          : uploadCopy.errorFallback,
+      );
+    } finally {
+      setIsBusy(false);
+    }
+  }
 
+  async function handleParseSelected(): Promise<void> {
+    if (!selectedCandidate) {
+      return;
+    }
+
+    setIsBusy(true);
+    setError(null);
+
+    try {
       const result = await parseFile(
-        first.uri,
-        first.originalFileName,
-        first.mimeType,
+        selectedCandidate.uri,
+        selectedCandidate.originalFileName,
+        selectedCandidate.mimeType,
       );
 
       router.push({
         params: {
-          fileName: first.originalFileName,
-          rawJson: result.rawJson != null ? JSON.stringify(result.rawJson) : "",
-          rawText: result.rawText,
+          fileName: selectedCandidate.originalFileName,
+          mimeType: selectedCandidate.mimeType ?? "",
           model: result.model,
           parseError: result.error ?? "",
           parserKind: result.parserKind,
+          rawJson: result.rawJson != null ? JSON.stringify(result.rawJson) : "",
+          rawText: result.rawText,
         },
         pathname: "/ledger/parse",
       });
@@ -84,11 +126,26 @@ export function LedgerUploadScreen() {
   }
 
   const statusText =
-    status.kind === "empty"
+    status === "empty"
       ? uploadCopy.emptySelection
-      : status.kind === "parsing" && status.fileName
-        ? `${uploadCopy.parsingStatusPrefix} ${status.fileName}...`
+      : isBusy && selectedCandidate
+        ? `${uploadCopy.parsingStatusPrefix} ${selectedCandidate.originalFileName}...`
+      : selectedCandidate
+        ? uploadCopy.previewSummary
         : uploadCopy.hint;
+  const previewMeta = selectedCandidate
+    ? [
+        selectedCandidate.mimeType?.trim() || "Unknown type",
+        formatUploadCandidateSize(selectedCandidate.sizeBytes),
+      ]
+        .filter((value): value is string => Boolean(value))
+        .join(" · ")
+    : "";
+  const showImagePreview =
+    selectedCandidate != null &&
+    (selectedCandidate.kind === "image" ||
+      selectedCandidate.kind === "live_photo") &&
+    Boolean(selectedCandidate.mimeType?.startsWith("image/"));
 
   return (
     <SafeAreaView
@@ -184,47 +241,198 @@ export function LedgerUploadScreen() {
               {uploadCopy.uploadCardSummary}
             </Text>
 
-            <View style={[styles.buttonStack, isWide && styles.buttonStackWide]}>
-              <Pressable
-                accessibilityRole="button"
-                disabled={isBusy}
-                onPress={() => handleImport("photos")}
-                style={({ pressed }) => [
-                  styles.primaryButton,
+            {selectedCandidate ? (
+              <View
+                style={[
+                  styles.previewCard,
                   {
-                    backgroundColor: isBusy
-                      ? primaryButton.disabledBackground
-                      : pressed
-                        ? primaryButton.pressedBackground
-                        : primaryButton.background,
-                    opacity: isBusy ? 0.7 : 1,
-                    shadowColor: palette.shadow,
+                    backgroundColor: palette.paper,
+                    borderColor: palette.border,
                   },
                 ]}
-                testID="ledger-upload-select-photos-button"
+                testID="ledger-upload-preview-card"
               >
-                <View style={styles.primaryButtonContent}>
-                    <MaterialCommunityIcons
-                    color={isBusy ? primaryButton.disabledText : primaryButton.text}
-                    name="image-multiple-outline"
-                    size={18}
+                <Text style={[styles.previewEyebrow, { color: palette.inkMuted }]}>
+                  {uploadCopy.previewTitle}
+                </Text>
+                {showImagePreview ? (
+                  <Image
+                    source={{ uri: selectedCandidate.uri }}
+                    style={styles.previewImage}
                   />
-                  <Text
+                ) : (
+                  <View
                     style={[
-                      styles.primaryButtonLabel,
-                      { color: isBusy ? primaryButton.disabledText : primaryButton.text },
+                      styles.previewIconWrap,
+                      { backgroundColor: palette.accentSoft },
                     ]}
                   >
-                    {isBusy ? uploadCopy.parsing : uploadCopy.selectPhotos}
+                    <MaterialCommunityIcons
+                      color={palette.accent}
+                      name={
+                        selectedCandidate.kind === "live_photo"
+                          ? "motion-play-outline"
+                          : selectedCandidate.kind === "image"
+                            ? "image-outline"
+                            : "file-document-outline"
+                      }
+                      size={28}
+                    />
+                  </View>
+                )}
+                <Text style={[styles.previewFileName, { color: palette.ink }]}>
+                  {selectedCandidate.originalFileName}
+                </Text>
+                {previewMeta ? (
+                  <Text style={[styles.previewMeta, { color: palette.inkMuted }]}>
+                    {previewMeta}
                   </Text>
-                </View>
-              </Pressable>
+                ) : null}
 
-              {Platform.OS !== "web" && (
+                <View style={[styles.buttonStack, isWide && styles.buttonStackWide]}>
+                  <Pressable
+                    accessibilityRole="button"
+                    disabled={isBusy}
+                    onPress={handleParseSelected}
+                    style={({ pressed }) => [
+                      styles.primaryButton,
+                      {
+                        backgroundColor: isBusy
+                          ? primaryButton.disabledBackground
+                          : pressed
+                            ? primaryButton.pressedBackground
+                            : primaryButton.background,
+                        opacity: isBusy ? 0.7 : 1,
+                        shadowColor: palette.shadow,
+                      },
+                    ]}
+                    testID="ledger-upload-parse-button"
+                  >
+                    <View style={styles.primaryButtonContent}>
+                      <MaterialCommunityIcons
+                        color={isBusy ? primaryButton.disabledText : primaryButton.text}
+                        name="file-search-outline"
+                        size={18}
+                      />
+                      <Text
+                        style={[
+                          styles.primaryButtonLabel,
+                          {
+                            color: isBusy
+                              ? primaryButton.disabledText
+                              : primaryButton.text,
+                          },
+                        ]}
+                      >
+                        {isBusy ? uploadCopy.parsing : uploadCopy.parseAction}
+                      </Text>
+                    </View>
+                  </Pressable>
+
+                  <Pressable
+                    accessibilityRole="button"
+                    disabled={isBusy}
+                    onPress={() => {
+                      setError(null);
+                      setSelectedCandidate(null);
+                      setStatus("idle");
+                    }}
+                    style={({ pressed }) => [
+                      styles.secondaryButton,
+                      {
+                        backgroundColor: pressed ? palette.paperMuted : palette.paper,
+                        borderColor: palette.border,
+                        opacity: isBusy ? 0.7 : 1,
+                      },
+                    ]}
+                    testID="ledger-upload-back-button"
+                  >
+                    <View style={styles.primaryButtonContent}>
+                      <MaterialCommunityIcons
+                        color={palette.ink}
+                        name="arrow-left"
+                        size={18}
+                      />
+                      <Text
+                        style={[styles.secondaryButtonLabel, { color: palette.ink }]}
+                      >
+                        {uploadCopy.backAction}
+                      </Text>
+                    </View>
+                  </Pressable>
+                </View>
+              </View>
+            ) : (
+              <View style={[styles.buttonStack, isWide && styles.buttonStackWide]}>
                 <Pressable
                   accessibilityRole="button"
                   disabled={isBusy}
-                  onPress={() => handleImport("camera")}
+                  onPress={() => handleImport("photos")}
+                  style={({ pressed }) => [
+                    styles.primaryButton,
+                    {
+                      backgroundColor: isBusy
+                        ? primaryButton.disabledBackground
+                        : pressed
+                          ? primaryButton.pressedBackground
+                          : primaryButton.background,
+                      opacity: isBusy ? 0.7 : 1,
+                      shadowColor: palette.shadow,
+                    },
+                  ]}
+                  testID="ledger-upload-select-photos-button"
+                >
+                  <View style={styles.primaryButtonContent}>
+                    <MaterialCommunityIcons
+                      color={isBusy ? primaryButton.disabledText : primaryButton.text}
+                      name="image-multiple-outline"
+                      size={18}
+                    />
+                    <Text
+                      style={[
+                        styles.primaryButtonLabel,
+                        { color: isBusy ? primaryButton.disabledText : primaryButton.text },
+                      ]}
+                    >
+                      {isBusy ? uploadCopy.parsing : uploadCopy.selectPhotos}
+                    </Text>
+                  </View>
+                </Pressable>
+
+                {Platform.OS !== "web" && (
+                  <Pressable
+                    accessibilityRole="button"
+                    disabled={isBusy}
+                    onPress={() => handleImport("camera")}
+                    style={({ pressed }) => [
+                      styles.secondaryButton,
+                      {
+                        backgroundColor: pressed ? palette.paperMuted : palette.paper,
+                        borderColor: palette.border,
+                        opacity: isBusy ? 0.7 : 1,
+                      },
+                    ]}
+                    testID="ledger-upload-camera-button"
+                  >
+                    <View style={styles.primaryButtonContent}>
+                      <MaterialCommunityIcons
+                        color={palette.ink}
+                        name="camera-outline"
+                        size={18}
+                      />
+                      <Text
+                        style={[styles.secondaryButtonLabel, { color: palette.ink }]}
+                      >
+                        {uploadCopy.takePhoto}
+                      </Text>
+                    </View>
+                  </Pressable>
+                )}
+
+                <Pressable
+                  accessibilityRole="button"
+                  disabled={isBusy}
+                  onPress={() => handleImport("documents")}
                   style={({ pressed }) => [
                     styles.secondaryButton,
                     {
@@ -233,51 +441,23 @@ export function LedgerUploadScreen() {
                       opacity: isBusy ? 0.7 : 1,
                     },
                   ]}
-                  testID="ledger-upload-camera-button"
+                  testID="ledger-upload-select-button"
                 >
                   <View style={styles.primaryButtonContent}>
                     <MaterialCommunityIcons
                       color={palette.ink}
-                      name="camera-outline"
+                      name="file-upload-outline"
                       size={18}
                     />
                     <Text
                       style={[styles.secondaryButtonLabel, { color: palette.ink }]}
                     >
-                      {uploadCopy.takePhoto}
+                      {uploadCopy.selectFiles}
                     </Text>
                   </View>
                 </Pressable>
-              )}
-
-              <Pressable
-                accessibilityRole="button"
-                disabled={isBusy}
-                onPress={() => handleImport("documents")}
-                style={({ pressed }) => [
-                  styles.secondaryButton,
-                  {
-                    backgroundColor: pressed ? palette.paperMuted : palette.paper,
-                    borderColor: palette.border,
-                    opacity: isBusy ? 0.7 : 1,
-                  },
-                ]}
-                testID="ledger-upload-select-button"
-              >
-                <View style={styles.primaryButtonContent}>
-                  <MaterialCommunityIcons
-                    color={palette.ink}
-                    name="file-upload-outline"
-                    size={18}
-                  />
-                  <Text
-                    style={[styles.secondaryButtonLabel, { color: palette.ink }]}
-                  >
-                    {uploadCopy.selectFiles}
-                  </Text>
-                </View>
-              </Pressable>
-            </View>
+              </View>
+            )}
 
             <Text
               style={[
@@ -386,6 +566,43 @@ const styles = StyleSheet.create({
   hint: {
     fontSize: 12,
     lineHeight: 17,
+    textAlign: "center",
+  },
+  previewCard: {
+    alignItems: "center",
+    borderRadius: 16,
+    borderWidth: 1,
+    gap: 10,
+    padding: 14,
+    width: "100%",
+  },
+  previewEyebrow: {
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 0.8,
+    textTransform: "uppercase",
+  },
+  previewFileName: {
+    fontSize: 16,
+    fontWeight: "700",
+    lineHeight: 22,
+    textAlign: "center",
+  },
+  previewIconWrap: {
+    alignItems: "center",
+    borderRadius: 18,
+    height: 72,
+    justifyContent: "center",
+    width: 72,
+  },
+  previewImage: {
+    borderRadius: 16,
+    height: 180,
+    width: "100%",
+  },
+  previewMeta: {
+    fontSize: 13,
+    lineHeight: 18,
     textAlign: "center",
   },
   primaryButton: {

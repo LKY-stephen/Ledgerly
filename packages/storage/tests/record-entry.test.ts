@@ -199,6 +199,72 @@ describe("standard receipt entry resolver", () => {
     });
   });
 
+  it("resolves non-business income outside the business tax flow", async () => {
+    const database = createStorageDatabase();
+    seedResolverFixture(database);
+    const writableDatabase = createWritableDatabase(database);
+    const resolvedEntry = resolveStandardReceiptEntry(
+      {
+        amountCents: 5_500,
+        currency: "USD",
+        description: "Bank interest",
+        entityId: "entity-main",
+        occurredOn: "2026-03-28",
+        source: "Bank",
+        target: "Personal checking",
+        userClassification: "non_business_income",
+      },
+      {
+        createdAt: "2026-03-28T09:00:00.000Z",
+        recordId: "record-non-business-income",
+        sourceSystem: "resolver-test",
+        updatedAt: "2026-03-28T09:05:00.000Z",
+      },
+    );
+
+    await persistResolvedStandardReceiptEntry(writableDatabase, resolvedEntry);
+
+    const storedRecord = database
+      .prepare(
+        `SELECT
+          amount_cents AS amountCents,
+          business_use_bps AS businessUseBps,
+          record_kind AS recordKind,
+          tax_line_code AS taxLineCode
+        FROM records
+        WHERE record_id = ?;`,
+      )
+      .get("record-non-business-income") as {
+      amountCents: number;
+      businessUseBps: number;
+      recordKind: string;
+      taxLineCode: string | null;
+    };
+    const storedClassification = database
+      .prepare(
+        `SELECT
+          user_classification AS userClassification,
+          resolver_code AS resolverCode
+        FROM record_entry_classifications
+        WHERE record_id = ?;`,
+      )
+      .get("record-non-business-income") as {
+      resolverCode: string;
+      userClassification: string;
+    };
+
+    expect(storedRecord).toEqual({
+      amountCents: 5_500,
+      businessUseBps: 10_000,
+      recordKind: "non_business_income",
+      taxLineCode: null,
+    });
+    expect(storedClassification).toEqual({
+      resolverCode: "non_business_income_default",
+      userClassification: "non_business_income",
+    });
+  });
+
   it("resolves personal spending without a tax line", async () => {
     const database = createStorageDatabase();
     seedResolverFixture(database);

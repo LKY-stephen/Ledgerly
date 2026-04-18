@@ -5,6 +5,7 @@ const expenseFallbackTaxCategoryCode = "schedule-c-other-expense";
 
 export const standardReceiptUserClassifications = [
   "income",
+  "non_business_income",
   "expense",
   "personal_spending",
 ] as const;
@@ -53,7 +54,7 @@ export interface StandardReceiptRecordDraft {
   memo: string | null;
   occurredOn: string;
   recordId: string;
-  recordKind: "expense" | "income" | "personal_spending";
+  recordKind: "expense" | "income" | "non_business_income" | "personal_spending";
   recordStatus: string;
   sourceCounterpartyId: string | null;
   sourceLabel: string;
@@ -158,6 +159,54 @@ export function resolveStandardReceiptEntry(
         targetLabel,
         taxCategoryCode: null,
         taxLineCode: "line1",
+        updatedAt,
+      },
+      taxYearProfile: {
+        accountingMethod: "cash",
+        createdAt,
+        entityId,
+        taxYear,
+        updatedAt,
+      },
+    };
+  }
+
+  if (input.userClassification === "non_business_income") {
+    return {
+      classification: {
+        classificationStatus: "resolved",
+        createdAt,
+        entryMode: "standard_receipt",
+        recordId,
+        resolverCode: "non_business_income_default",
+        resolverNote:
+          "Resolved from the simplified non-business income path and excluded from business tax totals.",
+        updatedAt,
+        userClassification: input.userClassification,
+      },
+      evidenceIds,
+      input,
+      record: {
+        amountCents,
+        businessUseBps: businessUseFullBps,
+        categoryCode: null,
+        createdAt,
+        currency,
+        description,
+        entityId,
+        memo,
+        occurredOn,
+        recordId,
+        recordKind: "non_business_income",
+        recordStatus,
+        sourceCounterpartyId: normalizeNullableText(context.sourceCounterpartyId),
+        sourceLabel,
+        sourceSystem,
+        subcategoryCode: null,
+        targetCounterpartyId: normalizeNullableText(context.targetCounterpartyId),
+        targetLabel,
+        taxCategoryCode: null,
+        taxLineCode: null,
         updatedAt,
       },
       taxYearProfile: {

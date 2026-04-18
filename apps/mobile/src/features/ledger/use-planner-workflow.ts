@@ -1,7 +1,10 @@
 import { useCallback, useState } from "react";
 
 import { useAppShell } from "../app-shell/provider";
-import type { LedgerReviewValues } from "./ledger-domain";
+import type {
+  LedgerReviewValues,
+  ProposalApprovalOptions,
+} from "./ledger-domain";
 import {
   approveWriteProposal,
   rejectWriteProposal,
@@ -69,7 +72,10 @@ export function usePlannerWorkflow(input: {
   ]);
 
   const approveProposal = useCallback(
-    async (writeProposalId: string) => {
+    async (
+      writeProposalId: string,
+      options?: ProposalApprovalOptions,
+    ) => {
       if (!plannerResult) return;
 
       setIsApproving(true);
@@ -80,6 +86,7 @@ export function usePlannerWorkflow(input: {
           plannerResult.batchId,
           writeProposalId,
           review,
+          options,
         );
 
         setPlannerResult(result);

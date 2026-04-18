@@ -107,6 +107,24 @@ describe("feat_upload home aggregation", () => {
           updatedAt: "2026-04-18T11:00:00.000Z",
         },
       ),
+      resolveStandardReceiptEntry(
+        {
+          amountCents: 3_400,
+          currency: "USD",
+          description: "Bank interest",
+          entityId: "entity-main",
+          occurredOn: "2026-04-19",
+          source: "Bank",
+          target: "Personal checking",
+          userClassification: "non_business_income",
+        },
+        {
+          createdAt: "2026-04-19T08:30:00.000Z",
+          recordId: "record-income-3",
+          sourceSystem: "home-test",
+          updatedAt: "2026-04-19T08:30:00.000Z",
+        },
+      ),
     ];
 
     for (const entry of entries) {
@@ -125,9 +143,16 @@ describe("feat_upload home aggregation", () => {
     });
 
     expect(firstPage.metrics).toEqual({
-      incomeCents: 21_400,
-      netCents: 17_200,
+      incomeCents: 24_800,
+      netCents: 20_600,
       outflowCents: 4_200,
+    });
+    expect(
+      firstPage.trend.find((point) => point.date === "2026-04-19"),
+    ).toEqual({
+      amountCents: 3_400,
+      date: "2026-04-19",
+      label: "Apr 19",
     });
     expect(
       firstPage.trend.find((point) => point.date === "2026-04-18"),
@@ -145,7 +170,7 @@ describe("feat_upload home aggregation", () => {
     });
     expect(firstPage.recentRecords).toHaveLength(2);
     expect(firstPage.hasMore).toBe(true);
-    expect(secondPage.recentRecords).toHaveLength(1);
+    expect(secondPage.recentRecords).toHaveLength(2);
     expect(secondPage.hasMore).toBe(false);
   });
 

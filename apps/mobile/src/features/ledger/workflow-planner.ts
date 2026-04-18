@@ -13,7 +13,11 @@ import type {
   WorkflowWriteProposalPayload,
 } from "@creator-cfo/schemas";
 
-import type { EvidenceQueueItem, LedgerReviewValues } from "./ledger-domain";
+import type {
+  DuplicateMatchedRecordSummary,
+  EvidenceQueueItem,
+  LedgerReviewValues,
+} from "./ledger-domain";
 
 export interface PlannerLookupMatch {
   counterpartyId: string;
@@ -25,6 +29,7 @@ export interface DuplicateReceiptMatch {
   conflictEvidenceId: string;
   conflictLabel: string;
   matchedRecordIds: string[];
+  matchedRecords: DuplicateMatchedRecordSummary[];
   overlapEntryCount: number;
 }
 
@@ -347,6 +352,7 @@ function buildReadTasks(
           conflictEvidenceId: match.conflictEvidenceId,
           conflictLabel: match.conflictLabel,
           matchedRecordIds: match.matchedRecordIds,
+          matchedRecords: match.matchedRecords,
           overlapEntryCount: match.overlapEntryCount,
         })) as unknown as JsonValue[],
       } as JsonObject,
@@ -558,6 +564,7 @@ function buildResolveDuplicateReceiptProposal(
       duplicateEvidenceId: match.conflictEvidenceId,
       duplicateReceiptLabel: match.conflictLabel,
       matchedRecordIds: match.matchedRecordIds,
+      matchedRecords: match.matchedRecords as unknown as JsonValue,
       overlapEntryCount: match.overlapEntryCount,
       relatedEvidenceFileName: match.conflictLabel,
     },
@@ -581,10 +588,12 @@ function createPersistProposal(
       ...(remoteProposal?.values ?? {}),
       duplicateHints,
       duplicateReceiptMatch: duplicateReceiptMatch
-        ? {
+          ? {
             conflictEvidenceId: duplicateReceiptMatch.conflictEvidenceId,
             conflictLabel: duplicateReceiptMatch.conflictLabel,
             matchedRecordIds: duplicateReceiptMatch.matchedRecordIds,
+            matchedRecords:
+              duplicateReceiptMatch.matchedRecords as unknown as JsonValue,
             overlapEntryCount: duplicateReceiptMatch.overlapEntryCount,
           }
         : null,
@@ -616,6 +625,7 @@ function buildDuplicateReceiptMatchFromProposal(proposal: WorkflowWriteProposalP
       proposal.values.duplicateReceiptLabel ?? proposal.values.relatedEvidenceFileName,
     ) ?? "Existing receipt",
     matchedRecordIds: asStringArray(proposal.values.matchedRecordIds),
+    matchedRecords: asRecordSummaries(proposal.values.matchedRecords),
     overlapEntryCount: readFirstNumber(
       proposal.values.overlapEntryCount,
       proposal.values.overlappingEntryCount,
@@ -669,6 +679,36 @@ function asStringArray(value: JsonValue | undefined): string[] {
   return Array.isArray(value)
     ? value.filter((item): item is string => typeof item === "string" && item.trim().length > 0)
     : [];
+}
+
+function asRecordSummaries(value: JsonValue | undefined): DuplicateMatchedRecordSummary[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.flatMap((item) => {
+    if (!item || typeof item !== "object" || Array.isArray(item)) {
+      return [];
+    }
+
+    const record = item as Record<string, JsonValue>;
+    const recordId = normalizeJsonString(record.recordId);
+
+    if (!recordId) {
+      return [];
+    }
+
+    return [
+      {
+        amountCents: readFirstNumber(record.amountCents) ?? 0,
+        date: normalizeJsonString(record.date) ?? "",
+        description: normalizeJsonString(record.description) ?? "",
+        recordId,
+        sourceLabel: normalizeJsonString(record.sourceLabel) ?? "",
+        targetLabel: normalizeJsonString(record.targetLabel) ?? "",
+      },
+    ];
+  });
 }
 
 function readFirstNumber(...values: unknown[]): number | null {

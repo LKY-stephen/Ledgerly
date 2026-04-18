@@ -327,6 +327,132 @@ describe("ledger web upload runtime", () => {
     expect(reloadedState?.writeProposals.find((proposal) => proposal.writeProposalId === createProposal!.writeProposalId)?.state).toBe("rejected");
   });
 
+  it("supports keeping the new record when approving a duplicate merge", async () => {
+    vi.spyOn(remoteParse, "planEvidenceDbUpdates").mockResolvedValueOnce({
+      businessEvents: ["Receipt payment"],
+      candidateRecords: [
+        {
+          amountCents: 5299,
+          currency: "USD",
+          date: "2026-02-27",
+          description: "Apple Store accessories",
+          evidenceId: "evidence-web-keep-new",
+          recordKind: "expense",
+          sourceLabel: "Business Card",
+          targetLabel: "Apple Store",
+        },
+      ],
+      classifiedFacts: [],
+      counterpartyResolutions: [
+        {
+          confidence: "high",
+          displayName: "Business Card",
+          matchedDisplayNames: [],
+          matchedCounterpartyIds: [],
+          role: "source",
+          status: "proposed_new",
+        },
+      ],
+      duplicateHints: [],
+      readTasks: [
+        { readTaskId: "read-1", rationale: "Lookup counterparties", status: "pending", taskType: "counterparty_lookup" },
+        { readTaskId: "read-2", rationale: "Check duplicate receipts", status: "pending", taskType: "duplicate_lookup" },
+      ],
+      summary: "One expense record from the uploaded receipt.",
+      warnings: [],
+      writeProposals: [
+        {
+          proposalType: "resolve_duplicate_receipt",
+          values: {
+            conflictEvidenceId: "evidence-existing-duplicate",
+            duplicateReceiptLabel: "receipt-2026-02-27.pdf",
+            matchedRecordIds: ["record-existing-1"],
+            matchedRecords: [
+              {
+                amountCents: 5299,
+                date: "2026-02-27",
+                description: "Apple Store accessories",
+                recordId: "record-existing-1",
+                sourceLabel: "Business Card",
+                targetLabel: "Apple Store",
+              },
+            ],
+            overlapEntryCount: 1,
+          },
+        },
+        {
+          proposalType: "persist_candidate_record",
+          reviewFields: ["amount", "date", "source", "target"],
+          values: { candidateIndex: 0 },
+        },
+      ],
+    });
+
+    const plannerResult = await runPlanner({
+      fileName: "receipt-feb-27-keep-new.pdf",
+      mimeType: "application/pdf",
+      model: "gpt-5",
+      rawJson: {
+        candidates: {
+          amountCents: 5299,
+          category: "expense",
+          date: "2026-02-27",
+          description: "Apple Store accessories",
+          notes: null,
+          source: "Business Card",
+          target: "Apple Store",
+          taxCategory: "office",
+        },
+        fields: {
+          amountCents: 5299,
+          category: "expense",
+          date: "2026-02-27",
+          description: "Apple Store accessories",
+          notes: null,
+          source: "Business Card",
+          target: "Apple Store",
+          taxCategory: "office",
+        },
+        model: "gpt-5",
+        parser: "openai_gpt",
+        rawSummary: "Apple Store receipt",
+        rawText: "Apple Store 02/27/2026 $52.99",
+        warnings: [],
+      },
+      rawText: "Apple Store 02/27/2026 $52.99",
+    });
+
+    const duplicateProposal = plannerResult.writeProposals.find(
+      (proposal) => proposal.proposalType === "resolve_duplicate_receipt",
+    );
+
+    const afterKeepNew = await approveWriteProposal(
+      plannerResult.batchId,
+      duplicateProposal!.writeProposalId,
+      {
+        amount: "52.99",
+        category: "expense",
+        date: "2026-02-27",
+        description: "Apple Store accessories",
+        notes: "keep new on web",
+        source: "Business Card",
+        target: "Apple Store",
+        taxCategory: "office",
+      },
+      {
+        duplicateResolution: { keepMode: "keep_new" },
+      },
+    );
+
+    expect(afterKeepNew.batchState).toBe("approved");
+    expect(afterKeepNew.candidateRecords[0]?.state).toBe("persisted_final");
+    expect(
+      afterKeepNew.writeProposals.find(
+        (proposal) => proposal.proposalType === "persist_candidate_record",
+      )?.state,
+    ).toBe("rejected");
+  });
+
   it("takes a camera photo and returns an upload candidate", async () => {
     vi.mocked(ImagePicker.launchCameraAsync).mockResolvedValueOnce({
       assets: [

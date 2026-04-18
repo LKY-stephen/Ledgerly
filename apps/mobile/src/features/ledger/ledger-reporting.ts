@@ -175,7 +175,7 @@ interface LedgerRecordRow {
   memo: string | null;
   occurredOn: string;
   recordId: string;
-  recordKind: "expense" | "income" | "personal_spending";
+  recordKind: "expense" | "income" | "non_business_income" | "personal_spending";
   sourceLabel: string;
   targetLabel: string;
   taxLineCode: string | null;
@@ -221,10 +221,12 @@ const businessLedgerRecordKinds = [
   "expense",
 ] as const satisfies readonly LedgerRecordRow["recordKind"][];
 const personalLedgerRecordKinds = [
+  "non_business_income",
   "personal_spending",
 ] as const satisfies readonly LedgerRecordRow["recordKind"][];
 const balanceSheetLedgerRecordKinds = [
   "income",
+  "non_business_income",
   "expense",
   "personal_spending",
 ] as const satisfies readonly LedgerRecordRow["recordKind"][];
@@ -749,7 +751,7 @@ function buildGeneralLedgerEntries(
     ),
   )) {
     const kind =
-      row.recordKind === "income"
+      row.recordKind === "income" || row.recordKind === "non_business_income"
         ? "income"
         : row.recordKind === "personal_spending"
           ? "personal"
@@ -757,6 +759,8 @@ function buildGeneralLedgerEntries(
     const kindLabel =
       row.recordKind === "income"
         ? runtimeCopy.journal.incomeRecordKind
+        : row.recordKind === "non_business_income"
+          ? runtimeCopy.journal.nonBusinessIncomeRecordKind
         : row.recordKind === "personal_spending"
           ? runtimeCopy.journal.personalRecordKind
           : runtimeCopy.journal.expenseRecordKind;
@@ -897,11 +901,11 @@ function buildPostingLinesForRecord(
   const detail = normalizeLabel(row.description, locale);
   const record = buildPostingLineRecord(row, locale);
   const counterpartyAccountName =
-    row.recordKind === "income"
+    row.recordKind === "income" || row.recordKind === "non_business_income"
       ? normalizeLabel(row.sourceLabel, locale)
       : normalizeLabel(row.targetLabel, locale);
 
-  if (row.recordKind === "income") {
+  if (row.recordKind === "income" || row.recordKind === "non_business_income") {
     return [
       {
         accountName: counterpartyAccountName,
@@ -975,10 +979,16 @@ function buildProfitAndLossSnapshot(
 ): ProfitAndLossSnapshot {
   const runtimeCopy = getLedgerRuntimeCopy(locale);
   const incomeRows = rows.filter((row) => row.recordKind === "income");
+  const nonBusinessIncomeRows = rows.filter(
+    (row) => row.recordKind === "non_business_income",
+  );
   const expenseRows = rows.filter((row) => row.recordKind === "expense");
   const personalRows = rows.filter((row) => row.recordKind === "personal_spending");
   const businessRevenueTotalCents = sumAmounts(
     incomeRows.map((row) => row.effectiveAmountCents),
+  );
+  const nonBusinessIncomeTotalCents = sumAmounts(
+    nonBusinessIncomeRows.map((row) => row.effectiveAmountCents),
   );
   const businessExpenseTotalCents = sumAmounts(
     expenseRows.map((row) => row.effectiveAmountCents),
@@ -987,30 +997,47 @@ function buildProfitAndLossSnapshot(
     personalRows.map((row) => row.effectiveAmountCents),
   );
   const businessProfitCents = businessRevenueTotalCents - businessExpenseTotalCents;
-  const personalProfitCents = businessProfitCents - personalSpendingTotalCents;
+  const personalProfitCents =
+    businessProfitCents +
+    nonBusinessIncomeTotalCents -
+    personalSpendingTotalCents;
 
   if (scopeId === "personal") {
+    const metricCards: LedgerMetricCard[] = [
+      {
+        accent:
+          businessProfitCents > 0
+            ? "success"
+            : businessProfitCents < 0
+              ? "danger"
+              : "neutral",
+        id: "business-profit",
+        label: locale === "zh-CN" ? "经营利润" : "Business Profit",
+        value: formatCurrencyFromCents(normalizeSignedZeroCents(businessProfitCents)),
+      },
+    ];
+
+    if (nonBusinessIncomeTotalCents > 0) {
+      metricCards.push({
+        accent: "success",
+        id: "non-business-income",
+        label: runtimeCopy.journal.nonBusinessIncomeMetric,
+        value: formatCurrencyFromCents(
+          normalizeSignedZeroCents(nonBusinessIncomeTotalCents),
+        ),
+      });
+    }
+
+    metricCards.push({
+      accent: "danger",
+      id: "personal-spend",
+      label: runtimeCopy.journal.personalSpendMetric,
+      value: formatCurrencyFromCents(personalSpendingTotalCents),
+    });
+
     return {
       expenseRows: [],
-      metricCards: [
-        {
-          accent:
-            businessProfitCents > 0
-              ? "success"
-              : businessProfitCents < 0
-                ? "danger"
-                : "neutral",
-          id: "business-profit",
-          label: locale === "zh-CN" ? "经营利润" : "Business Profit",
-          value: formatCurrencyFromCents(normalizeSignedZeroCents(businessProfitCents)),
-        },
-        {
-          accent: "danger",
-          id: "personal-spend",
-          label: runtimeCopy.journal.personalSpendMetric,
-          value: formatCurrencyFromCents(personalSpendingTotalCents),
-        },
-      ],
+      metricCards,
       netIncomeLabel: formatCurrencyFromCents(normalizeSignedZeroCents(personalProfitCents)),
       revenueRows: [],
     };
@@ -1043,10 +1070,16 @@ function buildGeneralLedgerEquationSnapshot(
   locale: ResolvedLocale,
 ): LedgerEquationSnapshot {
   const incomeRows = rows.filter((row) => row.recordKind === "income");
+  const nonBusinessIncomeRows = rows.filter(
+    (row) => row.recordKind === "non_business_income",
+  );
   const expenseRows = rows.filter((row) => row.recordKind === "expense");
   const personalRows = rows.filter((row) => row.recordKind === "personal_spending");
   const businessRevenueTotalCents = sumAmounts(
     incomeRows.map((row) => row.effectiveAmountCents),
+  );
+  const nonBusinessIncomeTotalCents = sumAmounts(
+    nonBusinessIncomeRows.map((row) => row.effectiveAmountCents),
   );
   const businessExpenseTotalCents = sumAmounts(
     expenseRows.map((row) => row.effectiveAmountCents),
@@ -1057,52 +1090,77 @@ function buildGeneralLedgerEquationSnapshot(
   const businessMovementCents = businessRevenueTotalCents - businessExpenseTotalCents;
   const ownerBalanceMovementCents =
     scopeId === "personal"
-      ? businessMovementCents - personalSpendingTotalCents
+      ? businessMovementCents +
+        nonBusinessIncomeTotalCents -
+        personalSpendingTotalCents
       : businessMovementCents;
 
   if (scopeId === "personal") {
+    const rows: LedgerEquationRow[] = [
+      {
+        accent:
+          businessMovementCents > 0
+            ? "success"
+            : businessMovementCents < 0
+              ? "danger"
+              : "neutral",
+        id: "initial-owner-balance",
+        label: buildOwnerBalanceResultLabel(businessMovementCents, locale),
+        value: formatCurrencyFromCents(
+          normalizeSignedZeroCents(businessMovementCents),
+        ),
+      },
+    ];
+
+    if (nonBusinessIncomeTotalCents > 0) {
+      rows.push({
+        accent: "success",
+        id: "non-business-income",
+        label:
+          locale === "zh-CN"
+            ? "加：非经营收入"
+            : "Plus non-business income",
+        value: formatCurrencyFromCents(
+          normalizeSignedZeroCents(nonBusinessIncomeTotalCents),
+        ),
+      });
+    }
+
+    rows.push(
+      {
+        accent: personalSpendingTotalCents > 0 ? "danger" : "neutral",
+        id: "personal-spending",
+        label: locale === "zh-CN" ? "减：个人支出" : "Less personal spending",
+        value: formatCurrencyFromCents(
+          normalizeSignedZeroCents(personalSpendingTotalCents * -1),
+        ),
+      },
+      {
+        accent:
+          ownerBalanceMovementCents > 0
+            ? "success"
+            : ownerBalanceMovementCents < 0
+              ? "danger"
+              : "neutral",
+        id: "left-owner-balance",
+        label: buildLeftOwnerBalanceLabel(locale),
+        value: formatCurrencyFromCents(
+          normalizeSignedZeroCents(ownerBalanceMovementCents),
+        ),
+      },
+    );
+
     return {
       label: getOwnerBalanceLabel(locale),
-      rows: [
-        {
-          accent:
-            businessMovementCents > 0
-              ? "success"
-              : businessMovementCents < 0
-                ? "danger"
-                : "neutral",
-          id: "initial-owner-balance",
-          label: buildOwnerBalanceResultLabel(businessMovementCents, locale),
-          value: formatCurrencyFromCents(
-            normalizeSignedZeroCents(businessMovementCents),
-          ),
-        },
-        {
-          accent: personalSpendingTotalCents > 0 ? "danger" : "neutral",
-          id: "personal-spending",
-          label: locale === "zh-CN" ? "减：个人支出" : "Less personal spending",
-          value: formatCurrencyFromCents(
-            normalizeSignedZeroCents(personalSpendingTotalCents * -1),
-          ),
-        },
-        {
-          accent:
-            ownerBalanceMovementCents > 0
-              ? "success"
-              : ownerBalanceMovementCents < 0
-                ? "danger"
-                : "neutral",
-          id: "left-owner-balance",
-          label: buildLeftOwnerBalanceLabel(locale),
-          value: formatCurrencyFromCents(
-            normalizeSignedZeroCents(ownerBalanceMovementCents),
-          ),
-        },
-      ],
+      rows,
       summary:
         locale === "zh-CN"
-          ? "个人页签先保留本期所有者余额增加值，再减去个人支出，得到剩余所有者余额。这里只展示所选期间的变动。"
-          : "Personal tab starts from the selected-period owner balance increase, then subtracts personal spend to show the left owner balance. Selected-period movement only.",
+          ? nonBusinessIncomeTotalCents > 0
+            ? "个人页签先保留本期所有者余额增加值，再加上非经营收入，最后减去个人支出，得到剩余所有者余额。这里只展示所选期间的变动。"
+            : "个人页签先保留本期所有者余额增加值，再减去个人支出，得到剩余所有者余额。这里只展示所选期间的变动。"
+          : nonBusinessIncomeTotalCents > 0
+            ? "Personal tab starts from the selected-period owner balance increase, then adds non-business income and subtracts personal spend to show the left owner balance. Selected-period movement only."
+            : "Personal tab starts from the selected-period owner balance increase, then subtracts personal spend to show the left owner balance. Selected-period movement only.",
     };
   }
 
@@ -1239,6 +1297,7 @@ function buildBalanceSheetEquationSnapshot(
   summary: {
     businessClosingAssetCents: number;
     currentYearBusinessProfitCents: number;
+    currentYearNonBusinessIncomeCents: number;
     currentYearPersonalSpendingCents: number;
     openingBalanceCents: number;
     personalClosingAssetCents: number;
@@ -1272,6 +1331,19 @@ function buildBalanceSheetEquationSnapshot(
   ];
 
   if (scopeId === "personal") {
+    if (summary.currentYearNonBusinessIncomeCents > 0) {
+      rows.push({
+        accent: "success",
+        id: "non-business-income",
+        label:
+          locale === "zh-CN"
+            ? "加：非经营收入"
+            : "Plus non-business income",
+        value: formatCurrencyFromCents(
+          normalizeSignedZeroCents(summary.currentYearNonBusinessIncomeCents),
+        ),
+      });
+    }
     rows.push({
       accent:
         summary.currentYearPersonalSpendingCents > 0 ? "danger" : "neutral",
@@ -1431,6 +1503,7 @@ function buildBalanceSheetEquationSummary(
   summary: {
     businessClosingAssetCents: number;
     currentYearBusinessProfitCents: number;
+    currentYearNonBusinessIncomeCents: number;
     currentYearPersonalSpendingCents: number;
     openingBalanceCents: number;
     personalClosingAssetCents: number;
@@ -1447,6 +1520,9 @@ function buildBalanceSheetEquationSummary(
   const businessClosingNetAsset = formatCurrencyFromCents(
     normalizeSignedZeroCents(summary.businessClosingAssetCents),
   );
+  const nonBusinessIncome = formatCurrencyFromCents(
+    normalizeSignedZeroCents(summary.currentYearNonBusinessIncomeCents),
+  );
   const personalClosingNetAsset = formatCurrencyFromCents(
     normalizeSignedZeroCents(summary.personalClosingAssetCents),
   );
@@ -1459,14 +1535,18 @@ function buildBalanceSheetEquationSummary(
       return `期初 ${opening} + 经营变动 ${businessMovement} = 期末净资产 ${businessClosingNetAsset}`;
     }
 
-    return `期初 ${opening} + 经营变动 ${businessMovement} - 个人支出 ${personalSpending} = 期末净资产 ${personalClosingNetAsset}`;
+    return summary.currentYearNonBusinessIncomeCents > 0
+      ? `期初 ${opening} + 经营变动 ${businessMovement} + 非经营收入 ${nonBusinessIncome} - 个人支出 ${personalSpending} = 期末净资产 ${personalClosingNetAsset}`
+      : `期初 ${opening} + 经营变动 ${businessMovement} - 个人支出 ${personalSpending} = 期末净资产 ${personalClosingNetAsset}`;
   }
 
   if (scopeId === "business") {
     return `Opening ${opening} + business movement ${businessMovement} = closing net asset ${businessClosingNetAsset}`;
   }
 
-  return `Opening ${opening} + business movement ${businessMovement} - personal spending ${personalSpending} = closing net asset ${personalClosingNetAsset}`;
+  return summary.currentYearNonBusinessIncomeCents > 0
+    ? `Opening ${opening} + business movement ${businessMovement} + non-business income ${nonBusinessIncome} - personal spending ${personalSpending} = closing net asset ${personalClosingNetAsset}`
+    : `Opening ${opening} + business movement ${businessMovement} - personal spending ${personalSpending} = closing net asset ${personalClosingNetAsset}`;
 }
 
 function buildBalanceSheetNetPositionLabel(
@@ -1521,7 +1601,10 @@ function normalizeDerivedRows(
 }
 
 function applyDerivedAmount(row: LedgerRecordRow): number {
-  if (row.recordKind === "personal_spending") {
+  if (
+    row.recordKind === "personal_spending" ||
+    row.recordKind === "non_business_income"
+  ) {
     return row.amountCents;
   }
 
@@ -1534,6 +1617,7 @@ function buildSplitBalanceSheetSummary(
 ): {
   businessClosingAssetCents: number;
   currentYearBusinessProfitCents: number;
+  currentYearNonBusinessIncomeCents: number;
   currentYearPersonalSpendingCents: number;
   hasPriorYearActivity: boolean;
   openingBalanceCents: number;
@@ -1541,13 +1625,16 @@ function buildSplitBalanceSheetSummary(
 } {
   const currentYearStart = `${selectedYear}-01-01`;
   let currentYearBusinessProfitCents = 0;
+  let currentYearNonBusinessIncomeCents = 0;
   let currentYearPersonalSpendingCents = 0;
   let hasPriorYearActivity = false;
   let openingBalanceCents = 0;
 
   for (const row of rows) {
     const signedAmountCents =
-      row.recordKind === "income" ? row.effectiveAmountCents : row.effectiveAmountCents * -1;
+      row.recordKind === "income" || row.recordKind === "non_business_income"
+        ? row.effectiveAmountCents
+        : row.effectiveAmountCents * -1;
     const isPriorYearRow = row.occurredOn < currentYearStart;
 
     if (isPriorYearRow) {
@@ -1561,17 +1648,25 @@ function buildSplitBalanceSheetSummary(
       continue;
     }
 
+    if (row.recordKind === "non_business_income") {
+      currentYearNonBusinessIncomeCents += row.effectiveAmountCents;
+      continue;
+    }
+
     currentYearBusinessProfitCents += signedAmountCents;
   }
 
   const businessClosingAssetCents =
     openingBalanceCents + currentYearBusinessProfitCents;
   const personalClosingAssetCents =
-    businessClosingAssetCents - currentYearPersonalSpendingCents;
+    businessClosingAssetCents +
+    currentYearNonBusinessIncomeCents -
+    currentYearPersonalSpendingCents;
 
   return {
     businessClosingAssetCents,
     currentYearBusinessProfitCents,
+    currentYearNonBusinessIncomeCents,
     currentYearPersonalSpendingCents,
     hasPriorYearActivity,
     openingBalanceCents,
@@ -1583,6 +1678,7 @@ function buildBalanceSheetCarryForwardRows(
   summary: {
     businessClosingAssetCents: number;
     currentYearBusinessProfitCents: number;
+    currentYearNonBusinessIncomeCents: number;
     currentYearPersonalSpendingCents: number;
     hasPriorYearActivity: boolean;
     openingBalanceCents: number;
@@ -1639,6 +1735,24 @@ function buildBalanceSheetCarryForwardRows(
   return [
     openingBalanceRow,
     businessProfitRow,
+    ...(summary.currentYearNonBusinessIncomeCents > 0
+      ? [
+          {
+            amount: formatCurrencyFromCents(
+              normalizeSignedZeroCents(summary.currentYearNonBusinessIncomeCents),
+            ),
+            id: "current-year-non-business-income",
+            label:
+              locale === "zh-CN"
+                ? "非经营收入年初至今"
+                : "Non-business income YTD",
+            note:
+              locale === "zh-CN"
+                ? "到所选期间结束日为止的当年累计非经营收入，会计入个人页签的净资产结果。"
+                : "Current-year cumulative non-business income through the selected period end is included only in the personal-tab net-asset result.",
+          },
+        ]
+      : []),
     {
       amount: formatCurrencyFromCents(
         normalizeSignedZeroCents(summary.currentYearPersonalSpendingCents * -1),
@@ -1877,6 +1991,7 @@ export async function loadJournalEntries(
   const locale = input.locale ?? "en";
   const allRecordKinds: LedgerRecordRow["recordKind"][] = [
     "income",
+    "non_business_income",
     "expense",
     "personal_spending",
   ];

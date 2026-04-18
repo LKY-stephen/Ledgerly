@@ -19,9 +19,11 @@ import {
 import {
   createEmptyReviewValues,
   defaultEntityId,
+  type DuplicateMatchedRecordSummary,
   type EvidenceQueueItem,
   type ImportedEvidenceBundle,
   type LedgerReviewValues,
+  type ProposalApprovalOptions,
   type WorkflowCandidateRecord,
   type WorkflowWriteProposalItem,
 } from "./ledger-domain";
@@ -656,6 +658,7 @@ export async function approveWorkflowWriteProposal(
   input: {
     actor?: string;
     evidenceId: string;
+    options?: ProposalApprovalOptions;
     review?: LedgerReviewValues;
     updatedAt: string;
     writeProposalId: string;
@@ -689,6 +692,8 @@ export async function approveWorkflowWriteProposal(
     await executeResolveDuplicateReceiptProposal(database, {
       actor: input.actor ?? "local_user",
       evidenceId: input.evidenceId,
+      options: input.options,
+      review: input.review,
       proposal,
       updatedAt: input.updatedAt,
     });
@@ -821,6 +826,8 @@ export async function finalizeEvidenceReview(
         userClassification:
           normalizedReview.category === "income"
             ? "income"
+            : normalizedReview.category === "non_business_income"
+              ? "non_business_income"
             : normalizedReview.category === "spending"
               ? "personal_spending"
               : "expense",
@@ -1138,11 +1145,23 @@ async function lookupDuplicateReceiptMatches(
       conflictEvidenceId,
       conflictLabel: normalizeText(row.conflictLabel) ?? conflictEvidenceId,
       matchedRecordIds: [],
+      matchedRecords: [] as DuplicateMatchedRecordSummary[],
       overlapEntryCount: row.evidenceRecordCount > 0 ? row.evidenceRecordCount : 1,
     };
 
     if (!existing.matchedRecordIds.includes(row.recordId)) {
       existing.matchedRecordIds.push(row.recordId);
+    }
+
+    if (!existing.matchedRecords.some((record) => record.recordId === row.recordId)) {
+      existing.matchedRecords.push({
+        amountCents: row.amountCents,
+        date: row.date,
+        description: row.description,
+        recordId: row.recordId,
+        sourceLabel: row.sourceLabel,
+        targetLabel: row.targetLabel,
+      });
     }
 
     existing.overlapEntryCount = Math.max(
@@ -1496,10 +1515,16 @@ async function executeResolveDuplicateReceiptProposal(
   input: {
     actor: string;
     evidenceId: string;
+    options?: ProposalApprovalOptions;
     proposal: NonNullable<Awaited<ReturnType<typeof loadProposalById>>>;
+    review?: LedgerReviewValues;
     updatedAt: string;
   },
 ): Promise<void> {
+  const keepMode =
+    input.options?.duplicateResolution?.keepMode === "keep_new"
+      ? "keep_new"
+      : "keep_existing";
   const conflictEvidenceId = normalizeText(
     asString(input.proposal.payload.conflictEvidenceId ?? input.proposal.payload.duplicateEvidenceId),
   );
@@ -1515,6 +1540,148 @@ async function executeResolveDuplicateReceiptProposal(
 
   if (!matchedRecordIds.length || !input.proposal.candidateId) {
     throw new Error("Duplicate receipt proposal is missing matched record references.");
+  }
+
+  if (keepMode === "keep_new") {
+    const candidate = await loadCandidateById(database, input.proposal.candidateId);
+
+    if (!candidate) {
+      throw new Error("Candidate row no longer exists.");
+    }
+
+    const review = normalizeReviewValues(input.review ?? candidate.reviewValues);
+    const amountCents = Math.round(Number.parseFloat(review.amountValue) * 100);
+    const nextPayload: CandidateRecordPayload = {
+      ...candidate.payload,
+      amountCents,
+      date: review.date,
+      description: review.description,
+      sourceLabel: review.source,
+      targetLabel: review.target,
+      taxCategoryCode: review.taxCategory || null,
+    };
+    const retainedEvidenceIds = dedupeStrings([
+      input.evidenceId,
+      ...(await loadEvidenceIdsForRecords(database, matchedRecordIds)),
+    ]);
+    const resolvedEntry = resolveStandardReceiptEntry(
+      {
+        amountCents,
+        currency: "USD",
+        description: review.description,
+        entityId: defaultEntityId,
+        evidenceIds: retainedEvidenceIds,
+        memo: review.notes || null,
+        occurredOn: review.date,
+        source: review.source,
+        target: review.target,
+        userClassification:
+          review.category === "income"
+            ? "income"
+            : review.category === "non_business_income"
+              ? "non_business_income"
+            : review.category === "spending"
+              ? "personal_spending"
+              : "expense",
+      },
+      {
+        createdAt: input.updatedAt,
+        recordId: candidate.recordId ?? `record-${input.evidenceId}`,
+        sourceCounterpartyId: nextPayload.sourceCounterpartyId ?? null,
+        sourceSystem: "ledger-upload-workflow",
+        targetCounterpartyId: nextPayload.targetCounterpartyId ?? null,
+        updatedAt: input.updatedAt,
+      },
+    );
+
+    await deleteMatchedRecords(database, matchedRecordIds);
+    await persistResolvedStandardReceiptEntry(database, resolvedEntry);
+    await database.runAsync(
+      `UPDATE candidate_records
+       SET payload_json = ?,
+           review_json = ?,
+           record_id = ?,
+           state = ?,
+           updated_at = ?
+       WHERE candidate_id = ?;`,
+      JSON.stringify(nextPayload),
+      JSON.stringify({
+        amount: review.amountValue,
+        category: review.category,
+        date: review.date,
+        description: review.description,
+        notes: review.notes,
+        source: review.source,
+        target: review.target,
+        taxCategory: review.taxCategory,
+      }),
+      resolvedEntry.record.recordId,
+      "persisted_final",
+      input.updatedAt,
+      candidate.candidateId,
+    );
+    await database.runAsync(
+      `UPDATE workflow_write_proposals
+       SET state = ?,
+           updated_at = ?
+       WHERE write_proposal_id = ?;`,
+      "executed",
+      input.updatedAt,
+      input.proposal.writeProposalId,
+    );
+    await database.runAsync(
+      `UPDATE workflow_write_proposals
+       SET state = ?,
+           updated_at = ?
+       WHERE planner_run_id = ?
+         AND write_proposal_id != ?
+         AND state IN ('pending_approval', 'blocked');`,
+      "rejected",
+      input.updatedAt,
+      input.proposal.plannerRunId,
+      input.proposal.writeProposalId,
+    );
+
+    const extractedData = buildConfirmedExtractedData(review, candidate.extractedData, null);
+    await database.runAsync(
+      `UPDATE evidences
+       SET parse_status = 'parsed',
+           extracted_data = ?,
+           captured_date = ?,
+           captured_amount_cents = ?,
+           captured_source = ?,
+           captured_target = ?,
+           captured_description = ?
+       WHERE evidence_id = ?;`,
+      JSON.stringify(extractedData),
+      review.date,
+      amountCents,
+      review.source,
+      review.target,
+      review.description,
+      input.evidenceId,
+    );
+    await updateUploadBatchState(database, {
+      batchId: input.proposal.batchId,
+      duplicateKind: "near_duplicate",
+      duplicateOfEvidenceId:
+        asString(
+          input.proposal.payload.conflictEvidenceId ??
+            input.proposal.payload.duplicateEvidenceId,
+        ) || conflictEvidenceId,
+      state: "approved",
+      updatedAt: input.updatedAt,
+    });
+    await appendWorkflowAuditEvent(database, {
+      batchId: input.proposal.batchId,
+      candidateId: input.proposal.candidateId,
+      createdAt: input.updatedAt,
+      eventType: "duplicate_receipt_merged",
+      message: `Duplicate receipt merge kept the new record and replaced ${matchedRecordIds.length} older record${matchedRecordIds.length === 1 ? "" : "s"} after approval by ${input.actor}.`,
+      plannerRunId: input.proposal.plannerRunId,
+      writeProposalId: input.proposal.writeProposalId,
+    });
+    return;
   }
 
   for (const recordId of matchedRecordIds) {
@@ -1633,6 +1800,8 @@ async function executePersistCandidateProposal(
       userClassification:
         review.category === "income"
           ? "income"
+          : review.category === "non_business_income"
+            ? "non_business_income"
           : review.category === "spending"
             ? "personal_spending"
             : "expense",
@@ -1715,6 +1884,53 @@ async function executePersistCandidateProposal(
     plannerRunId: input.proposal.plannerRunId,
     writeProposalId: input.proposal.writeProposalId,
   });
+}
+
+async function loadEvidenceIdsForRecords(
+  database: ReadableStorageDatabase,
+  recordIds: string[],
+): Promise<string[]> {
+  if (!recordIds.length) {
+    return [];
+  }
+
+  const placeholders = recordIds.map(() => "?").join(", ");
+  const rows = await database.getAllAsync<{ evidenceId: string }>(
+    `SELECT DISTINCT evidence_id AS evidenceId
+     FROM record_evidence_links
+     WHERE record_id IN (${placeholders})
+     ORDER BY evidence_id ASC;`,
+    ...recordIds,
+  );
+
+  return rows.map((row) => row.evidenceId);
+}
+
+async function deleteMatchedRecords(
+  database: WritableStorageDatabase,
+  recordIds: string[],
+): Promise<void> {
+  if (!recordIds.length) {
+    return;
+  }
+
+  const placeholders = recordIds.map(() => "?").join(", ");
+
+  await database.runAsync(
+    `DELETE FROM record_evidence_links
+     WHERE record_id IN (${placeholders});`,
+    ...recordIds,
+  );
+  await database.runAsync(
+    `DELETE FROM record_entry_classifications
+     WHERE record_id IN (${placeholders});`,
+    ...recordIds,
+  );
+  await database.runAsync(
+    `DELETE FROM records
+     WHERE record_id IN (${placeholders});`,
+    ...recordIds,
+  );
 }
 
 async function loadCandidateById(

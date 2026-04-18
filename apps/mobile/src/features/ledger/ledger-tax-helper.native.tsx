@@ -29,6 +29,10 @@ import {
 } from "./ledger-tax-helper.shared";
 import { defaultEntityId } from "./ledger-domain";
 import { useAppShell } from "../app-shell/provider";
+import {
+  getButtonColors,
+  getFeedbackColors,
+} from "../app-shell/theme-utils";
 import { BackHeaderBar } from "../../components/back-header-bar";
 import { CfoAvatar } from "../../components/cfo-avatar";
 import { getActivePackageRootDirectory } from "../../storage/package-environment.native";
@@ -58,6 +62,10 @@ type WritableFileHandle = InstanceType<typeof File> & {
 export function LedgerTaxHelper(props: LedgerTaxHelperProps) {
   const { selectedScope, yearOptions } = props;
   const { palette, resolvedLocale } = useAppShell();
+  const primaryButton = getButtonColors(palette, "primary");
+  const errorColors = getFeedbackColors(palette, "error");
+  const successColors = getFeedbackColors(palette, "success");
+  const warningColors = getFeedbackColors(palette, "warning");
   const database = useSQLiteContext();
   const [isVisible, setIsVisible] = useState(false);
   const [selectedYear, setSelectedYear] = useState<number | null>(
@@ -271,14 +279,31 @@ export function LedgerTaxHelper(props: LedgerTaxHelperProps) {
     }
   };
 
+  if (selectedScope === "personal") {
+    return null;
+  }
+
   return (
     <>
-      <View style={styles.card}>
+      <View
+        style={[
+          styles.card,
+          { backgroundColor: palette.paper, borderColor: palette.border },
+        ]}
+      >
         <View style={styles.cardCopy}>
-          <Text style={styles.cardEyebrow}>{helperCopy.launcherEyebrow}</Text>
-          <Text style={styles.cardTitle}>{helperCopy.launcherTitle}</Text>
-          <Text style={styles.cardSummary}>{helperCopy.launcherSummary}</Text>
-          <Text style={styles.cardNote}>{launcherState.note}</Text>
+          <Text style={[styles.cardEyebrow, { color: palette.accent }]}>
+            {helperCopy.launcherEyebrow}
+          </Text>
+          <Text style={[styles.cardTitle, { color: palette.ink }]}>
+            {helperCopy.launcherTitle}
+          </Text>
+          <Text style={[styles.cardSummary, { color: palette.inkMuted }]}>
+            {helperCopy.launcherSummary}
+          </Text>
+          <Text style={[styles.cardNote, { color: palette.inkMuted }]}>
+            {launcherState.note}
+          </Text>
         </View>
         <Pressable
           accessibilityRole="button"
@@ -286,12 +311,26 @@ export function LedgerTaxHelper(props: LedgerTaxHelperProps) {
           onPress={openHelper}
           style={({ pressed }) => [
             styles.openButton,
+            {
+              backgroundColor: !canOpen
+                ? primaryButton.disabledBackground
+                : pressed
+                  ? primaryButton.pressedBackground
+                  : primaryButton.background,
+            },
             !canOpen ? styles.openButtonDisabled : null,
             pressed && canOpen ? styles.openButtonPressed : null,
           ]}
           testID="ledger-tax-helper-button"
         >
-          <Text style={styles.openButtonLabel}>{helperCopy.openHelper}</Text>
+          <Text
+            style={[
+              styles.openButtonLabel,
+              { color: !canOpen ? primaryButton.disabledText : primaryButton.text },
+            ]}
+          >
+            {helperCopy.openHelper}
+          </Text>
         </Pressable>
       </View>
 
@@ -301,18 +340,37 @@ export function LedgerTaxHelper(props: LedgerTaxHelperProps) {
         visible={isVisible}
       >
         <SafeAreaProvider>
-        <SafeAreaView edges={["top", "left", "right"]} style={styles.modalScreen}>
-          <View style={styles.modalHeaderBar}>
+        <SafeAreaView
+          edges={["top", "left", "right"]}
+          style={[styles.modalScreen, { backgroundColor: palette.shell }]}
+        >
+          <View
+            style={[
+              styles.modalHeaderBar,
+              { borderBottomColor: palette.divider },
+            ]}
+          >
             <BackHeaderBar onBack={closeHelper} palette={palette} rightAccessory={<CfoAvatar />} title={helperCopy.modalTitle} />
           </View>
 
           <ScrollView contentContainerStyle={styles.modalContent}>
             <View style={styles.modalIntro}>
-              <Text style={styles.modalEyebrow}>{helperCopy.modalEyebrow}</Text>
-              <Text style={styles.modalSummary}>{helperCopy.modalSummary}</Text>
+              <Text style={[styles.modalEyebrow, { color: palette.accent }]}>
+                {helperCopy.modalEyebrow}
+              </Text>
+              <Text style={[styles.modalSummary, { color: palette.inkMuted }]}>
+                {helperCopy.modalSummary}
+              </Text>
             </View>
-            <View style={styles.sectionCard}>
-              <Text style={styles.sectionTitle}>{helperCopy.yearTitle}</Text>
+            <View
+              style={[
+                styles.sectionCard,
+                { backgroundColor: palette.paper, borderColor: palette.border },
+              ]}
+            >
+              <Text style={[styles.sectionTitle, { color: palette.ink }]}>
+                {helperCopy.yearTitle}
+              </Text>
               <View style={styles.yearRow}>
                 {yearOptions.map((option) => {
                   const isSelected = option.year === selectedYear;
@@ -325,15 +383,27 @@ export function LedgerTaxHelper(props: LedgerTaxHelperProps) {
                         setSelectedYear(option.year);
                         setExportState({ kind: "idle" });
                       }}
-                      style={[
+                      style={({ pressed }) => [
                         styles.yearButton,
-                        isSelected ? styles.yearButtonSelected : null,
+                        {
+                          backgroundColor: isSelected
+                            ? primaryButton.background
+                            : palette.shellElevated,
+                          borderColor: isSelected
+                            ? primaryButton.border
+                            : palette.border,
+                        },
+                        pressed ? styles.openButtonPressed : null,
                       ]}
                     >
                       <Text
                         style={[
                           styles.yearButtonLabel,
-                          isSelected ? styles.yearButtonLabelSelected : null,
+                          {
+                            color: isSelected
+                              ? primaryButton.text
+                              : palette.ink,
+                          },
                         ]}
                       >
                         {option.label}
@@ -344,20 +414,29 @@ export function LedgerTaxHelper(props: LedgerTaxHelperProps) {
               </View>
             </View>
 
-            <View style={styles.sectionCard}>
-              <Text style={styles.sectionTitle}>
+            <View
+              style={[
+                styles.sectionCard,
+                { backgroundColor: palette.paper, borderColor: palette.border },
+              ]}
+            >
+              <Text style={[styles.sectionTitle, { color: palette.ink }]}>
                 {helperCopy.derivedRowsTitle}
               </Text>
-              <Text style={styles.sectionSummary}>
+              <Text style={[styles.sectionSummary, { color: palette.inkMuted }]}>
                 {helperCopy.derivedRowsSummary}
               </Text>
 
               {!isLoaded ? (
-                <Text style={styles.stateText}>{helperCopy.loadingYear}</Text>
+                <Text style={[styles.stateText, { color: palette.inkMuted }]}>
+                  {helperCopy.loadingYear}
+                </Text>
               ) : error ? (
-                <Text style={styles.errorText}>{error}</Text>
+                <Text style={[styles.errorText, { color: errorColors.text }]}>
+                  {error}
+                </Text>
               ) : fieldGroups.length === 0 ? (
-                <Text style={styles.stateText}>
+                <Text style={[styles.stateText, { color: palette.inkMuted }]}>
                   {buildTaxHelperEmptyStateMessage(
                     snapshot,
                     selectedYear,
@@ -368,18 +447,31 @@ export function LedgerTaxHelper(props: LedgerTaxHelperProps) {
                 <>
                   {fieldGroups.map((group) => (
                     <View key={group.formName} style={styles.formGroup}>
-                      <Text style={styles.formTitle}>{group.formName}</Text>
+                      <Text style={[styles.formTitle, { color: palette.ink }]}>
+                        {group.formName}
+                      </Text>
                       {group.fields.map((field) => (
-                        <View key={field.fieldId} style={styles.fieldRow}>
+                        <View
+                          key={field.fieldId}
+                          style={[
+                            styles.fieldRow,
+                            {
+                              backgroundColor: palette.shellElevated,
+                              borderColor: palette.border,
+                            },
+                          ]}
+                        >
                           <View style={styles.fieldCopy}>
-                            <Text style={styles.fieldName}>
+                            <Text style={[styles.fieldName, { color: palette.ink }]}>
                               {field.fieldName}
                             </Text>
-                            <Text style={styles.fieldTuple}>
+                            <Text
+                              style={[styles.fieldTuple, { color: palette.inkMuted }]}
+                            >
                               {field.formName} / {field.fieldName}
                             </Text>
                           </View>
-                          <Text style={styles.fieldValue}>
+                          <Text style={[styles.fieldValue, { color: palette.accent }]}>
                             {field.ledgerImpliedValue}
                           </Text>
                         </View>
@@ -387,7 +479,7 @@ export function LedgerTaxHelper(props: LedgerTaxHelperProps) {
                     </View>
                   ))}
 
-                  <Text style={styles.infoText}>
+                  <Text style={[styles.infoText, { color: palette.inkMuted }]}>
                     {helperCopy.fieldInfoText}
                   </Text>
                 </>
@@ -396,7 +488,10 @@ export function LedgerTaxHelper(props: LedgerTaxHelperProps) {
               {snapshot?.notices.length ? (
                 <View style={styles.noticeStack}>
                   {snapshot.notices.map((note) => (
-                    <Text key={note} style={styles.noticeText}>
+                    <Text
+                      key={note}
+                      style={[styles.noticeText, { color: warningColors.text }]}
+                    >
                       {note}
                     </Text>
                   ))}
@@ -404,11 +499,16 @@ export function LedgerTaxHelper(props: LedgerTaxHelperProps) {
               ) : null}
             </View>
 
-            <View style={styles.sectionCard}>
-              <Text style={styles.sectionTitle}>
+            <View
+              style={[
+                styles.sectionCard,
+                { backgroundColor: palette.paper, borderColor: palette.border },
+              ]}
+            >
+              <Text style={[styles.sectionTitle, { color: palette.ink }]}>
                 {helperCopy.evidenceArchiveTitle}
               </Text>
-              <Text style={styles.sectionSummary}>
+              <Text style={[styles.sectionSummary, { color: palette.inkMuted }]}>
                 {helperCopy.evidenceArchiveSummary}
               </Text>
               <Pressable
@@ -424,6 +524,17 @@ export function LedgerTaxHelper(props: LedgerTaxHelperProps) {
                 }}
                 style={({ pressed }) => [
                   styles.exportButton,
+                  {
+                    backgroundColor:
+                      !snapshot?.exportableRecordIds.length ||
+                      exportState.kind === "running" ||
+                      !isLoaded ||
+                      Boolean(error)
+                        ? primaryButton.disabledBackground
+                        : pressed
+                          ? primaryButton.pressedBackground
+                          : primaryButton.background,
+                  },
                   !snapshot?.exportableRecordIds.length ||
                   exportState.kind === "running" ||
                   !isLoaded ||
@@ -440,17 +551,34 @@ export function LedgerTaxHelper(props: LedgerTaxHelperProps) {
                 ]}
                 testID="ledger-tax-helper-export-button"
               >
-                <Text style={styles.openButtonLabel}>
+                <Text
+                  style={[
+                    styles.openButtonLabel,
+                    {
+                      color:
+                        !snapshot?.exportableRecordIds.length ||
+                        exportState.kind === "running" ||
+                        !isLoaded ||
+                        Boolean(error)
+                          ? primaryButton.disabledText
+                          : primaryButton.text,
+                    },
+                  ]}
+                >
                   {exportState.kind === "running"
                     ? helperCopy.exportBuilding
                     : helperCopy.exportTrigger}
                 </Text>
               </Pressable>
               {exportState.kind === "success" ? (
-                <Text style={styles.successText}>{exportState.message}</Text>
+                <Text style={[styles.successText, { color: successColors.text }]}>
+                  {exportState.message}
+                </Text>
               ) : null}
               {exportState.kind === "error" ? (
-                <Text style={styles.errorText}>{exportState.message}</Text>
+                <Text style={[styles.errorText, { color: errorColors.text }]}>
+                  {exportState.message}
+                </Text>
               ) : null}
             </View>
           </ScrollView>
