@@ -6,7 +6,7 @@
 | **类型** | 技术调研 / 文档输出（**不涉及代码实现**） |
 | **依赖** | 已有 `form-schedule-c` 模型与 `form-1099-nec` 模型可作为参考 |
 
-**公用约定**：以 `.cursor/prd/agent-dev-guide-summary.md` 为准。仓库级 Agent 基线：`.cursor/rules/creator-cfo-always.mdc`。结构参考 `.cursor/prd/TEMPLATE.md`。
+**公用约定**：以 `.cursor/prd/agent-dev-guide-summary.md` 为准。仓库级 Agent 基线：`.cursor/rules/ledgerly-always.mdc`。结构参考 `.cursor/prd/TEMPLATE.md`。
 
 ## 平台描述
 

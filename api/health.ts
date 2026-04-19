@@ -6,7 +6,7 @@ export async function GET() {
     model: parseModel,
     parser: "openai_gpt",
     requiresUserApiKey: true,
-    service: "creator-cfo-parse-api",
+    service: "ledgerly-parse-api",
     status: "ok",
     version: 1,
   });

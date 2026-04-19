@@ -5,7 +5,9 @@ import { Platform } from "react-native";
 import {
   createLocalStorageBootstrapManifest,
   getLocalStorageBootstrapPlan,
-} from "@creator-cfo/storage";
+  legacyFileVaultRootDirectories,
+  legacyStructuredStoreDatabaseNames,
+} from "@ledgerly/storage";
 
 import {
   getCacheDirectoryOrThrow,
@@ -49,8 +51,8 @@ type PickedFileHandle = InstanceType<typeof File> & {
 };
 
 const IOS_PACKAGE_STAGING_GUIDANCE =
-  "On iPhone and iPad, choose the creator-cfo-vault folder, or a folder that contains creator-cfo-vault, in the folder picker. Do not pick creator-cfo-local.db directly.";
-const IOS_DIRECTORY_IMPORT_STAGE_NAME = "creator-cfo-directory-import-stage";
+  "On iPhone and iPad, choose the ledgerly-vault folder, or a folder that contains it, in the folder picker. Do not pick ledgerly-local.db directly.";
+const IOS_DIRECTORY_IMPORT_STAGE_NAME = "ledgerly-directory-import-stage";
 
 export async function pickAndImportDatabasePackageAsync(): Promise<DatabaseImportResult | null> {
   if (Platform.OS === "ios") {
@@ -80,9 +82,8 @@ async function pickAndImportDatabasePackageDirectoryAsync(): Promise<DatabaseImp
   try {
     const selectedDirectory = asPickedDirectoryHandle(await Directory.pickDirectoryAsync());
     const packageRootDirectory = resolveSelectedPackageRootDirectoryOrThrow(selectedDirectory);
-    const storagePlan = getLocalStorageBootstrapPlan();
     const stagedPackageRoot = await stageSelectedIosPackageDirectoryAsync(packageRootDirectory);
-    const selectedDatabaseUri = createPickedFileHandle(stagedPackageRoot, storagePlan.databaseName).uri;
+    const selectedDatabaseUri = resolvePackageDatabaseFileOrThrow(stagedPackageRoot).uri;
     const resolvedPackageRoot = trimTrailingSlashes(packageRootDirectory.uri);
 
     console.info(
@@ -91,7 +92,7 @@ async function pickAndImportDatabasePackageDirectoryAsync(): Promise<DatabaseImp
 
     try {
       const result = await importDatabasePackageFromFileUri({
-        displayName: storagePlan.databaseName,
+        displayName: getBaseName(selectedDatabaseUri),
         selectedDatabaseUri,
       });
 
@@ -338,23 +339,59 @@ function formatImportErrorMessage(error: unknown): string {
 function resolveSelectedPackageRootDirectoryOrThrow(
   selectedDirectory: PickedDirectoryHandle,
 ): PickedDirectoryHandle {
-  const storagePlan = getLocalStorageBootstrapPlan();
-  const directDatabase = createPickedFileHandle(selectedDirectory, storagePlan.databaseName);
-
-  if (directDatabase.exists) {
+  if (findExistingPackageDatabaseFile(selectedDirectory)) {
     return selectedDirectory;
   }
 
-  const nestedPackageRoot = createPickedDirectoryHandle(selectedDirectory, storagePlan.fileVaultRoot);
-  const nestedDatabase = createPickedFileHandle(nestedPackageRoot, storagePlan.databaseName);
+  for (const rootDirectory of getPackageRootDirectoryNames()) {
+    const nestedPackageRoot = createPickedDirectoryHandle(selectedDirectory, rootDirectory);
 
-  if (nestedPackageRoot.exists && nestedDatabase.exists) {
-    return nestedPackageRoot;
+    if (nestedPackageRoot.exists && findExistingPackageDatabaseFile(nestedPackageRoot)) {
+      return nestedPackageRoot;
+    }
   }
 
   throw new Error(
-    `The selected folder must be creator-cfo-vault or a folder that contains creator-cfo-vault/${storagePlan.databaseName}.`,
+    "The selected folder must be ledgerly-vault or a folder that contains a valid Ledgerly database package.",
   );
+}
+
+function getPackageRootDirectoryNames(): string[] {
+  const storagePlan = getLocalStorageBootstrapPlan();
+
+  return [storagePlan.fileVaultRoot, ...legacyFileVaultRootDirectories];
+}
+
+function getPackageDatabaseNames(): string[] {
+  const storagePlan = getLocalStorageBootstrapPlan();
+
+  return [storagePlan.databaseName, ...legacyStructuredStoreDatabaseNames];
+}
+
+function findExistingPackageDatabaseFile(
+  packageRoot: PickedDirectoryHandle,
+): PickedFileHandle | null {
+  for (const databaseName of getPackageDatabaseNames()) {
+    const candidate = createPickedFileHandle(packageRoot, databaseName);
+
+    if (candidate.exists) {
+      return candidate;
+    }
+  }
+
+  return null;
+}
+
+function resolvePackageDatabaseFileOrThrow(
+  packageRoot: PickedDirectoryHandle,
+): PickedFileHandle {
+  const databaseFile = findExistingPackageDatabaseFile(packageRoot);
+
+  if (databaseFile) {
+    return databaseFile;
+  }
+
+  throw new Error("The selected package does not contain a supported Ledgerly database file.");
 }
 
 async function stageSelectedIosPackageDirectoryAsync(

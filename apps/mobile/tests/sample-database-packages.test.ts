@@ -12,7 +12,7 @@ import {
   loadScheduleSEPreview,
   scheduleCSupportedLineDefinitions,
   type StorageSqlValue,
-} from "@creator-cfo/storage";
+} from "@ledgerly/storage";
 
 import {
   buildLedgerPeriodId,
@@ -25,9 +25,9 @@ const fixturesRoot = join(
   dirname(fileURLToPath(import.meta.url)),
   "../../../tests/fixtures/sample-database-packages",
 );
-const packageARoot = join(fixturesRoot, "package-a-clean", "creator-cfo-vault");
-const packageBRoot = join(fixturesRoot, "package-b-mixed", "creator-cfo-vault");
-const packageCRoot = join(fixturesRoot, "package-c-grouped-ledger", "creator-cfo-vault");
+const packageARoot = join(fixturesRoot, "package-a-clean", "ledgerly-vault");
+const packageBRoot = join(fixturesRoot, "package-b-mixed", "ledgerly-vault");
+const packageCRoot = join(fixturesRoot, "package-c-grouped-ledger", "ledgerly-vault");
 
 function createReadableDatabase(database: DatabaseSync) {
   return createReadableStorageDatabase({
@@ -41,7 +41,7 @@ function createReadableDatabase(database: DatabaseSync) {
 }
 
 function openDatabase(packageRoot: string) {
-  return new DatabaseSync(join(packageRoot, "creator-cfo-local.db"));
+  return new DatabaseSync(join(packageRoot, "ledgerly-local.db"));
 }
 
 async function loadCounts(database: DatabaseSync) {
@@ -87,8 +87,8 @@ describe("sample database packages", () => {
   });
 
   it("can upgrade a legacy portable package copy to the current schema contract", async () => {
-    const tempRoot = mkdtempSync(join(tmpdir(), "creator-cfo-sample-package-"));
-    const packageRoot = join(tempRoot, "creator-cfo-vault");
+    const tempRoot = mkdtempSync(join(tmpdir(), "ledgerly-sample-package-"));
+    const packageRoot = join(tempRoot, "ledgerly-vault");
 
     cpSync(packageARoot, packageRoot, { recursive: true });
 

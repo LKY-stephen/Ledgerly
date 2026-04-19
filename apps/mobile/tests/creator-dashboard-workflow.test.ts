@@ -8,7 +8,7 @@ import {
   structuredStoreContract,
   type StorageSqlValue,
   type StandardReceiptEntryInput,
-} from "@creator-cfo/storage";
+} from "@ledgerly/storage";
 
 import { loadHomeSnapshot, loadJournalListSnapshot } from "../src/features/home/home-data";
 import { buildLedgerPeriodId, loadLedgerSnapshot } from "../src/features/ledger/ledger-reporting";

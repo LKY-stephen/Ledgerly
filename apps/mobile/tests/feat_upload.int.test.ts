@@ -1,12 +1,12 @@
 import { DatabaseSync } from "node:sqlite";
 import { describe, expect, it } from "vitest";
-import type { ReceiptPlannerPayload } from "@creator-cfo/schemas";
+import type { ReceiptPlannerPayload } from "@ledgerly/schemas";
 
 import {
   createWritableStorageDatabase,
   structuredStoreContract,
   type StorageSqlValue,
-} from "@creator-cfo/storage";
+} from "@ledgerly/storage";
 import {
   buildExtractedData,
   buildFailedExtractedData,

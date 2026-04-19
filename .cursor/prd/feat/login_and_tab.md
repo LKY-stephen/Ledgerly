@@ -1,6 +1,6 @@
 # 搭建黑夜，白天模式，定义好颜色规范体系，以及多语言架构，首页骨架以及appleID登录体系
 
-**公用约定**：以 `.cursor/prd/agent-dev-guide-summary.md` 为准（流程、契约真源、`pnpm` 门禁、完结后更新 `main.md`）；结构参考 `.cursor/prd/TEMPLATE.md`。Cursor 始终应用：`.cursor/rules/creator-cfo-always.mdc`。
+**公用约定**：以 `.cursor/prd/agent-dev-guide-summary.md` 为准（流程、契约真源、`pnpm` 门禁、完结后更新 `main.md`）；结构参考 `.cursor/prd/TEMPLATE.md`。Cursor 始终应用：`.cursor/rules/ledgerly-always.mdc`。
 
 ## 平台描述
 

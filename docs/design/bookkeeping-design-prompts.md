@@ -1,4 +1,4 @@
-# CreatorCFO 记账版设计图提示词包
+# Ledgerly 记账版设计图提示词包
 
 - Version: v1
 - Date: 2026-03-30
@@ -32,10 +32,10 @@
 ## 2. 通用中文母提示词
 
 ```text
-请为 CreatorCFO 设计一张高保真移动端 App UI 设计图。
+请为 Ledgerly 设计一张高保真移动端 App UI 设计图。
 
 产品背景：
-CreatorCFO 是一个面向创作者的移动端、本地优先财务工作台。当前版本只做记账功能，帮助用户记录收入、费用和发票，并通过上传入口管理票据、对账单、发票文件和附件资料。产品运行在 Expo + React Native 环境中，数据主要保存在设备本地。
+Ledgerly 是一个面向创作者的移动端、本地优先财务工作台。当前版本只做记账功能，帮助用户记录收入、费用和发票，并通过上传入口管理票据、对账单、发票文件和附件资料。产品运行在 Expo + React Native 环境中，数据主要保存在设备本地。
 
 目标用户：
 美国市场的创作者、自雇人士和自由职业者，尤其是 YouTube 创作者、Newsletter 作者、播客创作者，以及有品牌赞助、平台收入和联盟收入的用户。
@@ -68,10 +68,10 @@ CreatorCFO 是一个面向创作者的移动端、本地优先财务工作台。
 ### 3.1 整套页面总提示词
 
 ```text
-请为 CreatorCFO 设计一整套高保真移动端 App UI 设计图。
+请为 Ledgerly 设计一整套高保真移动端 App UI 设计图。
 
 项目背景：
-CreatorCFO 是一个移动端优先、本地优先的创作者财务工作台。当前版本只聚焦记账功能，帮助用户记录收入、费用和发票，并通过本地文件上传管理票据、对账单和资料附件。产品运行在 Expo + React Native 环境中，数据主要保存在设备本地。
+Ledgerly 是一个移动端优先、本地优先的创作者财务工作台。当前版本只聚焦记账功能，帮助用户记录收入、费用和发票，并通过本地文件上传管理票据、对账单和资料附件。产品运行在 Expo + React Native 环境中，数据主要保存在设备本地。
 
 目标用户：
 美国市场的创作者、自雇人士、自由职业者，尤其是 YouTube 创作者、Newsletter 作者、播客创作者，以及拥有品牌赞助、平台收入、联盟收入的 solo creator。
@@ -117,7 +117,7 @@ CreatorCFO 是一个移动端优先、本地优先的创作者财务工作台。
 #### Ledger Home
 
 ```text
-请为 CreatorCFO 设计一张移动端 Ledger Home 页面高保真 UI 设计图。
+请为 Ledgerly 设计一张移动端 Ledger Home 页面高保真 UI 设计图。
 
 这是记账功能的主工作区。用户可以查看收入、费用和发票，并进入新增记录和上传流程。
 
@@ -137,7 +137,7 @@ CreatorCFO 是一个移动端优先、本地优先的创作者财务工作台。
 #### New Income
 
 ```text
-请为 CreatorCFO 设计一张移动端 New Income 页面高保真 UI 设计图。
+请为 Ledgerly 设计一张移动端 New Income 页面高保真 UI 设计图。
 
 页面目标：
 新增一笔收入记录。
@@ -163,7 +163,7 @@ CreatorCFO 是一个移动端优先、本地优先的创作者财务工作台。
 #### New Expense
 
 ```text
-请为 CreatorCFO 设计一张移动端 New Expense 页面高保真 UI 设计图。
+请为 Ledgerly 设计一张移动端 New Expense 页面高保真 UI 设计图。
 
 页面目标：
 新增一笔费用记录。
@@ -188,7 +188,7 @@ CreatorCFO 是一个移动端优先、本地优先的创作者财务工作台。
 #### New Invoice
 
 ```text
-请为 CreatorCFO 设计一张移动端 New Invoice 页面高保真 UI 设计图。
+请为 Ledgerly 设计一张移动端 New Invoice 页面高保真 UI 设计图。
 
 页面目标：
 新增一笔发票 / 应收记录。
@@ -212,7 +212,7 @@ CreatorCFO 是一个移动端优先、本地优先的创作者财务工作台。
 #### Upload Center
 
 ```text
-请为 CreatorCFO 设计一张移动端 Upload Center 页面高保真 UI 设计图。
+请为 Ledgerly 设计一张移动端 Upload Center 页面高保真 UI 设计图。
 
 页面目标：
 统一处理文件上传入口。
@@ -235,7 +235,7 @@ CreatorCFO 是一个移动端优先、本地优先的创作者财务工作台。
 #### Record Detail
 
 ```text
-请为 CreatorCFO 设计一张移动端 Record Detail 页面高保真 UI 设计图。
+请为 Ledgerly 设计一张移动端 Record Detail 页面高保真 UI 设计图。
 
 页面目标：
 查看并编辑一条收入、费用或发票记录，同时管理其附件。
@@ -264,7 +264,7 @@ CreatorCFO 是一个移动端优先、本地优先的创作者财务工作台。
 ### 4.1 整套视觉方向
 
 ```text
-mobile app UI for CreatorCFO, creator finance workspace, local-first bookkeeping app, income records, expense records, invoice tracking, upload center, iphone app interface, premium fintech mobile product, calm and trustworthy, warm off-white background, deep navy typography, muted green accents, rounded cards, realistic SaaS app layout, structured information hierarchy, not a banking app, not a budgeting app, not crypto exchange, high fidelity product design --ar 9:16 --stylize 150
+mobile app UI for Ledgerly, creator finance workspace, local-first bookkeeping app, income records, expense records, invoice tracking, upload center, iphone app interface, premium fintech mobile product, calm and trustworthy, warm off-white background, deep navy typography, muted green accents, rounded cards, realistic SaaS app layout, structured information hierarchy, not a banking app, not a budgeting app, not crypto exchange, high fidelity product design --ar 9:16 --stylize 150
 ```
 
 ### 4.2 Ledger Home
@@ -297,10 +297,10 @@ iphone app UI, upload center screen, receipt statement invoice file upload, crea
 ### 5.1 整套提示词
 
 ```text
-Create a mobile app design system and screen set for CreatorCFO.
+Create a mobile app design system and screen set for Ledgerly.
 
 Product:
-CreatorCFO is a mobile-first, local-first bookkeeping workspace for creators. This version only supports bookkeeping workflows: income, expenses, invoices, upload center, and record detail. No backend, no automatic sync, no tax calculation.
+Ledgerly is a mobile-first, local-first bookkeeping workspace for creators. This version only supports bookkeeping workflows: income, expenses, invoices, upload center, and record detail. No backend, no automatic sync, no tax calculation.
 
 Users:
 US-based creators, freelancers, and solo operators.
@@ -328,7 +328,7 @@ Important:
 ### 5.2 适合单页继续精细化的 prompt
 
 ```text
-Design a mobile Record Detail screen for CreatorCFO.
+Design a mobile Record Detail screen for Ledgerly.
 
 Goal:
 Allow a user to review and edit a bookkeeping record, see current status, and manage attached files.

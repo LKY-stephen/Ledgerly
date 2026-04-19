@@ -1,4 +1,4 @@
-import { structuredStoreContract, type ReadableStorageDatabase } from "@creator-cfo/storage";
+import { structuredStoreContract, type ReadableStorageDatabase } from "@ledgerly/storage";
 
 import { buildPackageAbsolutePath } from "./package-paths";
 

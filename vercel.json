@@ -1,5 +1,5 @@
 {
-  "buildCommand": "pnpm --filter @creator-cfo/mobile run build && cp apps/mobile/public/*.wasm apps/mobile/dist/",
+  "buildCommand": "pnpm --filter @ledgerly/mobile run build && cp apps/mobile/public/*.wasm apps/mobile/dist/",
   "outputDirectory": "apps/mobile/dist",
   "framework": null,
   "rewrites": [

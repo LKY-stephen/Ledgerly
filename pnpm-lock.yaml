@@ -38,13 +38,13 @@ importers:
 
   apps/mobile:
     dependencies:
-      '@creator-cfo/schemas':
+      '@ledgerly/schemas':
         specifier: workspace:*
         version: link:../../packages/schemas
-      '@creator-cfo/storage':
+      '@ledgerly/storage':
         specifier: workspace:*
         version: link:../../packages/storage
-      '@creator-cfo/ui':
+      '@ledgerly/ui':
         specifier: workspace:*
         version: link:../../packages/ui
       '@react-native-async-storage/async-storage':

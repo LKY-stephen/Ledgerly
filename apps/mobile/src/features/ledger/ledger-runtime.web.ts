@@ -1,13 +1,13 @@
 import * as DocumentPicker from "expo-document-picker";
 import * as ImagePicker from "expo-image-picker";
 
-import type { PlannerSummary, ReceiptParsePayload } from "@creator-cfo/schemas";
+import type { PlannerSummary, ReceiptParsePayload } from "@ledgerly/schemas";
 import {
   createReadableStorageDatabase,
   createWritableStorageDatabase,
   resolveStandardReceiptEntry,
   persistResolvedStandardReceiptEntry,
-} from "@creator-cfo/storage";
+} from "@ledgerly/storage";
 import type { ResolvedLocale } from "../app-shell/types";
 
 import {
@@ -27,6 +27,8 @@ import {
   buildPlannerSummary,
   buildReviewValuesFromPayload,
   deriveCandidateState,
+  mergeReviewValuesWithPayload,
+  shouldDefaultReviewDateToCurrentDate,
   type PlannerReadResults,
 } from "./workflow-planner";
 import type { HomeSnapshot, JournalListSnapshot } from "../home/home-data";
@@ -275,6 +277,9 @@ export async function runPlanner(input: {
     readResults,
     remotePlan,
   });
+  const defaultReviewDate = shouldDefaultReviewDateToCurrentDate(summary)
+    ? now.slice(0, 10)
+    : null;
 
   // Build candidate records and write proposals for UI
   const candidateRecords: WorkflowCandidateRecord[] =
@@ -292,7 +297,9 @@ export async function runPlanner(input: {
         errorMessage: null,
         payload,
         recordId: null,
-        reviewValues: buildReviewValuesFromPayload(payload),
+        reviewValues: buildReviewValuesFromPayload(payload, {
+          defaultDate: defaultReviewDate,
+        }),
         state,
         updatedAt: now,
       };
@@ -362,6 +369,7 @@ export async function approveWriteProposal(
         proposal.payload.parsedDisplayName,
       ),
       counterpartyId: `counterparty-web-${proposal.writeProposalId}`,
+      currentReview: review,
     });
     releaseResolvedWebDependencies(state);
     state.batchState = "review_required";
@@ -377,6 +385,7 @@ export async function approveWriteProposal(
       counterpartyId:
         readFirstString(proposal.payload.existingCounterpartyId) ??
         `counterparty-web-${proposal.writeProposalId}`,
+      currentReview: review,
     });
     rejectSiblingWebCounterpartyCreate(state, proposal);
     releaseResolvedWebDependencies(state);
@@ -751,6 +760,7 @@ function applyWebCounterpartySelection(
   proposal: WorkflowWriteProposalItem,
   input: {
     counterpartyId: string;
+    currentReview?: LedgerReviewValues;
     displayName: string | null;
   },
 ): void {
@@ -772,7 +782,13 @@ function applyWebCounterpartySelection(
           targetLabel: displayName,
         }),
   };
-  candidate.reviewValues = buildReviewValuesFromPayload(candidate.payload);
+  candidate.reviewValues = mergeReviewValuesWithPayload(
+    input.currentReview ?? candidate.reviewValues,
+    candidate.payload,
+    {
+      overwriteFields: role === "source" ? ["source"] : ["target"],
+    },
+  );
   candidate.state = "validated";
   candidate.updatedAt = proposal.updatedAt;
   state.reviewValues = candidate.reviewValues;

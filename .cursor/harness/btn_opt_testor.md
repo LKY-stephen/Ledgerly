@@ -25,9 +25,9 @@
 
 ## Recommended Automated Checks
 
-- `pnpm --filter @creator-cfo/mobile lint`
-- `pnpm --filter @creator-cfo/mobile typecheck`
-- `pnpm --filter @creator-cfo/mobile test`
+- `pnpm --filter @ledgerly/mobile lint`
+- `pnpm --filter @ledgerly/mobile typecheck`
+- `pnpm --filter @ledgerly/mobile test`
 - `pnpm lint`
 - `pnpm typecheck`
 - `pnpm test`
@@ -53,9 +53,9 @@
 
 | Case | Result | Evidence |
 |---|---|---|
-| Light/dark token contrast assertions | Passed | `apps/mobile/tests/theme-contrast.test.ts`, `pnpm --filter @creator-cfo/mobile test` |
-| Mobile lint | Passed | `pnpm --filter @creator-cfo/mobile lint` |
-| Mobile typecheck | Passed | `pnpm --filter @creator-cfo/mobile typecheck` |
+| Light/dark token contrast assertions | Passed | `apps/mobile/tests/theme-contrast.test.ts`, `pnpm --filter @ledgerly/mobile test` |
+| Mobile lint | Passed | `pnpm --filter @ledgerly/mobile lint` |
+| Mobile typecheck | Passed | `pnpm --filter @ledgerly/mobile typecheck` |
 | Monorepo lint | Passed | `pnpm lint` |
 | Monorepo typecheck | Passed | `pnpm typecheck` |
 | Monorepo test | Passed | `pnpm test` |

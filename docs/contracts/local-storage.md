@@ -2,13 +2,13 @@
 
 This document is the canonical local-storage contract for the current Expo, local-first runtime.
 
-- Current implemented contract version: `5`
-- Database file: `creator-cfo-local.db`
+- Current implemented contract version: `6`
+- Database file: `ledgerly-local.db`
 - Architecture phase: mobile-first, local-first, no standalone backend
 
 ## Runtime Baseline
 
-The active runtime baseline is a hybrid `v5` contract:
+The active runtime baseline is a hybrid `v6` contract:
 
 - intake is optimized for sparse evidence capture
 - the canonical persisted transaction surface is `records`
@@ -100,10 +100,10 @@ The supported tax-query path reads directly from `records` plus `tax_year_profil
 
 The active runtime now treats the previous vault root as the package root for both the SQLite database and evidence collections. The structured collections remain defined in `packages/storage/src/contracts.ts`.
 
-- package root: `creator-cfo-vault/`
-- active database file: `creator-cfo-vault/creator-cfo-local.db`
-- evidence uploads: `creator-cfo-vault/evidence-objects/{entity_id}/uploads/{yyyy}/{mm}/{entity_id}_{timestamp}_{hash}.{ext}`
-- evidence manifests: `creator-cfo-vault/evidence-manifests/{evidence_id}.json`
+- package root: `ledgerly-vault/`
+- active database file: `ledgerly-vault/ledgerly-local.db`
+- evidence uploads: `ledgerly-vault/evidence-objects/{entity_id}/uploads/{yyyy}/{mm}/{entity_id}_{timestamp}_{hash}.{ext}`
+- evidence manifests: `ledgerly-vault/evidence-manifests/{evidence_id}.json`
 
 Expected upload-state rules:
 
@@ -118,6 +118,7 @@ Expected upload-state rules:
 - runtime readers resolve `evidence_files.relative_path` and `evidences.file_path` from the active package root, not from a detached global storage location
 - runtime open/import fails closed when a tracked evidence path is absolute, escapes the package root, or points to a missing required file
 - known legacy portable CFO packages that still match the older core 8-table baseline remain acceptable migration inputs; activation upgrades them to the current contract before normal runtime reads and writes proceed
+- legacy local package names remain readable during migration and import so older local data is not stranded by the Ledgerly rename
 - the authoritative workflow state now lives on `upload_batches.state` plus per-row `candidate_records.state`; `evidences.parse_status` remains a compatibility summary for queue screens
 
 Expected write-policy rules:
@@ -164,7 +165,7 @@ Compatibility notes:
 
 ## Device State
 
-The device-state contract is now at version `6`. In addition to theme, locale, and session, the app persists:
+The device-state contract is now at version `7`. In addition to theme, locale, and session, the app persists:
 
 - `openai_api_key`: the user-provided OpenAI API key used only for outbound parse requests
 - `ai_provider`: the user's selected AI provider for document parsing and planning (`"openai"`, `"gemini"`, or `"infer"`, default `"openai"`)
@@ -181,6 +182,14 @@ The device-state contract is now at version `6`. In addition to theme, locale, a
 - `profile_phone`: profile phone used as mapping source context
 
 The OpenAI base URL and model now come from the runtime env (`EXPO_PUBLIC_OPENAI_BASE_URL`, `EXPO_PUBLIC_OPENAI_MODEL`) rather than local device state. Gemini base URL and model come from `EXPO_PUBLIC_GEMINI_BASE_URL` and `EXPO_PUBLIC_GEMINI_MODEL` respectively. Infer model can be overridden via `EXPO_PUBLIC_INFER_MODEL`.
+
+Compatibility migration notes:
+
+- Active package root has been renamed to `ledgerly-vault`
+- Active database file has been renamed to `ledgerly-local.db`
+- Active device-state namespace has been renamed to `@ledgerly/mobile`
+- previous device-state namespace remains readable during migration
+- Web IndexedDB persistence now prefers Ledgerly names but still reads legacy stores for migration
 
 ## Contract Source Of Truth
 

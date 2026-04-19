@@ -9,7 +9,7 @@ import {
   createReadableStorageDatabase,
   structuredStoreContract,
   type StorageSqlValue,
-} from "@creator-cfo/storage";
+} from "@ledgerly/storage";
 import { validateDatabasePackageOrThrow } from "../src/storage/storage-package-integrity";
 
 function createStorageDatabase(): DatabaseSync {
@@ -51,7 +51,7 @@ function seedEvidencePath(database: DatabaseSync, relativePath: string) {
       default_timezone,
       created_at
     ) VALUES (?, ?, ?, ?, ?, ?);`,
-  ).run("entity-main", "Creator CFO Main Entity", "sole_proprietorship", "USD", "UTC", "2026-04-01T00:00:00.000Z");
+  ).run("entity-main", "Ledgerly Main Entity", "sole_proprietorship", "USD", "UTC", "2026-04-01T00:00:00.000Z");
   database.prepare(
     `INSERT INTO evidences (
       evidence_id,
@@ -125,7 +125,7 @@ afterEach(async () => {
 describe("storage package integrity", () => {
   it("accepts evidence files stored under the active package root", async () => {
     const database = createStorageDatabase();
-    const packageRoot = mkdtempSync(join(tmpdir(), "creator-cfo-package-"));
+    const packageRoot = mkdtempSync(join(tmpdir(), "ledgerly-package-"));
     const relativePath = "evidence-objects/entity-main/uploads/2026/04/receipt.pdf";
     tempDirectories.push(packageRoot);
     mkdirSync(join(packageRoot, "evidence-objects/entity-main/uploads/2026/04"), {
@@ -145,7 +145,7 @@ describe("storage package integrity", () => {
 
   it("rejects relative paths that escape the package root", async () => {
     const database = createStorageDatabase();
-    const packageRoot = mkdtempSync(join(tmpdir(), "creator-cfo-package-"));
+    const packageRoot = mkdtempSync(join(tmpdir(), "ledgerly-package-"));
     tempDirectories.push(packageRoot);
     seedEvidencePath(database, "../outside.pdf");
 
@@ -160,7 +160,7 @@ describe("storage package integrity", () => {
 
   it("rejects missing evidence files", async () => {
     const database = createStorageDatabase();
-    const packageRoot = mkdtempSync(join(tmpdir(), "creator-cfo-package-"));
+    const packageRoot = mkdtempSync(join(tmpdir(), "ledgerly-package-"));
     tempDirectories.push(packageRoot);
     seedEvidencePath(database, "evidence-objects/entity-main/uploads/2026/04/missing.pdf");
 

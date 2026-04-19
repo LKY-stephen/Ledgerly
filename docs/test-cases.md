@@ -1,8 +1,8 @@
-# CreatorCFO 详细测试用例
+# Ledgerly 详细测试用例
 
 ## 1. 文档说明
 
-- 适用仓库：`/Users/test/CreatorCFO`
+- 适用仓库：`/Users/test/Ledgerly`
 - 基线分支：`origin/dev_peanut`
 - 基线提交：`e89590c`
 - 适用端：移动端，当前以 **iOS** 为主执行环境
@@ -23,7 +23,7 @@
 - 首页本地账本总览
 - 上传中心：选文件 / 选照片 / 导入队列
 - 解析复核页：字段编辑、分类选择、确认保存、重试解析
-- 本地设置：主题、语言、Vercel Parse API、OpenAI API Key、退出登录
+- 本地设置：主题、语言、Parse API、OpenAI API Key、退出登录
 - 本地数据链路：AsyncStorage、SQLite、本地 evidence queue
 - 税表/聚合相关代码域回归：Schedule C、Schedule SE、1040、1099-NEC 模型层
 
@@ -57,22 +57,22 @@
 ### 4.2 执行前准备
 
 - 仓库依赖已安装：`pnpm install`
-- 可启动移动端：`pnpm --filter @creator-cfo/mobile exec expo start --go`
+- 可启动移动端：`pnpm --filter @ledgerly/mobile exec expo start --go`
 - 如需验证 Apple 成功登录：准备支持 Apple Authentication 的 iPhone 真机
 - 如需验证解析成功路径：在 Profile 中提前写入
-  - `Vercel API Base URL`
+  - `Parse API Base URL`
   - `OpenAI API Key`
 
 ### 4.3 建议执行命令
 
 - 全量自动化：`pnpm test`
-- 仅移动端测试：`pnpm --filter @creator-cfo/mobile test`
+- 仅移动端测试：`pnpm --filter @ledgerly/mobile test`
 - 类型检查：`pnpm typecheck`
 - Lint：`pnpm lint`
 
 当前仓库实测结果：
 
-- `pnpm --filter @creator-cfo/mobile test`：**15 个测试文件，38 个用例全部通过**
+- `pnpm --filter @ledgerly/mobile test`：**15 个测试文件，38 个用例全部通过**
 
 ## 5. 测试数据设计
 
@@ -528,7 +528,7 @@
 ### TC-PARSE-004 未配置 Base URL 时解析失败提示
 
 - 优先级：`P0`
-- 前置条件：Profile 中未保存 `Vercel API Base URL`
+- 前置条件：Profile 中未保存 `Parse API Base URL`
 - 步骤：
   1. 导入文件
   2. 进入解析页
@@ -661,7 +661,7 @@
 - 优先级：`P0`
 - 前置条件：已登录
 - 步骤：
-  1. 输入 `Vercel API Base URL`
+  1. 输入 `Parse API Base URL`
   2. 输入 `OpenAI API Key`
   3. 点击 `Save API Settings`
   4. 重启应用
@@ -789,22 +789,22 @@
 
 当前已存在且可用的自动化：
 
-- `/Users/test/CreatorCFO/apps/mobile/tests/feat_upload.int.test.ts`
+- `/Users/test/Ledgerly/apps/mobile/tests/feat_upload.int.test.ts`
   - 覆盖上传入库、Live Photo 配对、失败解析保留、确认入账
-- `/Users/test/CreatorCFO/apps/mobile/tests/feat_upload_home.test.ts`
+- `/Users/test/Ledgerly/apps/mobile/tests/feat_upload_home.test.ts`
   - 覆盖首页聚合、趋势、分页
-- `/Users/test/CreatorCFO/apps/mobile/tests/app-shell-model.test.ts`
+- `/Users/test/Ledgerly/apps/mobile/tests/app-shell-model.test.ts`
   - 覆盖主题/语言回退、会话解析
-- `/Users/test/CreatorCFO/apps/mobile/tests/tab-config.test.ts`
+- `/Users/test/Ledgerly/apps/mobile/tests/tab-config.test.ts`
   - 覆盖三 Tab 配置
-- `/Users/test/CreatorCFO/apps/mobile/tests/login-copy.test.ts`
+- `/Users/test/Ledgerly/apps/mobile/tests/login-copy.test.ts`
   - 覆盖登录文案结构
-- `/Users/test/CreatorCFO/apps/mobile/tests/database-demo.test.ts`
+- `/Users/test/Ledgerly/apps/mobile/tests/database-demo.test.ts`
   - 覆盖本地记录与税表聚合
-- `/Users/test/CreatorCFO/apps/mobile/tests/form-1040-model.test.ts`
-- `/Users/test/CreatorCFO/apps/mobile/tests/form-1099-nec-model.test.ts`
-- `/Users/test/CreatorCFO/apps/mobile/tests/form-schedule-c-model.test.ts`
-- `/Users/test/CreatorCFO/apps/mobile/tests/form-schedule-se-model.test.ts`
+- `/Users/test/Ledgerly/apps/mobile/tests/form-1040-model.test.ts`
+- `/Users/test/Ledgerly/apps/mobile/tests/form-1099-nec-model.test.ts`
+- `/Users/test/Ledgerly/apps/mobile/tests/form-schedule-c-model.test.ts`
+- `/Users/test/Ledgerly/apps/mobile/tests/form-schedule-se-model.test.ts`
 
 ## 10. 当前自动化缺口
 
@@ -837,7 +837,7 @@
 ### 11.1 必须满足
 
 - 所有 `P0` 用例通过，或仅剩已签字接受的已知缺陷
-- `pnpm --filter @creator-cfo/mobile test` 全绿
+- `pnpm --filter @ledgerly/mobile test` 全绿
 - 上传 -> 解析 -> 保存 -> 首页联动 这条主链路可完整走通
 - 退出登录后可正确回到登录页
 - 主题、语言、API 设置重启后保持一致

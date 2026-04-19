@@ -1,6 +1,6 @@
 import Svg, { G, Path, Rect, Text as SvgText, TSpan } from "react-native-svg";
 
-import type { SurfaceTokens } from "@creator-cfo/ui";
+import type { SurfaceTokens } from "@ledgerly/ui";
 
 import {
   getScheduleCCanvasGroupId,

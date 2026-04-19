@@ -1,9 +1,9 @@
-import { productModules, supportedPlatforms, workflowPrinciples } from "@creator-cfo/schemas";
+import { productModules, supportedPlatforms, workflowPrinciples } from "@ledgerly/schemas";
 import {
   deviceStateContract,
   fileVaultContract,
   getLocalStorageOverview,
-} from "@creator-cfo/storage";
+} from "@ledgerly/storage";
 
 import type { AppCopy } from "../app-shell/copy";
 import type { AppSession } from "../app-shell/types";

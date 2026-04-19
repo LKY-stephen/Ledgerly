@@ -1,7 +1,7 @@
 import {
   accountingPostableRecordStatuses,
   type ReadableStorageDatabase,
-} from "@creator-cfo/storage";
+} from "@ledgerly/storage";
 
 import {
   defaultEntityId,

@@ -12,7 +12,7 @@ describe("GET /api/health", () => {
       model: expect.any(String),
       parser: "openai_gpt",
       requiresUserApiKey: true,
-      service: "creator-cfo-parse-api",
+      service: "ledgerly-parse-api",
       status: "ok",
       version: 1,
     });

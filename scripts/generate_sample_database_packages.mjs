@@ -8,8 +8,8 @@ import {
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const databaseName = "creator-cfo-local.db";
-const rootDirectoryName = "creator-cfo-vault";
+const databaseName = "ledgerly-local.db";
+const rootDirectoryName = "ledgerly-vault";
 const sourceSystem = "sample_package_generator";
 const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const fixturesRoot = join(rootDir, "tests", "fixtures", "sample-database-packages");
@@ -750,11 +750,11 @@ function buildCapturedAt(dateValue) {
 
 function writeFixturesReadme() {
   const packageDirectories = packageSpecs.map(
-    (spec) => `- \`${spec.directoryName}/creator-cfo-vault/\``,
+    (spec) => `- \`${spec.directoryName}/ledgerly-vault/\``,
   );
   const simulatorPackageDirectories = packageSpecs.map(
     (spec) =>
-      `   - \`creator_cfo_monorepo/tests/fixtures/sample-database-packages/${spec.directoryName}/\``,
+      `   - \`Ledgerly/tests/fixtures/sample-database-packages/${spec.directoryName}/\``,
   );
   const lines = [
     "# Sample Database Packages",
@@ -765,24 +765,24 @@ function writeFixturesReadme() {
     "",
     ...packageDirectories,
     "",
-    "You can also choose the parent sample folder, as long as it contains `creator-cfo-vault/creator-cfo-local.db`.",
+    "You can also choose the parent sample folder, as long as it contains `ledgerly-vault/ledgerly-local.db`.",
     "",
     "The sibling `evidence-objects/` and `evidence-manifests/` directories are part of each portable package and are required by the current integrity checks.",
     "",
     "## iPhone Simulator On macOS",
     "",
-    "On iOS, use the in-app folder picker and choose the package folder instead of the SQLite file. The package must stay intact so the app can read `creator-cfo-local.db` together with its sibling evidence directories.",
+    "On iOS, use the in-app folder picker and choose the package folder instead of the SQLite file. The package must stay intact so the app can read `ledgerly-local.db` together with its sibling evidence directories.",
     "",
     "1. Boot the target iPhone simulator in Apple's `Simulator` app.",
     "2. In Finder, open one of these fixture directories:",
     ...simulatorPackageDirectories,
-    "3. Drag either the full sample folder, such as `package-a-clean/`, or the inner `creator-cfo-vault/` folder into the simulator `Files` app, for example under `On My iPhone` or `Downloads`.",
-    "4. In Creator CFO, open the Settings/Profile import action.",
+    "3. Drag either the full sample folder, such as `package-a-clean/`, or the inner `ledgerly-vault/` folder into the simulator `Files` app, for example under `On My iPhone` or `Downloads`.",
+    "4. In Ledgerly, open the Settings/Profile import action.",
     "5. In the iOS folder picker, choose either:",
-    "   - `creator-cfo-vault/`, or",
-    "   - a parent folder that contains `creator-cfo-vault/`",
+    "   - `ledgerly-vault/`, or",
+    "   - a parent folder that contains `ledgerly-vault/`",
     "",
-    "Do not select `creator-cfo-local.db` directly on iPhone or iPad. Keep `creator-cfo-local.db`, `evidence-objects/`, and `evidence-manifests/` together in the same package directory.",
+    "Do not select `ledgerly-local.db` directly on iPhone or iPad. Keep `ledgerly-local.db`, `evidence-objects/`, and `evidence-manifests/` together in the same package directory.",
   ];
 
   writeFileSync(join(fixturesRoot, "README.md"), `${lines.join("\n")}\n`);

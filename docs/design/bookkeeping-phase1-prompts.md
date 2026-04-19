@@ -1,4 +1,4 @@
-# CreatorCFO 一期记账版设计提示词
+# Ledgerly 一期记账版设计提示词
 
 - Version: v1
 - Date: 2026-03-30
@@ -36,10 +36,10 @@
 ## 2. 通用中文母提示词
 
 ```text
-请为 CreatorCFO 设计一张高保真移动端 App UI 设计图。
+请为 Ledgerly 设计一张高保真移动端 App UI 设计图。
 
 项目背景：
-CreatorCFO 是一个移动端优先、本地优先的创作者财务工作台，运行在 Expo + React Native 环境中。当前一期功能只做记账、上传和解析，帮助用户在手机端记录收入、费用和发票，并上传票据、对账单、发票文件等资料，再对这些文件做基础解析。
+Ledgerly 是一个移动端优先、本地优先的创作者财务工作台，运行在 Expo + React Native 环境中。当前一期功能只做记账、上传和解析，帮助用户在手机端记录收入、费用和发票，并上传票据、对账单、发票文件等资料，再对这些文件做基础解析。
 
 当前产品约束：
 - 不修改现有底部菜单结构
@@ -73,10 +73,10 @@ CreatorCFO 是一个移动端优先、本地优先的创作者财务工作台，
 ## 3. 整套页面统一提示词
 
 ```text
-请为 CreatorCFO 设计一整套高保真移动端 App UI 设计图。
+请为 Ledgerly 设计一整套高保真移动端 App UI 设计图。
 
 项目背景：
-CreatorCFO 是一个移动端优先、本地优先的创作者财务工作台。当前一期只做记账、上传和解析，不改动现有底部菜单结构。产品运行在 Expo + React Native 环境中，数据主要保存在设备本地。
+Ledgerly 是一个移动端优先、本地优先的创作者财务工作台。当前一期只做记账、上传和解析，不改动现有底部菜单结构。产品运行在 Expo + React Native 环境中，数据主要保存在设备本地。
 
 底部菜单必须保持不变：
 - Home
@@ -129,7 +129,7 @@ CreatorCFO 是一个移动端优先、本地优先的创作者财务工作台。
 ## 4.1 Home
 
 ```text
-请为 CreatorCFO 设计一张移动端 Home 页面高保真 UI 设计图。
+请为 Ledgerly 设计一张移动端 Home 页面高保真 UI 设计图。
 
 要求：
 - 不改底部菜单结构
@@ -156,7 +156,7 @@ Creator finance workspace 风格，清晰、可信、安静。
 ## 4.2 Ledger Home
 
 ```text
-请为 CreatorCFO 设计一张移动端 Ledger Home 页面高保真 UI 设计图。
+请为 Ledgerly 设计一张移动端 Ledger Home 页面高保真 UI 设计图。
 
 要求：
 - 不改底部菜单结构
@@ -183,7 +183,7 @@ Creator finance workspace 风格，清晰、可信、安静。
 ## 4.3 New Income
 
 ```text
-请为 CreatorCFO 设计一张移动端 New Income 页面高保真 UI 设计图。
+请为 Ledgerly 设计一张移动端 New Income 页面高保真 UI 设计图。
 
 页面目标：
 - 新增一笔收入
@@ -209,7 +209,7 @@ Creator finance workspace 风格，清晰、可信、安静。
 ## 4.4 New Expense
 
 ```text
-请为 CreatorCFO 设计一张移动端 New Expense 页面高保真 UI 设计图。
+请为 Ledgerly 设计一张移动端 New Expense 页面高保真 UI 设计图。
 
 页面目标：
 - 新增一笔费用
@@ -233,7 +233,7 @@ Creator finance workspace 风格，清晰、可信、安静。
 ## 4.5 New Invoice
 
 ```text
-请为 CreatorCFO 设计一张移动端 New Invoice 页面高保真 UI 设计图。
+请为 Ledgerly 设计一张移动端 New Invoice 页面高保真 UI 设计图。
 
 页面目标：
 - 新增一笔发票 / 应收记录
@@ -256,7 +256,7 @@ Creator finance workspace 风格，清晰、可信、安静。
 ## 4.6 Upload Center
 
 ```text
-请为 CreatorCFO 设计一张移动端 Upload Center 页面高保真 UI 设计图。
+请为 Ledgerly 设计一张移动端 Upload Center 页面高保真 UI 设计图。
 
 页面目标：
 - 统一处理文件上传
@@ -283,7 +283,7 @@ Creator finance workspace 风格，清晰、可信、安静。
 ## 4.7 Parse Review
 
 ```text
-请为 CreatorCFO 设计一张移动端 Parse Review 页面高保真 UI 设计图。
+请为 Ledgerly 设计一张移动端 Parse Review 页面高保真 UI 设计图。
 
 页面目标：
 - 上传文件后展示解析结果
@@ -308,7 +308,7 @@ Creator finance workspace 风格，清晰、可信、安静。
 ## 4.8 Record Detail
 
 ```text
-请为 CreatorCFO 设计一张移动端 Record Detail 页面高保真 UI 设计图。
+请为 Ledgerly 设计一张移动端 Record Detail 页面高保真 UI 设计图。
 
 页面目标：
 - 查看、编辑一条收入/费用/发票记录
@@ -330,7 +330,7 @@ Creator finance workspace 风格，清晰、可信、安静。
 ## 4.9 Discover
 
 ```text
-请为 CreatorCFO 设计一张移动端 Discover 页面高保真 UI 设计图。
+请为 Ledgerly 设计一张移动端 Discover 页面高保真 UI 设计图。
 
 要求：
 - 不改底部菜单结构
@@ -354,7 +354,7 @@ Creator finance workspace 风格，清晰、可信、安静。
 ## 4.10 Profile
 
 ```text
-请为 CreatorCFO 设计一张移动端 Profile 页面高保真 UI 设计图。
+请为 Ledgerly 设计一张移动端 Profile 页面高保真 UI 设计图。
 
 要求：
 - 不改底部菜单结构
@@ -381,7 +381,7 @@ Creator finance workspace 风格，清晰、可信、安静。
 ### 5.1 整体视觉方向
 
 ```text
-mobile app UI for CreatorCFO, creator bookkeeping workspace, upload and parsing workflow, local-first finance app, income expenses invoices, iphone app interface, premium fintech mobile design, calm and trustworthy, warm off-white background, deep navy typography, muted green accents, rounded cards, realistic react native product layout, not banking app, not budgeting app, not crypto exchange --ar 9:16 --stylize 150
+mobile app UI for Ledgerly, creator bookkeeping workspace, upload and parsing workflow, local-first finance app, income expenses invoices, iphone app interface, premium fintech mobile design, calm and trustworthy, warm off-white background, deep navy typography, muted green accents, rounded cards, realistic react native product layout, not banking app, not budgeting app, not crypto exchange --ar 9:16 --stylize 150
 ```
 
 ### 5.2 Ledger Home
@@ -407,10 +407,10 @@ iphone app UI, parse review screen, file upload parsing confirmation workflow, e
 ## 6. Figma AI / Uizard / Galileo 版本
 
 ```text
-Create a mobile app screen set for CreatorCFO.
+Create a mobile app screen set for Ledgerly.
 
 Product:
-CreatorCFO is a local-first creator bookkeeping app. Phase 1 only includes bookkeeping, upload, and parsing features. Do not change the existing bottom navigation structure.
+Ledgerly is a local-first creator bookkeeping app. Phase 1 only includes bookkeeping, upload, and parsing features. Do not change the existing bottom navigation structure.
 
 Bottom tabs must remain:
 - Home

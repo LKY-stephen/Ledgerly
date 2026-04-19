@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native";
-import type { SurfaceTokens } from "@creator-cfo/ui";
+import type { SurfaceTokens } from "@ledgerly/ui";
 
 import { AppIcon, type AppIconName } from "./app-icon";
 

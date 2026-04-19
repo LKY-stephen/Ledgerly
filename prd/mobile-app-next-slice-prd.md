@@ -1,4 +1,4 @@
-# CreatorCFO Mobile App Next Slice PRD
+# Ledgerly Mobile App Next Slice PRD
 
 - Version: v1
 - Date: 2026-03-30
@@ -20,7 +20,7 @@
 - Ledger 还不是工作区
 - Discover 还没有真正承接智能能力
 
-因此下一阶段的目标，不是扩新技术栈，而是把现有移动端壳层推进成第一批可用的 CreatorCFO 业务体验。
+因此下一阶段的目标，不是扩新技术栈，而是把现有移动端壳层推进成第一批可用的 Ledgerly 业务体验。
 
 ---
 

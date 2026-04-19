@@ -5,7 +5,7 @@ import {
   loadEntityLegalName,
   loadScheduleCAggregation,
   type TaxQueryScope,
-} from "@creator-cfo/storage";
+} from "@ledgerly/storage";
 
 import {
   buildFormScheduleCSnapshot,

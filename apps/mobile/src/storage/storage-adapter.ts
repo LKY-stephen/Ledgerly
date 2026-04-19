@@ -5,7 +5,7 @@ import {
   type ReadableStorageDatabase,
   type StorageSqlValue,
   type WritableStorageDatabase,
-} from "@creator-cfo/storage";
+} from "@ledgerly/storage";
 
 export function createReadableStorageDatabase(
   database: SQLiteDatabase,

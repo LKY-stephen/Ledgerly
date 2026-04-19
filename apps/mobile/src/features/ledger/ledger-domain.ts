@@ -13,8 +13,8 @@ import type {
   ReceiptParsePayload,
   UploadBatchState,
   WorkflowWriteProposalState,
-} from "@creator-cfo/schemas";
-import { getLocalStorageBootstrapPlan } from "@creator-cfo/storage";
+} from "@ledgerly/schemas";
+import { getLocalStorageBootstrapPlan } from "@ledgerly/storage";
 
 import type { ResolvedLocale } from "../app-shell/types";
 import {

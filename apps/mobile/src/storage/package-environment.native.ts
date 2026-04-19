@@ -1,6 +1,10 @@
 import * as FileSystem from "expo-file-system/legacy";
 import { defaultDatabaseDirectory } from "expo-sqlite";
-import { getLocalStorageBootstrapPlan } from "@creator-cfo/storage";
+import {
+  getLocalStorageBootstrapPlan,
+  legacyFileVaultRootDirectories,
+  legacyStructuredStoreDatabaseNames,
+} from "@ledgerly/storage";
 
 import { joinPathSegments } from "./package-paths";
 
@@ -25,6 +29,29 @@ export function getActivePackageRootDirectory(): string {
   return joinPathSegments(getDocumentDirectoryOrThrow(), storagePlan.fileVaultRoot);
 }
 
+function uniquePaths(paths: string[]): string[] {
+  return [...new Set(paths)];
+}
+
+export function getPackageRootDirectoryCandidates(): string[] {
+  return uniquePaths([
+    getActivePackageRootDirectory(),
+    ...legacyFileVaultRootDirectories.map((rootDirectory) =>
+      joinPathSegments(getDocumentDirectoryOrThrow(), rootDirectory)
+    ),
+  ]);
+}
+
+export function getPackageDatabasePathCandidates(packageRoot: string): string[] {
+  const storagePlan = getLocalStorageBootstrapPlan();
+
+  return uniquePaths(
+    [storagePlan.databaseName, ...legacyStructuredStoreDatabaseNames].map(
+      (databaseName) => joinPathSegments(packageRoot, databaseName),
+    ),
+  );
+}
+
 export function getActiveDatabaseDirectory(): string {
   return getActivePackageRootDirectory();
 }
@@ -41,6 +68,16 @@ export function getLegacyDatabaseDirectory(): string {
 export function getLegacyDatabasePath(): string {
   const storagePlan = getLocalStorageBootstrapPlan();
   return joinPathSegments(getLegacyDatabaseDirectory(), storagePlan.databaseName);
+}
+
+export function getLegacyStandaloneDatabasePathCandidates(): string[] {
+  const storagePlan = getLocalStorageBootstrapPlan();
+
+  return uniquePaths(
+    [storagePlan.databaseName, ...legacyStructuredStoreDatabaseNames].map(
+      (databaseName) => joinPathSegments(getLegacyDatabaseDirectory(), databaseName),
+    ),
+  );
 }
 
 export function getPackageBackupDirectory(): string {

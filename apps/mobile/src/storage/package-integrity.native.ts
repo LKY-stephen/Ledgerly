@@ -3,7 +3,7 @@ import { openDatabaseAsync } from "expo-sqlite";
 import {
   createReadableStorageDatabase,
   type StorageSqlValue,
-} from "@creator-cfo/storage";
+} from "@ledgerly/storage";
 
 import {
   validateDatabasePackageOrThrow,

@@ -1,4 +1,4 @@
-import type { AppThemeName } from "@creator-cfo/ui";
+import type { AppThemeName } from "@ledgerly/ui";
 
 import type {
   AppSession,

@@ -2,13 +2,13 @@ import * as Crypto from "expo-crypto";
 import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system/legacy";
 import * as ImagePicker from "expo-image-picker";
-import { buildEvidenceUploadPath } from "@creator-cfo/storage";
+import { buildEvidenceUploadPath } from "@ledgerly/storage";
 import {
   normalizeReceiptParsePayload,
   type EvidenceExtractedData,
   type JsonValue,
   type ReceiptParsePayload,
-} from "@creator-cfo/schemas";
+} from "@ledgerly/schemas";
 
 import {
   buildRecordSchemeTemplate,
@@ -33,7 +33,7 @@ import {
   updateEvidenceExtraction,
 } from "./ledger-store";
 import { parseFileWithOpenAi, type ParseResult } from "./remote-parse";
-import type { PlannerSummary } from "@creator-cfo/schemas";
+import type { PlannerSummary } from "@ledgerly/schemas";
 import {
   loadHomeSnapshot,
   loadJournalListSnapshot,

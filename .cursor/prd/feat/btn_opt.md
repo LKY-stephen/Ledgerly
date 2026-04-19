@@ -6,7 +6,7 @@
 | **类型** | 前端 UI / 主题 token（默认**不**改存储契约） |
 | **依赖** | `useAppShell()` → `surfaceThemes`（`packages/ui`）；`(tabs)` 四 Tab 与登录流已存在 |
 
-**公用约定**：以 `.cursor/prd/agent-dev-guide-summary.md` 为准；基线 `.cursor/rules/creator-cfo-always.mdc`；结构参考 `.cursor/prd/TEMPLATE.md`。
+**公用约定**：以 `.cursor/prd/agent-dev-guide-summary.md` 为准；基线 `.cursor/rules/ledgerly-always.mdc`；结构参考 `.cursor/prd/TEMPLATE.md`。
 
 ## 平台描述
 

@@ -53,7 +53,7 @@
 
 ### Smoke Path
 
-1. Run `pnpm --filter @creator-cfo/mobile start`.
+1. Run `pnpm --filter @ledgerly/mobile start`.
 2. Open the app and confirm the dashboard renders modules, platforms, and local persistence cards.
 3. Confirm the bootstrap status reports readiness.
 4. Run `pnpm contract:check` to verify the storage contract package still passes.

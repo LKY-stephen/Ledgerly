@@ -26,7 +26,7 @@ export const localNewsFeed: NewsArticle[] = [
     title: "YouTube payout pacing matters more than headline CPM",
     summary:
       "Creators are tracking settlement lag and reserve windows just as closely as monthly revenue totals.",
-    source: "Creator CFO Desk",
+    source: "Ledgerly Desk",
     publishedAt: "2026-03-27T08:00:00.000Z",
     readMinutes: 4,
     body: [
@@ -42,7 +42,7 @@ export const localNewsFeed: NewsArticle[] = [
       "TikTok Shop creators are planning cash around fee timing, not just top-line sales",
     summary:
       "Net settlement timing is reshaping how short-form commerce teams think about runway and inventory risk.",
-    source: "Creator CFO Desk",
+    source: "Ledgerly Desk",
     publishedAt: "2026-03-27T07:00:00.000Z",
     readMinutes: 3,
     body: [
@@ -58,7 +58,7 @@ export const localNewsFeed: NewsArticle[] = [
       "Membership revenue is becoming the stabilizer in mixed creator income stacks",
     summary:
       "Recurring support is increasingly used as the buffer against campaign and ad volatility.",
-    source: "Creator CFO Desk",
+    source: "Ledgerly Desk",
     publishedAt: "2026-03-27T06:00:00.000Z",
     readMinutes: 5,
     body: [
@@ -73,7 +73,7 @@ export const localNewsFeed: NewsArticle[] = [
     title: "Brand-deal invoice ops are moving closer to content calendars",
     summary:
       "Invoice visibility is becoming part of campaign planning, not a downstream admin task.",
-    source: "Creator CFO Desk",
+    source: "Ledgerly Desk",
     publishedAt: "2026-03-27T05:00:00.000Z",
     readMinutes: 4,
     body: [
@@ -88,7 +88,7 @@ export const localNewsFeed: NewsArticle[] = [
     title: "Tax reserves are shifting from quarterly scramble to weekly habit",
     summary:
       "More creators are treating reserve visibility as an always-on signal rather than a filing-season emergency.",
-    source: "Creator CFO Desk",
+    source: "Ledgerly Desk",
     publishedAt: "2026-03-26T18:00:00.000Z",
     readMinutes: 3,
     body: [
@@ -104,7 +104,7 @@ export const localNewsFeed: NewsArticle[] = [
       "Stablecoin payout conversations are staying exploratory but operationally relevant",
     summary:
       "Even before adoption, creators want to compare what alternate settlement rails could do for timing and fees.",
-    source: "Creator CFO Desk",
+    source: "Ledgerly Desk",
     publishedAt: "2026-03-26T16:30:00.000Z",
     readMinutes: 4,
     body: [
@@ -120,7 +120,7 @@ export const localNewsFeed: NewsArticle[] = [
       "Statement discipline is still the fastest way to reduce payout confusion",
     summary:
       "Creators juggling multiple platforms are investing in cleaner statement review before chasing deeper automation.",
-    source: "Creator CFO Desk",
+    source: "Ledgerly Desk",
     publishedAt: "2026-03-26T15:00:00.000Z",
     readMinutes: 4,
     body: [
@@ -136,7 +136,7 @@ export const localNewsFeed: NewsArticle[] = [
       "Mini runway dashboards are replacing giant creator finance spreadsheets",
     summary:
       "A smaller, always-available signal set is winning over all-in-one templates for daily decisions.",
-    source: "Creator CFO Desk",
+    source: "Ledgerly Desk",
     publishedAt: "2026-03-26T13:00:00.000Z",
     readMinutes: 5,
     body: [
@@ -152,7 +152,7 @@ export const localNewsFeed: NewsArticle[] = [
       "Contractor visibility is becoming the missing half of creator margin tracking",
     summary:
       "Revenue is easy to celebrate, but margin confidence still depends on seeing collaborators and tool spend clearly.",
-    source: "Creator CFO Desk",
+    source: "Ledgerly Desk",
     publishedAt: "2026-03-26T11:30:00.000Z",
     readMinutes: 3,
     body: [
@@ -168,7 +168,7 @@ export const localNewsFeed: NewsArticle[] = [
       "Shopify creators are blending storefront and media reporting more tightly",
     summary:
       "The separation between media performance and commerce operations keeps shrinking.",
-    source: "Creator CFO Desk",
+    source: "Ledgerly Desk",
     publishedAt: "2026-03-26T10:00:00.000Z",
     readMinutes: 4,
     body: [

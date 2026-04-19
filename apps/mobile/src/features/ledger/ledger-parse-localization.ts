@@ -2,7 +2,7 @@ import type {
   CandidateRecordState,
   WorkflowWriteProposalPayload,
   WorkflowWriteProposalState,
-} from "@creator-cfo/schemas";
+} from "@ledgerly/schemas";
 
 import { getAppCopy } from "../app-shell/copy";
 import type { ResolvedLocale } from "../app-shell/types";

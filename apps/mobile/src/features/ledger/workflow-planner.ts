@@ -11,7 +11,7 @@ import type {
   PlannerSummary,
   ReceiptPlannerPayload,
   WorkflowWriteProposalPayload,
-} from "@creator-cfo/schemas";
+} from "@ledgerly/schemas";
 
 import type {
   DuplicateMatchedRecordSummary,
@@ -131,7 +131,12 @@ export function deriveCandidateState(input: {
   return "validated";
 }
 
-export function buildReviewValuesFromPayload(payload: CandidateRecordPayload): LedgerReviewValues {
+export function buildReviewValuesFromPayload(
+  payload: CandidateRecordPayload,
+  options?: {
+    defaultDate?: string | null;
+  },
+): LedgerReviewValues {
   return {
     amount: payload.amountCents ? (payload.amountCents / 100).toFixed(2) : "",
     category:
@@ -140,13 +145,91 @@ export function buildReviewValuesFromPayload(payload: CandidateRecordPayload): L
         : payload.recordKind === "personal_spending"
           ? "spending"
           : "expense",
-    date: payload.date ?? "",
+    date: normalizeText(options?.defaultDate) ?? normalizeText(payload.date) ?? "",
     description: payload.description ?? "",
     notes: "",
     source: payload.sourceLabel ?? "",
     target: payload.targetLabel ?? "",
     taxCategory: payload.taxCategoryCode ?? "",
   };
+}
+
+export function mergeReviewValuesWithPayload(
+  currentReview: LedgerReviewValues,
+  payload: CandidateRecordPayload,
+  options?: {
+    defaultDate?: string | null;
+    overwriteFields?: ReadonlyArray<keyof LedgerReviewValues>;
+  },
+): LedgerReviewValues {
+  const nextReview = buildReviewValuesFromPayload(payload, options);
+  const merged: LedgerReviewValues = {
+    amount: currentReview.amount.trim() ? currentReview.amount : nextReview.amount,
+    category: currentReview.category,
+    date: currentReview.date.trim() ? currentReview.date : nextReview.date,
+    description: currentReview.description.trim()
+      ? currentReview.description
+      : nextReview.description,
+    notes: currentReview.notes,
+    source: currentReview.source.trim() ? currentReview.source : nextReview.source,
+    target: currentReview.target.trim() ? currentReview.target : nextReview.target,
+    taxCategory: currentReview.taxCategory.trim()
+      ? currentReview.taxCategory
+      : nextReview.taxCategory,
+  };
+
+  for (const field of options?.overwriteFields ?? []) {
+    switch (field) {
+      case "amount":
+        merged.amount = nextReview.amount;
+        break;
+      case "category":
+        merged.category = nextReview.category;
+        break;
+      case "date":
+        merged.date = nextReview.date;
+        break;
+      case "description":
+        merged.description = nextReview.description;
+        break;
+      case "notes":
+        merged.notes = nextReview.notes;
+        break;
+      case "source":
+        merged.source = nextReview.source;
+        break;
+      case "target":
+        merged.target = nextReview.target;
+        break;
+      case "taxCategory":
+        merged.taxCategory = nextReview.taxCategory;
+        break;
+    }
+  }
+
+  return merged;
+}
+
+export function shouldDefaultReviewDateToCurrentDate(input: {
+  classifiedFacts: ClassifiedParseField[];
+  warnings: string[];
+}): boolean {
+  const dateFact = input.classifiedFacts.find((fact) => fact.field === "date");
+
+  if (dateFact && dateFact.status !== "confirmed") {
+    return true;
+  }
+
+  return input.warnings.some((warning) => {
+    const normalized = warning.toLowerCase();
+    return normalized.includes("date") && (
+      normalized.includes("ambigu") ||
+      normalized.includes("uncertain") ||
+      normalized.includes("infer") ||
+      normalized.includes("estimated") ||
+      normalized.includes("footer")
+    );
+  });
 }
 
 function assertPlannerPayloadCompleteness(remotePlan: ReceiptPlannerPayload): void {

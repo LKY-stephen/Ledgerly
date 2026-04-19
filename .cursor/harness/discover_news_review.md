@@ -70,9 +70,9 @@
 
 | Case | Result | Evidence |
 |---|---|---|
-| Local feed helpers | Passed | `pnpm --filter @creator-cfo/mobile test` |
-| Mobile lint | Passed | `pnpm --filter @creator-cfo/mobile lint` |
-| Mobile typecheck | Passed | `pnpm --filter @creator-cfo/mobile typecheck` |
+| Local feed helpers | Passed | `pnpm --filter @ledgerly/mobile test` |
+| Mobile lint | Passed | `pnpm --filter @ledgerly/mobile lint` |
+| Mobile typecheck | Passed | `pnpm --filter @ledgerly/mobile typecheck` |
 | Monorepo lint | Passed | `pnpm lint` |
 | Monorepo typecheck | Passed | `pnpm typecheck` |
 | Monorepo test | Passed | `pnpm test` |

@@ -8,7 +8,7 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import { SectionCard, type SurfaceTokens } from "@creator-cfo/ui";
+import { SectionCard, type SurfaceTokens } from "@ledgerly/ui";
 
 import { BackHeaderBar } from "../../components/back-header-bar";
 import type { TaxFormPage, TaxFormSlotId, TaxFormSlotSource, TaxFormSlotState } from "./types";

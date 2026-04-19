@@ -1,6 +1,6 @@
 # feat: 修复上传与解析链路（Vercel Parse API）
 
-**公用约定**：以 `.cursor/prd/agent-dev-guide-summary.md` 为准。仓库级 Agent 基线（Cursor 始终应用）：`.cursor/rules/creator-cfo-always.mdc`。
+**公用约定**：以 `.cursor/prd/agent-dev-guide-summary.md` 为准。仓库级 Agent 基线（Cursor 始终应用）：`.cursor/rules/ledgerly-always.mdc`。
 
 ## 平台描述
 
@@ -14,7 +14,7 @@
 
 ## 配置与环境
 
-- Parse API Base URL（示例）：`https://creator-cfo-monorepo-xxx.vercel.app`
+- Parse API Base URL（示例）：`https://ledgerly-monorepo-xxx.vercel.app`
 - API Key：**不得写入 PRD 或代码仓库明文**，统一通过环境变量注入。
 
 建议环境变量命名：
@@ -88,7 +88,7 @@
 ## 参考
 
 - PRD 模板：`.cursor/prd/TEMPLATE.md`
-- 参考目录：`/Users/peanut-tomo/Desktop/Tomo-project/creator_cfo_monorepo/prd`
+- 参考目录：`/Users/peanut-tomo/Desktop/Tomo-project/Ledgerly/prd`
 - 契约真源：
   - `docs/contracts/`
   - `packages/storage/src/contracts.ts`

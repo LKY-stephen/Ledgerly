@@ -5,7 +5,7 @@ import {
   createWritableStorageDatabase,
   structuredStoreContract,
   type StorageSqlValue,
-} from "@creator-cfo/storage";
+} from "@ledgerly/storage";
 
 import { loadHomeSnapshot } from "../src/features/home/home-data";
 import { buildLedgerPeriodId, loadLedgerSnapshot } from "../src/features/ledger/ledger-reporting";

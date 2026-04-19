@@ -8,13 +8,13 @@ import type {
   ReceiptPlannerPayload,
   UploadBatchState,
   WorkflowWriteProposalState,
-} from "@creator-cfo/schemas";
+} from "@ledgerly/schemas";
 import {
   persistResolvedStandardReceiptEntry,
   resolveStandardReceiptEntry,
   type ReadableStorageDatabase,
   type WritableStorageDatabase,
-} from "@creator-cfo/storage";
+} from "@ledgerly/storage";
 
 import {
   createEmptyReviewValues,
@@ -28,9 +28,11 @@ import {
   type WorkflowWriteProposalItem,
 } from "./ledger-domain";
 import {
-  buildPlannerSummary,
   buildReviewValuesFromPayload,
   deriveCandidateState,
+  buildPlannerSummary,
+  mergeReviewValuesWithPayload,
+  shouldDefaultReviewDateToCurrentDate,
   type DuplicateReceiptMatch,
   type PlannerLookupMatch,
   type PlannerReadResults,
@@ -41,7 +43,7 @@ const defaultEntitySeed = {
   defaultTimezone: "UTC",
   entityId: defaultEntityId,
   entityType: "sole_proprietorship",
-  legalName: "Creator CFO Main Entity",
+  legalName: "Ledgerly Main Entity",
 } as const;
 
 interface PersistedExtractionRun {
@@ -427,6 +429,9 @@ export async function savePlannerArtifacts(
     readResults,
     remotePlan: input.remotePlan,
   });
+  const defaultReviewDate = shouldDefaultReviewDateToCurrentDate(summary)
+    ? input.createdAt.slice(0, 10)
+    : null;
   await updatePlannerRun(database, {
     plannerPayload: input.remotePlan,
     plannerRunId: input.plannerRunId,
@@ -494,7 +499,11 @@ export async function savePlannerArtifacts(
       input.evidence.evidenceId,
       state,
       JSON.stringify(payload),
-      JSON.stringify(buildReviewValuesFromPayload(payload)),
+      JSON.stringify(
+        buildReviewValuesFromPayload(payload, {
+          defaultDate: defaultReviewDate,
+        }),
+      ),
       input.createdAt,
       input.createdAt,
     );
@@ -674,6 +683,7 @@ export async function approveWorkflowWriteProposal(
     await executeCreateCounterpartyProposal(database, {
       actor: input.actor ?? "local_user",
       proposal,
+      review: input.review,
       updatedAt: input.updatedAt,
     });
     return;
@@ -683,6 +693,7 @@ export async function approveWorkflowWriteProposal(
     await executeMergeCounterpartyProposal(database, {
       actor: input.actor ?? "local_user",
       proposal,
+      review: input.review,
       updatedAt: input.updatedAt,
     });
     return;
@@ -1336,6 +1347,7 @@ async function executeCreateCounterpartyProposal(
   input: {
     actor: string;
     proposal: NonNullable<Awaited<ReturnType<typeof loadProposalById>>>;
+    review?: LedgerReviewValues;
     updatedAt: string;
   },
 ): Promise<void> {
@@ -1378,6 +1390,13 @@ async function executeCreateCounterpartyProposal(
       ? { sourceCounterpartyId: counterpartyId, sourceLabel: displayName }
       : { targetCounterpartyId: counterpartyId, targetLabel: displayName }),
   } satisfies CandidateRecordPayload;
+  const nextReview = mergeReviewValuesWithPayload(
+    input.review ?? candidate.reviewValues,
+    nextPayload,
+    {
+      overwriteFields: role === "source" ? ["source"] : ["target"],
+    },
+  );
 
   await database.runAsync(
     `UPDATE candidate_records
@@ -1387,7 +1406,7 @@ async function executeCreateCounterpartyProposal(
          updated_at = ?
      WHERE candidate_id = ?;`,
     JSON.stringify(nextPayload),
-    JSON.stringify(buildReviewValuesFromPayload(nextPayload)),
+    JSON.stringify(nextReview),
     "validated",
     input.updatedAt,
     candidate.candidateId,
@@ -1424,6 +1443,7 @@ async function executeMergeCounterpartyProposal(
   input: {
     actor: string;
     proposal: NonNullable<Awaited<ReturnType<typeof loadProposalById>>>;
+    review?: LedgerReviewValues;
     updatedAt: string;
   },
 ): Promise<void> {
@@ -1451,6 +1471,13 @@ async function executeMergeCounterpartyProposal(
       ? { sourceCounterpartyId: existingCounterpartyId, sourceLabel: existingDisplayName }
       : { targetCounterpartyId: existingCounterpartyId, targetLabel: existingDisplayName }),
   } satisfies CandidateRecordPayload;
+  const nextReview = mergeReviewValuesWithPayload(
+    input.review ?? candidate.reviewValues,
+    nextPayload,
+    {
+      overwriteFields: role === "source" ? ["source"] : ["target"],
+    },
+  );
 
   await database.runAsync(
     `UPDATE candidate_records
@@ -1460,7 +1487,7 @@ async function executeMergeCounterpartyProposal(
          updated_at = ?
      WHERE candidate_id = ?;`,
     JSON.stringify(nextPayload),
-    JSON.stringify(buildReviewValuesFromPayload(nextPayload)),
+    JSON.stringify(nextReview),
     "validated",
     input.updatedAt,
     candidate.candidateId,

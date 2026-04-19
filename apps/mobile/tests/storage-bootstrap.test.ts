@@ -2,17 +2,23 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   countStructuredTables: vi.fn(),
+  deleteAsync: vi.fn(),
   getInfoAsync: vi.fn(),
   initializeActivePackageDatabase: vi.fn(),
   makeDirectoryAsync: vi.fn(),
+  moveAsync: vi.fn(),
   openDatabaseAsync: vi.fn(),
+  readDirectoryAsync: vi.fn(),
   writeAsStringAsync: vi.fn(),
 }));
 
 vi.mock("expo-file-system/legacy", () => ({
   copyAsync: vi.fn(),
+  deleteAsync: mocks.deleteAsync,
   getInfoAsync: mocks.getInfoAsync,
   makeDirectoryAsync: mocks.makeDirectoryAsync,
+  moveAsync: mocks.moveAsync,
+  readDirectoryAsync: mocks.readDirectoryAsync,
   writeAsStringAsync: mocks.writeAsStringAsync,
 }));
 
@@ -20,19 +26,19 @@ vi.mock("expo-sqlite", () => ({
   openDatabaseAsync: mocks.openDatabaseAsync,
 }));
 
-vi.mock("@creator-cfo/storage", () => ({
-  createLocalStorageBootstrapManifest: () => ({ version: 5 }),
+vi.mock("@ledgerly/storage", () => ({
+  createLocalStorageBootstrapManifest: () => ({ version: 6 }),
   getLocalStorageBootstrapPlan: () => ({
-    databaseName: "creator-cfo-local.db",
+    databaseName: "ledgerly-local.db",
     fileCollections: [{ slug: "evidence-objects" }, { slug: "evidence-manifests" }],
-    fileVaultRoot: "creator-cfo-vault",
+    fileVaultRoot: "ledgerly-vault",
     overview: {
       collectionCount: 2,
     },
   }),
 }));
 
-vi.mock("@creator-cfo/schemas", () => ({
+vi.mock("@ledgerly/schemas", () => ({
   supportedPlatforms: ["ios", "android", "web"],
 }));
 
@@ -45,9 +51,18 @@ vi.mock("../src/storage/database", () => ({
 }));
 
 vi.mock("../src/storage/package-environment.native", () => ({
-  getActiveDatabaseDirectory: () => "file:///documents/creator-cfo-vault",
-  getActiveDatabasePath: () => "file:///documents/creator-cfo-vault/creator-cfo-local.db",
-  getLegacyDatabasePath: () => "file:///legacy/creator-cfo-local.db",
+  getActiveDatabaseDirectory: () => "file:///documents/ledgerly-vault",
+  getActiveDatabasePath: () => "file:///documents/ledgerly-vault/ledgerly-local.db",
+  getActivePackageRootDirectory: () => "file:///documents/ledgerly-vault",
+  getLegacyStandaloneDatabasePathCandidates: () => ["file:///legacy/ledgerly-local.db"],
+  getPackageDatabasePathCandidates: (packageRoot: string) => [
+    `${packageRoot}/ledgerly-local.db`,
+    `${packageRoot}/${["creator", "cfo"].join("-")}-local.db`,
+  ],
+  getPackageRootDirectoryCandidates: () => [
+    "file:///documents/ledgerly-vault",
+    `file:///documents/${["creator", "cfo"].join("-")}-vault`,
+  ],
 }));
 
 import {
@@ -60,11 +75,14 @@ beforeEach(() => {
   vi.clearAllMocks();
   mocks.getInfoAsync.mockResolvedValue({ exists: false, isDirectory: false });
   mocks.countStructuredTables.mockResolvedValue(15);
+  mocks.deleteAsync.mockResolvedValue(undefined);
   mocks.initializeActivePackageDatabase.mockResolvedValue(undefined);
+  mocks.moveAsync.mockResolvedValue(undefined);
   mocks.openDatabaseAsync.mockResolvedValue({
     closeAsync: vi.fn(),
     getAllAsync: vi.fn(),
   });
+  mocks.readDirectoryAsync.mockResolvedValue([]);
 });
 
 describe("native storage bootstrap", () => {
@@ -78,14 +96,14 @@ describe("native storage bootstrap", () => {
 
     expect(mocks.makeDirectoryAsync).toHaveBeenCalled();
     expect(mocks.openDatabaseAsync).toHaveBeenCalledWith(
-      "creator-cfo-local.db",
+      "ledgerly-local.db",
       undefined,
-      "file:///documents/creator-cfo-vault",
+      "file:///documents/ledgerly-vault",
     );
     expect(status).toMatchObject({
-      databaseName: "creator-cfo-local.db",
+      databaseName: "ledgerly-local.db",
       fileCollectionCount: 2,
-      fileVaultRoot: "creator-cfo-vault",
+      fileVaultRoot: "ledgerly-vault",
       status: "ready",
       structuredTableCount: 15,
     });

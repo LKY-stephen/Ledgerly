@@ -1,16 +1,16 @@
 # feat: 应用 UI 展示名称调整为 `Ledgerly`
 
-**公用约定**：以 `.cursor/prd/agent-dev-guide-summary.md` 为准。仓库级 Agent 基线（Cursor 始终应用）：`.cursor/rules/creator-cfo-always.mdc`。
+**公用约定**：以 `.cursor/prd/agent-dev-guide-summary.md` 为准。仓库级 Agent 基线（Cursor 始终应用）：`.cursor/rules/ledgerly-always.mdc`。
 
 ## 平台描述
 
 - 当前项目为 **Expo + React Native + Expo Router** 的移动端本地优先产品。
-- 目前工程名或默认配置中仍存在 `creator-cfo-monorepo` 这一偏开发态的名称。
+- 目前工程名或默认配置中仍存在 `ledgerly-monorepo` 这一偏开发态的名称。
 - 本需求的目标是把**UI 层面用户可见的应用名称**统一为 **Ledgerly**，让产品展示更贴近正式形态。
 
 ## 背景与目标
 
-- `creator-cfo-monorepo` 更像仓库名或开发代号，不适合作为最终产品展示名。
+- `ledgerly-monorepo` 更像仓库名或开发代号，不适合作为最终产品展示名。
 - 如果需求只写成“把 app name 改成 Ledgerly”，实现时很容易遗漏：
   - 只改了一个配置文件，其他展示位仍显示旧名
   - UI 展示位改了，但技术标识也被误改
@@ -33,7 +33,7 @@
 
 ## 一句话需求
 
-- 将应用中**用户可见的 UI 展示名称**从 `creator-cfo-monorepo` 调整为 `Ledgerly`，且不改动任何技术标识。
+- 将应用中**用户可见的 UI 展示名称**从 `ledgerly-monorepo` 调整为 `Ledgerly`，且不改动任何技术标识。
 
 ## 需求描述
 
@@ -42,8 +42,8 @@
 - App 中用户可见的 UI 名称应统一为 `Ledgerly`。
 - 至少需要覆盖以下典型展示位：
   - 应用内页面标题、导航标题、空状态、设置页或其他直接展示给用户的名称文案
-  - 如当前 UI 中存在明显暴露 `creator-cfo-monorepo` 的位置，应同步替换
-- 目标是让用户看到的名字统一，不再暴露仓库名 `creator-cfo-monorepo`。
+  - 如当前 UI 中存在明显暴露 `ledgerly-monorepo` 的位置，应同步替换
+- 目标是让用户看到的名字统一，不再暴露仓库名 `ledgerly-monorepo`。
 
 ### 2. 只改 UI 层，不改技术配置
 
@@ -58,7 +58,7 @@
 
 ### 3. 展示一致性要求
 
-- 名称修改后，UI 展示不应出现“一个地方叫 Ledgerly，另一个地方仍是 creator-cfo-monorepo”的割裂情况。
+- 名称修改后，UI 展示不应出现“一个地方叫 Ledgerly，另一个地方仍是 ledgerly-monorepo”的割裂情况。
 - 需要优先排查应用内直接展示给用户的名称来源，而不是全局替换所有字符串。
 - 若某些字段虽然也包含旧名，但属于技术标识或构建配置，应明确保留，不要改动。
 
@@ -99,7 +99,7 @@
 
 ## 验收标准
 
-- [ ] 用户可见的 UI 名称已从 `creator-cfo-monorepo` 调整为 `Ledgerly`。
+- [ ] 用户可见的 UI 名称已从 `ledgerly-monorepo` 调整为 `Ledgerly`。
 - [ ] 主要 UI 展示位中不出现明显的旧名残留。
 - [ ] 本次改动没有改动 bundle id、package name、slug 或其他技术标识。
 - [ ] 至少完成一次基础验证，例如启动检查、UI 检查或 smoke 验证。
@@ -109,7 +109,7 @@
 ## 建议测试点
 
 - 检查应用内标题、设置页、欢迎页或其他用户可见位置是否显示 `Ledgerly`。
-- 检查 UI 中是否仍残留 `creator-cfo-monorepo`。
+- 检查 UI 中是否仍残留 `ledgerly-monorepo`。
 - 检查本次改动后项目是否仍可正常启动。
 - 检查 bundle id / package name / slug 等技术字段是否未被改动。
 
@@ -125,7 +125,7 @@
 
 ## 对 Agent 的执行提示
 
-- 先搜索 `creator-cfo-monorepo` 在 UI 层的出现位置，再判断哪些是真正展示给用户的文案。
+- 先搜索 `ledgerly-monorepo` 在 UI 层的出现位置，再判断哪些是真正展示给用户的文案。
 - 不要一上来全局替换；只修改 UI 可见层。
 - 发现属于技术配置、工程名、包名、slug 的字段时，直接跳过并在说明中标注“非本次范围”。
 - 修改后至少做一次基础验证，避免只是替换了文案但没有确认页面闭环。

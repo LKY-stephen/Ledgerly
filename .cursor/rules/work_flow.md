@@ -1,6 +1,6 @@
 # PRD 分解与任务开发工作流
 
-**始终生效的基线**（摘要）：`.cursor/rules/creator-cfo-always.mdc`。下文为流程全文。
+**始终生效的基线**（摘要）：`.cursor/rules/ledgerly-always.mdc`。下文为流程全文。
 
 **项目真源**：根目录 `AGENTS.md`、`.cursor/context/main.md`（当前快照）、`.cursor/context/{semver}_context.md`（按版本归档）。本阶段为 **Expo 移动端、本地优先**；契约以 `docs/contracts/`、`packages/storage/src/contracts.ts`、`packages/schemas` 为准。处理需求时优先阅读上述文件，避免按「全栈 Web + 后端 API」的默认假设实现。
 

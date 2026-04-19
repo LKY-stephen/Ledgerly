@@ -36,7 +36,9 @@ interface SelectedUploadCandidate {
 export function LedgerUploadScreen() {
   const router = useRouter();
   const { isExpanded, isMedium } = useResponsive();
+  const isWeb = Platform.OS === "web";
   const isWide = isExpanded || isMedium;
+  const useSplitLayout = isWide && !isWeb;
   const { copy, palette, resolvedLocale } = useAppShell();
   const uploadCopy = copy.ledger.upload;
   const errorColors = getFeedbackColors(palette, "error");
@@ -150,327 +152,477 @@ export function LedgerUploadScreen() {
   return (
     <SafeAreaView
       edges={["top", "left", "right"]}
-      style={[styles.safeArea, { backgroundColor: palette.shell }]}
+      style={[
+        styles.safeArea,
+        {
+          backgroundColor: isWeb ? "transparent" : palette.shell,
+        },
+      ]}
       testID="ledger-upload-screen"
     >
-      <View
-        style={[
-          styles.appBar,
-          {
-            backgroundColor: palette.shell,
-            borderBottomColor: palette.divider,
-          },
-        ]}
-      >
-        <BackHeaderBar
-          onBack={() => {
-            if (router.canGoBack()) {
-              router.back();
-            } else {
-              router.replace("/(tabs)/ledger");
-            }
-          }}
-          palette={palette}
-          rightAccessory={<CfoAvatar />}
-          title={copy.common.appName}
-        />
-      </View>
-      <ScrollView
-        contentContainerStyle={[
-          styles.container,
-          isWide && styles.containerWide,
-        ]}
-      >
-        <View style={isWide ? styles.wideRow : null}>
-          <View
-            style={[
-              styles.heroBlock,
-              isWide && styles.heroBlockWide,
-              {
-                backgroundColor: palette.paper,
-                borderColor: palette.border,
-              },
-            ]}
-          >
-            <Text style={[styles.eyebrow, { color: palette.inkMuted }]}>
-              {uploadCopy.eyebrow}
-            </Text>
-            <Text
-              style={[
-                styles.heroTitle,
-                isWide && styles.heroTitleWide,
-                { color: palette.ink },
-              ]}
-            >
-              {uploadCopy.title}
-            </Text>
-            <Text
-              style={[
-                styles.heroSummary,
-                isWide && styles.heroSummaryWide,
-                { color: palette.inkMuted },
-              ]}
-            >
-              {uploadCopy.summary}
-            </Text>
-          </View>
-
-          <View
-            style={[
-              styles.dropCard,
-              isWide && styles.dropCardWide,
-              {
-                backgroundColor: palette.shellElevated,
-                borderColor: palette.border,
-                shadowColor: palette.shadow,
-              },
-            ]}
-          >
+      {isWeb ? (
+        <View
+          style={[
+            styles.webModalBackdrop,
+          ]}
+        >
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => {
+              if (router.canGoBack()) {
+                router.back();
+              } else {
+                router.replace("/(tabs)/ledger");
+              }
+            }}
+            style={StyleSheet.absoluteFillObject}
+            testID="ledger-upload-backdrop-close"
+          />
+          <View style={styles.webModalFrameWrap}>
             <View
               style={[
-                styles.uploadGlyph,
-                { backgroundColor: palette.accentSoft },
+                styles.webModalFrame,
+                {
+                  backgroundColor: palette.shell,
+                  borderColor: palette.border,
+                  shadowColor: palette.shadow,
+                },
               ]}
             >
-              <Feather color={palette.accent} name="upload-cloud" size={26} />
+              <View style={styles.webModalHeader}>
+                <View style={styles.webModalHeaderCopy}>
+                  <Text style={[styles.eyebrow, { color: palette.inkMuted }]}>
+                    {uploadCopy.eyebrow}
+                  </Text>
+                  <Text style={[styles.heroTitle, styles.webHeroTitle, { color: palette.ink }]}>
+                    {uploadCopy.title}
+                  </Text>
+                  <Text style={[styles.heroSummary, styles.webHeroSummary, { color: palette.inkMuted }]}>
+                    {uploadCopy.summary}
+                  </Text>
+                </View>
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => {
+                    if (router.canGoBack()) {
+                      router.back();
+                    } else {
+                      router.replace("/(tabs)/ledger");
+                    }
+                  }}
+                  style={({ pressed }) => [
+                    styles.webModalCloseButton,
+                    {
+                      backgroundColor: pressed ? palette.paperMuted : palette.paper,
+                      borderColor: palette.border,
+                    },
+                  ]}
+                  testID="ledger-upload-close-button"
+                >
+                  <Feather color={palette.ink} name="x" size={18} />
+                </Pressable>
+              </View>
+              <View style={styles.webModalBody}>
+                <UploadWorkspaceCard
+                  error={error}
+                  errorColors={errorColors}
+                  handleImport={handleImport}
+                  handleParseSelected={handleParseSelected}
+                  isBusy={isBusy}
+                  isWide={true}
+                  palette={palette}
+                  previewMeta={previewMeta}
+                  primaryButton={primaryButton}
+                  selectedCandidate={selectedCandidate}
+                  setError={setError}
+                  setSelectedCandidate={setSelectedCandidate}
+                  setStatus={setStatus}
+                  showImagePreview={showImagePreview}
+                  statusText={statusText}
+                  uploadCopy={uploadCopy}
+                />
+              </View>
             </View>
-            <Text style={[styles.dropTitle, { color: palette.ink }]}>
-              {uploadCopy.uploadCardTitle}
-            </Text>
-            <Text style={[styles.dropSummary, { color: palette.inkMuted }]}>
-              {uploadCopy.uploadCardSummary}
-            </Text>
-
-            {selectedCandidate ? (
+          </View>
+        </View>
+      ) : (
+        <>
+          <View
+            style={[
+              styles.appBar,
+              {
+                backgroundColor: palette.shell,
+                borderBottomColor: palette.divider,
+              },
+            ]}
+          >
+            <BackHeaderBar
+              onBack={() => {
+                if (router.canGoBack()) {
+                  router.back();
+                } else {
+                  router.replace("/(tabs)/ledger");
+                }
+              }}
+              palette={palette}
+              rightAccessory={<CfoAvatar />}
+              title={copy.common.appName}
+            />
+          </View>
+          <ScrollView
+            contentContainerStyle={[
+              styles.container,
+              isWide && styles.containerWide,
+            ]}
+          >
+            <View style={useSplitLayout ? styles.wideRow : null}>
               <View
                 style={[
-                  styles.previewCard,
+                  styles.heroBlock,
+                  isWide && styles.heroBlockWide,
                   {
                     backgroundColor: palette.paper,
                     borderColor: palette.border,
                   },
                 ]}
-                testID="ledger-upload-preview-card"
               >
-                <Text style={[styles.previewEyebrow, { color: palette.inkMuted }]}>
-                  {uploadCopy.previewTitle}
+                <Text style={[styles.eyebrow, { color: palette.inkMuted }]}>
+                  {uploadCopy.eyebrow}
                 </Text>
-                {showImagePreview ? (
-                  <Image
-                    source={{ uri: selectedCandidate.uri }}
-                    style={styles.previewImage}
-                  />
-                ) : (
-                  <View
-                    style={[
-                      styles.previewIconWrap,
-                      { backgroundColor: palette.accentSoft },
-                    ]}
-                  >
-                    <MaterialCommunityIcons
-                      color={palette.accent}
-                      name={
-                        selectedCandidate.kind === "live_photo"
-                          ? "motion-play-outline"
-                          : selectedCandidate.kind === "image"
-                            ? "image-outline"
-                            : "file-document-outline"
-                      }
-                      size={28}
-                    />
-                  </View>
-                )}
-                <Text style={[styles.previewFileName, { color: palette.ink }]}>
-                  {selectedCandidate.originalFileName}
+                <Text
+                  style={[
+                    styles.heroTitle,
+                    isWide && styles.heroTitleWide,
+                    { color: palette.ink },
+                  ]}
+                >
+                  {uploadCopy.title}
                 </Text>
-                {previewMeta ? (
-                  <Text style={[styles.previewMeta, { color: palette.inkMuted }]}>
-                    {previewMeta}
-                  </Text>
-                ) : null}
-
-                <View style={[styles.buttonStack, isWide && styles.buttonStackWide]}>
-                  <Pressable
-                    accessibilityRole="button"
-                    disabled={isBusy}
-                    onPress={handleParseSelected}
-                    style={({ pressed }) => [
-                      styles.primaryButton,
-                      {
-                        backgroundColor: isBusy
-                          ? primaryButton.disabledBackground
-                          : pressed
-                            ? primaryButton.pressedBackground
-                            : primaryButton.background,
-                        opacity: isBusy ? 0.7 : 1,
-                        shadowColor: palette.shadow,
-                      },
-                    ]}
-                    testID="ledger-upload-parse-button"
-                  >
-                    <View style={styles.primaryButtonContent}>
-                      <MaterialCommunityIcons
-                        color={isBusy ? primaryButton.disabledText : primaryButton.text}
-                        name="file-search-outline"
-                        size={18}
-                      />
-                      <Text
-                        style={[
-                          styles.primaryButtonLabel,
-                          {
-                            color: isBusy
-                              ? primaryButton.disabledText
-                              : primaryButton.text,
-                          },
-                        ]}
-                      >
-                        {isBusy ? uploadCopy.parsing : uploadCopy.parseAction}
-                      </Text>
-                    </View>
-                  </Pressable>
-
-                  <Pressable
-                    accessibilityRole="button"
-                    disabled={isBusy}
-                    onPress={() => {
-                      setError(null);
-                      setSelectedCandidate(null);
-                      setStatus("idle");
-                    }}
-                    style={({ pressed }) => [
-                      styles.secondaryButton,
-                      {
-                        backgroundColor: pressed ? palette.paperMuted : palette.paper,
-                        borderColor: palette.border,
-                        opacity: isBusy ? 0.7 : 1,
-                      },
-                    ]}
-                    testID="ledger-upload-back-button"
-                  >
-                    <View style={styles.primaryButtonContent}>
-                      <MaterialCommunityIcons
-                        color={palette.ink}
-                        name="arrow-left"
-                        size={18}
-                      />
-                      <Text
-                        style={[styles.secondaryButtonLabel, { color: palette.ink }]}
-                      >
-                        {uploadCopy.backAction}
-                      </Text>
-                    </View>
-                  </Pressable>
-                </View>
-              </View>
-            ) : (
-              <View style={[styles.buttonStack, isWide && styles.buttonStackWide]}>
-                <Pressable
-                  accessibilityRole="button"
-                  disabled={isBusy}
-                  onPress={() => handleImport("photos")}
-                  style={({ pressed }) => [
-                    styles.primaryButton,
-                    {
-                      backgroundColor: isBusy
-                        ? primaryButton.disabledBackground
-                        : pressed
-                          ? primaryButton.pressedBackground
-                          : primaryButton.background,
-                      opacity: isBusy ? 0.7 : 1,
-                      shadowColor: palette.shadow,
-                    },
+                <Text
+                  style={[
+                    styles.heroSummary,
+                    isWide && styles.heroSummaryWide,
+                    { color: palette.inkMuted },
                   ]}
-                  testID="ledger-upload-select-photos-button"
                 >
-                  <View style={styles.primaryButtonContent}>
-                    <MaterialCommunityIcons
-                      color={isBusy ? primaryButton.disabledText : primaryButton.text}
-                      name="image-multiple-outline"
-                      size={18}
-                    />
-                    <Text
-                      style={[
-                        styles.primaryButtonLabel,
-                        { color: isBusy ? primaryButton.disabledText : primaryButton.text },
-                      ]}
-                    >
-                      {isBusy ? uploadCopy.parsing : uploadCopy.selectPhotos}
-                    </Text>
-                  </View>
-                </Pressable>
-
-                {Platform.OS !== "web" && (
-                  <Pressable
-                    accessibilityRole="button"
-                    disabled={isBusy}
-                    onPress={() => handleImport("camera")}
-                    style={({ pressed }) => [
-                      styles.secondaryButton,
-                      {
-                        backgroundColor: pressed ? palette.paperMuted : palette.paper,
-                        borderColor: palette.border,
-                        opacity: isBusy ? 0.7 : 1,
-                      },
-                    ]}
-                    testID="ledger-upload-camera-button"
-                  >
-                    <View style={styles.primaryButtonContent}>
-                      <MaterialCommunityIcons
-                        color={palette.ink}
-                        name="camera-outline"
-                        size={18}
-                      />
-                      <Text
-                        style={[styles.secondaryButtonLabel, { color: palette.ink }]}
-                      >
-                        {uploadCopy.takePhoto}
-                      </Text>
-                    </View>
-                  </Pressable>
-                )}
-
-                <Pressable
-                  accessibilityRole="button"
-                  disabled={isBusy}
-                  onPress={() => handleImport("documents")}
-                  style={({ pressed }) => [
-                    styles.secondaryButton,
-                    {
-                      backgroundColor: pressed ? palette.paperMuted : palette.paper,
-                      borderColor: palette.border,
-                      opacity: isBusy ? 0.7 : 1,
-                    },
-                  ]}
-                  testID="ledger-upload-select-button"
-                >
-                  <View style={styles.primaryButtonContent}>
-                    <MaterialCommunityIcons
-                      color={palette.ink}
-                      name="file-upload-outline"
-                      size={18}
-                    />
-                    <Text
-                      style={[styles.secondaryButtonLabel, { color: palette.ink }]}
-                    >
-                      {uploadCopy.selectFiles}
-                    </Text>
-                  </View>
-                </Pressable>
+                  {uploadCopy.summary}
+                </Text>
               </View>
-            )}
+              <UploadWorkspaceCard
+                error={error}
+                errorColors={errorColors}
+                handleImport={handleImport}
+                handleParseSelected={handleParseSelected}
+                isBusy={isBusy}
+                isWide={isWide}
+                palette={palette}
+                previewMeta={previewMeta}
+                primaryButton={primaryButton}
+                selectedCandidate={selectedCandidate}
+                setError={setError}
+                setSelectedCandidate={setSelectedCandidate}
+                setStatus={setStatus}
+                showImagePreview={showImagePreview}
+                statusText={statusText}
+                uploadCopy={uploadCopy}
+              />
+            </View>
+          </ScrollView>
+        </>
+      )}
+    </SafeAreaView>
+  );
+}
 
-            <Text
+function UploadWorkspaceCard({
+  error,
+  errorColors,
+  handleImport,
+  handleParseSelected,
+  isBusy,
+  isWide,
+  palette,
+  previewMeta,
+  primaryButton,
+  selectedCandidate,
+  setError,
+  setSelectedCandidate,
+  setStatus,
+  showImagePreview,
+  statusText,
+  uploadCopy,
+}: {
+  error: string | null;
+  errorColors: ReturnType<typeof getFeedbackColors>;
+  handleImport: (source: "camera" | "documents" | "photos") => Promise<void>;
+  handleParseSelected: () => Promise<void>;
+  isBusy: boolean;
+  isWide: boolean;
+  palette: ReturnType<typeof useAppShell>["palette"];
+  previewMeta: string;
+  primaryButton: ReturnType<typeof getButtonColors>;
+  selectedCandidate: SelectedUploadCandidate | null;
+  setError: (value: string | null) => void;
+  setSelectedCandidate: (value: SelectedUploadCandidate | null) => void;
+  setStatus: (value: "empty" | "idle") => void;
+  showImagePreview: boolean;
+  statusText: string;
+  uploadCopy: ReturnType<typeof useAppShell>["copy"]["ledger"]["upload"];
+}) {
+  return (
+    <View
+      style={[
+        styles.dropCard,
+        isWide && styles.dropCardWide,
+        {
+          backgroundColor: palette.shellElevated,
+          borderColor: palette.border,
+          shadowColor: palette.shadow,
+        },
+      ]}
+    >
+      <View
+        style={[
+          styles.uploadGlyph,
+          { backgroundColor: palette.accentSoft },
+        ]}
+      >
+        <Feather color={palette.accent} name="upload-cloud" size={26} />
+      </View>
+      <Text style={[styles.dropTitle, { color: palette.ink }]}>
+        {uploadCopy.uploadCardTitle}
+      </Text>
+      <Text style={[styles.dropSummary, { color: palette.inkMuted }]}>
+        {uploadCopy.uploadCardSummary}
+      </Text>
+
+      {selectedCandidate ? (
+        <View
+          style={[
+            styles.previewCard,
+            {
+              backgroundColor: palette.paper,
+              borderColor: palette.border,
+            },
+          ]}
+          testID="ledger-upload-preview-card"
+        >
+          <Text style={[styles.previewEyebrow, { color: palette.inkMuted }]}>
+            {uploadCopy.previewTitle}
+          </Text>
+          {showImagePreview ? (
+            <Image
+              source={{ uri: selectedCandidate.uri }}
+              style={styles.previewImage}
+            />
+          ) : (
+            <View
               style={[
-                styles.hint,
-                { color: error ? errorColors.text : palette.inkMuted },
+                styles.previewIconWrap,
+                { backgroundColor: palette.accentSoft },
               ]}
             >
-              {error ?? statusText}
+              <MaterialCommunityIcons
+                color={palette.accent}
+                name={
+                  selectedCandidate.kind === "live_photo"
+                    ? "motion-play-outline"
+                    : selectedCandidate.kind === "image"
+                      ? "image-outline"
+                      : "file-document-outline"
+                }
+                size={28}
+              />
+            </View>
+          )}
+          <Text style={[styles.previewFileName, { color: palette.ink }]}>
+            {selectedCandidate.originalFileName}
+          </Text>
+          {previewMeta ? (
+            <Text style={[styles.previewMeta, { color: palette.inkMuted }]}>
+              {previewMeta}
             </Text>
+          ) : null}
+
+          <View style={[styles.buttonStack, isWide && styles.buttonStackWide]}>
+            <Pressable
+              accessibilityRole="button"
+              disabled={isBusy}
+              onPress={handleParseSelected}
+              style={({ pressed }) => [
+                styles.primaryButton,
+                {
+                  backgroundColor: isBusy
+                    ? primaryButton.disabledBackground
+                    : pressed
+                      ? primaryButton.pressedBackground
+                      : primaryButton.background,
+                  opacity: isBusy ? 0.7 : 1,
+                  shadowColor: palette.shadow,
+                },
+              ]}
+              testID="ledger-upload-parse-button"
+            >
+              <View style={styles.primaryButtonContent}>
+                <MaterialCommunityIcons
+                  color={isBusy ? primaryButton.disabledText : primaryButton.text}
+                  name="file-search-outline"
+                  size={18}
+                />
+                <Text
+                  style={[
+                    styles.primaryButtonLabel,
+                    {
+                      color: isBusy
+                        ? primaryButton.disabledText
+                        : primaryButton.text,
+                    },
+                  ]}
+                >
+                  {isBusy ? uploadCopy.parsing : uploadCopy.parseAction}
+                </Text>
+              </View>
+            </Pressable>
+
+            <Pressable
+              accessibilityRole="button"
+              disabled={isBusy}
+              onPress={() => {
+                setError(null);
+                setSelectedCandidate(null);
+                setStatus("idle");
+              }}
+              style={({ pressed }) => [
+                styles.secondaryButton,
+                {
+                  backgroundColor: pressed ? palette.paperMuted : palette.paper,
+                  borderColor: palette.border,
+                  opacity: isBusy ? 0.7 : 1,
+                },
+              ]}
+              testID="ledger-upload-back-button"
+            >
+              <View style={styles.primaryButtonContent}>
+                <MaterialCommunityIcons
+                  color={palette.ink}
+                  name="arrow-left"
+                  size={18}
+                />
+                <Text
+                  style={[styles.secondaryButtonLabel, { color: palette.ink }]}
+                >
+                  {uploadCopy.backAction}
+                </Text>
+              </View>
+            </Pressable>
           </View>
         </View>
-      </ScrollView>
-    </SafeAreaView>
+      ) : (
+        <View style={[styles.buttonStack, isWide && styles.buttonStackWide]}>
+          <Pressable
+            accessibilityRole="button"
+            disabled={isBusy}
+            onPress={() => handleImport("photos")}
+            style={({ pressed }) => [
+              styles.primaryButton,
+              {
+                backgroundColor: isBusy
+                  ? primaryButton.disabledBackground
+                  : pressed
+                    ? primaryButton.pressedBackground
+                    : primaryButton.background,
+                opacity: isBusy ? 0.7 : 1,
+                shadowColor: palette.shadow,
+              },
+            ]}
+            testID="ledger-upload-select-photos-button"
+          >
+            <View style={styles.primaryButtonContent}>
+              <MaterialCommunityIcons
+                color={isBusy ? primaryButton.disabledText : primaryButton.text}
+                name="image-multiple-outline"
+                size={18}
+              />
+              <Text
+                style={[
+                  styles.primaryButtonLabel,
+                  { color: isBusy ? primaryButton.disabledText : primaryButton.text },
+                ]}
+              >
+                {isBusy ? uploadCopy.parsing : uploadCopy.selectPhotos}
+              </Text>
+            </View>
+          </Pressable>
+
+          {Platform.OS !== "web" && (
+            <Pressable
+              accessibilityRole="button"
+              disabled={isBusy}
+              onPress={() => handleImport("camera")}
+              style={({ pressed }) => [
+                styles.secondaryButton,
+                {
+                  backgroundColor: pressed ? palette.paperMuted : palette.paper,
+                  borderColor: palette.border,
+                  opacity: isBusy ? 0.7 : 1,
+                },
+              ]}
+              testID="ledger-upload-camera-button"
+            >
+              <View style={styles.primaryButtonContent}>
+                <MaterialCommunityIcons
+                  color={palette.ink}
+                  name="camera-outline"
+                  size={18}
+                />
+                <Text
+                  style={[styles.secondaryButtonLabel, { color: palette.ink }]}
+                >
+                  {uploadCopy.takePhoto}
+                </Text>
+              </View>
+            </Pressable>
+          )}
+
+          <Pressable
+            accessibilityRole="button"
+            disabled={isBusy}
+            onPress={() => handleImport("documents")}
+            style={({ pressed }) => [
+              styles.secondaryButton,
+              {
+                backgroundColor: pressed ? palette.paperMuted : palette.paper,
+                borderColor: palette.border,
+                opacity: isBusy ? 0.7 : 1,
+              },
+            ]}
+            testID="ledger-upload-select-button"
+          >
+            <View style={styles.primaryButtonContent}>
+              <MaterialCommunityIcons
+                color={palette.ink}
+                name="file-upload-outline"
+                size={18}
+              />
+              <Text
+                style={[styles.secondaryButtonLabel, { color: palette.ink }]}
+              >
+                {uploadCopy.selectFiles}
+              </Text>
+            </View>
+          </Pressable>
+        </View>
+      )}
+
+      <Text
+        style={[
+          styles.hint,
+          { color: error ? errorColors.text : palette.inkMuted },
+        ]}
+      >
+        {error ?? statusText}
+      </Text>
+    </View>
   );
 }
 
@@ -643,6 +795,60 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: "row",
     gap: 32,
+  },
+  webHeroSummary: {
+    fontSize: 15,
+    lineHeight: 22,
+    maxWidth: 560,
+  },
+  webHeroTitle: {
+    fontSize: 28,
+    lineHeight: 34,
+  },
+  webModalBackdrop: {
+    alignItems: "center",
+    flex: 1,
+    justifyContent: "center",
+    paddingHorizontal: 28,
+    paddingVertical: 36,
+  },
+  webModalBody: {
+    paddingHorizontal: 28,
+    paddingBottom: 28,
+  },
+  webModalCloseButton: {
+    alignItems: "center",
+    borderRadius: 14,
+    borderWidth: 1,
+    height: 40,
+    justifyContent: "center",
+    width: 40,
+  },
+  webModalFrame: {
+    borderRadius: 28,
+    borderWidth: 1,
+    maxWidth: 880,
+    shadowOffset: { width: 0, height: 20 },
+    shadowOpacity: 0.16,
+    shadowRadius: 40,
+    width: "100%",
+  },
+  webModalFrameWrap: {
+    maxWidth: 880,
+    width: "100%",
+  },
+  webModalHeader: {
+    alignItems: "flex-start",
+    flexDirection: "row",
+    gap: 20,
+    justifyContent: "space-between",
+    paddingHorizontal: 28,
+    paddingTop: 28,
+    paddingBottom: 20,
+  },
+  webModalHeaderCopy: {
+    flex: 1,
+    gap: 8,
   },
   uploadGlyph: {
     alignItems: "center",
