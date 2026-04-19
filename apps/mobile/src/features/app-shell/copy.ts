@@ -1015,7 +1015,7 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
       appleUnavailable:
         "Apple sign-in is unavailable here. Continue as a guest.",
       brandSubtitle: "Your local-first financial workbench.",
-      body: "Sign in with Apple, Google, or step in as a guest. Your shell stays local, calm, and ready.",
+      body: "You become governable, not by others but by yourself.",
       caption: "Theme and language stay in sync with your device.",
       eyebrow: "Local-first login",
       googleButton: "Continue with Google",
@@ -1026,8 +1026,8 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
       privacyMetrics: ["AES-256 local encryption", "Zero cloud sync default"],
       privacySummary: "Your records stay organized on-device first.",
       signals: ["On-device first", "Guest ready", "Theme aware"],
-      skip: "Skip for now",
-      title: "One calm place for creator cash.",
+      skip: "Try now",
+      title: "The moment you start tracking your money, you stop being random.",
     },
     meScreen: {
       aiProviderGemini: "Google AI Studio Gemini",
@@ -1610,7 +1610,7 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
       privacyMetrics: ["AES-256 本地加密", "默认不启用云同步"],
       privacySummary: "你的记录会优先保存在本机并保持有序。",
       signals: ["设备优先", "游客可用", "主题自适应"],
-      skip: "暂不登录",
+      skip: "立即体验",
       title: "先给创作者现金流一个安静入口。",
     },
     meScreen: {
