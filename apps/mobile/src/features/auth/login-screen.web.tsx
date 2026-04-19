@@ -2,6 +2,7 @@ import { Redirect, useRouter } from "expo-router";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { LedgerlyIconMark } from "../../components/ledgerly-icon-mark";
 import { useResponsive } from "../../hooks/use-responsive";
 import { LaunchScreen } from "../app-shell/launch-screen";
 import { useAppShell } from "../app-shell/provider";
@@ -44,89 +45,39 @@ export function LoginScreen() {
       <SafeAreaView style={[styles.safeArea, { backgroundColor: palette.paper }]}>
         <View style={styles.splitLayout}>
           <View style={[styles.leftPanel, { backgroundColor: palette.paper }]}>
-            <View style={styles.leftPanelInner}>
-              <View style={styles.topBlock}>
-                <Text style={[styles.brandTitleWide, { color: palette.ink }]}>
-                  {copy.common.appName}
-                </Text>
-                <Text style={[styles.brandSubtitleWide, { color: palette.inkMuted }]}>
-                  {copy.login.brandSubtitle}
-                </Text>
-              </View>
-
-              <View
-                style={[
-                  styles.heroArt,
-                  {
-                    backgroundColor: palette.heroEnd,
-                    shadowColor: palette.shadow,
-                  },
-                ]}
-              >
-                <View
-                  style={[
-                    styles.heroGlow,
-                    { backgroundColor: palette.shellElevated },
-                  ]}
-                />
-                <View style={styles.heroDesk} />
-                <View style={styles.heroLaptop}>
-                  <View
-                    style={[
-                      styles.heroLaptopScreen,
-                      { backgroundColor: palette.paper },
-                    ]}
-                  />
-                </View>
-                <View
-                  style={[
-                    styles.heroPill,
-                    styles.heroPillTop,
-                    { backgroundColor: palette.paper },
-                  ]}
-                >
-                  <View
-                    style={[styles.pillDot, { backgroundColor: palette.accent }]}
-                  />
-                  <Text style={[styles.heroPillLabel, { color: palette.ink }]}>
-                    {copy.login.signals[0]}
-                  </Text>
-                </View>
-                <View
-                  style={[
-                    styles.heroPill,
-                    styles.heroPillMiddle,
-                    { backgroundColor: palette.paper },
-                  ]}
-                >
-                  <View
-                    style={[styles.pillDot, { backgroundColor: palette.accent }]}
-                  />
-                  <Text style={[styles.heroPillLabel, { color: palette.ink }]}>
-                    {copy.login.signals[1]}
-                  </Text>
-                </View>
-                <View
-                  style={[
-                    styles.heroPill,
-                    styles.heroPillBottom,
-                    { backgroundColor: palette.paper },
-                  ]}
-                >
-                  <View
-                    style={[styles.pillDot, { backgroundColor: palette.accent }]}
-                  />
-                  <Text style={[styles.heroPillLabel, { color: palette.ink }]}>
-                    {copy.login.signals[2]}
-                  </Text>
-                </View>
-              </View>
-
+            <View
+              style={[
+                styles.messageBlock,
+                {
+                  backgroundColor: palette.paperMuted,
+                  borderColor: palette.border,
+                  shadowColor: palette.shadow,
+                },
+              ]}
+            >
+              <Text style={[styles.brandTitleWide, { color: palette.ink }]}>
+                {copy.common.appName}
+              </Text>
+              <Text style={[styles.brandSubtitleWide, { color: palette.inkMuted }]}>
+                {copy.login.brandSubtitle}
+              </Text>
+              <Text style={[styles.messageTitle, { color: palette.ink }]}>
+                The moment you start tracking your money,
+              </Text>
+              <Text style={[styles.messageBody, { color: palette.ink }]}>
+                you stop being random.
+              </Text>
+              <Text style={[styles.messageBody, { color: palette.ink }]}>
+                You become governable,
+              </Text>
+              <Text style={[styles.messageBody, { color: palette.ink }]}>
+                not by others but by yourself.
+              </Text>
               <View style={styles.privacyMetrics}>
                 <View
                   style={[
                     styles.privacyChip,
-                    { backgroundColor: palette.paperMuted, borderColor: palette.border },
+                    { backgroundColor: palette.paper, borderColor: palette.border },
                   ]}
                 >
                   <View style={[styles.statusDot, { backgroundColor: palette.accent }]} />
@@ -137,7 +88,7 @@ export function LoginScreen() {
                 <View
                   style={[
                     styles.privacyChip,
-                    { backgroundColor: palette.paperMuted, borderColor: palette.border },
+                    { backgroundColor: palette.paper, borderColor: palette.border },
                   ]}
                 >
                   <View style={[styles.statusDot, { backgroundColor: palette.accent }]} />
@@ -151,55 +102,37 @@ export function LoginScreen() {
 
           <View style={[styles.rightPanel, { backgroundColor: palette.paperMuted }]}>
             <View style={styles.rightPanelInner}>
-              <Text style={[styles.privacyEyebrow, { color: palette.accent }]}>
-                {copy.login.eyebrow}
-              </Text>
-              <Text style={[styles.loginTitle, { color: palette.ink }]}>
-                {copy.login.title}
-              </Text>
-              <Text style={[styles.loginBody, { color: palette.inkMuted }]}>
-                {copy.login.body}
-              </Text>
+              <View
+                style={[
+                  styles.tryNowIconWrap,
+                  {
+                    backgroundColor: palette.paper,
+                    borderColor: palette.border,
+                    shadowColor: palette.shadow,
+                  }
+                ]}
+              >
+                <LedgerlyIconMark
+                  size={168}
+                />
+              </View>
 
               <View style={styles.actionsWide}>
                 <Pressable
                   accessibilityRole="button"
                   onPress={handleGuestMode}
                   style={({ pressed }) => [
-                    styles.primaryButton,
+                    styles.secondaryButton,
                     {
-                      backgroundColor: pressed ? palette.heroEnd : palette.ink,
-                      shadowColor: palette.shadow,
+                      backgroundColor: pressed ? palette.paperMuted : palette.paper,
+                      borderColor: palette.border,
                     },
                   ]}
                 >
-                  <Text
-                    style={[styles.primaryLabel, { color: palette.inkOnAccent }]}
-                  >
+                  <Text style={[styles.secondaryLabel, { color: palette.ink }]}>
                     {copy.login.skip}
                   </Text>
                 </Pressable>
-              </View>
-
-              <Text style={[styles.caption, { color: palette.inkMuted }]}>
-                {copy.login.caption}
-              </Text>
-
-              <View
-                style={[
-                  styles.statusPanel,
-                  {
-                    backgroundColor: palette.paper,
-                    borderColor: palette.border,
-                  },
-                ]}
-              >
-                <View
-                  style={[styles.statusDot, { backgroundColor: palette.accent }]}
-                />
-                <Text style={[styles.statusText, { color: palette.inkMuted }]}>
-                  {copy.login.appleHint}
-                </Text>
               </View>
             </View>
           </View>
@@ -297,23 +230,20 @@ export function LoginScreen() {
             accessibilityRole="button"
             onPress={handleGuestMode}
             style={({ pressed }) => [
-              styles.primaryButton,
+              styles.secondaryButton,
               {
-                backgroundColor: pressed ? palette.heroEnd : palette.ink,
+                backgroundColor: pressed ? palette.paperMuted : palette.paper,
+                borderColor: palette.border,
               },
             ]}
           >
             <Text
-              style={[styles.primaryLabel, { color: palette.inkOnAccent }]}
+              style={[styles.secondaryLabel, { color: palette.ink }]}
             >
               {copy.login.skip}
             </Text>
           </Pressable>
         </View>
-
-        <Text style={[styles.caption, { color: palette.inkMuted }]}>
-          {copy.login.caption}
-        </Text>
 
         <View style={[styles.privacyCard, { borderTopColor: palette.divider }]}>
           <Text style={[styles.privacyEyebrow, { color: palette.accent }]}>
@@ -474,10 +404,41 @@ const styles = StyleSheet.create({
     paddingHorizontal: 48,
     paddingVertical: 40,
   },
-  leftPanelInner: {
-    gap: 28,
+  messageBlock: {
+    borderRadius: 28,
+    borderWidth: 1,
+    gap: 12,
     maxWidth: 560,
+    paddingHorizontal: 28,
+    paddingVertical: 30,
+    shadowOffset: { height: 14, width: 0 },
+    shadowOpacity: 0.08,
+    shadowRadius: 28,
     width: "100%",
+  },
+  messageBody: {
+    fontSize: 24,
+    fontWeight: "800",
+    letterSpacing: -0.3,
+    lineHeight: 31,
+  },
+  messageCaption: {
+    fontSize: 14,
+    lineHeight: 21,
+    marginTop: 6,
+  },
+  messageEyebrow: {
+    fontSize: 12,
+    fontWeight: "800",
+    letterSpacing: 1.4,
+    textTransform: "uppercase",
+  },
+  messageTitle: {
+    fontSize: 24,
+    fontWeight: "800",
+    letterSpacing: -0.3,
+    lineHeight: 31,
+    marginTop: 8,
   },
   loginBody: {
     fontSize: 16,
@@ -506,6 +467,17 @@ const styles = StyleSheet.create({
     shadowRadius: 14,
   },
   primaryLabel: {
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  secondaryButton: {
+    alignItems: "center",
+    borderRadius: 14,
+    borderWidth: 1,
+    height: 52,
+    justifyContent: "center",
+  },
+  secondaryLabel: {
     fontSize: 16,
     fontWeight: "700",
   },
@@ -565,8 +537,8 @@ const styles = StyleSheet.create({
   },
   rightPanelInner: {
     alignItems: "center",
-    gap: 20,
-    maxWidth: 440,
+    gap: 28,
+    maxWidth: 320,
     width: "100%",
   },
   safeArea: {
@@ -600,6 +572,17 @@ const styles = StyleSheet.create({
     fontSize: 18,
     lineHeight: 28,
     textAlign: "center",
+  },
+  tryNowIconWrap: {
+    alignItems: "center",
+    borderRadius: 28,
+    borderWidth: 1,
+    height: 260,
+    justifyContent: "center",
+    shadowOffset: { height: 18, width: 0 },
+    shadowOpacity: 0.08,
+    shadowRadius: 32,
+    width: 260,
   },
   topBlock: {
     alignItems: "center",

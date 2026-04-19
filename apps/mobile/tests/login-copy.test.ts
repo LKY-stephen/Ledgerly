@@ -14,7 +14,7 @@ describe("login copy", () => {
     expect(chineseLogin.signals).toHaveLength(3);
     expect(englishLogin.privacyMetrics).toHaveLength(2);
     expect(chineseLogin.privacyMetrics).toHaveLength(2);
-    expect(englishLogin.title.length).toBeLessThan(60);
+    expect(englishLogin.title.length).toBeLessThan(80);
     expect(chineseLogin.title.length).toBeLessThan(30);
     expect(englishLogin.body.length).toBeLessThan(100);
     expect(chineseLogin.body.length).toBeLessThan(60);

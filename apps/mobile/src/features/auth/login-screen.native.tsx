@@ -237,20 +237,16 @@ export function LoginScreen() {
               {
                 backgroundColor: pressed
                   ? palette.paperMuted
-                  : palette.shellElevated,
+                  : palette.paper,
                 borderColor: palette.border,
               },
             ]}
           >
-            <Text style={[styles.guestLabel, { color: palette.inkMuted }]}>
+            <Text style={[styles.guestLabel, { color: palette.ink }]}>
               {copy.login.skip}
             </Text>
           </Pressable>
         </View>
-
-        <Text style={[styles.caption, { color: palette.inkMuted }]}>
-          {copy.login.caption}
-        </Text>
 
         <View style={[styles.privacyCard, { borderTopColor: palette.divider }]}>
           <Text style={[styles.privacyEyebrow, { color: palette.accent }]}>
