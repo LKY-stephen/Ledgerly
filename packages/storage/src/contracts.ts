@@ -467,9 +467,9 @@ const structuredSchemaStatements = [
 ] as const;
 
 export const structuredStoreContract = {
-  databaseName: "creator-cfo-local.db",
+  databaseName: "ledgerly-local.db",
   maintenanceStatements: structuredMaintenanceStatements,
-  version: 5,
+  version: 6,
   pragmas: structuredStorePragmas,
   tables: structuredTables,
   views: structuredViews,
@@ -487,7 +487,7 @@ export const structuredStoreContract = {
 };
 
 export const fileVaultContract = {
-  rootDirectory: "creator-cfo-vault",
+  rootDirectory: "ledgerly-vault",
   collections: [
     {
       slug: "evidence-objects",
@@ -527,8 +527,8 @@ export const fileVaultContract = {
 
 export const deviceStateContract = {
   storageEngine: "AsyncStorage",
-  namespace: "@creator-cfo/mobile",
-  version: 6,
+  namespace: "@ledgerly/mobile",
+  version: 7,
   records: [
     {
       key: "theme_preference",
@@ -626,6 +626,21 @@ export const deviceStateContract = {
   records: KeyValueRecordContract[];
 };
 
+const legacyProductSlug = ["creator", "cfo"].join("-");
+const legacyDeviceStateNamespace = `@${legacyProductSlug}/mobile`;
+
+export const legacyStructuredStoreDatabaseNames = [
+  `${legacyProductSlug}-local.db`,
+] as const;
+
+export const legacyFileVaultRootDirectories = [
+  `${legacyProductSlug}-vault`,
+] as const;
+
+export const legacyDeviceStateNamespaces = [
+  legacyDeviceStateNamespace,
+] as const;
+
 export type FileVaultCollectionSlug = (typeof fileVaultContract.collections)[number]["slug"];
 export type DeviceStateRecordKey = (typeof deviceStateContract.records)[number]["key"];
 
@@ -673,6 +688,12 @@ export function buildVaultRelativePath(
 
 export function buildDeviceStateStorageKey(key: DeviceStateRecordKey): string {
   return `${deviceStateContract.namespace}/${key}`;
+}
+
+export function buildLegacyDeviceStateStorageKeys(
+  key: DeviceStateRecordKey,
+): string[] {
+  return legacyDeviceStateNamespaces.map((namespace) => `${namespace}/${key}`);
 }
 
 export function buildEvidenceObjectPath(sha256Hex: string, extension: string): string {

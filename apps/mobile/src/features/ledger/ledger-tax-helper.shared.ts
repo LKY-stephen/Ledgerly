@@ -2,7 +2,7 @@ import type {
   TaxHelperDerivedField,
   TaxHelperEvidenceFileLink,
   TaxHelperSnapshot,
-} from "@creator-cfo/storage";
+} from "@ledgerly/storage";
 
 import type { ResolvedLocale } from "../app-shell/types";
 import type { LedgerScopeId } from "./ledger-reporting";

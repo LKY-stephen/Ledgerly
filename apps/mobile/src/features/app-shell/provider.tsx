@@ -7,7 +7,7 @@ import {
   type PropsWithChildren,
 } from "react";
 import { Platform, useColorScheme } from "react-native";
-import { surfaceThemes } from "@creator-cfo/ui";
+import { surfaceThemes } from "@ledgerly/ui";
 
 import {
   initializeEmptyStorageFromSetup,
@@ -106,8 +106,10 @@ interface AppShellContextValue {
 
 const AppShellContext = createContext<AppShellContextValue | null>(null);
 
+const defaultAiProvider: AiProvider = "infer";
+
 const initialState: PersistedAppState = {
-  aiProvider: "openai",
+  aiProvider: defaultAiProvider,
   geminiApiKey: "",
   geminiAuthMode: "api_key",
   googleAccessToken: "",

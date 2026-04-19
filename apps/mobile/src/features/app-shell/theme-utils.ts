@@ -1,4 +1,4 @@
-import type { SurfaceTokens } from "@creator-cfo/ui";
+import type { SurfaceTokens } from "@ledgerly/ui";
 
 type FeedbackTone = "error" | "success" | "warning";
 type ButtonTone = "primary" | "destructive";

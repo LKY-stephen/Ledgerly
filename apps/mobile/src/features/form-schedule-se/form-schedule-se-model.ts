@@ -1,4 +1,4 @@
-import type { SupportedScheduleCNetProfitPreview } from "@creator-cfo/storage";
+import type { SupportedScheduleCNetProfitPreview } from "@ledgerly/storage";
 
 import { scheduleSEFields } from "./form-schedule-se-fields";
 import {

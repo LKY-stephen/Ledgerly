@@ -9,7 +9,7 @@ import {
   resolveStandardReceiptEntry,
   structuredStoreContract,
   type StorageSqlValue,
-} from "@creator-cfo/storage";
+} from "@ledgerly/storage";
 
 function createStorageDatabase(): DatabaseSync {
   const database = new DatabaseSync(":memory:");
@@ -57,7 +57,7 @@ async function createPopulatedV1Database() {
       created_at
     ) VALUES (?, ?, ?, ?, ?, ?);`,
     "entity-main",
-    "Creator CFO Demo Books",
+    "Ledgerly Demo Books",
     "sole_proprietorship",
     "USD",
     "America/Los_Angeles",

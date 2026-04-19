@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import type { SurfaceTokens } from "@creator-cfo/ui";
+import type { SurfaceTokens } from "@ledgerly/ui";
 
 import { AppIcon } from "./app-icon";
 

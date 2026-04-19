@@ -62,7 +62,7 @@
 
 ### Smoke Path
 
-1. Run `pnpm --filter @creator-cfo/mobile start`.
+1. Run `pnpm --filter @ledgerly/mobile start`.
 2. Enter the tab shell and verify all four tabs show vector icons.
 3. Switch tabs and confirm the selected icon gives a subtle wobble/selection cue.
 4. On Home, verify modules, platforms, bootstrap, storage, and device-state cards render with icons and real counts.

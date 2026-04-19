@@ -1,5 +1,5 @@
 import { getActiveWebDatabase, openWebSqliteDatabase } from "../../storage/web-sqlite";
-import { createWritableStorageDatabase } from "@creator-cfo/storage";
+import { createWritableStorageDatabase } from "@ledgerly/storage";
 import { replaceCreatorLedgerDemoRecords } from "./creator-ledger-demo-plan";
 import { deleteDatabaseFromIndexedDB } from "../../storage/web-persistence";
 import { initializeLocalDatabase } from "../../storage/database";
@@ -47,7 +47,7 @@ export async function startNewLedger(): Promise<void> {
   // Export the new empty database into the selected folder
   if (dirHandle) {
     const data = newDb.exportDatabase();
-    const fileHandle = await dirHandle.getFileHandle("creator-cfo-local.db", {
+    const fileHandle = await dirHandle.getFileHandle("ledgerly-local.db", {
       create: true,
     });
     const writable = await fileHandle.createWritable();

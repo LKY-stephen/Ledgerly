@@ -6,7 +6,7 @@
 | **类型** | 前端 UI / 动效（默认**不**改存储契约） |
 | **依赖** | 已有 `(tabs)` 四 Tab（home / ledger / discover / profile）与 `AppShell` 主题、文案体系 |
 
-**公用约定**：以 `.cursor/prd/agent-dev-guide-summary.md` 为准。仓库级 Agent 基线：`.cursor/rules/creator-cfo-always.mdc`。结构参考 `.cursor/prd/TEMPLATE.md`。
+**公用约定**：以 `.cursor/prd/agent-dev-guide-summary.md` 为准。仓库级 Agent 基线：`.cursor/rules/ledgerly-always.mdc`。结构参考 `.cursor/prd/TEMPLATE.md`。
 
 ## 平台描述
 

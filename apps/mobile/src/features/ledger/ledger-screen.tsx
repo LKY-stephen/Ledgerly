@@ -1,7 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import {
   Modal,
+  Platform,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -36,8 +38,10 @@ import {
 } from "./ledger-screen-state";
 
 export function LedgerScreen() {
+  const router = useRouter();
   const { copy, palette } = useAppShell();
   const screenCopy = copy.ledgerScreen;
+  const ledgerCopy = copy.ledger;
   const primaryButton = getButtonColors(palette, "primary");
   const [isSelectorOpen, setIsSelectorOpen] = useState(false);
   const [selectedEntry, setSelectedEntry] =
@@ -197,6 +201,34 @@ export function LedgerScreen() {
               {copy.common.appName}
             </Text>
           </View>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => router.push("/ledger/upload")}
+            style={({ pressed }) => [
+              styles.headerUploadButton,
+              {
+                backgroundColor: pressed
+                  ? primaryButton.pressedBackground
+                  : primaryButton.background,
+                borderColor: primaryButton.border,
+              },
+            ]}
+            testID="ledger-header-upload-button"
+          >
+            <Ionicons
+              color={primaryButton.text}
+              name={Platform.OS === "web" ? "open-outline" : "cloud-upload-outline"}
+              size={16}
+            />
+            <Text
+              style={[
+                styles.headerUploadButtonLabel,
+                { color: primaryButton.text },
+              ]}
+            >
+              {ledgerCopy.primaryAction}
+            </Text>
+          </Pressable>
         </View>
 
         <View style={styles.topControls}>
@@ -1570,6 +1602,20 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 16,
     paddingTop: 8,
+  },
+  headerUploadButton: {
+    alignItems: "center",
+    borderRadius: 14,
+    borderWidth: 1,
+    flexDirection: "row",
+    gap: 8,
+    minHeight: 42,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  headerUploadButtonLabel: {
+    fontSize: 14,
+    fontWeight: "700",
   },
   endCapBar: {
     backgroundColor: "rgba(26, 54, 93, 0.1)",

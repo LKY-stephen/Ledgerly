@@ -1,4 +1,4 @@
-import type { ScheduleCSupportedLineCode } from "@creator-cfo/storage";
+import type { ScheduleCSupportedLineCode } from "@ledgerly/storage";
 
 import { parsedScheduleCHighlights, scheduleCPageAspectRatio } from "./form-schedule-c-layout";
 

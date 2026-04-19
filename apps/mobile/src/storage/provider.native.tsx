@@ -1,6 +1,6 @@
 import { SQLiteProvider } from "expo-sqlite";
 import type { PropsWithChildren } from "react";
-import { getLocalStorageBootstrapPlan } from "@creator-cfo/storage";
+import { getLocalStorageBootstrapPlan } from "@ledgerly/storage";
 
 import { useAppShell } from "../features/app-shell/provider";
 import { initializeActivePackageDatabase } from "./active-database.native";

@@ -2,7 +2,7 @@ import type {
   StandardReceiptEntryInput,
   StandardReceiptPersistenceContext,
   StandardReceiptUserClassification,
-} from "@creator-cfo/storage";
+} from "@ledgerly/storage";
 
 export const databaseDemoIds = {
   cashAccountId: "demo-account-cash",

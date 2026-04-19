@@ -1,19 +1,19 @@
 {
   "expo": {
     "name": "Ledgerly",
-    "slug": "creator-cfo",
+    "slug": "ledgerly",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
-    "scheme": "creatorcfo",
+    "scheme": "ledgerly",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#09211f"
     },
     "ios": {
-      "bundleIdentifier": "com.creatorcfo.mobile",
+      "bundleIdentifier": "com.ledgerly.mobile",
       "supportsTablet": true,
       "appleTeamId": "7LSK46Z392"
     },

@@ -1,4 +1,4 @@
-import { getLocalStorageBootstrapPlan } from "@creator-cfo/storage";
+import { getLocalStorageBootstrapPlan } from "@ledgerly/storage";
 
 export interface StorageSqlExecDatabase {
   execAsync(source: string): Promise<void>;

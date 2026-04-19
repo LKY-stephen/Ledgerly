@@ -187,7 +187,7 @@ Each criterion below is written as an observable, pass/fail check.
 
 ### PRD AC-7: Automated test exists
 
-- [ ] Run `pnpm --filter @creator-cfo/mobile test`
+- [ ] Run `pnpm --filter @ledgerly/mobile test`
 - [ ] Verify a test named similar to "picks camera capture candidate" or "launches camera and returns upload candidate" exists and passes
 - [ ] Verify the test mocks `ImagePicker.launchCameraAsync` and `ImagePicker.requestCameraPermissionsAsync`
 - [ ] Verify the test asserts the returned candidate shape matches `UploadCandidate`

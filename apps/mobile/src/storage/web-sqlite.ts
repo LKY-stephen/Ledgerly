@@ -1,5 +1,5 @@
 import initSqlJs, { type Database as SqlJsDatabase, type SqlJsStatic } from "sql.js";
-import type { StorageSqlValue } from "@creator-cfo/storage";
+import type { StorageSqlValue } from "@ledgerly/storage";
 import {
   loadDatabaseFromIndexedDB,
   saveDatabaseToIndexedDB,

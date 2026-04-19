@@ -1,5 +1,5 @@
-import { supportedPlatforms } from "@creator-cfo/schemas";
-import { getLocalStorageBootstrapPlan } from "@creator-cfo/storage";
+import { supportedPlatforms } from "@ledgerly/schemas";
+import { getLocalStorageBootstrapPlan } from "@ledgerly/storage";
 
 import { initializeLocalDatabase, countStructuredTables } from "./database";
 import type { BootstrapStatus } from "./status";

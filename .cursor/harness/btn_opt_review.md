@@ -116,9 +116,9 @@
 - Test design and execution record: `.cursor/harness/btn_opt_testor.md`
 - Automated evidence collected:
   - `apps/mobile/tests/theme-contrast.test.ts`
-  - `pnpm --filter @creator-cfo/mobile lint`
-  - `pnpm --filter @creator-cfo/mobile typecheck`
-  - `pnpm --filter @creator-cfo/mobile test`
+  - `pnpm --filter @ledgerly/mobile lint`
+  - `pnpm --filter @ledgerly/mobile typecheck`
+  - `pnpm --filter @ledgerly/mobile test`
   - `pnpm lint`
   - `pnpm typecheck`
   - `pnpm test`

@@ -5,7 +5,7 @@ import {
   type ReadableStorageDatabase,
   type StorageSqlValue,
   type WritableStorageDatabase,
-} from "@creator-cfo/storage";
+} from "@ledgerly/storage";
 
 import { useAppShell } from "../features/app-shell/provider";
 import { openWebSqliteDatabase, type WebSqliteDatabase } from "./web-sqlite";

@@ -38,8 +38,8 @@ function createContractDatabase(): DatabaseSync {
   return database;
 }
 
-describe("storage contract v5", () => {
-  it("boots the simplified hybrid v5 contract and exposes the expected schema inventory", () => {
+describe("storage contract v6", () => {
+  it("boots the simplified hybrid v6 contract and exposes the expected schema inventory", () => {
     const database = createContractDatabase();
     const tableRows = database
       .prepare(`SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name ASC;`)
@@ -54,7 +54,7 @@ describe("storage contract v5", () => {
       .prepare(`PRAGMA table_info(planner_runs);`)
       .all() as Array<{ name: string }>;
 
-    expect(structuredStoreContract.version).toBe(5);
+    expect(structuredStoreContract.version).toBe(6);
     expect(accountingPostableRecordStatuses).toEqual(["posted", "reconciled"]);
     expect(tableRows.map((row) => row.name)).toEqual(
       expect.arrayContaining([
@@ -106,14 +106,14 @@ describe("storage contract v5", () => {
     const overview = getLocalStorageOverview();
     const plan = getLocalStorageBootstrapPlan();
 
-    expect(manifest.version).toBe(5);
+    expect(manifest.version).toBe(6);
     expect(manifest.schemaObjects.tables).toEqual(
       structuredStoreContract.tables.map((table) => table.name),
     );
     expect(manifest.schemaObjects.views).toEqual([]);
     expect(overview.tableCount).toBe(structuredStoreContract.tables.length);
     expect(overview.viewCount).toBe(0);
-    expect(plan.version).toBe(5);
+    expect(plan.version).toBe(6);
     expect(plan.schemaStatements.length).toBeGreaterThan(0);
   });
 
@@ -123,7 +123,7 @@ describe("storage contract v5", () => {
       "evidence-derived/preview-1.jpg",
     );
     expect(buildDeviceStateStorageKey("theme_preference")).toBe(
-      "@creator-cfo/mobile/theme_preference",
+      "@ledgerly/mobile/theme_preference",
     );
     expect(buildEvidenceObjectPath("ABCD1234", "pdf")).toBe(
       "evidence-objects/ab/cd/abcd1234.pdf",
@@ -143,17 +143,19 @@ describe("storage contract v5", () => {
     );
   });
 
-  it("documents v5 as the active runtime baseline", () => {
+  it("documents v6 as the active runtime baseline", () => {
     const contractDocPath = fileURLToPath(
       new URL("../../../docs/contracts/local-storage.md", import.meta.url),
     );
     const contractDoc = readFileSync(contractDocPath, "utf8");
 
-    expect(contractDoc).toContain("Current implemented contract version: `5`");
+    expect(contractDoc).toContain("Current implemented contract version: `6`");
+    expect(contractDoc).toContain("legacy local package names remain readable during migration");
+    expect(contractDoc).toContain("previous device-state namespace remains readable during migration");
     expect(contractDoc).toContain("`records`");
     expect(contractDoc).toContain("`parse_status`");
     expect(contractDoc).toContain("`entity-main`");
-    expect(contractDoc).toContain("active database file: `creator-cfo-vault/creator-cfo-local.db`");
+    expect(contractDoc).toContain("active database file: `ledgerly-vault/ledgerly-local.db`");
     expect(contractDoc).toContain("runtime open/import fails closed");
     expect(contractDoc).toContain("`planner_payload_json`");
     expect(contractDoc).toContain("validated parser DTO snapshot");

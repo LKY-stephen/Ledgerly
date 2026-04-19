@@ -10,7 +10,8 @@
  */
 const http = require("http");
 
-const PORT = 19007;
+const HOST = process.env.CORS_PROXY_HOST || "127.0.0.1";
+const PORT = Number.parseInt(process.env.CORS_PROXY_PORT || "19007", 10);
 
 const server = http.createServer((req, res) => {
   if (req.method === "OPTIONS") {
@@ -97,6 +98,6 @@ function corsHeaders() {
   };
 }
 
-server.listen(PORT, () => {
-  console.log(`[cors-proxy] Running on http://localhost:${PORT}`);
+server.listen(PORT, HOST, () => {
+  console.log(`[cors-proxy] Running on http://${HOST}:${PORT}`);
 });

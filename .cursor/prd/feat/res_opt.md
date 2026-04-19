@@ -1,6 +1,6 @@
 # feat: 解析链路拆分为双接口（纯解析 + scheme 映射）
 
-**公用约定**：以 `.cursor/prd/agent-dev-guide-summary.md` 为准。仓库级 Agent 基线（Cursor 始终应用）：`.cursor/rules/creator-cfo-always.mdc`。
+**公用约定**：以 `.cursor/prd/agent-dev-guide-summary.md` 为准。仓库级 Agent 基线（Cursor 始终应用）：`.cursor/rules/ledgerly-always.mdc`。
 
 ## 平台描述
 
@@ -113,7 +113,7 @@
 
 ## 参考
 
-- 参考 PRD 目录：`/Users/peanut-tomo/Desktop/Tomo-project/creator_cfo_monorepo/prd`
+- 参考 PRD 目录：`/Users/peanut-tomo/Desktop/Tomo-project/Ledgerly/prd`
 - 契约真源：
   - `docs/contracts/`
   - `packages/storage/src/contracts.ts`

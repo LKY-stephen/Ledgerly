@@ -3,7 +3,7 @@ import type { SQLiteDatabase } from "expo-sqlite";
 import {
   createReadableStorageDatabase,
   type StorageSqlValue,
-} from "@creator-cfo/storage";
+} from "@ledgerly/storage";
 
 import { initializeLocalDatabase } from "./database";
 import {

@@ -339,7 +339,7 @@ function ensureSimulatorServicesAvailable() {
       `xcode-select: ${selectedPath}`,
       `Simulator executable present: ${simulatorPresent}`,
       "This command requires a working CoreSimulatorService before Expo can install the app.",
-      "Try these host-level checks, then rerun `pnpm --filter @creator-cfo/mobile ios`:",
+      "Try these host-level checks, then rerun `pnpm --filter @ledgerly/mobile ios`:",
       "  1. Open Xcode once and let any first-launch setup finish.",
       "  2. Start Simulator.app manually.",
       "  3. Run `xcrun simctl list devices` and confirm it succeeds.",

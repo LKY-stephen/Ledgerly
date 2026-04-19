@@ -60,7 +60,7 @@
 
 ### Smoke Path
 
-1. Run `pnpm --filter @creator-cfo/mobile start`.
+1. Run `pnpm --filter @ledgerly/mobile start`.
 2. Confirm the refined login page shows the shorter hero copy, signal chips, Apple CTA, and guest CTA.
 3. Trigger the guest path and confirm the app still enters `/(tabs)`.
 4. Return to login and switch theme / locale from the shell to confirm the login page remains readable.

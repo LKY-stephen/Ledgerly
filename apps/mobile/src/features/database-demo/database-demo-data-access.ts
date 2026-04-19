@@ -3,7 +3,7 @@ import {
   resolveStandardReceiptEntry,
   type ReadableStorageDatabase,
   type WritableStorageDatabase,
-} from "@creator-cfo/storage";
+} from "@ledgerly/storage";
 
 import {
   buildDatabaseDemoReportState,

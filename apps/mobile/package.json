@@ -1,5 +1,5 @@
 {
-  "name": "@creator-cfo/mobile",
+  "name": "@ledgerly/mobile",
   "version": "1.0.0",
   "main": "expo-router/entry",
   "scripts": {
@@ -13,12 +13,12 @@
     "ios": "node ./scripts/run-ios.mjs",
     "test": "vitest run tests",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "web": "node scripts/cors-proxy.js & expo start --web"
+    "web": "CORS_PROXY_HOST=127.0.0.1 EXPO_PUBLIC_CORS_PROXY_URL=http://127.0.0.1:19007 node scripts/cors-proxy.js & CORS_PROXY_HOST=127.0.0.1 EXPO_PUBLIC_CORS_PROXY_URL=http://127.0.0.1:19007 expo start --web --port 8088"
   },
   "dependencies": {
-    "@creator-cfo/schemas": "workspace:*",
-    "@creator-cfo/storage": "workspace:*",
-    "@creator-cfo/ui": "workspace:*",
+    "@ledgerly/schemas": "workspace:*",
+    "@ledgerly/storage": "workspace:*",
+    "@ledgerly/ui": "workspace:*",
     "@react-native-async-storage/async-storage": "2.2.0",
     "expo": "~55.0.8",
     "expo-apple-authentication": "~55.0.9",

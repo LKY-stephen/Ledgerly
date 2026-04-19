@@ -7,7 +7,7 @@ import {
   resolveStandardReceiptEntry,
   structuredStoreContract,
   type StorageSqlValue,
-} from "@creator-cfo/storage";
+} from "@ledgerly/storage";
 
 import { loadHomeSnapshot } from "../src/features/home/home-data";
 import { ensureDefaultEntity } from "../src/features/ledger/ledger-store";

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type {
   TaxHelperDerivedField,
   TaxHelperEvidenceFileLink,
-} from "@creator-cfo/storage";
+} from "@ledgerly/storage";
 
 import {
   buildTaxHelperEmptyStateMessage,

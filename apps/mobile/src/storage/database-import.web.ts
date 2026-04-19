@@ -74,7 +74,7 @@ export function exportDatabaseToFile(): void {
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = url;
-  anchor.download = "creator-cfo-local.db";
+  anchor.download = "ledgerly-local.db";
   anchor.click();
   URL.revokeObjectURL(url);
 }

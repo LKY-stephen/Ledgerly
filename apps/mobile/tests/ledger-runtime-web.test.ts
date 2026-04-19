@@ -43,6 +43,89 @@ afterEach(() => {
 });
 
 describe("ledger web upload runtime", () => {
+  it("defaults an ambiguous parsed date to the current date in review values", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-04-19T03:00:00.000Z"));
+
+    vi.spyOn(remoteParse, "planEvidenceDbUpdates").mockResolvedValueOnce({
+      businessEvents: ["Receipt payment"],
+      candidateRecords: [
+        {
+          amountCents: 5299,
+          currency: "USD",
+          date: "2026-02-27",
+          description: "Apple Store accessories",
+          evidenceId: "web-evidence-ambiguous-date",
+          recordKind: "expense",
+          sourceLabel: "Business Card",
+          targetLabel: "Apple Store",
+        },
+      ],
+      classifiedFacts: [
+        {
+          confidence: "medium",
+          field: "date",
+          reason: "Date inferred from receipt footer.",
+          status: "uncertain",
+          value: "2026-02-27",
+        },
+      ],
+      counterpartyResolutions: [],
+      duplicateHints: [],
+      readTasks: [
+        { readTaskId: "read-1", rationale: "Lookup counterparties", status: "pending", taskType: "counterparty_lookup" },
+        { readTaskId: "read-2", rationale: "Check duplicate receipts", status: "pending", taskType: "duplicate_lookup" },
+      ],
+      summary: "One expense record from receipt.",
+      warnings: ["Date inferred from receipt footer."],
+      writeProposals: [
+        {
+          proposalType: "persist_candidate_record",
+          reviewFields: ["amount", "date", "source", "target"],
+          values: { candidateIndex: 0 },
+        },
+      ],
+    });
+
+    const plannerResult = await runPlanner({
+      fileName: "receipt-ambiguous-date.pdf",
+      mimeType: "application/pdf",
+      model: "gpt-5",
+      rawJson: {
+        candidates: {
+          amountCents: 5299,
+          category: "expense",
+          date: "2026-02-27",
+          description: "Apple Store accessories",
+          notes: null,
+          source: "Business Card",
+          target: "Apple Store",
+          taxCategory: "office",
+        },
+        fields: {
+          amountCents: 5299,
+          category: "expense",
+          date: "2026-02-27",
+          description: "Apple Store accessories",
+          notes: null,
+          source: "Business Card",
+          target: "Apple Store",
+          taxCategory: "office",
+        },
+        model: "gpt-5",
+        parser: "openai_gpt",
+        rawSummary: "Apple Store receipt",
+        rawText: "Apple Store 02/27/2026 $52.99",
+        warnings: ["Date inferred from receipt footer."],
+      },
+      rawText: "Apple Store 02/27/2026 $52.99",
+    });
+
+    expect(plannerResult.reviewValues.date).toBe("2026-04-19");
+    expect(plannerResult.candidateRecords[0]?.reviewValues.date).toBe("2026-04-19");
+    expect(plannerResult.candidateRecords[0]?.payload.date).toBe("2026-02-27");
+  });
+
   it("picks photo candidates from the image library", async () => {
     vi.mocked(ImagePicker.launchImageLibraryAsync).mockResolvedValueOnce({
       assets: [
@@ -297,9 +380,24 @@ describe("ledger web upload runtime", () => {
     const createProposal = plannerResult.writeProposals.find((proposal) => proposal.proposalType === "create_counterparty");
     const persistProposal = plannerResult.writeProposals.find((proposal) => proposal.proposalType === "persist_candidate_record");
 
-    const afterMergeApproval = await approveWriteProposal(plannerResult.batchId, mergeProposal!.writeProposalId);
+    const afterMergeApproval = await approveWriteProposal(
+      plannerResult.batchId,
+      mergeProposal!.writeProposalId,
+      {
+        amount: "52.99",
+        category: "expense",
+        date: "2026-03-01",
+        description: "Apple Store accessories",
+        notes: "edited before counterparty approval",
+        source: "Business Card",
+        target: "Apple Store",
+        taxCategory: "office",
+      },
+    );
     expect(afterMergeApproval.writeProposals.find((proposal) => proposal.proposalType === "create_counterparty")?.state).toBe("rejected");
     expect(afterMergeApproval.candidateRecords[0]?.payload.targetCounterpartyId).toBe("counterparty-existing-target");
+    expect(afterMergeApproval.reviewValues.date).toBe("2026-03-01");
+    expect(afterMergeApproval.candidateRecords[0]?.reviewValues.date).toBe("2026-03-01");
 
     const afterKeepSeparate = await rejectWriteProposal(plannerResult.batchId, duplicateProposal!.writeProposalId);
     expect(afterKeepSeparate.writeProposals.find((proposal) => proposal.proposalType === "persist_candidate_record")?.state).toBe("pending_approval");

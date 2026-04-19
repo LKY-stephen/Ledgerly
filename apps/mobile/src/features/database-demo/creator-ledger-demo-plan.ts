@@ -4,7 +4,7 @@ import {
   type ReadableStorageDatabase,
   type StandardReceiptEntryInput,
   type WritableStorageDatabase,
-} from "@creator-cfo/storage";
+} from "@ledgerly/storage";
 
 import { defaultEntityId } from "../ledger/ledger-domain";
 import { ensureDefaultEntity } from "../ledger/ledger-store";

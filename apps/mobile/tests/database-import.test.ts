@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
-  createManifest: vi.fn(() => ({ version: 4 })),
+  createManifest: vi.fn(() => ({ version: 6 })),
   getDocumentAsync: vi.fn(),
   pickDirectoryAsync: vi.fn(),
   getInfoAsync: vi.fn(),
@@ -275,18 +275,20 @@ vi.mock("react-native", () => ({
   Platform: mocks.platform,
 }));
 
-vi.mock("@creator-cfo/storage", () => ({
+vi.mock("@ledgerly/storage", () => ({
   createLocalStorageBootstrapManifest: mocks.createManifest,
   getLocalStorageBootstrapPlan: () => ({
-    databaseName: "creator-cfo-local.db",
+    databaseName: "ledgerly-local.db",
     fileCollections: [{ slug: "evidence-objects" }, { slug: "evidence-manifests" }],
-    fileVaultRoot: "creator-cfo-vault",
+    fileVaultRoot: "ledgerly-vault",
   }),
+  legacyFileVaultRootDirectories: [[ "creator", "cfo" ].join("-") + "-vault"],
+  legacyStructuredStoreDatabaseNames: [[ "creator", "cfo" ].join("-") + "-local.db"],
 }));
 
 vi.mock("../src/storage/package-environment.native", () => ({
   getCacheDirectoryOrThrow: () => "file:///cache",
-  getActiveDatabasePath: () => "file:///active/creator-cfo-local.db",
+  getActiveDatabasePath: () => "file:///active/ledgerly-local.db",
   getActivePackageRootDirectory: () => "file:///active",
   getDocumentDirectoryOrThrow: () => "file:///documents",
   getPackageBackupDirectory: () => "file:///active-backup",
@@ -365,11 +367,11 @@ describe("database import", () => {
 
   it("imports a validated database package into the active package root", async () => {
     seedDirectory("file:///active");
-    seedFile("file:///active/creator-cfo-local.db");
+    seedFile("file:///active/ledgerly-local.db");
     seedDirectory("file:///source");
     seedDirectory("file:///source/evidence-objects");
     seedDirectory("file:///source/evidence-objects/entity-main");
-    seedFile("file:///source/creator-cfo-local.db");
+    seedFile("file:///source/ledgerly-local.db");
     seedFile("file:///source/evidence-objects/entity-main/receipt.pdf");
 
     mocks.validateDatabasePackageDirectoryOrThrow
@@ -378,7 +380,7 @@ describe("database import", () => {
 
     const result = await importDatabasePackageFromFileUri({
       displayName: "source.db",
-      selectedDatabaseUri: "file:///source/creator-cfo-local.db",
+      selectedDatabaseUri: "file:///source/ledgerly-local.db",
     });
 
     expect(result).toEqual({
@@ -388,17 +390,17 @@ describe("database import", () => {
     });
     expect(mocks.resetLocalStorageRuntime).toHaveBeenCalledTimes(1);
     expect(mocks.getSQLiteDatabase).toHaveBeenCalledTimes(1);
-    expect(files.has("file:///active/creator-cfo-local.db")).toBe(true);
+    expect(files.has("file:///active/ledgerly-local.db")).toBe(true);
     expect(files.has("file:///active/bootstrap-manifest.json")).toBe(true);
     expect(files.has("file:///active/evidence-objects/entity-main/receipt.pdf")).toBe(true);
   });
 
   it("restores the previous active package when validation of the imported package fails", async () => {
     seedDirectory("file:///active");
-    seedFile("file:///active/creator-cfo-local.db");
+    seedFile("file:///active/ledgerly-local.db");
     seedDirectory("file:///source");
     seedDirectory("file:///source/evidence-objects");
-    seedFile("file:///source/creator-cfo-local.db");
+    seedFile("file:///source/ledgerly-local.db");
     seedFile("file:///source/evidence-objects/receipt.pdf");
 
     mocks.validateDatabasePackageDirectoryOrThrow
@@ -408,13 +410,13 @@ describe("database import", () => {
     await expect(
       importDatabasePackageFromFileUri({
         displayName: "broken.db",
-        selectedDatabaseUri: "file:///source/creator-cfo-local.db",
+        selectedDatabaseUri: "file:///source/ledgerly-local.db",
       }),
     ).rejects.toThrow("Imported package integrity failed.");
 
     expect(mocks.resetLocalStorageRuntime).toHaveBeenCalledTimes(2);
-    expect(files.has("file:///active/creator-cfo-local.db")).toBe(true);
-    expect(files.has("file:///active-backup/creator-cfo-local.db")).toBe(false);
+    expect(files.has("file:///active/ledgerly-local.db")).toBe(true);
+    expect(files.has("file:///active-backup/ledgerly-local.db")).toBe(false);
   });
 
   it("adds iOS staging guidance when a picked file cannot expose sibling package files", async () => {
@@ -427,12 +429,12 @@ describe("database import", () => {
 
     await expect(
       importDatabasePackageFromFileUri({
-        displayName: "creator-cfo-local.db",
+        displayName: "ledgerly-local.db",
         selectedDatabaseUri:
-          "file:///Users/test/Library/Developer/CoreSimulator/Devices/booted/File%20Provider%20Storage/package-b-mixed/creator-cfo-vault/creator-cfo-local.db",
+          "file:///Users/test/Library/Developer/CoreSimulator/Devices/booted/File%20Provider%20Storage/package-b-mixed/ledgerly-vault/ledgerly-local.db",
       }),
     ).rejects.toThrow(
-      "On iPhone and iPad, choose the creator-cfo-vault folder, or a folder that contains creator-cfo-vault, in the folder picker. Do not pick creator-cfo-local.db directly.",
+      "On iPhone and iPad, choose the ledgerly-vault folder, or a folder that contains it, in the folder picker. Do not pick ledgerly-local.db directly.",
     );
   });
 
@@ -441,7 +443,7 @@ describe("database import", () => {
     seedDirectory("file:///selected-package");
     seedDirectory("file:///selected-package/evidence-objects");
     seedDirectory("file:///selected-package/evidence-objects/entity-main");
-    seedFile("file:///selected-package/creator-cfo-local.db");
+    seedFile("file:///selected-package/ledgerly-local.db");
     seedFile("file:///selected-package/evidence-objects/entity-main/receipt.pdf");
 
     mocks.validateDatabasePackageDirectoryOrThrow
@@ -454,29 +456,29 @@ describe("database import", () => {
     expect(mocks.pickDirectoryAsync).toHaveBeenCalledTimes(1);
     expect(result).toEqual({
       checkedPathCount: 1,
-      importedDatabaseName: "creator-cfo-local.db",
+      importedDatabaseName: "ledgerly-local.db",
       sourcePackageRoot: "file:///selected-package",
     });
     expect(mocks.validateDatabasePackageDirectoryOrThrow).toHaveBeenNthCalledWith(1, {
-      databaseDirectory: "file:///cache/creator-cfo-directory-import-stage/selected-package",
-      databaseName: "creator-cfo-local.db",
+      databaseDirectory: "file:///cache/ledgerly-directory-import-stage/selected-package",
+      databaseName: "ledgerly-local.db",
       tableCompatibility: "current_or_legacy",
     });
-    expect(files.has("file:///active/creator-cfo-local.db")).toBe(true);
-    expect(directories.has("file:///cache/creator-cfo-directory-import-stage")).toBe(false);
+    expect(files.has("file:///active/ledgerly-local.db")).toBe(true);
+    expect(directories.has("file:///cache/ledgerly-directory-import-stage")).toBe(false);
   });
 
-  it("imports a parent folder that contains creator-cfo-vault on iOS", async () => {
+  it("imports a parent folder that contains ledgerly-vault on iOS", async () => {
     mocks.platform.OS = "ios";
     mocks.pickDirectoryAsync.mockResolvedValue(
       new fileSystemState.MockDirectory("file:///selected-parent"),
     );
     seedDirectory("file:///selected-parent");
-    seedDirectory("file:///selected-parent/creator-cfo-vault");
-    seedDirectory("file:///selected-parent/creator-cfo-vault/evidence-objects");
-    seedDirectory("file:///selected-parent/creator-cfo-vault/evidence-objects/entity-main");
-    seedFile("file:///selected-parent/creator-cfo-vault/creator-cfo-local.db");
-    seedFile("file:///selected-parent/creator-cfo-vault/evidence-objects/entity-main/receipt.pdf");
+    seedDirectory("file:///selected-parent/ledgerly-vault");
+    seedDirectory("file:///selected-parent/ledgerly-vault/evidence-objects");
+    seedDirectory("file:///selected-parent/ledgerly-vault/evidence-objects/entity-main");
+    seedFile("file:///selected-parent/ledgerly-vault/ledgerly-local.db");
+    seedFile("file:///selected-parent/ledgerly-vault/evidence-objects/entity-main/receipt.pdf");
 
     mocks.validateDatabasePackageDirectoryOrThrow
       .mockResolvedValueOnce({ checkedPathCount: 1, requiredTableCount: 8 })
@@ -486,14 +488,48 @@ describe("database import", () => {
 
     expect(result).toEqual({
       checkedPathCount: 1,
-      importedDatabaseName: "creator-cfo-local.db",
-      sourcePackageRoot: "file:///selected-parent/creator-cfo-vault",
+      importedDatabaseName: "ledgerly-local.db",
+      sourcePackageRoot: "file:///selected-parent/ledgerly-vault",
     });
     expect(mocks.validateDatabasePackageDirectoryOrThrow).toHaveBeenNthCalledWith(1, {
-      databaseDirectory: "file:///cache/creator-cfo-directory-import-stage/creator-cfo-vault",
-      databaseName: "creator-cfo-local.db",
+      databaseDirectory: "file:///cache/ledgerly-directory-import-stage/ledgerly-vault",
+      databaseName: "ledgerly-local.db",
       tableCompatibility: "current_or_legacy",
     });
+  });
+
+  it("imports a parent folder that contains a legacy-named package on iOS", async () => {
+    const legacyProductSlug = ["creator", "cfo"].join("-");
+    const legacyVaultRoot = `${legacyProductSlug}-vault`;
+    const legacyDatabaseName = `${legacyProductSlug}-local.db`;
+
+    mocks.platform.OS = "ios";
+    mocks.pickDirectoryAsync.mockResolvedValue(
+      new fileSystemState.MockDirectory("file:///selected-legacy-parent"),
+    );
+    seedDirectory("file:///selected-legacy-parent");
+    seedDirectory(`file:///selected-legacy-parent/${legacyVaultRoot}`);
+    seedDirectory(`file:///selected-legacy-parent/${legacyVaultRoot}/evidence-objects`);
+    seedFile(`file:///selected-legacy-parent/${legacyVaultRoot}/${legacyDatabaseName}`);
+    seedFile(`file:///selected-legacy-parent/${legacyVaultRoot}/evidence-objects/receipt.pdf`);
+
+    mocks.validateDatabasePackageDirectoryOrThrow
+      .mockResolvedValueOnce({ checkedPathCount: 1, requiredTableCount: 8 })
+      .mockResolvedValueOnce({ checkedPathCount: 1, requiredTableCount: 8 });
+
+    const result = await pickAndImportDatabasePackageAsync();
+
+    expect(result).toEqual({
+      checkedPathCount: 1,
+      importedDatabaseName: legacyDatabaseName,
+      sourcePackageRoot: `file:///selected-legacy-parent/${legacyVaultRoot}`,
+    });
+    expect(mocks.validateDatabasePackageDirectoryOrThrow).toHaveBeenNthCalledWith(1, {
+      databaseDirectory: `file:///cache/ledgerly-directory-import-stage/${legacyVaultRoot}`,
+      databaseName: legacyDatabaseName,
+      tableCompatibility: "current_or_legacy",
+    });
+    expect(files.has("file:///active/ledgerly-local.db")).toBe(true);
   });
 
   it("returns null when the iOS folder picker is canceled", async () => {
@@ -512,7 +548,7 @@ describe("database import", () => {
     seedDirectory("file:///selected-empty-folder");
 
     await expect(pickAndImportDatabasePackageAsync()).rejects.toThrow(
-      "The selected folder must be creator-cfo-vault or a folder that contains creator-cfo-vault/creator-cfo-local.db.",
+      "The selected folder must be ledgerly-vault or a folder that contains a valid Ledgerly database package.",
     );
   });
 });

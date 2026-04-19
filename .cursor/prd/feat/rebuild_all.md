@@ -6,7 +6,7 @@
 | **类型** | 上传解析工作流修复 + 严格 DTO 收口 + 存储契约扩展 |
 | **依赖** | `feat_upload` 已完成；本地 SQLite 与文件仓已可用 |
 
-**公用约定**：以 `.cursor/prd/agent-dev-guide-summary.md` 为准。仓库级 Agent 基线（Cursor 始终应用）：`.cursor/rules/creator-cfo-always.mdc`。
+**公用约定**：以 `.cursor/prd/agent-dev-guide-summary.md` 为准。仓库级 Agent 基线（Cursor 始终应用）：`.cursor/rules/ledgerly-always.mdc`。
 
 ## 平台描述
 

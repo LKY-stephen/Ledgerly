@@ -71,7 +71,7 @@
 |---|---|---|
 | Required folder structure exists | Passed | Repository tree, README |
 | Web starter exists | Passed | `apps/web/app/page.tsx`, shared packages |
-| API starter exists | Passed | `apps/api/src/creator_cfo_api/app.py`, tests |
+| API starter exists | Passed | `apps/api/src/ledgerly_api/app.py`, tests |
 | Contract snapshot exists | Passed | `openapi/openapi.yaml`, export script |
 | Automated commands are defined | Passed | root `package.json`, CI, pre-commit |
 | Installed dependency execution | Passed | `pnpm install`, `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, backend `uv` checks |

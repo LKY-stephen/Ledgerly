@@ -14,9 +14,9 @@
     "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
-      "@creator-cfo/schemas": ["packages/schemas/src/index.ts"],
-      "@creator-cfo/storage": ["packages/storage/src/index.ts"],
-      "@creator-cfo/ui": ["packages/ui/src/index.ts"]
+      "@ledgerly/schemas": ["packages/schemas/src/index.ts"],
+      "@ledgerly/storage": ["packages/storage/src/index.ts"],
+      "@ledgerly/ui": ["packages/ui/src/index.ts"]
     }
   }
 }

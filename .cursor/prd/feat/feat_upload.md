@@ -6,7 +6,7 @@
 | **类型** | 核心功能（上传、解析、展示）+ 存储契约扩展 |
 | **依赖** | 本地 SQLite 与文件仓已初始化；`records` 表与 `evidences` 表存在 |
 
-**公用约定**：以 `.cursor/prd/agent-dev-guide-summary.md` 为准。仓库级 Agent 基线（Cursor 始终应用）：`.cursor/rules/creator-cfo-always.mdc`。
+**公用约定**：以 `.cursor/prd/agent-dev-guide-summary.md` 为准。仓库级 Agent 基线（Cursor 始终应用）：`.cursor/rules/ledgerly-always.mdc`。
 
 ## 平台描述
 

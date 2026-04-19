@@ -1,4 +1,4 @@
-import type { ReadableStorageDatabase } from "@creator-cfo/storage";
+import type { ReadableStorageDatabase } from "@ledgerly/storage";
 
 import {
   createTrendPointsFromTotals,

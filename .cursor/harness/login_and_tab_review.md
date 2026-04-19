@@ -66,7 +66,7 @@
 
 ### Smoke Path
 
-1. Run `pnpm --filter @creator-cfo/mobile start`.
+1. Run `pnpm --filter @ledgerly/mobile start`.
 2. On cold start, verify the login screen appears with Apple sign-in and skip affordance.
 3. Use "skip for now" to enter the guest flow, then confirm Home, Ledger, Discover, and Me tabs render.
 4. In Me, switch theme and language, then confirm the shell updates without reload.

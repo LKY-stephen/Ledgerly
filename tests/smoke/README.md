@@ -8,7 +8,7 @@
 pnpm smoke
 ```
 
-说明：`pnpm smoke` 通过 Turbo 先跑依赖的 `build`，再执行各工作区的 `smoke` 任务。移动端包（`@creator-cfo/mobile`）当前将 `smoke` 映射为 `pnpm test`（Vitest）。可与下列 **Required Checks** 一起作为回归入口：
+说明：`pnpm smoke` 通过 Turbo 先跑依赖的 `build`，再执行各工作区的 `smoke` 任务。移动端包（`@ledgerly/mobile`）当前将 `smoke` 映射为 `pnpm test`（Vitest）。可与下列 **Required Checks** 一起作为回归入口：
 
 ```bash
 pnpm lint
@@ -23,7 +23,7 @@ pnpm smoke
 
 在自动化通过仍不足时，或验证真实运行时：
 
-1. 运行 `pnpm --filter @creator-cfo/mobile start`，在 iOS development build、Android 或 Web 中打开应用。
+1. 运行 `pnpm --filter @ledgerly/mobile start`，在 iOS development build、Android 或 Web 中打开应用。
 2. 冷启动时确认先进入登录页，并能看到：
    - Apple 登录入口
    - 右上角「暂不登录」
@@ -84,7 +84,7 @@ pnpm smoke
 15. 在「设置」中执行退出登录，确认应用回到登录页。
 16. 若在支持的 iOS 设备上，验证 Apple 登录可进入主壳层；若当前环境不支持，确认会优雅提示并允许游客继续。
 17. 运行 `pnpm contract:check`，确认本地存储与设备状态契约测试通过。
-18. 在「设置」页确认 Profile 模块可见（Name / Email / Phone 三个字段），输入后点击 Save Profile，退出重进后回显正确。设置页不再出现 "Vercel API Base URL" 或等价配置项。上传文件 → Map to Records → 确认 planner 不报错且 source / target 映射合理（若已填写 Profile，source 应优先归属到 Profile 主体）。
+18. 在「设置」页确认 Profile 模块可见（Name / Email / Phone 三个字段），输入后点击 Save Profile，退出重进后回显正确。设置页不再出现 "Parse API Base URL" 或等价配置项。上传文件 → Map to Records → 确认 planner 不报错且 source / target 映射合理（若已填写 Profile，source 应优先归属到 Profile 主体）。
 19. 在「设置」页 AI Provider 区块确认可切换 OpenAI / Gemini / Infer API：
     - 默认选中 OpenAI，显示 OpenAI API Key 输入框
     - 切换到 Gemini 后，显示 Gemini API Key 输入框
@@ -93,7 +93,7 @@ pnpm smoke
     - 选中 Gemini 并填入有效 Gemini key 后，上传文件 → Parse → 确认使用 Gemini 解析（model 字段应显示 gemini 相关模型）
     - 切回 OpenAI 并填入有效 OpenAI key 后，上传文件 → Parse → 确认使用 OpenAI 解析
 20. 在「设置」页 AI Provider 区块确认 Infer API 渠道：
-    - 切换到 Infer API 后，显示 Infer Base URL 和 Infer API Key 输入框，隐藏 Vercel API Base URL 输入框
+    - 切换到 Infer API 后，显示 Infer Base URL 和 Infer API Key 输入框，隐藏 Parse API Base URL 输入框
     - 不填 Infer Base URL 点保存 → 提示 "Enter an Infer Base URL first."（中文环境显示 "请填入 Infer Base URL"）
     - 不填 Infer API Key 点保存 → 提示 "Enter an Infer API Key first."（中文环境显示 "请填入 Infer API Key"）
     - 填入有效 Infer Base URL 与 Infer API Key 并保存，退出重进后 provider、Base URL 和 key 均回显正确

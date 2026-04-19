@@ -1,6 +1,6 @@
 # 设置页 Profile 信息规范化与 Vercel Base URL 清理
 
-**公用约定**：以 `.cursor/prd/agent-dev-guide-summary.md` 为准（流程、契约真源、`pnpm` 门禁、完结后上下文维护）；结构参考 `.cursor/prd/TEMPLATE.md`。Cursor 始终应用：`.cursor/rules/creator-cfo-always.mdc`。
+**公用约定**：以 `.cursor/prd/agent-dev-guide-summary.md` 为准（流程、契约真源、`pnpm` 门禁、完结后上下文维护）；结构参考 `.cursor/prd/TEMPLATE.md`。Cursor 始终应用：`.cursor/rules/ledgerly-always.mdc`。
 
 ## 平台描述
 

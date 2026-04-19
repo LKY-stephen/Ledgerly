@@ -1,6 +1,6 @@
 # Database Schema Summary
 
-This folder is the version-managed entrypoint for database schema design summaries in `creator_cfo_monorepo/prd/`.
+This folder is the version-managed entrypoint for database schema design summaries in `Ledgerly/prd/`.
 
 It is a derived planning artifact, not the runtime source of truth.
 

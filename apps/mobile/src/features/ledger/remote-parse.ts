@@ -4,7 +4,7 @@ import {
   type JsonValue,
   type ReceiptParsePayload,
   type ReceiptPlannerPayload,
-} from "@creator-cfo/schemas";
+} from "@ledgerly/schemas";
 
 import { loadPersistedAiProvider, loadPersistedGeminiApiKey, loadPersistedGeminiAuthMode, loadPersistedInferApiKey, loadPersistedInferBaseUrl, loadPersistedInferModel, loadPersistedOpenAiApiKey } from "../app-shell/storage";
 import type { AiProvider, GeminiAuthMode } from "../app-shell/types";
@@ -280,6 +280,7 @@ const defaultOpenAiBaseUrl = "https://api.openai.com/v1";
 const defaultOpenAiModel = "gpt-4o";
 const defaultGeminiBaseUrl = "https://generativelanguage.googleapis.com/v1beta";
 const defaultGeminiModel = "gemini-2.5-flash";
+const defaultLocalCorsProxyUrl = "http://127.0.0.1:19007";
 const runtimeModelOverrides: Partial<Record<AiProvider, string>> = {};
 const parseSystemPrompt = [
   "你是 receipt parser。",
@@ -341,7 +342,7 @@ export async function parseFileWithOpenAi(input: {
     const filePart = createInputFilePart({ base64, fileName: input.fileName, mimeType });
     return await callOpenAiParseApi(settings, filePart, input.fileName, mimeType, aiProvider);
   } catch (error) {
-    const aiProvider = await loadPersistedAiProvider().catch(() => "openai" as AiProvider);
+    const aiProvider = await loadPersistedAiProvider().catch(() => "infer" as AiProvider);
     return {
       rawJson: null,
       rawText: "",
@@ -372,7 +373,7 @@ export async function parseFileWithOpenAiFromBlob(input: {
     const filePart = createInputFilePart({ base64, fileName: input.fileName, mimeType });
     return await callOpenAiParseApi(settings, filePart, input.fileName, mimeType, aiProvider);
   } catch (error) {
-    const aiProvider = await loadPersistedAiProvider().catch(() => "openai" as AiProvider);
+    const aiProvider = await loadPersistedAiProvider().catch(() => "infer" as AiProvider);
     return {
       rawJson: null,
       rawText: "",
@@ -731,7 +732,7 @@ async function performGeminiRequest(
       signal: controller?.signal,
     });
 
-    const payload = await response.json() as Record<string, unknown>;
+    const payload = await parseProviderJsonResponse(response, "gemini");
 
     if (!response.ok) {
       const errDetail = payload?.error as { message?: string } | undefined;
@@ -771,7 +772,7 @@ async function callOpenAi(settings: OpenAiSettings, input: unknown, provider: Ai
 
   for (const model of candidateModels) {
     try {
-      const payload = await performOpenAiRequest(settings, input, model);
+      const payload = await performOpenAiRequest(settings, input, model, provider);
       if (model !== settings.model) {
         runtimeModelOverrides[provider] = model;
       }
@@ -794,6 +795,7 @@ async function performOpenAiRequest(
   settings: OpenAiSettings,
   input: unknown,
   model: string,
+  provider: AiProvider,
 ): Promise<Record<string, unknown>> {
   const controller = typeof AbortController === "function" ? new AbortController() : null;
   const timeoutId = setTimeout(() => controller?.abort(), openAiRequestTimeoutMs);
@@ -811,7 +813,7 @@ async function performOpenAiRequest(
     const useProxy = isWebRuntime() && !isFirstPartyApiHost(settings.baseUrl);
     const proxyUrl =
       typeof window !== "undefined" && window.location.hostname === "localhost"
-        ? "http://localhost:19007"
+        ? (process.env.EXPO_PUBLIC_CORS_PROXY_URL ?? defaultLocalCorsProxyUrl).trim()
         : "/api/cors-proxy";
     const fetchUrl = useProxy ? proxyUrl : targetUrl;
     const fetchHeaders: Record<string, string> = {
@@ -828,13 +830,13 @@ async function performOpenAiRequest(
       signal: controller?.signal,
     });
 
-    const payload = await response.json() as Record<string, unknown>;
+    const payload = await parseProviderJsonResponse(response, provider);
 
     if (!response.ok) {
       const errMsg = (payload?.error as { message?: string })?.message;
       throw new ProviderRequestError(
-        errMsg ?? `OpenAI request failed: ${response.status}`,
-        "openai",
+        errMsg ?? `${getProviderDisplayName(provider)} request failed: ${response.status}`,
+        provider,
         response.status,
       );
     }
@@ -1063,5 +1065,34 @@ function isFirstPartyApiHost(baseUrl: string): boolean {
     return firstPartyApiHosts.some((allowed) => host === allowed || host.endsWith(`.${allowed}`));
   } catch {
     return false;
+  }
+}
+
+function getProviderDisplayName(provider: AiProvider): string {
+  if (provider === "infer") return "Infer";
+  if (provider === "gemini") return "Gemini";
+  return "OpenAI";
+}
+
+async function parseProviderJsonResponse(
+  response: Response,
+  provider: AiProvider,
+): Promise<Record<string, unknown>> {
+  const rawText = await response.text();
+  const trimmed = rawText.trim();
+
+  if (!trimmed) {
+    return {};
+  }
+
+  try {
+    return JSON.parse(trimmed) as Record<string, unknown>;
+  } catch {
+    const snippet = trimmed.replace(/\s+/g, " ").slice(0, 160);
+    throw new ProviderRequestError(
+      `${getProviderDisplayName(provider)} returned a non-JSON response${snippet ? `: ${snippet}` : ""}`,
+      provider,
+      response.status,
+    );
   }
 }

@@ -108,7 +108,7 @@ pnpm smoke
 
 ### 手工 (设备/模拟器最短主路径)
 
-1. `pnpm --filter @creator-cfo/mobile start` 启动 Expo。
+1. `pnpm --filter @ledgerly/mobile start` 启动 Expo。
 2. 冷启动确认进入登录页；点击“暂不登录”进入 Tab。
 3. 依次切换 4 个 Tab，确认无红屏，选中态可见。
 4. 进入 Ledger，点击上传入口 -> 上传页 -> 继续 -> 解析页 -> 返回 Ledger。
@@ -129,7 +129,7 @@ pnpm smoke
    - 对 Upload/Parse 屏的关键结构做快照或结构断言（比如标题、主 CTA、状态区块存在）。
 
 4. 回归测试补点
-   - 若修改了共享组件（`@creator-cfo/ui` 或 tab bar icon），补充对应的现有测试或新增 1 条最小断言。
+   - 若修改了共享组件（`@ledgerly/ui` 或 tab bar icon），补充对应的现有测试或新增 1 条最小断言。
 
 ### 手工验证清单 (复测时最小集)
 

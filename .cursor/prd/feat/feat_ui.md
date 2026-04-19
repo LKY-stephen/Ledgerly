@@ -1,6 +1,6 @@
 # feat：整体 UI 架构与多屏纯 UI（Figma 对齐）
 
-**公用约定**：以 `.cursor/prd/agent-dev-guide-summary.md` 为准（角色三角、`pnpm` 门禁、完结后版本化上下文）；结构参考 `.cursor/prd/TEMPLATE.md`。Cursor 始终应用：`.cursor/rules/creator-cfo-always.mdc`。
+**公用约定**：以 `.cursor/prd/agent-dev-guide-summary.md` 为准（角色三角、`pnpm` 门禁、完结后版本化上下文）；结构参考 `.cursor/prd/TEMPLATE.md`。Cursor 始终应用：`.cursor/rules/ledgerly-always.mdc`。
 
 ## 一句话摘要
 

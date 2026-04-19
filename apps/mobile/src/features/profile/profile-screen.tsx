@@ -14,7 +14,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { SectionCard } from "@creator-cfo/ui";
+import { SectionCard } from "@ledgerly/ui";
 
 import { startNewLedger } from "../database-demo/seed-database-demo";
 import { pickAndImportDatabasePackageAsync } from "../../storage/database-import";

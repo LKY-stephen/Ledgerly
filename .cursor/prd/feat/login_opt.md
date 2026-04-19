@@ -6,7 +6,7 @@
 | **类型** | 前端 UI / 文案（默认**不**改存储契约） |
 | **依赖** | 先有 `login_and_tab` 的主题、多语言、Apple 登录与游客态；本 feat 在其之上做视觉与文案收敛 |
 
-**公用约定**：以 `.cursor/prd/agent-dev-guide-summary.md` 为准。仓库级 Agent 基线：`.cursor/rules/creator-cfo-always.mdc`。结构参考 `.cursor/prd/TEMPLATE.md`。
+**公用约定**：以 `.cursor/prd/agent-dev-guide-summary.md` 为准。仓库级 Agent 基线：`.cursor/rules/ledgerly-always.mdc`。结构参考 `.cursor/prd/TEMPLATE.md`。
 
 ## 平台描述
 

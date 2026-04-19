@@ -1,4 +1,4 @@
-# Creator CFO Monorepo
+# Ledgerly Monorepo
 
 A local-first financial console for creators, built with Expo + React Native. No backend — all data lives on-device via SQLite and a local file vault.
 
@@ -7,7 +7,7 @@ A local-first financial console for creators, built with Expo + React Native. No
 - **App**: Expo 55 · React Native 0.83 · Expo Router · TypeScript
 - **Storage**: expo-sqlite (native) / sql.js WASM (web) · Expo File System · AsyncStorage
 - **Monorepo**: pnpm workspaces · Turborepo
-- **API**: Vercel Serverless Functions
+- **API**: Direct OpenAI from the client by default, plus Vercel serverless compatibility routes under `api/`
 - **Testing**: Vitest
 - **Linting**: ESLint · Prettier
 
@@ -21,9 +21,9 @@ pnpm install
 pnpm dev
 
 # run on a specific platform
-pnpm --filter @creator-cfo/mobile ios
-pnpm --filter @creator-cfo/mobile android
-pnpm --filter @creator-cfo/mobile web
+pnpm --filter @ledgerly/mobile ios
+pnpm --filter @ledgerly/mobile android
+pnpm --filter @ledgerly/mobile web
 ```
 
 ## Scripts
@@ -42,7 +42,7 @@ pnpm --filter @creator-cfo/mobile web
 ## Project Structure
 
 ```
-creator_cfo_monorepo/
+Ledgerly/
 ├── apps/
 │   └── mobile/                  # Expo + React Native app
 │       ├── app/                 # Expo Router routes
@@ -120,3 +120,31 @@ pnpm typecheck      # Type check
 pnpm lint           # Lint
 pnpm build          # Export for web deployment
 ```
+
+## Vercel Deploy
+
+Vercel deployment is wired through [vercel.json](/Users/stephen/work/CFO/Ledgerly/vercel.json).
+
+- The web build targets `@ledgerly/mobile` and outputs to `apps/mobile/dist`.
+- The deployed app keeps the `api/` routes available for health checks and compatibility endpoints.
+- Default OpenAI parsing still points to `https://api.openai.com/v1`; Vercel is the hosting target, not the required default parse proxy.
+
+Typical deploy flow:
+
+```bash
+pnpm install
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm build
+vercel
+```
+
+Optional runtime env overrides for the deployed web build:
+
+- `EXPO_PUBLIC_OPENAI_BASE_URL`
+- `EXPO_PUBLIC_OPENAI_MODEL`
+- `EXPO_PUBLIC_GEMINI_BASE_URL`
+- `EXPO_PUBLIC_GEMINI_MODEL`
+- `EXPO_PUBLIC_INFER_BASE_URL`
+- `EXPO_PUBLIC_INFER_MODEL`

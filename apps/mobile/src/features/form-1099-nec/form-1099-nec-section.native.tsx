@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { SurfaceTokens } from "@creator-cfo/ui";
+import type { SurfaceTokens } from "@ledgerly/ui";
 
 import type { AppCopy } from "../app-shell/copy";
 import { LocalStorageProvider } from "../../storage/provider.native";

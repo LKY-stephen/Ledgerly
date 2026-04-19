@@ -3,9 +3,19 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 vi.mock("../src/features/app-shell/storage", () => ({
   loadPersistedAiProvider: vi.fn(async () => "openai"),
   loadPersistedGeminiApiKey: vi.fn(async () => ""),
+  loadPersistedGeminiAuthMode: vi.fn(async () => "api_key"),
+  loadPersistedInferApiKey: vi.fn(async () => ""),
+  loadPersistedInferBaseUrl: vi.fn(async () => ""),
+  loadPersistedInferModel: vi.fn(async () => ""),
   loadPersistedOpenAiApiKey: vi.fn(async () => ""),
 }));
 
+import {
+  loadPersistedAiProvider,
+  loadPersistedInferApiKey,
+  loadPersistedInferBaseUrl,
+  loadPersistedInferModel,
+} from "../src/features/app-shell/storage";
 import {
   buildFallbackModelListForTests,
   parseFileWithOpenAiFromBlob,
@@ -57,6 +67,10 @@ afterEach(() => {
   process.env.EXPO_PUBLIC_OPENAI_API_KEY = originalApiKey;
   delete process.env.EXPO_PUBLIC_OPENAI_FALLBACK_MODELS;
   delete process.env.EXPO_PUBLIC_GEMINI_FALLBACK_MODELS;
+  vi.mocked(loadPersistedAiProvider).mockResolvedValue("openai");
+  vi.mocked(loadPersistedInferApiKey).mockResolvedValue("");
+  vi.mocked(loadPersistedInferBaseUrl).mockResolvedValue("");
+  vi.mocked(loadPersistedInferModel).mockResolvedValue("");
   vi.unstubAllGlobals();
   vi.useRealTimers();
   vi.restoreAllMocks();
@@ -266,6 +280,32 @@ describe("remote parse client", () => {
     });
 
     expect(result.error).toContain("Rate limit exceeded");
+    expect(result.rawJson).toBeNull();
+  });
+
+  it("returns a readable Infer error when the provider responds with non-JSON content", async () => {
+    vi.mocked(loadPersistedAiProvider).mockResolvedValue("infer");
+    vi.mocked(loadPersistedInferApiKey).mockResolvedValue("infer-test-key");
+    vi.mocked(loadPersistedInferBaseUrl).mockResolvedValue("https://infer.example/v1");
+    vi.mocked(loadPersistedInferModel).mockResolvedValue("gpt-4o");
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        new Response("<html>bad gateway</html>", {
+          headers: { "content-type": "text/html" },
+          status: 502,
+        }),
+      ),
+    );
+
+    const result = await parseFileWithOpenAiFromBlob({
+      blob: new Blob(["pdf-bytes"], { type: "application/pdf" }),
+      fileName: "receipt.pdf",
+      mimeType: "application/pdf",
+    });
+
+    expect(result.error).toContain("Infer returned a non-JSON response");
     expect(result.rawJson).toBeNull();
   });
 

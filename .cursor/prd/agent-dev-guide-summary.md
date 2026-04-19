@@ -53,6 +53,6 @@ pnpm smoke
 
 各 `.cursor/prd/feat/*.md` **不必重复**写长段交付门禁、三角角色说明或 `{version}_context.md` / `main.md` 维护细则；在文档中保留 **一行引用**即可：
 
-> **公用约定**：以本文 `.cursor/prd/agent-dev-guide-summary.md` 为准（愿景、角色与 `work_flow`、技术约束、交付前 `pnpm` 命令、PRD/上下文与版本化 `*_context.md`）。Cursor **始终应用**基线：`.cursor/rules/creator-cfo-always.mdc`。结构参考 `.cursor/prd/TEMPLATE.md`。若仓库内有《Ai Agent 友好型 开发指南》PDF，可作人工补充，**勿假设** Agent 已完整读取 PDF。
+> **公用约定**：以本文 `.cursor/prd/agent-dev-guide-summary.md` 为准（愿景、角色与 `work_flow`、技术约束、交付前 `pnpm` 命令、PRD/上下文与版本化 `*_context.md`）。Cursor **始终应用**基线：`.cursor/rules/ledgerly-always.mdc`。结构参考 `.cursor/prd/TEMPLATE.md`。若仓库内有《Ai Agent 友好型 开发指南》PDF，可作人工补充，**勿假设** Agent 已完整读取 PDF。
 
 feat 内只写**本需求独有**的内容：平台/场景一句话（可指向 README）、存储与契约影响、需求与验收、参考 Skill、以及必要的**额外**交付说明（若有）。

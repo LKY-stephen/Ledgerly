@@ -1,6 +1,6 @@
 import Svg, { G, Rect, Text as SvgText, TSpan } from "react-native-svg";
 
-import type { SurfaceTokens } from "@creator-cfo/ui";
+import type { SurfaceTokens } from "@ledgerly/ui";
 
 import {
   getForm1099NecLayoutPage,

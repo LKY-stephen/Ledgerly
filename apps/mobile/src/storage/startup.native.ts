@@ -1,6 +1,6 @@
 import * as FileSystem from "expo-file-system/legacy";
 import { openDatabaseAsync } from "expo-sqlite";
-import { getLocalStorageBootstrapPlan } from "@creator-cfo/storage";
+import { getLocalStorageBootstrapPlan } from "@ledgerly/storage";
 
 import { loadDatabaseTableCompatibility } from "./active-database.native";
 import { initializeEmptyActivePackage, migrateLegacyDatabaseIfNeeded } from "./bootstrap";

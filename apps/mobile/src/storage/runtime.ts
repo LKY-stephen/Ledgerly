@@ -1,6 +1,6 @@
 import { openDatabaseAsync, type SQLiteDatabase } from "expo-sqlite";
 
-import { getLocalStorageBootstrapPlan } from "@creator-cfo/storage";
+import { getLocalStorageBootstrapPlan } from "@ledgerly/storage";
 
 import { initializeActivePackageDatabase } from "./active-database.native";
 import { bootstrapLocalStorage } from "./bootstrap";
