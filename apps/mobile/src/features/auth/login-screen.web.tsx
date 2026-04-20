@@ -39,6 +39,12 @@ export function LoginScreen() {
     await continueAsGuest();
     router.replace("/");
   };
+  const poemLines = [
+    "The moment you start tracking your money,",
+    "you stop being random.",
+    "You become governable,",
+    "not by others but by yourself.",
+  ] as const;
 
   if (isWide) {
     return (
@@ -155,75 +161,47 @@ export function LoginScreen() {
 
         <View
           style={[
-            styles.heroArt,
+            styles.mobileLogoCard,
             {
-              backgroundColor: palette.heroEnd,
+              backgroundColor: palette.paperMuted,
+              borderColor: palette.border,
               shadowColor: palette.shadow,
             },
           ]}
         >
-          <View
-            style={[
-              styles.heroGlow,
-              { backgroundColor: palette.shellElevated },
-            ]}
-          />
-          <View style={styles.heroDesk} />
-          <View style={styles.heroLaptop}>
-            <View
-              style={[
-                styles.heroLaptopScreen,
-                { backgroundColor: palette.paper },
-              ]}
-            />
-          </View>
-          <View
-            style={[
-              styles.heroPill,
-              styles.heroPillTop,
-              { backgroundColor: palette.paper },
-            ]}
-          >
-            <View
-              style={[styles.pillDot, { backgroundColor: palette.accent }]}
-            />
-            <Text style={[styles.heroPillLabel, { color: palette.ink }]}>
-              {copy.login.signals[0]}
-            </Text>
-          </View>
-          <View
-            style={[
-              styles.heroPill,
-              styles.heroPillMiddle,
-              { backgroundColor: palette.paper },
-            ]}
-          >
-            <View
-              style={[styles.pillDot, { backgroundColor: palette.accent }]}
-            />
-            <Text style={[styles.heroPillLabel, { color: palette.ink }]}>
-              {copy.login.signals[1]}
-            </Text>
-          </View>
-          <View
-            style={[
-              styles.heroPill,
-              styles.heroPillBottom,
-              { backgroundColor: palette.paper },
-            ]}
-          >
-            <View
-              style={[styles.pillDot, { backgroundColor: palette.accent }]}
-            />
-            <Text style={[styles.heroPillLabel, { color: palette.ink }]}>
-              {copy.login.signals[2]}
-            </Text>
-          </View>
+          <LedgerlyIconMark size={164} />
         </View>
 
-        <Text style={[styles.summary, { color: palette.inkMuted }]}>
-          {copy.login.body}
-        </Text>
+        <View style={styles.poemStack}>
+          {poemLines.map((line, index) => (
+            <Text
+              key={line}
+              style={[
+                index === 0 ? styles.mobilePoemTitle : styles.mobilePoemLine,
+                { color: palette.ink },
+              ]}
+            >
+              {line}
+            </Text>
+          ))}
+        </View>
+
+        <View style={styles.signalRow}>
+          {copy.login.signals.map((signal) => (
+            <View
+              key={signal}
+              style={[
+                styles.signalChip,
+                { backgroundColor: palette.paperMuted, borderColor: palette.border },
+              ]}
+            >
+              <View style={[styles.statusDot, { backgroundColor: palette.accent }]} />
+              <Text style={[styles.signalChipLabel, { color: palette.inkMuted }]}>
+                {signal}
+              </Text>
+            </View>
+          ))}
+        </View>
 
         <View style={styles.actions}>
           <Pressable
@@ -243,39 +221,6 @@ export function LoginScreen() {
               {copy.login.skip}
             </Text>
           </Pressable>
-        </View>
-
-        <View style={[styles.privacyCard, { borderTopColor: palette.divider }]}>
-          <Text style={[styles.privacyEyebrow, { color: palette.accent }]}>
-            {copy.login.privacyEyebrow}
-          </Text>
-          <Text style={[styles.privacySummary, { color: palette.inkMuted }]}>
-            {copy.login.privacySummary}
-          </Text>
-          <View style={styles.privacyMetrics}>
-            <Text style={[styles.privacyMetric, { color: palette.inkMuted }]}>
-              {copy.login.privacyMetrics[0]}
-            </Text>
-            <Text style={[styles.privacyMetric, { color: palette.inkMuted }]}>
-              {copy.login.privacyMetrics[1]}
-            </Text>
-          </View>
-          <View
-            style={[
-              styles.statusPanel,
-              {
-                backgroundColor: palette.paperMuted,
-                borderColor: palette.border,
-              },
-            ]}
-          >
-            <View
-              style={[styles.statusDot, { backgroundColor: palette.accent }]}
-            />
-            <Text style={[styles.statusText, { color: palette.inkMuted }]}>
-              {copy.login.appleHint}
-            </Text>
-          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -321,81 +266,21 @@ const styles = StyleSheet.create({
   container: {
     alignItems: "center",
     flexGrow: 1,
-    gap: 22,
+    gap: 20,
     padding: 24,
     paddingBottom: 36,
   },
-  heroArt: {
-    borderRadius: 34,
-    height: 344,
-    overflow: "hidden",
-    position: "relative",
+  mobileLogoCard: {
+    alignItems: "center",
+    borderRadius: 28,
+    borderWidth: 1,
+    justifyContent: "center",
+    minHeight: 248,
+    padding: 24,
     width: "100%",
     shadowOffset: { height: 16, width: 0 },
-    shadowOpacity: 0.16,
+    shadowOpacity: 0.12,
     shadowRadius: 28,
-  },
-  heroDesk: {
-    backgroundColor: "rgba(255, 245, 230, 0.48)",
-    bottom: 30,
-    height: 18,
-    left: 0,
-    position: "absolute",
-    right: 0,
-  },
-  heroGlow: {
-    alignSelf: "center",
-    borderRadius: 999,
-    height: 120,
-    marginTop: 18,
-    opacity: 0.22,
-    width: 120,
-  },
-  heroLaptop: {
-    backgroundColor: "#d8d4cd",
-    borderRadius: 10,
-    borderWidth: 3,
-    borderColor: "#8a939e",
-    bottom: 58,
-    height: 88,
-    position: "absolute",
-    right: 38,
-    transform: [{ rotate: "-5deg" }],
-    width: 118,
-  },
-  heroLaptopScreen: {
-    borderRadius: 4,
-    flex: 1,
-    margin: 7,
-  },
-  heroPill: {
-    alignItems: "center",
-    borderRadius: 999,
-    flexDirection: "row",
-    gap: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    position: "absolute",
-    shadowOffset: { height: 10, width: 0 },
-    shadowOpacity: 0.08,
-    shadowRadius: 18,
-  },
-  heroPillBottom: {
-    bottom: 22,
-    left: 22,
-  },
-  heroPillLabel: {
-    fontSize: 13,
-    fontWeight: "800",
-    letterSpacing: 0.7,
-  },
-  heroPillMiddle: {
-    bottom: 90,
-    right: 18,
-  },
-  heroPillTop: {
-    bottom: 116,
-    left: 22,
   },
   leftPanel: {
     flex: 55,
@@ -481,13 +366,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700",
   },
-  privacyCard: {
-    alignSelf: "stretch",
-    borderTopWidth: 1,
-    gap: 14,
-    marginTop: 16,
-    paddingTop: 26,
-  },
   privacyChip: {
     alignItems: "center",
     borderRadius: 12,
@@ -502,29 +380,9 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: 0.6,
   },
-  privacyEyebrow: {
-    fontSize: 12,
-    fontWeight: "800",
-    letterSpacing: 1.4,
-    textAlign: "center",
-    textTransform: "uppercase",
-  },
-  privacyMetric: {
-    flex: 1,
-    fontSize: 12,
-    fontWeight: "700",
-    letterSpacing: 1,
-    textAlign: "center",
-    textTransform: "uppercase",
-  },
   privacyMetrics: {
     flexDirection: "row",
     gap: 12,
-  },
-  privacySummary: {
-    fontSize: 16,
-    lineHeight: 24,
-    textAlign: "center",
   },
   rightPanel: {
     flex: 45,
@@ -553,25 +411,25 @@ const styles = StyleSheet.create({
     height: 10,
     width: 10,
   },
-  statusPanel: {
+  signalChip: {
     alignItems: "center",
-    borderRadius: 14,
+    borderRadius: 999,
     borderWidth: 1,
     flexDirection: "row",
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  signalChipLabel: {
+    fontSize: 12,
+    fontWeight: "700",
+    letterSpacing: 0.5,
+  },
+  signalRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    width: "100%",
-  },
-  statusText: {
-    flex: 1,
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  summary: {
-    fontSize: 18,
-    lineHeight: 28,
-    textAlign: "center",
+    justifyContent: "center",
   },
   tryNowIconWrap: {
     alignItems: "center",
@@ -588,5 +446,23 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 10,
     marginTop: 8,
+  },
+  mobilePoemLine: {
+    fontSize: 24,
+    fontWeight: "800",
+    letterSpacing: -0.3,
+    lineHeight: 31,
+    textAlign: "center",
+  },
+  mobilePoemTitle: {
+    fontSize: 24,
+    fontWeight: "800",
+    letterSpacing: -0.3,
+    lineHeight: 31,
+    textAlign: "center",
+  },
+  poemStack: {
+    alignItems: "center",
+    gap: 2,
   },
 });
