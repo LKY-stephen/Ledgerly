@@ -74,6 +74,8 @@ export function LedgerParseScreen() {
     plannerResult,
     rejectProposal,
     review,
+    selectedCandidateIndex,
+    selectCandidate,
     startPlanner,
     updateField,
   } = usePlannerWorkflow({
@@ -96,6 +98,10 @@ export function LedgerParseScreen() {
     parsedRawJson !== null &&
     Boolean(plannerError);
   const allApproved = plannerResult?.batchState === "approved";
+  const activeCandidate = plannerResult?.candidateRecords[selectedCandidateIndex] ?? null;
+  const visibleProposals = plannerResult?.writeProposals.filter((proposal) =>
+    !proposal.candidateId || proposal.candidateId === activeCandidate?.candidateId,
+  ) ?? [];
   const [duplicateKeepModes, setDuplicateKeepModes] = useState<
     Record<string, DuplicateMergeKeepMode>
   >({});
@@ -376,23 +382,63 @@ export function LedgerParseScreen() {
                 ]}
               >
                 <Text style={[styles.sectionTitle, { color: palette.ink }]}>
-                  {parseCopy.editRecordTitle}
+                  {plannerResult.candidateRecords.length > 1
+                    ? `${parseCopy.editRecordTitle} ${selectedCandidateIndex + 1}/${plannerResult.candidateRecords.length}`
+                    : parseCopy.editRecordTitle}
                 </Text>
-                {plannerResult.candidateRecords[0] ? (
+                {plannerResult.candidateRecords.length > 1 ? (
+                  <View style={styles.candidateChipRow}>
+                    {plannerResult.candidateRecords.map((candidate, index) => {
+                      const selected = index === selectedCandidateIndex;
+
+                      return (
+                        <Pressable
+                          key={candidate.candidateId}
+                          accessibilityRole="button"
+                          onPress={() => selectCandidate(index)}
+                          style={[
+                            styles.candidateChip,
+                            {
+                              backgroundColor: selected
+                                ? palette.accentSoft
+                                : palette.shellElevated,
+                              borderColor: selected
+                                ? palette.accent
+                                : palette.border,
+                            },
+                          ]}
+                          testID={`candidate-${index + 1}`}
+                        >
+                          <Text
+                            style={[
+                              styles.candidateChipLabel,
+                              {
+                                color: selected ? palette.accent : palette.ink,
+                              },
+                            ]}
+                          >
+                            {`${parseCopy.reviewStateCandidate} ${index + 1}`}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                ) : null}
+                {activeCandidate ? (
                   <View style={styles.statePillRow}>
                     <View
                       style={[
                         styles.statePill,
                         {
                           backgroundColor: stateColor(
-                            plannerResult.candidateRecords[0].state,
+                            activeCandidate.state,
                           ),
                         },
                       ]}
                     >
                       <Text style={styles.statePillText}>
                         {formatLedgerParseCandidateState(
-                          plannerResult.candidateRecords[0].state,
+                          activeCandidate.state,
                           resolvedLocale,
                         )}
                       </Text>
@@ -445,7 +491,7 @@ export function LedgerParseScreen() {
             ) : null}
 
             {plannerResult &&
-            plannerResult.writeProposals.length > 0 &&
+            visibleProposals.length > 0 &&
             !allApproved ? (
               <View style={styles.proposalsSection}>
                 <Text
@@ -456,7 +502,7 @@ export function LedgerParseScreen() {
                 >
                   {parseCopy.writeProposalsTitle}
                 </Text>
-                {plannerResult.writeProposals.map((proposal) => {
+                {visibleProposals.map((proposal) => {
                   if (proposal.proposalType === "resolve_duplicate_receipt") {
                     const keepMode =
                       duplicateKeepModes[proposal.writeProposalId] ?? "keep_existing";
@@ -1240,6 +1286,24 @@ const styles = StyleSheet.create({
   backButtonLabel: {
     fontSize: 15,
     fontWeight: "700",
+  },
+  candidateChip: {
+    borderRadius: 14,
+    borderWidth: 1,
+    minHeight: 38,
+    justifyContent: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  candidateChipLabel: {
+    fontSize: 13,
+    fontWeight: "700",
+    textAlign: "center",
+  },
+  candidateChipRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
   },
   card: {
     borderRadius: 18,

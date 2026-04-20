@@ -12,10 +12,14 @@ import type {
 const parsePrompt = [
   "你是 receipt parser。",
   "Only parse the file attached in the current request.",
+  "If one image or PDF contains multiple distinct receipts or transactions, return them as separate ordered records.",
+  "Keep continuation pages of the same receipt in one record instead of splitting by page alone.",
   "Return JSON only.",
   "Do not treat prior parse results, prior uploads, or cached examples as truth.",
-  "The top-level object must contain parser, model, rawText, rawSummary, warnings, fields, and candidates.",
-  "fields and candidates must both include amountCents, category, date, description, notes, source, target, and taxCategory.",
+  "The top-level object must contain parser, model, rawText, rawSummary, warnings, records, fields, and candidates.",
+  "records must be a non-empty array ordered by the file's natural reading order.",
+  "Each records[i].fields and records[i].candidates must include amountCents, category, date, description, notes, source, target, and taxCategory.",
+  "Top-level fields and candidates must mirror the first record for legacy compatibility.",
   "amountCents must be an integer in cents or null.",
   "date must be YYYY-MM-DD when known or null.",
 ].join(" ");
@@ -73,7 +77,7 @@ export async function parseOriginDataWithOpenAI(
     throw new RouteError(
       502,
       "invalid_openai_json",
-      "OpenAI parser output must include parser, model, rawText, rawSummary, warnings, fields, and candidates.",
+      "OpenAI parser output must include parser, model, rawText, rawSummary, warnings, and at least one record with fields and candidates.",
     );
   }
 

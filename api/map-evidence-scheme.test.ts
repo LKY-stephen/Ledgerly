@@ -42,6 +42,30 @@ describe("POST /api/map-evidence-scheme", () => {
           parser: "openai_gpt",
           rawSummary: "Apple Store receipt",
           rawText: "Apple Store 04/01/2026 $52.99",
+          records: [
+            {
+              candidates: {
+                amountCents: 5299,
+                category: "expense",
+                date: "2026-04-01",
+                description: "Apple Store receipt",
+                notes: null,
+                source: "Business card",
+                target: "Apple Store",
+                taxCategory: "office",
+              },
+              fields: {
+                amountCents: 5299,
+                category: "expense",
+                date: "2026-04-01",
+                description: "Apple Store receipt",
+                notes: null,
+                source: "Business card",
+                target: "Apple Store",
+                taxCategory: "office",
+              },
+            },
+          ],
           warnings: [],
         },
         scheme: {

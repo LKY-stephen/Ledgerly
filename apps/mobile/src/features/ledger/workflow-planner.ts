@@ -5,12 +5,17 @@ import type {
   CounterpartyResolution,
   DuplicateKind,
   EvidenceExtractedData,
+  EvidenceFieldCandidates,
   JsonObject,
   JsonValue,
   PlannerReadTask,
   PlannerSummary,
   ReceiptPlannerPayload,
   WorkflowWriteProposalPayload,
+} from "@ledgerly/schemas";
+import {
+  getReceiptParseRecords,
+  normalizeReceiptParsePayload,
 } from "@ledgerly/schemas";
 
 import type {
@@ -34,6 +39,11 @@ export interface DuplicateReceiptMatch {
 }
 
 export interface PlannerReadResults {
+  candidates: CandidatePlannerReadResult[];
+}
+
+export interface CandidatePlannerReadResult {
+  candidateIndex: number;
   duplicateRecordIds: string[];
   duplicateReceiptMatches: DuplicateReceiptMatch[];
   sourceCounterpartyMatches: PlannerLookupMatch[];
@@ -79,17 +89,25 @@ export function buildPlannerSummary(input: {
   );
   const writeProposals = materializeWriteProposals({
     candidateRecords: localCandidateRecords,
-    duplicateReceiptMatches: input.readResults.duplicateReceiptMatches,
     duplicateHints,
     remoteWriteProposals: input.remotePlan.writeProposals,
+    readResults: input.readResults,
     resolutions: counterpartyResolutions,
   });
-  const duplicateReceiptMatch = selectPrimaryDuplicateMatch(input.readResults.duplicateReceiptMatches);
+  const duplicateWarnings = input.readResults.candidates.flatMap((candidateResult) => {
+    const primaryDuplicateMatch = selectPrimaryDuplicateMatch(candidateResult.duplicateReceiptMatches);
+
+    if (!primaryDuplicateMatch) {
+      return [];
+    }
+
+    return [formatDuplicateReceiptWarning(primaryDuplicateMatch, candidateResult.candidateIndex)];
+  });
   const warnings = dedupeStrings([
     ...input.extractedData.warnings,
     ...input.remotePlan.warnings,
-    ...(duplicateReceiptMatch ? [formatDuplicateReceiptWarning(duplicateReceiptMatch)] : []),
-    ...(duplicateHints.includes("record_duplicate") && !duplicateReceiptMatch
+    ...duplicateWarnings,
+    ...(duplicateHints.includes("record_duplicate") && duplicateWarnings.length === 0
       ? ["Potential duplicate record detected from local record lookup."]
       : []),
     ...(counterpartyResolutions.some((resolution) => resolution.status === "ambiguous")
@@ -107,6 +125,64 @@ export function buildPlannerSummary(input: {
     summary: input.remotePlan.summary,
     warnings,
     writeProposals,
+  };
+}
+
+export function materializeCandidateRecordDraft(input: {
+  candidate: CandidateRecordPayload;
+  candidateIndex: number;
+  evidence: Pick<
+    EvidenceQueueItem,
+    | "capturedAmountCents"
+    | "capturedDate"
+    | "capturedDescription"
+    | "capturedSource"
+    | "capturedTarget"
+    | "evidenceId"
+    | "originalFileName"
+  >;
+  extractedData: EvidenceExtractedData;
+}): CandidateRecordPayload {
+  const parseRecord = getParseRecordForCandidateIndex(input.extractedData, input.candidateIndex);
+  const fieldFallback = parseRecord?.fields ?? input.extractedData.fields;
+  const candidateFallback = parseRecord?.candidates ?? input.extractedData.candidates;
+
+  return {
+    ...input.candidate,
+    amountCents:
+      input.candidate.amountCents ??
+      fieldFallback.amountCents ??
+      candidateFallback.amountCents ??
+      (input.evidence.capturedAmountCents > 0 ? input.evidence.capturedAmountCents : null),
+    currency: normalizeText(input.candidate.currency) ?? "USD",
+    date:
+      normalizeText(input.candidate.date) ??
+      fieldFallback.date ??
+      candidateFallback.date ??
+      input.evidence.capturedDate,
+    description:
+      normalizeText(input.candidate.description) ??
+      normalizeText(fieldFallback.description) ??
+      normalizeText(candidateFallback.description) ??
+      normalizeText(input.evidence.capturedDescription) ??
+      input.evidence.originalFileName,
+    evidenceId: input.evidence.evidenceId,
+    sourceCounterpartyId: null,
+    sourceLabel:
+      normalizeText(input.candidate.sourceLabel) ??
+      normalizeText(fieldFallback.source) ??
+      normalizeText(candidateFallback.source) ??
+      normalizeText(input.evidence.capturedSource),
+    targetCounterpartyId: null,
+    targetLabel:
+      normalizeText(input.candidate.targetLabel) ??
+      normalizeText(fieldFallback.target) ??
+      normalizeText(candidateFallback.target) ??
+      normalizeText(input.evidence.capturedTarget),
+    taxCategoryCode:
+      normalizeText(input.candidate.taxCategoryCode) ??
+      normalizeText(fieldFallback.taxCategory) ??
+      normalizeText(candidateFallback.taxCategory),
   };
 }
 
@@ -247,6 +323,58 @@ function assertPlannerPayloadCompleteness(remotePlan: ReceiptPlannerPayload): vo
   if (!proposalTypes.has("persist_candidate_record")) {
     throw new Error("Planner payload is missing the persist_candidate_record proposal.");
   }
+
+  if (remotePlan.candidateRecords.length <= 1) {
+    return;
+  }
+
+  const persistCandidateIndexes = new Set<number>();
+
+  for (const proposal of remotePlan.writeProposals) {
+    if (!isCandidateScopedProposalType(proposal.proposalType)) {
+      continue;
+    }
+
+    const candidateIndex = resolveProposalCandidateIndex(proposal);
+
+    if (candidateIndex === null) {
+      throw new Error(
+        `Planner payload must include explicit candidateIndex routing for ${proposal.proposalType} when multiple candidate records exist.`,
+      );
+    }
+
+    if (candidateIndex >= remotePlan.candidateRecords.length) {
+      throw new Error(
+        `Planner payload candidateIndex ${candidateIndex} is out of range for ${remotePlan.candidateRecords.length} candidate records.`,
+      );
+    }
+
+    if (proposal.proposalType === "persist_candidate_record") {
+      persistCandidateIndexes.add(candidateIndex);
+    }
+  }
+
+  for (const [candidateIndex] of remotePlan.candidateRecords.entries()) {
+    if (!persistCandidateIndexes.has(candidateIndex)) {
+      throw new Error(
+        `Planner payload is missing persist_candidate_record routing for candidate ${candidateIndex}.`,
+      );
+    }
+  }
+
+  for (const resolution of remotePlan.counterpartyResolutions) {
+    if (resolution.candidateIndex === undefined) {
+      throw new Error(
+        "Planner payload must include candidateIndex on counterparty resolutions when multiple candidate records exist.",
+      );
+    }
+
+    if (resolution.candidateIndex < 0 || resolution.candidateIndex >= remotePlan.candidateRecords.length) {
+      throw new Error(
+        `Planner payload counterparty resolution candidateIndex ${resolution.candidateIndex} is out of range.`,
+      );
+    }
+  }
 }
 
 function materializeCandidateRecords(input: {
@@ -264,46 +392,25 @@ function materializeCandidateRecords(input: {
   readResults: PlannerReadResults;
   remoteCandidateRecords: CandidateRecordPayload[];
 }): CandidateRecordPayload[] {
-  return input.remoteCandidateRecords.map((candidate) => {
-    const amountCents =
-      candidate.amountCents ??
-      input.extractedData.fields.amountCents ??
-      (input.evidence.capturedAmountCents > 0 ? input.evidence.capturedAmountCents : null);
-    const date = normalizeText(candidate.date) ?? input.extractedData.fields.date ?? input.evidence.capturedDate;
-    const description =
-      normalizeText(candidate.description) ??
-      normalizeText(input.extractedData.fields.description) ??
-      normalizeText(input.evidence.capturedDescription) ??
-      input.evidence.originalFileName;
-    const sourceLabel =
-      normalizeText(candidate.sourceLabel) ??
-      normalizeText(input.extractedData.fields.source) ??
-      normalizeText(input.evidence.capturedSource);
-    const targetLabel =
-      normalizeText(candidate.targetLabel) ??
-      normalizeText(input.extractedData.fields.target) ??
-      normalizeText(input.evidence.capturedTarget);
-    const sourceCounterpartyId =
-      input.readResults.sourceCounterpartyMatches.length === 1
-        ? input.readResults.sourceCounterpartyMatches[0]?.counterpartyId ?? null
-        : null;
-    const targetCounterpartyId =
-      input.readResults.targetCounterpartyMatches.length === 1
-        ? input.readResults.targetCounterpartyMatches[0]?.counterpartyId ?? null
-        : null;
+  return input.remoteCandidateRecords.map((candidate, candidateIndex) => {
+    const readResult = findCandidateReadResult(input.readResults, candidateIndex);
+    const draft = materializeCandidateRecordDraft({
+      candidate,
+      candidateIndex,
+      evidence: input.evidence,
+      extractedData: input.extractedData,
+    });
 
     return {
-      ...candidate,
-      amountCents,
-      currency: normalizeText(candidate.currency) ?? "USD",
-      date,
-      description,
-      evidenceId: input.evidence.evidenceId,
-      sourceCounterpartyId,
-      sourceLabel,
-      targetCounterpartyId,
-      targetLabel,
-      taxCategoryCode: normalizeText(candidate.taxCategoryCode),
+      ...draft,
+      sourceCounterpartyId:
+        readResult.sourceCounterpartyMatches.length === 1
+          ? readResult.sourceCounterpartyMatches[0]?.counterpartyId ?? null
+          : null,
+      targetCounterpartyId:
+        readResult.targetCounterpartyMatches.length === 1
+          ? readResult.targetCounterpartyMatches[0]?.counterpartyId ?? null
+          : null,
     };
   });
 }
@@ -314,86 +421,98 @@ function buildCounterpartyResolutions(input: {
   remoteResolutions: CounterpartyResolution[];
   candidateRecords: CandidateRecordPayload[];
 }): CounterpartyResolution[] {
-  return (["source", "target"] as const).map((role) => {
-    const remoteResolution = input.remoteResolutions.find((resolution) => resolution.role === role);
-    const displayName =
-      normalizeText(
-        role === "source"
-          ? input.candidateRecords[0]?.sourceLabel
-          : input.candidateRecords[0]?.targetLabel,
-      ) ??
-      normalizeText(remoteResolution?.displayName) ??
-      normalizeText(role === "source" ? input.evidence.capturedSource : input.evidence.capturedTarget) ??
-      "";
-    const matches =
-      role === "source" ? input.readResults.sourceCounterpartyMatches : input.readResults.targetCounterpartyMatches;
-    const suggestions =
-      role === "source" ? input.readResults.sourceCounterpartySuggestions : input.readResults.targetCounterpartySuggestions;
+  return input.candidateRecords.flatMap((candidateRecord, candidateIndex) =>
+    (["source", "target"] as const).map((role) => {
+      const readResult = findCandidateReadResult(input.readResults, candidateIndex);
+      const displayName =
+        normalizeText(role === "source" ? candidateRecord.sourceLabel : candidateRecord.targetLabel) ??
+        normalizeText(role === "source" ? input.evidence.capturedSource : input.evidence.capturedTarget) ??
+        "";
+      const remoteResolution = findCandidateResolution(input.remoteResolutions, {
+        candidateIndex,
+        displayName,
+        role,
+      });
+      const matches =
+        role === "source" ? readResult.sourceCounterpartyMatches : readResult.targetCounterpartyMatches;
+      const suggestions =
+        role === "source" ? readResult.sourceCounterpartySuggestions : readResult.targetCounterpartySuggestions;
 
-    if (!displayName) {
+      if (!displayName) {
+        return {
+          candidateIndex,
+          confidence: "low",
+          displayName: "",
+          matchedDisplayNames: [],
+          matchedCounterpartyIds: [],
+          role,
+          status: "proposed_new",
+        } satisfies CounterpartyResolution;
+      }
+
+      if (matches.length === 1) {
+        return {
+          candidateIndex,
+          confidence: "high",
+          displayName,
+          matchedDisplayNames: [matches[0]!.displayName],
+          matchedCounterpartyIds: [matches[0]!.counterpartyId],
+          role,
+          status: "matched",
+        } satisfies CounterpartyResolution;
+      }
+
+      if (matches.length > 1) {
+        return {
+          candidateIndex,
+          confidence: "medium",
+          displayName,
+          matchedDisplayNames: matches.map((match) => match.displayName),
+          matchedCounterpartyIds: matches.map((match) => match.counterpartyId),
+          role,
+          status: "ambiguous",
+        } satisfies CounterpartyResolution;
+      }
+
+      if (suggestions.length > 0) {
+        return {
+          candidateIndex,
+          confidence: "medium",
+          displayName,
+          matchedDisplayNames: suggestions.map((match) => match.displayName),
+          matchedCounterpartyIds: suggestions.map((match) => match.counterpartyId),
+          role,
+          status: "ambiguous",
+        } satisfies CounterpartyResolution;
+      }
+
+      if (
+        remoteResolution &&
+        remoteResolution.status !== "proposed_new" &&
+        remoteResolution.matchedCounterpartyIds.length > 0
+      ) {
+        return {
+          candidateIndex,
+          confidence: remoteResolution.confidence,
+          displayName,
+          matchedDisplayNames: remoteResolution.matchedDisplayNames,
+          matchedCounterpartyIds: remoteResolution.matchedCounterpartyIds,
+          role,
+          status: remoteResolution.status,
+        } satisfies CounterpartyResolution;
+      }
+
       return {
-        confidence: "low",
-        displayName: "",
+        candidateIndex,
+        confidence: remoteResolution?.confidence ?? "medium",
+        displayName,
         matchedDisplayNames: [],
         matchedCounterpartyIds: [],
         role,
         status: "proposed_new",
       } satisfies CounterpartyResolution;
-    }
-
-    if (matches.length === 1) {
-      return {
-        confidence: "high",
-        displayName,
-        matchedDisplayNames: [matches[0]!.displayName],
-        matchedCounterpartyIds: [matches[0]!.counterpartyId],
-        role,
-        status: "matched",
-      } satisfies CounterpartyResolution;
-    }
-
-    if (matches.length > 1) {
-      return {
-        confidence: "medium",
-        displayName,
-        matchedDisplayNames: matches.map((match) => match.displayName),
-        matchedCounterpartyIds: matches.map((match) => match.counterpartyId),
-        role,
-        status: "ambiguous",
-      } satisfies CounterpartyResolution;
-    }
-
-    if (suggestions.length > 0) {
-      return {
-        confidence: "medium",
-        displayName,
-        matchedDisplayNames: suggestions.map((match) => match.displayName),
-        matchedCounterpartyIds: suggestions.map((match) => match.counterpartyId),
-        role,
-        status: "ambiguous",
-      } satisfies CounterpartyResolution;
-    }
-
-    if (remoteResolution && remoteResolution.status !== "proposed_new" && remoteResolution.matchedCounterpartyIds.length > 0) {
-      return {
-        confidence: remoteResolution.confidence,
-        displayName,
-        matchedDisplayNames: remoteResolution.matchedDisplayNames,
-        matchedCounterpartyIds: remoteResolution.matchedCounterpartyIds,
-        role,
-        status: remoteResolution.status,
-      } satisfies CounterpartyResolution;
-    }
-
-    return {
-      confidence: remoteResolution?.confidence ?? "medium",
-      displayName,
-      matchedDisplayNames: [],
-      matchedCounterpartyIds: [],
-      role,
-      status: "proposed_new",
-    } satisfies CounterpartyResolution;
-  });
+    }),
+  );
 }
 
 function buildDuplicateHints(
@@ -402,8 +521,12 @@ function buildDuplicateHints(
 ): DuplicateKind[] {
   return dedupeDuplicateKinds([
     ...remoteDuplicateHints,
-    ...(readResults.duplicateReceiptMatches.length ? (["near_duplicate"] as const) : []),
-    ...(readResults.duplicateRecordIds.length ? (["record_duplicate"] as const) : []),
+    ...(readResults.candidates.some((candidate) => candidate.duplicateReceiptMatches.length)
+      ? (["near_duplicate"] as const)
+      : []),
+    ...(readResults.candidates.some((candidate) => candidate.duplicateRecordIds.length)
+      ? (["record_duplicate"] as const)
+      : []),
   ]);
 }
 
@@ -417,27 +540,33 @@ function buildReadTasks(
         ...task,
         input: task.input ?? {},
         result: {
-          sourceMatches: readResults.sourceCounterpartyMatches as unknown as JsonValue[],
-          sourceSuggestions: readResults.sourceCounterpartySuggestions as unknown as JsonValue[],
-          targetMatches: readResults.targetCounterpartyMatches as unknown as JsonValue[],
-          targetSuggestions: readResults.targetCounterpartySuggestions as unknown as JsonValue[],
+          candidates: readResults.candidates.map((candidateResult) => ({
+            candidateIndex: candidateResult.candidateIndex,
+            sourceMatches: candidateResult.sourceCounterpartyMatches,
+            sourceSuggestions: candidateResult.sourceCounterpartySuggestions,
+            targetMatches: candidateResult.targetCounterpartyMatches,
+            targetSuggestions: candidateResult.targetCounterpartySuggestions,
+          })) as unknown as JsonValue[],
         } as JsonObject,
         status: "completed",
       };
     }
 
-    return {
-      ...task,
-      input: task.input ?? {},
-      result: {
-        duplicateRecordIds: readResults.duplicateRecordIds,
-        duplicateReceiptMatches: readResults.duplicateReceiptMatches.map((match) => ({
-          conflictEvidenceId: match.conflictEvidenceId,
-          conflictLabel: match.conflictLabel,
-          matchedRecordIds: match.matchedRecordIds,
-          matchedRecords: match.matchedRecords,
-          overlapEntryCount: match.overlapEntryCount,
-        })) as unknown as JsonValue[],
+      return {
+        ...task,
+        input: task.input ?? {},
+        result: {
+          candidates: readResults.candidates.map((candidateResult) => ({
+            candidateIndex: candidateResult.candidateIndex,
+            duplicateRecordIds: candidateResult.duplicateRecordIds,
+            duplicateReceiptMatches: candidateResult.duplicateReceiptMatches.map((match) => ({
+              conflictEvidenceId: match.conflictEvidenceId,
+              conflictLabel: match.conflictLabel,
+              matchedRecordIds: match.matchedRecordIds,
+              matchedRecords: match.matchedRecords,
+              overlapEntryCount: match.overlapEntryCount,
+            })),
+          })) as unknown as JsonValue[],
       } as JsonObject,
       status: "completed",
     };
@@ -490,67 +619,108 @@ function classifyField(field: string, value: unknown): ClassifiedParseField {
 
 function materializeWriteProposals(input: {
   candidateRecords: CandidateRecordPayload[];
-  duplicateReceiptMatches: DuplicateReceiptMatch[];
   duplicateHints: DuplicateKind[];
   remoteWriteProposals: WorkflowWriteProposalPayload[];
+  readResults: PlannerReadResults;
   resolutions: CounterpartyResolution[];
 }): WorkflowWriteProposalPayload[] {
-  const primaryCandidate = input.candidateRecords[0] ?? null;
   const proposals: WorkflowWriteProposalPayload[] = [];
-  const duplicateReceiptMatch = selectPrimaryDuplicateMatch(input.duplicateReceiptMatches);
-  const remoteDuplicateProposal = findProposal(input.remoteWriteProposals, "resolve_duplicate_receipt");
   const passthroughRemoteProposals = input.remoteWriteProposals.filter((proposal) =>
     proposal.proposalType !== "create_counterparty" &&
     proposal.proposalType !== "merge_counterparty" &&
     proposal.proposalType !== "persist_candidate_record" &&
     proposal.proposalType !== "resolve_duplicate_receipt",
   );
+  const consumedPassthroughIndexes = new Set<number>();
 
-  if (duplicateReceiptMatch || remoteDuplicateProposal) {
-    proposals.push(
-      buildResolveDuplicateReceiptProposal(
-        remoteDuplicateProposal,
-        duplicateReceiptMatch ?? buildDuplicateReceiptMatchFromProposal(remoteDuplicateProposal!),
-      ),
-    );
-  }
+  for (const [candidateIndex, candidateRecord] of input.candidateRecords.entries()) {
+    const candidateReadResult = findCandidateReadResult(input.readResults, candidateIndex);
+    const candidateDuplicateMatch = selectPrimaryDuplicateMatch(candidateReadResult.duplicateReceiptMatches);
+    const remoteDuplicateProposal = findProposal(input.remoteWriteProposals, "resolve_duplicate_receipt", {
+      candidateIndex,
+    });
 
-  for (const role of ["source", "target"] as const) {
-    const resolution = input.resolutions.find((item) => item.role === role);
-    const remoteMergeProposal = findProposal(input.remoteWriteProposals, "merge_counterparty", role);
-    const effectiveResolution = mergeResolutionWithRemoteProposal(resolution, remoteMergeProposal, role);
-
-    if (!effectiveResolution?.displayName || effectiveResolution.status === "matched") {
-      continue;
-    }
-
-    const remoteCreateProposal = findProposal(input.remoteWriteProposals, "create_counterparty", role);
-
-    if (effectiveResolution.status === "ambiguous" && effectiveResolution.matchedCounterpartyIds.length > 0) {
+    if (candidateDuplicateMatch || remoteDuplicateProposal) {
       proposals.push(
-        buildMergeCounterpartyProposal(
-          remoteMergeProposal,
-          effectiveResolution,
-          role,
+        buildResolveDuplicateReceiptProposal(
+          remoteDuplicateProposal,
+          candidateDuplicateMatch ?? buildDuplicateReceiptMatchFromProposal(remoteDuplicateProposal!),
+          candidateIndex,
         ),
       );
     }
 
-    proposals.push(buildCreateCounterpartyProposal(remoteCreateProposal, effectiveResolution, role));
-  }
+    for (const role of ["source", "target"] as const) {
+      const resolution = input.resolutions.find((item) =>
+        item.candidateIndex === candidateIndex && item.role === role,
+      );
+      const remoteMergeProposal = findProposal(input.remoteWriteProposals, "merge_counterparty", {
+        candidateIndex,
+        role,
+      });
+      const effectiveResolution = mergeResolutionWithRemoteProposal(
+        resolution,
+        remoteMergeProposal,
+        role,
+        candidateIndex,
+      );
 
-  proposals.push(...passthroughRemoteProposals);
+      if (!effectiveResolution?.displayName || effectiveResolution.status === "matched") {
+        continue;
+      }
 
-  if (primaryCandidate) {
+      const remoteCreateProposal = findProposal(input.remoteWriteProposals, "create_counterparty", {
+        candidateIndex,
+        role,
+      });
+
+      if (
+        effectiveResolution.status === "ambiguous" &&
+        effectiveResolution.matchedCounterpartyIds.length > 0
+      ) {
+        proposals.push(
+          buildMergeCounterpartyProposal(
+            remoteMergeProposal,
+            effectiveResolution,
+            role,
+          ),
+        );
+      }
+
+      proposals.push(buildCreateCounterpartyProposal(remoteCreateProposal, effectiveResolution, role));
+    }
+
+    passthroughRemoteProposals.forEach((proposal, index) => {
+      if (
+        resolveProposalCandidateIndex(proposal) === candidateIndex &&
+        !consumedPassthroughIndexes.has(index)
+      ) {
+        proposals.push(proposal);
+        consumedPassthroughIndexes.add(index);
+      }
+    });
+
     proposals.push(
       createPersistProposal(
-        findProposal(input.remoteWriteProposals, "persist_candidate_record"),
-        input.duplicateHints,
-        duplicateReceiptMatch,
-        primaryCandidate,
+        findProposal(input.remoteWriteProposals, "persist_candidate_record", {
+          candidateIndex,
+        }),
+        buildCandidateDuplicateHints(candidateReadResult, input.duplicateHints),
+        candidateDuplicateMatch,
+        candidateRecord,
+        candidateIndex,
       ),
     );
   }
+
+  passthroughRemoteProposals.forEach((proposal, index) => {
+    if (
+      !consumedPassthroughIndexes.has(index) &&
+      resolveProposalCandidateIndex(proposal) === null
+    ) {
+      proposals.push(proposal);
+    }
+  });
 
   return proposals;
 }
@@ -576,15 +746,137 @@ function dedupeDuplicateKinds(values: DuplicateKind[]): DuplicateKind[] {
   return [...new Set(values)];
 }
 
+function findCandidateReadResult(
+  readResults: PlannerReadResults,
+  candidateIndex: number,
+): CandidatePlannerReadResult {
+  return readResults.candidates.find((candidate) => candidate.candidateIndex === candidateIndex) ?? {
+    candidateIndex,
+    duplicateRecordIds: [],
+    duplicateReceiptMatches: [],
+    sourceCounterpartyMatches: [],
+    sourceCounterpartySuggestions: [],
+    targetCounterpartyMatches: [],
+    targetCounterpartySuggestions: [],
+  };
+}
+
+function getParseRecordForCandidateIndex(
+  extractedData: EvidenceExtractedData,
+  candidateIndex: number,
+): { candidates: EvidenceFieldCandidates; fields: EvidenceFieldCandidates } | null {
+  const originData = extractedData.originData;
+
+  if (!originData || typeof originData !== "object" || Array.isArray(originData)) {
+    return null;
+  }
+
+  const parsePayload = normalizeReceiptParsePayload(originData as JsonValue, {
+    defaultModel: extractedData.model ?? null,
+    defaultParser: extractedData.parser,
+  });
+
+  if (!parsePayload) {
+    return null;
+  }
+
+  return getReceiptParseRecords(parsePayload)[candidateIndex] ?? getReceiptParseRecords(parsePayload)[0] ?? null;
+}
+
+function findCandidateResolution(
+  resolutions: CounterpartyResolution[],
+  input: {
+    candidateIndex: number;
+    displayName: string;
+    role: "source" | "target";
+  },
+): CounterpartyResolution | undefined {
+  return (
+    resolutions.find((resolution) =>
+      resolution.role === input.role &&
+      resolution.candidateIndex === input.candidateIndex,
+    ) ??
+    resolutions.find((resolution) =>
+      resolution.role === input.role &&
+      normalizeText(resolution.displayName) === normalizeText(input.displayName),
+    ) ??
+    resolutions.find((resolution) =>
+      resolution.role === input.role &&
+      resolution.candidateIndex === undefined,
+    )
+  );
+}
+
+function buildCandidateDuplicateHints(
+  candidateReadResult: CandidatePlannerReadResult,
+  duplicateHints: DuplicateKind[],
+): DuplicateKind[] {
+  return dedupeDuplicateKinds([
+    ...duplicateHints.filter((hint) => hint !== "near_duplicate" && hint !== "record_duplicate"),
+    ...(candidateReadResult.duplicateReceiptMatches.length ? (["near_duplicate"] as const) : []),
+    ...(candidateReadResult.duplicateRecordIds.length ? (["record_duplicate"] as const) : []),
+  ]);
+}
+
+function isCandidateScopedProposalType(
+  proposalType: WorkflowWriteProposalPayload["proposalType"],
+): boolean {
+  return proposalType === "create_counterparty" ||
+    proposalType === "merge_counterparty" ||
+    proposalType === "persist_candidate_record" ||
+    proposalType === "resolve_duplicate_receipt" ||
+    proposalType === "update_candidate_record";
+}
+
+function resolveProposalCandidateIndex(proposal: WorkflowWriteProposalPayload | null): number | null {
+  if (!proposal) {
+    return null;
+  }
+
+  const candidateIndex = readFirstNumber(proposal.values.candidateIndex);
+
+  return candidateIndex === null || candidateIndex < 0 ? null : candidateIndex;
+}
+
 function findProposal(
   proposals: WorkflowWriteProposalPayload[],
   proposalType: WorkflowWriteProposalPayload["proposalType"],
-  role?: "source" | "target",
+  options: {
+    candidateIndex?: number;
+    role?: "source" | "target";
+  } = {},
 ): WorkflowWriteProposalPayload | null {
-  return proposals.find((proposal) =>
-    proposal.proposalType === proposalType &&
-    (role === undefined || (proposal.role ?? normalizeProposalRole(proposal.values.role)) === role),
-  ) ?? null;
+  const matches = proposals.filter((proposal) => {
+    if (proposal.proposalType !== proposalType) {
+      return false;
+    }
+
+    if (
+      options.role !== undefined &&
+      (proposal.role ?? normalizeProposalRole(proposal.values.role)) !== options.role
+    ) {
+      return false;
+    }
+
+    if (options.candidateIndex !== undefined) {
+      const proposalCandidateIndex = resolveProposalCandidateIndex(proposal);
+      return proposalCandidateIndex === options.candidateIndex || proposalCandidateIndex === null;
+    }
+
+    return true;
+  });
+
+  if (options.candidateIndex !== undefined) {
+    return (
+      matches.find((proposal) => resolveProposalCandidateIndex(proposal) === options.candidateIndex) ??
+      (options.candidateIndex === 0
+        ? matches.find((proposal) => resolveProposalCandidateIndex(proposal) === null)
+        : null) ??
+      null
+    );
+  }
+
+  return matches[0] ?? null;
 }
 
 function buildCreateCounterpartyProposal(
@@ -601,6 +893,7 @@ function buildCreateCounterpartyProposal(
     role,
     values: {
       ...(remoteProposal?.values ?? {}),
+      candidateIndex: resolution.candidateIndex ?? resolveProposalCandidateIndex(remoteProposal) ?? 0,
       displayName: normalizeJsonString(remoteProposal?.values.displayName) ?? resolution.displayName,
       role,
     },
@@ -621,6 +914,7 @@ function buildMergeCounterpartyProposal(
     role,
     values: {
       ...(remoteProposal?.values ?? {}),
+      candidateIndex: resolution.candidateIndex ?? resolveProposalCandidateIndex(remoteProposal) ?? 0,
       existingCounterpartyId: resolution.matchedCounterpartyIds[0] ?? "",
       existingDisplayName: resolution.matchedDisplayNames[0] ?? resolution.displayName,
       matchedCounterpartyIds: resolution.matchedCounterpartyIds,
@@ -633,6 +927,7 @@ function buildMergeCounterpartyProposal(
 function buildResolveDuplicateReceiptProposal(
   remoteProposal: WorkflowWriteProposalPayload | null,
   match: DuplicateReceiptMatch,
+  candidateIndex: number,
 ): WorkflowWriteProposalPayload {
   return {
     candidateId: remoteProposal?.candidateId,
@@ -643,6 +938,7 @@ function buildResolveDuplicateReceiptProposal(
     role: remoteProposal?.role,
     values: {
       ...(remoteProposal?.values ?? {}),
+      candidateIndex,
       conflictEvidenceId: match.conflictEvidenceId,
       duplicateEvidenceId: match.conflictEvidenceId,
       duplicateReceiptLabel: match.conflictLabel,
@@ -658,10 +954,11 @@ function createPersistProposal(
   remoteProposal: WorkflowWriteProposalPayload | null,
   duplicateHints: DuplicateKind[],
   duplicateReceiptMatch: DuplicateReceiptMatch | null,
-  primaryCandidate: CandidateRecordPayload,
+  candidateRecord: CandidateRecordPayload,
+  candidateIndex: number,
 ): WorkflowWriteProposalPayload {
   return {
-    candidateId: remoteProposal?.candidateId ?? primaryCandidate.evidenceId,
+    candidateId: remoteProposal?.candidateId,
     counterpartyId: remoteProposal?.counterpartyId,
     dependencyIds: remoteProposal?.dependencyIds,
     proposalType: "persist_candidate_record",
@@ -669,6 +966,7 @@ function createPersistProposal(
     role: remoteProposal?.role,
     values: {
       ...(remoteProposal?.values ?? {}),
+      candidateIndex,
       duplicateHints,
       duplicateReceiptMatch: duplicateReceiptMatch
           ? {
@@ -680,7 +978,7 @@ function createPersistProposal(
             overlapEntryCount: duplicateReceiptMatch.overlapEntryCount,
           }
         : null,
-      payload: primaryCandidate as unknown as JsonObject,
+      payload: candidateRecord as unknown as JsonObject,
     },
   };
 }
@@ -693,8 +991,8 @@ function selectPrimaryDuplicateMatch(matches: DuplicateReceiptMatch[]): Duplicat
   )[0] ?? null;
 }
 
-function formatDuplicateReceiptWarning(match: DuplicateReceiptMatch): string {
-  return `Potential duplicate receipt detected: ${match.overlapEntryCount} overlapping ${
+function formatDuplicateReceiptWarning(match: DuplicateReceiptMatch, candidateIndex: number): string {
+  return `Candidate ${candidateIndex + 1}: potential duplicate receipt detected: ${match.overlapEntryCount} overlapping ${
     match.overlapEntryCount === 1 ? "entry" : "entries"
   } with ${match.conflictLabel}.`;
 }
@@ -721,6 +1019,7 @@ function mergeResolutionWithRemoteProposal(
   resolution: CounterpartyResolution | undefined,
   remoteProposal: WorkflowWriteProposalPayload | null,
   role: "source" | "target",
+  candidateIndex: number,
 ): CounterpartyResolution | null {
   const displayName =
     resolution?.displayName ??
@@ -743,6 +1042,7 @@ function mergeResolutionWithRemoteProposal(
   }
 
   return {
+    candidateIndex,
     confidence: resolution?.confidence ?? "medium",
     displayName,
     matchedDisplayNames,

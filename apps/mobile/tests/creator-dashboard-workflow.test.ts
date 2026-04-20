@@ -288,13 +288,12 @@ describe("creator dashboard workflow", () => {
       "Camera Rental Co",
       "Adobe",
     ]);
-    expect(
-      businessSnapshot.generalLedger.entries.find(
-        (entry) => entry.id === "party-camera-rental-co",
-      )?.amount,
-    ).toBe(
-      "-$74.40",
+    const cameraRentalExpenseEntry = businessSnapshot.generalLedger.entries.find(
+      (entry) => entry.kind === "expense" && entry.title === "Camera Rental Co",
     );
+
+    expect(cameraRentalExpenseEntry).toBeDefined();
+    expect(cameraRentalExpenseEntry?.amount).toBe("-$74.40");
 
     expect(q1BusinessSnapshot.selectedPeriod.id).toBe("2026:q1");
     expect(q1BusinessSnapshot.generalLedger.recordCountLabel).toBe("5 entries");

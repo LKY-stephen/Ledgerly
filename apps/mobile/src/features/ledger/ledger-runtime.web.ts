@@ -253,12 +253,15 @@ export async function runPlanner(input: {
 
   // Build read results (empty for web - no local DB)
   const readResults: PlannerReadResults = {
-    duplicateRecordIds: [],
-    duplicateReceiptMatches: [],
-    sourceCounterpartyMatches: [],
-    sourceCounterpartySuggestions: [],
-    targetCounterpartyMatches: [],
-    targetCounterpartySuggestions: [],
+    candidates: remotePlan.candidateRecords.map((_, candidateIndex) => ({
+      candidateIndex,
+      duplicateRecordIds: [],
+      duplicateReceiptMatches: [],
+      sourceCounterpartyMatches: [],
+      sourceCounterpartySuggestions: [],
+      targetCounterpartyMatches: [],
+      targetCounterpartySuggestions: [],
+    })),
   };
 
   const evidence = {
@@ -286,9 +289,9 @@ export async function runPlanner(input: {
     summary.candidateRecords.map((payload, index) => {
       const candidateId = `${plannerRunId}-candidate-${index + 1}`;
       const state = deriveCandidateState({
-        duplicateHints: summary.duplicateHints,
+        duplicateHints: readWebCandidateDuplicateHints(summary, index),
         payload,
-        resolutions: summary.counterpartyResolutions,
+        resolutions: summary.counterpartyResolutions.filter((resolution) => resolution.candidateIndex === index),
       });
 
       return {
@@ -306,8 +309,7 @@ export async function runPlanner(input: {
     });
 
   const writeProposals = buildWebWriteProposals({
-    candidateId: candidateRecords[0]?.candidateId ?? null,
-    candidateState: candidateRecords[0]?.state ?? "candidate",
+    candidateRecords,
     createdAt: now,
     plannerRunId,
     proposals: summary.writeProposals,
@@ -334,6 +336,7 @@ export async function runPlanner(input: {
     },
     writeProposals,
   };
+  result.batchState = deriveWebBatchState(result);
 
   plannerStateStore.set(batchId, result);
   return result;
@@ -372,7 +375,7 @@ export async function approveWriteProposal(
       currentReview: review,
     });
     releaseResolvedWebDependencies(state);
-    state.batchState = "review_required";
+    state.batchState = deriveWebBatchState(state);
     return state;
   }
 
@@ -389,7 +392,7 @@ export async function approveWriteProposal(
     });
     rejectSiblingWebCounterpartyCreate(state, proposal);
     releaseResolvedWebDependencies(state);
-    state.batchState = "review_required";
+    state.batchState = deriveWebBatchState(state);
     return state;
   }
 
@@ -398,7 +401,7 @@ export async function approveWriteProposal(
       options?.duplicateResolution?.keepMode === "keep_new"
         ? "keep_new"
         : "keep_existing";
-    const candidate = state.candidateRecords[0];
+    const candidate = resolveWebCandidateByProposal(state, proposal);
 
     if (candidate && keepMode === "keep_new") {
       const finalReview = review ?? candidate.reviewValues;
@@ -418,7 +421,9 @@ export async function approveWriteProposal(
       candidate.reviewValues = finalReview;
       candidate.state = "persisted_final";
       candidate.updatedAt = proposal.updatedAt;
-      state.reviewValues = finalReview;
+      if (candidate.candidateId === state.candidateRecords[0]?.candidateId) {
+        state.reviewValues = finalReview;
+      }
 
       const db = getActiveWebDatabase();
 
@@ -494,7 +499,7 @@ export async function approveWriteProposal(
             },
             {
               createdAt: proposal.updatedAt,
-              recordId: candidate.recordId ?? `record-${state.evidenceId}`,
+              recordId: candidate.recordId ?? buildWebRecordId(state, candidate),
               sourceCounterpartyId: candidate.payload?.sourceCounterpartyId ?? null,
               sourceSystem: "ledger-upload-workflow",
               targetCounterpartyId: candidate.payload?.targetCounterpartyId ?? null,
@@ -513,32 +518,25 @@ export async function approveWriteProposal(
       candidate.updatedAt = proposal.updatedAt;
     }
 
-    for (const item of state.writeProposals) {
-      if (
-        item.writeProposalId !== writeProposalId &&
-        (item.state === "pending_approval" || item.state === "blocked")
-      ) {
-        item.state = "rejected";
-        item.updatedAt = proposal.updatedAt;
-      }
-    }
-
-    state.batchState = "approved";
+    rejectWebCandidateScopedProposals(state, proposal);
+    state.batchState = deriveWebBatchState(state);
     return state;
   }
 
   if (
     proposal.proposalType === "persist_candidate_record" &&
-    state.candidateRecords[0]
+    resolveWebCandidateByProposal(state, proposal)
   ) {
-    const candidate = state.candidateRecords[0];
+    const candidate = resolveWebCandidateByProposal(state, proposal)!;
     const now = new Date().toISOString();
     candidate.state = "persisted_final";
     candidate.updatedAt = now;
 
     if (review) {
       candidate.reviewValues = review;
-      state.reviewValues = review;
+      if (candidate.candidateId === state.candidateRecords[0]?.candidateId) {
+        state.reviewValues = review;
+      }
     }
 
     const finalReview = candidate.reviewValues;
@@ -572,7 +570,7 @@ export async function approveWriteProposal(
         },
         {
           createdAt: now,
-          recordId: candidate.recordId ?? `record-${state.evidenceId}`,
+          recordId: candidate.recordId ?? buildWebRecordId(state, candidate),
           sourceCounterpartyId: candidate.payload?.sourceCounterpartyId ?? null,
           sourceSystem: "ledger-upload-workflow",
           targetCounterpartyId: candidate.payload?.targetCounterpartyId ?? null,
@@ -594,10 +592,10 @@ export async function approveWriteProposal(
         candidate.recordId = resolvedEntry.record.recordId;
       } catch (error) {
         console.error("[web] Failed to persist record to sql.js:", error);
+        }
       }
-    }
 
-    state.batchState = "approved";
+    state.batchState = deriveWebBatchState(state);
   }
 
   return state;
@@ -632,7 +630,7 @@ export async function rejectWriteProposal(
       }
     }
 
-    state.batchState = "rejected";
+    state.batchState = deriveWebBatchState(state);
     return state;
   }
 
@@ -647,13 +645,14 @@ export async function rejectWriteProposal(
 
   if (
     proposal.proposalType === "persist_candidate_record" &&
-    state.candidateRecords[0]
+    resolveWebCandidateByProposal(state, proposal)
   ) {
-    state.candidateRecords[0].state = "rejected";
-    state.candidateRecords[0].updatedAt = proposal.updatedAt;
+    const candidate = resolveWebCandidateByProposal(state, proposal)!;
+    candidate.state = "rejected";
+    candidate.updatedAt = proposal.updatedAt;
   }
 
-  state.batchState = "rejected";
+  state.batchState = deriveWebBatchState(state);
   return state;
 }
 
@@ -664,8 +663,7 @@ export async function loadPlannerState(
 }
 
 function buildWebWriteProposals(input: {
-  candidateId: string | null;
-  candidateState: WorkflowCandidateRecord["state"];
+  candidateRecords: WorkflowCandidateRecord[];
   createdAt: string;
   plannerRunId: string;
   proposals: PlannerSummary["writeProposals"];
@@ -678,11 +676,13 @@ function buildWebWriteProposals(input: {
   return input.proposals.map((proposal, index) => {
     const writeProposalId = `${input.plannerRunId}-proposal-${index + 1}`;
     const dependencyIds = resolveWebProposalDependencies(inserted, proposal);
+    const candidateIndex = readWebProposalCandidateIndex(proposal);
+    const candidate = candidateIndex === null ? null : input.candidateRecords[candidateIndex] ?? null;
     const state =
       dependencyIds.length > 0 ||
       (proposal.proposalType === "persist_candidate_record" &&
-        input.candidateState !== "validated" &&
-        input.candidateState !== "needs_review")
+        candidate?.state !== "validated" &&
+        candidate?.state !== "needs_review")
         ? "blocked"
         : "pending_approval";
 
@@ -690,7 +690,7 @@ function buildWebWriteProposals(input: {
 
     return {
       approvalRequired: true,
-      candidateId: input.candidateId,
+      candidateId: candidate?.candidateId ?? null,
       createdAt: input.createdAt,
       dependencyIds,
       payload: proposal.values,
@@ -710,12 +710,15 @@ function resolveWebProposalDependencies(
   }>,
   proposal: PlannerSummary["writeProposals"][number],
 ): string[] {
+  const proposalCandidateIndex = readWebProposalCandidateIndex(proposal);
+
   if (proposal.proposalType === "create_counterparty") {
     const role = readFirstString(proposal.values.role, proposal.role);
 
     return inserted
       .filter(
         (item) =>
+          readWebProposalCandidateIndex(item.proposal) === proposalCandidateIndex &&
           item.proposal.proposalType === "merge_counterparty" &&
           readFirstString(item.proposal.values.role, item.proposal.role) ===
             role,
@@ -727,9 +730,12 @@ function resolveWebProposalDependencies(
     return inserted
       .filter(
         (item) =>
-          item.proposal.proposalType === "create_counterparty" ||
-          item.proposal.proposalType === "merge_counterparty" ||
-          item.proposal.proposalType === "resolve_duplicate_receipt",
+          readWebProposalCandidateIndex(item.proposal) === proposalCandidateIndex &&
+          (
+            item.proposal.proposalType === "create_counterparty" ||
+            item.proposal.proposalType === "merge_counterparty" ||
+            item.proposal.proposalType === "resolve_duplicate_receipt"
+          ),
       )
       .map((item) => item.writeProposalId);
   }
@@ -755,6 +761,113 @@ function buildWebProposalRationale(
   return "Candidate record is ready for final persistence after approval and local validation.";
 }
 
+function readWebProposalCandidateIndex(
+  proposal:
+    | PlannerSummary["writeProposals"][number]
+    | WorkflowWriteProposalItem,
+): number | null {
+  const payload = "payload" in proposal ? proposal.payload : proposal.values;
+  const candidateIndex = readFirstNumber(payload?.candidateIndex);
+
+  return candidateIndex === null || candidateIndex < 0 ? null : candidateIndex;
+}
+
+function resolveWebCandidateByProposal(
+  state: PlannerResult,
+  proposal: WorkflowWriteProposalItem,
+): WorkflowCandidateRecord | null {
+  return (
+    (proposal.candidateId
+      ? state.candidateRecords.find((candidate) => candidate.candidateId === proposal.candidateId)
+      : null) ??
+    (readWebProposalCandidateIndex(proposal) !== null
+      ? state.candidateRecords[readWebProposalCandidateIndex(proposal)!] ?? null
+      : null)
+  );
+}
+
+function rejectWebCandidateScopedProposals(
+  state: PlannerResult,
+  proposal: WorkflowWriteProposalItem,
+): void {
+  for (const item of state.writeProposals) {
+    if (
+      item.writeProposalId !== proposal.writeProposalId &&
+      item.candidateId === proposal.candidateId &&
+      (item.state === "pending_approval" || item.state === "blocked")
+    ) {
+      item.state = "rejected";
+      item.updatedAt = proposal.updatedAt;
+    }
+  }
+}
+
+function buildWebRecordId(
+  state: PlannerResult,
+  candidate: WorkflowCandidateRecord,
+): string {
+  return state.candidateRecords.length <= 1
+    ? `record-${state.evidenceId}`
+    : `record-${candidate.candidateId}`;
+}
+
+function readWebCandidateDuplicateHints(
+  summary: PlannerSummary,
+  candidateIndex: number,
+): PlannerSummary["duplicateHints"] {
+  const persistProposal = summary.writeProposals.find((proposal) =>
+    proposal.proposalType === "persist_candidate_record" &&
+    readWebProposalCandidateIndex(proposal) === candidateIndex,
+  );
+  const duplicateHints = persistProposal?.values.duplicateHints;
+
+  if (!Array.isArray(duplicateHints)) {
+    return summary.duplicateHints;
+  }
+
+  return duplicateHints.filter((hint): hint is PlannerSummary["duplicateHints"][number] => typeof hint === "string");
+}
+
+function deriveWebBatchState(state: PlannerResult): string {
+  const resolvedStates = new Set<WorkflowCandidateRecord["state"]>([
+    "approved",
+    "failed",
+    "persisted_final",
+    "rejected",
+  ]);
+  const positiveStates = new Set<WorkflowCandidateRecord["state"]>([
+    "approved",
+    "persisted_final",
+  ]);
+  const candidateStates = state.candidateRecords.map((candidate) => candidate.state);
+  const hasResolvedCandidates = candidateStates.some((candidateState) => resolvedStates.has(candidateState));
+  const hasUnresolvedCandidates = candidateStates.some((candidateState) => !resolvedStates.has(candidateState));
+
+  if (!state.candidateRecords.length && !state.writeProposals.length) {
+    return "no_match";
+  }
+
+  if (hasResolvedCandidates && hasUnresolvedCandidates) {
+    return "partially_approved";
+  }
+
+  if (candidateStates.length > 0 && candidateStates.every((candidateState) => resolvedStates.has(candidateState))) {
+    return candidateStates.some((candidateState) => positiveStates.has(candidateState))
+      ? "approved"
+      : "rejected";
+  }
+
+  if (candidateStates.some((candidateState) => candidateState === "duplicate" || candidateState === "needs_review")) {
+    return "review_required";
+  }
+
+  if (state.writeProposals.length > 0) {
+    return "write_proposal_ready";
+  }
+
+  return "candidates_generated";
+}
+
 function applyWebCounterpartySelection(
   state: PlannerResult,
   proposal: WorkflowWriteProposalItem,
@@ -767,7 +880,7 @@ function applyWebCounterpartySelection(
   const role =
     readFirstString(proposal.payload.role) === "target" ? "target" : "source";
   const displayName = input.displayName ?? "";
-  const candidate = state.candidateRecords[0];
+  const candidate = resolveWebCandidateByProposal(state, proposal);
 
   if (!candidate) {
     return;
@@ -791,7 +904,9 @@ function applyWebCounterpartySelection(
   );
   candidate.state = "validated";
   candidate.updatedAt = proposal.updatedAt;
-  state.reviewValues = candidate.reviewValues;
+  if (proposal.candidateId === state.candidateRecords[0]?.candidateId) {
+    state.reviewValues = candidate.reviewValues;
+  }
 }
 
 function rejectSiblingWebCounterpartyCreate(
@@ -804,6 +919,7 @@ function rejectSiblingWebCounterpartyCreate(
     if (
       proposal.proposalType === "create_counterparty" &&
       proposal.writeProposalId !== mergeProposal.writeProposalId &&
+      proposal.candidateId === mergeProposal.candidateId &&
       readFirstString(proposal.payload.role) === role &&
       proposal.state !== "executed"
     ) {
@@ -864,6 +980,24 @@ function readFirstString(...values: unknown[]): string | null {
   for (const value of values) {
     if (typeof value === "string" && value.trim()) {
       return value.trim();
+    }
+  }
+
+  return null;
+}
+
+function readFirstNumber(...values: unknown[]): number | null {
+  for (const value of values) {
+    if (typeof value === "number" && Number.isFinite(value)) {
+      return Math.round(value);
+    }
+
+    if (typeof value === "string" && value.trim()) {
+      const parsed = Number(value);
+
+      if (Number.isFinite(parsed)) {
+        return Math.round(parsed);
+      }
     }
   }
 
