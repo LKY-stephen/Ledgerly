@@ -1,6 +1,8 @@
 export const receiptParseSkill = [
   "# receipt-parse",
   "- Only parse the file attached in the current request.",
+  "- If one image or PDF contains multiple distinct receipts or transactions, return them as separate records in document order.",
+  "- Keep continuation pages of the same receipt in one record instead of splitting by page alone.",
   "- Return JSON only.",
   "- Do not treat prior parse results, prior uploads, or cached examples as truth.",
   "- Preserve ambiguous values in warnings instead of inventing bookkeeping facts.",

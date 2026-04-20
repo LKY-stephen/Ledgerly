@@ -142,6 +142,7 @@ Expected `extracted_data` JSON fields:
 - `rawSummary`: short parse summary for review UI
 - `rawLines`: line-by-line OCR text or fallback tokens
 - `warnings`: ambiguity, inference, or parse-quality warnings returned by the parser
+- `originData.records`: ordered parser-record collection for multi-receipt or multi-transaction uploads; legacy single-record payloads remain readable without this field
 - `fields`: structured fields for `date`, `amountCents`, `description`, `source`, `target`, `category`, `taxCategory`, `notes`
 - `candidates`: structured candidates for `date`, `amountCents`, `description`, `source`, `target`, `category`, `taxCategory`, `notes`
 - `errorReason` / `failureReason`: optional parse diagnostics
@@ -155,6 +156,7 @@ Expected `planner_runs` semantics:
 
 - `planner_payload_json`: the validated remote planner DTO returned by the planner call
 - `summary_json`: the locally enriched planner summary after read-task execution, duplicate checks, duplicate overlap grouping, counterparty resolution, dependency ordering, and writeability validation
+- candidate-scoped resolutions and write proposals may include `candidateIndex` metadata in planner payloads so one upload can route actions to multiple `candidate_records`
 - planner DTO invalidation or missing required sections marks `planner_runs.state = failed`, `upload_batches.state = failed`, persists `error_message`, and appends `workflow_audit_events`
 
 Compatibility notes:
@@ -162,6 +164,7 @@ Compatibility notes:
 - `/api/parse-origin-data` and `/api/parse-evidence` both expose the same validated parser DTO shape
 - `/api/map-evidence-scheme` is deprecated compatibility glue that only projects legacy `scheme` output from the validated parser DTO
 - new uploads no longer rely on arbitrary `originData -> fields` heuristics or a separate remote scheme-mapping prompt
+- top-level parser `fields` and `candidates` remain as a first-record compatibility mirror even when `originData.records` contains multiple parsed records
 
 ## Device State
 

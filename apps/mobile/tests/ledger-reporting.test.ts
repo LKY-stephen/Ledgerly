@@ -823,6 +823,59 @@ describe("ledger reporting", () => {
     ]);
   });
 
+  it("keeps grouped ledger entry ids unique for punctuation-only party labels", async () => {
+    const database = createFakeLedgerDatabase([
+      {
+        amountCents: 50_000,
+        businessUseBps: 10_000,
+        createdAt: "2026-04-04T10:00:00Z",
+        currency: "USD",
+        description: "Unknown sponsor payout",
+        entityId: "entity-main",
+        memo: null,
+        occurredOn: "2026-04-04",
+        recordId: "record-income-dash-party",
+        recordKind: "income",
+        recordStatus: "posted",
+        sourceLabel: "-",
+        targetLabel: "Ledgerly",
+        taxLineCode: "line1",
+      },
+      {
+        amountCents: 15_000,
+        businessUseBps: 10_000,
+        createdAt: "2026-04-05T10:00:00Z",
+        currency: "USD",
+        description: "Slash label payout",
+        entityId: "entity-main",
+        memo: null,
+        occurredOn: "2026-04-05",
+        recordId: "record-income-slash-party",
+        recordKind: "income",
+        recordStatus: "posted",
+        sourceLabel: "/",
+        targetLabel: "Ledgerly",
+        taxLineCode: "line1",
+      },
+    ]);
+
+    const snapshot = await loadLedgerSnapshot(database, {
+      now: "2026-04-06",
+      preferredPeriodId: buildLedgerPeriodId(2026, "m04"),
+    });
+
+    const unknownPartyEntries = snapshot.generalLedger.entries.filter(
+      (entry) => entry.title === "-" || entry.title === "/",
+    );
+
+    expect(unknownPartyEntries).toHaveLength(2);
+    expect(unknownPartyEntries.map((entry) => entry.title).sort()).toEqual([
+      "-",
+      "/",
+    ]);
+    expect(new Set(unknownPartyEntries.map((entry) => entry.id)).size).toBe(2);
+  });
+
   it("uses the prior-year personal closing asset as next-year opening balance while business view ignores current-year personal deductions", async () => {
     const database = createFakeLedgerDatabase([
       {

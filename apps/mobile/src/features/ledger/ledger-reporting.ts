@@ -834,7 +834,7 @@ function buildGeneralLedgerEntries(
           computeGroupedDisplayAmountCents(group, locale),
         ),
         dateLabel: "",
-        id: `party-${group.accountName.toLowerCase().replace(/[^a-z0-9]+/g, "-") || "account"}`,
+        id: buildGeneralLedgerEntryId(group),
         kind: group.kind,
         kindLabel: group.kindLabel,
         lines: group.lines,
@@ -844,6 +844,11 @@ function buildGeneralLedgerEntries(
         title: group.accountName,
       };
     });
+}
+
+function buildGeneralLedgerEntryId(group: GeneralLedgerGroup): string {
+  const normalizedAccountName = group.accountName.trim().toLowerCase();
+  return `party-${group.kind}-${encodeURIComponent(normalizedAccountName || "account")}`;
 }
 
 function computeGroupedDisplayAmountCents(

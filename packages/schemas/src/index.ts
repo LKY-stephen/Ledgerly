@@ -106,6 +106,11 @@ export interface EvidenceExtractedData {
   warnings: string[];
 }
 
+export interface ReceiptParseRecordPayload {
+  candidates: EvidenceFieldCandidates;
+  fields: EvidenceFieldCandidates;
+}
+
 export interface ReceiptParsePayload {
   candidates: EvidenceFieldCandidates;
   fields: EvidenceFieldCandidates;
@@ -113,6 +118,7 @@ export interface ReceiptParsePayload {
   parser: EvidenceParserKind;
   rawSummary: string;
   rawText: string;
+  records: ReceiptParseRecordPayload[];
   warnings: string[];
 }
 
@@ -134,6 +140,7 @@ export interface PlannerReadTask {
 }
 
 export interface CounterpartyResolution {
+  candidateIndex?: number;
   confidence: "high" | "low" | "medium";
   displayName: string;
   matchedDisplayNames: string[];
@@ -223,8 +230,26 @@ export function normalizeReceiptParsePayload(
     return null;
   }
 
-  const fields = normalizeEvidenceFieldCandidates(record.fields) ?? normalizeEvidenceFieldCandidates(record.candidates);
-  const candidates = normalizeEvidenceFieldCandidates(record.candidates) ?? fields;
+  const normalizedRecords = normalizeReceiptParseRecordPayloads(record.records);
+  const hasExplicitRecordsField = Object.prototype.hasOwnProperty.call(record, "records");
+
+  if (hasExplicitRecordsField && normalizedRecords === null) {
+    return null;
+  }
+
+  const firstRecord = normalizedRecords?.[0] ?? null;
+  const fields =
+    normalizeEvidenceFieldCandidates(record.fields) ??
+    normalizeEvidenceFieldCandidates(record.candidates) ??
+    firstRecord?.fields ??
+    firstRecord?.candidates ??
+    null;
+  const candidates =
+    normalizeEvidenceFieldCandidates(record.candidates) ??
+    fields ??
+    firstRecord?.candidates ??
+    firstRecord?.fields ??
+    null;
   const rawText = asOptionalString(record.rawText) ?? "";
   const rawSummary = asOptionalString(record.rawSummary) ?? "";
   const warnings = asRequiredStringArray(record.warnings) ?? coerceToStringArray(record.warnings);
@@ -233,6 +258,15 @@ export function normalizeReceiptParsePayload(
     return null;
   }
 
+  const records = normalizedRecords?.length
+    ? normalizedRecords
+    : [
+        {
+          candidates,
+          fields,
+        },
+      ];
+
   return {
     candidates,
     fields,
@@ -240,8 +274,20 @@ export function normalizeReceiptParsePayload(
     parser: normalizeEvidenceParserKind(record.parser, input.defaultParser ?? "openai_gpt"),
     rawSummary,
     rawText,
+    records,
     warnings,
   };
+}
+
+export function getReceiptParseRecords(payload: ReceiptParsePayload): ReceiptParseRecordPayload[] {
+  return payload.records.length
+    ? payload.records
+    : [
+        {
+          candidates: payload.candidates,
+          fields: payload.fields,
+        },
+      ];
 }
 
 export function normalizeReceiptPlannerPayload(value: JsonValue): ReceiptPlannerPayload | null {
@@ -462,6 +508,7 @@ function normalizeCounterpartyResolutions(value: JsonValue | undefined): Counter
     }
 
     normalized.push({
+      candidateIndex: asOptionalNonNegativeInteger(record.candidateIndex) ?? undefined,
       confidence,
       displayName,
       matchedDisplayNames,
@@ -472,6 +519,41 @@ function normalizeCounterpartyResolutions(value: JsonValue | undefined): Counter
   }
 
   return normalized;
+}
+
+function normalizeReceiptParseRecordPayloads(
+  value: JsonValue | undefined,
+): ReceiptParseRecordPayload[] | null {
+  if (value === undefined) {
+    return null;
+  }
+
+  if (!Array.isArray(value)) {
+    return null;
+  }
+
+  const normalized: ReceiptParseRecordPayload[] = [];
+
+  for (const item of value) {
+    const record = asJsonObject(item);
+    const fields =
+      normalizeEvidenceFieldCandidates(record?.fields) ??
+      normalizeEvidenceFieldCandidates(record?.candidates);
+    const candidates =
+      normalizeEvidenceFieldCandidates(record?.candidates) ??
+      fields;
+
+    if (!record || !fields || !candidates) {
+      return null;
+    }
+
+    normalized.push({
+      candidates,
+      fields,
+    });
+  }
+
+  return normalized.length ? normalized : null;
 }
 
 function normalizeCandidateRecordPayloads(value: JsonValue | undefined): CandidateRecordPayload[] | null {
@@ -674,6 +756,16 @@ function asOptionalInteger(value: JsonValue | undefined): number | null {
   }
 
   return null;
+}
+
+function asOptionalNonNegativeInteger(value: JsonValue | undefined): number | null {
+  const normalized = asOptionalInteger(value);
+
+  if (normalized === null || normalized < 0) {
+    return null;
+  }
+
+  return normalized;
 }
 
 function asRequiredStringArray(value: JsonValue | undefined): string[] | null {

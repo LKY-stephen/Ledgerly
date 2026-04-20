@@ -32,7 +32,7 @@ function createParsePayload(input: {
   rawText?: string;
   warnings?: string[];
 } = {}) {
-  return {
+  const record = {
     candidates: {
       amountCents: 5299,
       category: "expense",
@@ -53,10 +53,16 @@ function createParsePayload(input: {
       target: "Apple Store",
       taxCategory: "office",
     },
+  };
+
+  return {
+    candidates: record.candidates,
+    fields: record.fields,
     model: input.model === undefined ? "gpt-5" : input.model,
     parser: "openai_gpt",
     rawSummary: input.rawSummary ?? "Apple Store receipt",
     rawText: input.rawText ?? "Apple Store 04/01/2026 $52.99",
+    records: [record],
     warnings: input.warnings ?? [],
   };
 }
@@ -250,7 +256,7 @@ describe("remote parse client", () => {
     });
 
     expect(result.error).toBe(
-      "OpenAI parser output must include parser, model, rawText, rawSummary, warnings, fields, and candidates.",
+      "OpenAI parser output must include parser, model, rawText, rawSummary, warnings, and at least one record with fields and candidates.",
     );
     expect(result.rawJson).toBeNull();
   });
