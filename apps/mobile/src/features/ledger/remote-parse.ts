@@ -1,4 +1,5 @@
 import {
+  getReceiptParseRecords,
   normalizeReceiptParsePayload,
   normalizeReceiptPlannerPayload,
   type JsonValue,
@@ -52,8 +53,8 @@ export async function planEvidenceDbUpdates(input: {
       { readTaskId: "read-2", taskType: "duplicate_lookup", rationale: "Check for duplicate records", status: "pending" },
     ],
     counterpartyResolutions: [
-      { role: "source", displayName: "Business Card", confidence: "medium", status: "proposed_new", matchedCounterpartyIds: [] },
-      { role: "target", displayName: "Vendor Inc", confidence: "high", status: "proposed_new", matchedCounterpartyIds: [] },
+      { candidateIndex: 0, role: "source", displayName: "Business Card", confidence: "medium", status: "proposed_new", matchedCounterpartyIds: [] },
+      { candidateIndex: 0, role: "target", displayName: "Vendor Inc", confidence: "high", status: "proposed_new", matchedCounterpartyIds: [] },
     ],
     candidateRecords: [
       {
@@ -68,8 +69,8 @@ export async function planEvidenceDbUpdates(input: {
       },
     ],
     writeProposals: [
-      { proposalType: "create_counterparty", role: "source", values: { displayName: "Business Card", role: "source" } },
-      { proposalType: "create_counterparty", role: "target", values: { displayName: "Vendor Inc", role: "target" } },
+      { proposalType: "create_counterparty", role: "source", values: { candidateIndex: 0, displayName: "Business Card", role: "source" } },
+      { proposalType: "create_counterparty", role: "target", values: { candidateIndex: 0, displayName: "Vendor Inc", role: "target" } },
       { proposalType: "persist_candidate_record", values: { candidateIndex: 0 }, reviewFields: ["amount", "date", "source", "target"] },
     ],
     duplicateHints: [],
@@ -81,11 +82,12 @@ export async function planEvidenceDbUpdates(input: {
     receiptDbUpdatePlannerSkill,
     "",
     "You receive evidence metadata and the raw parsed JSON from a receipt or document.",
+    "If parsedData.records contains multiple detected receipts or transactions, preserve that ordering when building candidateRecords and candidate-scoped write proposals.",
     "You MUST return a JSON object with EXACTLY these top-level keys:",
     "  businessEvents: string[]",
     "  classifiedFacts: Array<{field: string, value: any, confidence: 'high'|'medium'|'low', status: 'confirmed'|'conflicting'|'missing'|'uncertain', reason: string}>",
     "  readTasks: Array<{readTaskId: string, taskType: 'counterparty_lookup'|'duplicate_lookup', rationale: string, status: 'pending'}>",
-    "  counterpartyResolutions: Array<{role: 'source'|'target', displayName: string, confidence: 'high'|'medium'|'low', status: 'matched'|'proposed_new'|'ambiguous', matchedCounterpartyIds: string[]}>",
+    "  counterpartyResolutions: Array<{candidateIndex?: number, role: 'source'|'target', displayName: string, confidence: 'high'|'medium'|'low', status: 'matched'|'proposed_new'|'ambiguous', matchedCounterpartyIds: string[]}>",
     "  candidateRecords: Array<{evidenceId: string, amountCents: number, currency: string, date: string, description: string, recordKind: 'expense'|'income'|'personal_spending', sourceLabel: string, targetLabel: string}>",
     "  writeProposals: Array<{proposalType: 'create_counterparty'|'persist_candidate_record', role?: 'source'|'target', values: object, reviewFields?: string[]}>",
     "  duplicateHints: string[]",
@@ -95,6 +97,8 @@ export async function planEvidenceDbUpdates(input: {
     "IMPORTANT: readTasks MUST include at least one counterparty_lookup and one duplicate_lookup task.",
     "IMPORTANT: candidateRecords MUST have at least one record. Use the evidenceId from the input.",
     "IMPORTANT: writeProposals MUST include at least one persist_candidate_record proposal.",
+    "IMPORTANT: Every persist_candidate_record proposal MUST include values.candidateIndex that points to the matching candidateRecords entry.",
+    "IMPORTANT: If you emit candidate-specific create_counterparty proposals, include values.candidateIndex there too.",
     "IMPORTANT: amountCents must be in cents (e.g. $99.00 = 9900). Convert dollar amounts by multiplying by 100.",
     "",
     "Example output:",
@@ -189,23 +193,66 @@ function buildFallbackPlannerPayload(
   const source = getString(["source", "sourceLabel", "payer", "from", "payment_method"]);
   const target = getString(["target", "targetLabel", "vendor", "merchant", "company", "to", "billed_to"]);
   const summary = typeof partial.summary === "string" ? partial.summary : `Fallback planner for ${description}`;
+  const parsePayload = normalizeReceiptParsePayload(raw as JsonValue, {
+    defaultParser: "openai_gpt",
+  });
+  const parseRecords = parsePayload ? getReceiptParseRecords(parsePayload) : [];
+  const candidateRecords = (parseRecords.length ? parseRecords : [null]).map((parseRecord, index) => {
+    const fields = parseRecord?.fields;
+    const candidateAmount =
+      fields?.amountCents ??
+      (index === 0 ? amountCents : null);
+    const candidateDescription =
+      fields?.description ??
+      description;
+    const candidateDate =
+      fields?.date ??
+      date;
+    const candidateSource =
+      fields?.source ??
+      source;
+    const candidateTarget =
+      fields?.target ??
+      target;
+
+    return {
+      amountCents: candidateAmount,
+      currency: "USD",
+      date: candidateDate,
+      description: candidateDescription,
+      evidenceId: input.evidenceId,
+      recordKind: "expense" as const,
+      sourceLabel: candidateSource,
+      targetLabel: candidateTarget,
+      taxCategoryCode: fields?.taxCategory ?? null,
+    };
+  });
+  const counterpartyResolutions = candidateRecords.flatMap((candidate, index) => ([
+    {
+      candidateIndex: index,
+      confidence: "medium" as const,
+      displayName: candidate.sourceLabel ?? "",
+      matchedDisplayNames: [],
+      matchedCounterpartyIds: [],
+      role: "source" as const,
+      status: "proposed_new" as const,
+    },
+    {
+      candidateIndex: index,
+      confidence: "medium" as const,
+      displayName: candidate.targetLabel ?? "",
+      matchedDisplayNames: [],
+      matchedCounterpartyIds: [],
+      role: "target" as const,
+      status: "proposed_new" as const,
+    },
+  ]));
 
   return {
     businessEvents: Array.isArray(partial.businessEvents)
       ? (partial.businessEvents as string[]).filter((e) => typeof e === "string")
       : [summary],
-    candidateRecords: [
-      {
-        amountCents,
-        currency: "USD",
-        date,
-        description,
-        evidenceId: input.evidenceId,
-        recordKind: "expense",
-        sourceLabel: source,
-        targetLabel: target,
-      },
-    ],
+    candidateRecords,
     classifiedFacts: [
       { field: "amountCents", value: amountCents as never, confidence: amountCents ? "high" : "low", status: amountCents ? "confirmed" : "missing", reason: "Extracted from document" },
       { field: "date", value: (date ?? null) as never, confidence: date ? "high" : "low", status: date ? "confirmed" : "missing", reason: "Extracted from document" },
@@ -213,10 +260,7 @@ function buildFallbackPlannerPayload(
       { field: "source", value: (source ?? null) as never, confidence: source ? "medium" : "low", status: source ? "uncertain" : "missing", reason: "Extracted from document" },
       { field: "target", value: (target ?? null) as never, confidence: target ? "high" : "low", status: target ? "confirmed" : "missing", reason: "Extracted from document" },
     ],
-    counterpartyResolutions: [
-      { confidence: "medium", displayName: source ?? "", matchedDisplayNames: [], matchedCounterpartyIds: [], role: "source", status: "proposed_new" },
-      { confidence: "medium", displayName: target ?? "", matchedDisplayNames: [], matchedCounterpartyIds: [], role: "target", status: "proposed_new" },
-    ],
+    counterpartyResolutions,
     duplicateHints: [],
     readTasks: [
       { readTaskId: "read-fallback-1", rationale: "Look up source counterparty", status: "pending", taskType: "counterparty_lookup" },
@@ -224,11 +268,11 @@ function buildFallbackPlannerPayload(
     ],
     summary,
     warnings: ["Planner response did not match expected schema. Fallback values were used — please review all fields."],
-    writeProposals: [
-      { proposalType: "create_counterparty", role: "source", values: { displayName: source ?? "", role: "source" } },
-      { proposalType: "create_counterparty", role: "target", values: { displayName: target ?? "", role: "target" } },
-      { proposalType: "persist_candidate_record", reviewFields: ["amount", "date", "source", "target"], values: { candidateIndex: 0 } },
-    ],
+    writeProposals: candidateRecords.map((_, index) => ({
+      proposalType: "persist_candidate_record" as const,
+      reviewFields: ["amount", "date", "source", "target"] as const,
+      values: { candidateIndex: index },
+    })),
   };
 }
 
@@ -285,8 +329,10 @@ const runtimeModelOverrides: Partial<Record<AiProvider, string>> = {};
 const parseSystemPrompt = [
   "你是 receipt parser。",
   receiptParseSkill,
-  "The top-level object must contain parser, model, rawText, rawSummary, warnings, fields, and candidates.",
-  "fields and candidates must both include amountCents, category, date, description, notes, source, target, and taxCategory.",
+  "The top-level object must contain parser, model, rawText, rawSummary, warnings, records, fields, and candidates.",
+  "records must be a non-empty array ordered by the file's natural reading order.",
+  "Each records[i].fields and records[i].candidates must include amountCents, category, date, description, notes, source, target, and taxCategory.",
+  "Top-level fields and candidates must mirror the first record for legacy compatibility.",
   "amountCents must be an integer in cents or null.",
   "date must be YYYY-MM-DD when known or null.",
   "Return JSON only. No markdown, no code blocks, no explanations.",
@@ -446,7 +492,7 @@ async function callOpenAiParseApi(
       rawText: outputText,
       model: activeModel,
       parserKind: "openai_gpt",
-      error: "OpenAI parser output must include parser, model, rawText, rawSummary, warnings, fields, and candidates.",
+      error: "OpenAI parser output must include parser, model, rawText, rawSummary, warnings, and at least one record with fields and candidates.",
     };
   }
 
@@ -507,7 +553,7 @@ async function callGeminiParseApi(
       rawText: outputText,
       model: activeModel,
       parserKind: "gemini",
-      error: "Gemini parser output must include parser, model, rawText, rawSummary, warnings, fields, and candidates.",
+      error: "Gemini parser output must include parser, model, rawText, rawSummary, warnings, and at least one record with fields and candidates.",
     };
   }
 

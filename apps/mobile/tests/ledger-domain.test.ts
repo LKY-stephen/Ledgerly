@@ -186,6 +186,30 @@ describe("ledger parse json preview", () => {
       parser: "openai_gpt" as const,
       rawSummary: "Intercom receipt",
       rawText: "Intercom\n2026-02-27\n$99.00",
+      records: [
+        {
+          candidates: {
+            amountCents: 9900,
+            category: "expense",
+            date: "2026-02-27",
+            description: "Intercom",
+            notes: null,
+            source: "Visa",
+            target: "Intercom",
+            taxCategory: "software",
+          },
+          fields: {
+            amountCents: 9900,
+            category: "expense",
+            date: "2026-02-27",
+            description: "Intercom",
+            notes: null,
+            source: "Visa",
+            target: "Intercom",
+            taxCategory: "software",
+          },
+        },
+      ],
       warnings: [],
     };
     const scheme = {

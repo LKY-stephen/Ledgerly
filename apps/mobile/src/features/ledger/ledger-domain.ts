@@ -320,8 +320,19 @@ export function createEmptyReviewValues(): LedgerReviewValues {
 
 export function deriveReviewValues(
   item: EvidenceQueueItem,
+  options: {
+    candidateId?: string | null;
+    candidateIndex?: number;
+  } = {},
 ): LedgerReviewValues {
-  const candidateRecord = item.candidateRecords[0];
+  const candidateRecord =
+    (options.candidateId
+      ? item.candidateRecords.find((candidate) => candidate.candidateId === options.candidateId)
+      : null) ??
+    (typeof options.candidateIndex === "number"
+      ? item.candidateRecords[options.candidateIndex]
+      : null) ??
+    item.candidateRecords[0];
   const candidatePayload = candidateRecord?.payload;
   const candidates =
     item.extractedData?.fields ?? item.extractedData?.candidates;

@@ -70,7 +70,44 @@ describe("ledger web upload runtime", () => {
           value: "2026-02-27",
         },
       ],
-      counterpartyResolutions: [],
+      counterpartyResolutions: [
+        {
+          candidateIndex: 0,
+          confidence: "high",
+          displayName: "Business Card",
+          matchedDisplayNames: ["Business Card"],
+          matchedCounterpartyIds: ["counterparty-source-1"],
+          role: "source",
+          status: "matched",
+        },
+        {
+          candidateIndex: 0,
+          confidence: "high",
+          displayName: "Blue Bottle",
+          matchedDisplayNames: ["Blue Bottle"],
+          matchedCounterpartyIds: ["counterparty-target-1"],
+          role: "target",
+          status: "matched",
+        },
+        {
+          candidateIndex: 1,
+          confidence: "high",
+          displayName: "Business Card",
+          matchedDisplayNames: ["Business Card"],
+          matchedCounterpartyIds: ["counterparty-source-1"],
+          role: "source",
+          status: "matched",
+        },
+        {
+          candidateIndex: 1,
+          confidence: "high",
+          displayName: "Staples",
+          matchedDisplayNames: ["Staples"],
+          matchedCounterpartyIds: ["counterparty-target-2"],
+          role: "target",
+          status: "matched",
+        },
+      ],
       duplicateHints: [],
       readTasks: [
         { readTaskId: "read-1", rationale: "Lookup counterparties", status: "pending", taskType: "counterparty_lookup" },
@@ -116,6 +153,30 @@ describe("ledger web upload runtime", () => {
         parser: "openai_gpt",
         rawSummary: "Apple Store receipt",
         rawText: "Apple Store 02/27/2026 $52.99",
+        records: [
+          {
+            candidates: {
+              amountCents: 5299,
+              category: "expense",
+              date: "2026-02-27",
+              description: "Apple Store accessories",
+              notes: null,
+              source: "Business Card",
+              target: "Apple Store",
+              taxCategory: "office",
+            },
+            fields: {
+              amountCents: 5299,
+              category: "expense",
+              date: "2026-02-27",
+              description: "Apple Store accessories",
+              notes: null,
+              source: "Business Card",
+              target: "Apple Store",
+              taxCategory: "office",
+            },
+          },
+        ],
         warnings: ["Date inferred from receipt footer."],
       },
       rawText: "Apple Store 02/27/2026 $52.99",
@@ -195,6 +256,30 @@ describe("ledger web upload runtime", () => {
               parser: "openai_gpt",
               rawSummary: "Apple accessories receipt",
               rawText: "Apple accessories 04/02/2026 $52.99",
+              records: [
+                {
+                  candidates: {
+                    amountCents: 5299,
+                    category: "expense",
+                    date: "2026-04-02",
+                    description: "Apple accessories",
+                    notes: null,
+                    source: "Business card",
+                    target: "Apple Store",
+                    taxCategory: "office",
+                  },
+                  fields: {
+                    amountCents: 5299,
+                    category: "expense",
+                    date: "2026-04-02",
+                    description: "Apple accessories",
+                    notes: null,
+                    source: "Business card",
+                    target: "Apple Store",
+                    taxCategory: "office",
+                  },
+                },
+              ],
               warnings: [],
             }),
           }),
@@ -364,6 +449,30 @@ describe("ledger web upload runtime", () => {
         parser: "openai_gpt",
         rawSummary: "Apple Store receipt",
         rawText: "Apple Store 02/27/2026 $52.99",
+        records: [
+          {
+            candidates: {
+              amountCents: 5299,
+              category: "expense",
+              date: "2026-02-27",
+              description: "Apple Store accessories",
+              notes: null,
+              source: "Business Card",
+              target: "Apple Store",
+              taxCategory: "office",
+            },
+            fields: {
+              amountCents: 5299,
+              category: "expense",
+              date: "2026-02-27",
+              description: "Apple Store accessories",
+              notes: null,
+              source: "Business Card",
+              target: "Apple Store",
+              taxCategory: "office",
+            },
+          },
+        ],
         warnings: [],
       },
       rawText: "Apple Store 02/27/2026 $52.99",
@@ -515,6 +624,30 @@ describe("ledger web upload runtime", () => {
         parser: "openai_gpt",
         rawSummary: "Apple Store receipt",
         rawText: "Apple Store 02/27/2026 $52.99",
+        records: [
+          {
+            candidates: {
+              amountCents: 5299,
+              category: "expense",
+              date: "2026-02-27",
+              description: "Apple Store accessories",
+              notes: null,
+              source: "Business Card",
+              target: "Apple Store",
+              taxCategory: "office",
+            },
+            fields: {
+              amountCents: 5299,
+              category: "expense",
+              date: "2026-02-27",
+              description: "Apple Store accessories",
+              notes: null,
+              source: "Business Card",
+              target: "Apple Store",
+              taxCategory: "office",
+            },
+          },
+        ],
         warnings: [],
       },
       rawText: "Apple Store 02/27/2026 $52.99",
@@ -549,6 +682,306 @@ describe("ledger web upload runtime", () => {
         (proposal) => proposal.proposalType === "persist_candidate_record",
       )?.state,
     ).toBe("rejected");
+  });
+
+  it("keeps candidate approvals scoped and marks batches partially approved", async () => {
+    vi.spyOn(remoteParse, "planEvidenceDbUpdates").mockResolvedValueOnce({
+      businessEvents: ["Two receipt payments"],
+      candidateRecords: [
+        {
+          amountCents: 1299,
+          currency: "USD",
+          date: "2026-03-01",
+          description: "Coffee beans",
+          evidenceId: "evidence-web-multi",
+          recordKind: "expense",
+          sourceLabel: "Business Card",
+          targetLabel: "Blue Bottle",
+        },
+        {
+          amountCents: 4599,
+          currency: "USD",
+          date: "2026-03-02",
+          description: "Printer ink",
+          evidenceId: "evidence-web-multi",
+          recordKind: "expense",
+          sourceLabel: "Business Card",
+          targetLabel: "Staples",
+        },
+      ],
+      classifiedFacts: [],
+      counterpartyResolutions: [],
+      duplicateHints: [],
+      readTasks: [
+        { readTaskId: "read-1", rationale: "Lookup counterparties", status: "pending", taskType: "counterparty_lookup" },
+        { readTaskId: "read-2", rationale: "Check duplicate receipts", status: "pending", taskType: "duplicate_lookup" },
+      ],
+      summary: "Two expense records from one upload.",
+      warnings: [],
+      writeProposals: [
+        {
+          proposalType: "persist_candidate_record",
+          reviewFields: ["amount", "date", "source", "target"],
+          values: { candidateIndex: 0 },
+        },
+        {
+          proposalType: "persist_candidate_record",
+          reviewFields: ["amount", "date", "source", "target"],
+          values: { candidateIndex: 1 },
+        },
+      ],
+    });
+
+    const plannerResult = await runPlanner({
+      fileName: "multi-receipt.pdf",
+      mimeType: "application/pdf",
+      model: "gpt-5",
+      rawJson: {
+        candidates: {
+          amountCents: 1299,
+          category: "expense",
+          date: "2026-03-01",
+          description: "Coffee beans",
+          notes: null,
+          source: "Business Card",
+          target: "Blue Bottle",
+          taxCategory: "meals",
+        },
+        fields: {
+          amountCents: 1299,
+          category: "expense",
+          date: "2026-03-01",
+          description: "Coffee beans",
+          notes: null,
+          source: "Business Card",
+          target: "Blue Bottle",
+          taxCategory: "meals",
+        },
+        model: "gpt-5",
+        parser: "openai_gpt",
+        rawSummary: "Two receipts in one PDF",
+        rawText: "Blue Bottle 03/01/2026 $12.99\nStaples 03/02/2026 $45.99",
+        records: [
+          {
+            candidates: {
+              amountCents: 1299,
+              category: "expense",
+              date: "2026-03-01",
+              description: "Coffee beans",
+              notes: null,
+              source: "Business Card",
+              target: "Blue Bottle",
+              taxCategory: "meals",
+            },
+            fields: {
+              amountCents: 1299,
+              category: "expense",
+              date: "2026-03-01",
+              description: "Coffee beans",
+              notes: null,
+              source: "Business Card",
+              target: "Blue Bottle",
+              taxCategory: "meals",
+            },
+          },
+          {
+            candidates: {
+              amountCents: 4599,
+              category: "expense",
+              date: "2026-03-02",
+              description: "Printer ink",
+              notes: null,
+              source: "Business Card",
+              target: "Staples",
+              taxCategory: "office",
+            },
+            fields: {
+              amountCents: 4599,
+              category: "expense",
+              date: "2026-03-02",
+              description: "Printer ink",
+              notes: null,
+              source: "Business Card",
+              target: "Staples",
+              taxCategory: "office",
+            },
+          },
+        ],
+        warnings: [],
+      },
+      rawText: "Blue Bottle 03/01/2026 $12.99\nStaples 03/02/2026 $45.99",
+    });
+
+    expect(plannerResult.candidateRecords).toHaveLength(2);
+
+    const persistProposals = plannerResult.writeProposals.filter(
+      (proposal) => proposal.proposalType === "persist_candidate_record",
+    );
+
+    expect(persistProposals).toHaveLength(2);
+    expect(persistProposals[0]?.candidateId).not.toBe(
+      persistProposals[1]?.candidateId,
+    );
+
+    const firstProposal = persistProposals.find((proposal) =>
+      proposal.payload.candidateIndex === 0,
+    );
+    const secondCandidateId = plannerResult.candidateRecords[1]?.candidateId;
+    const secondCandidateOriginalReview = plannerResult.candidateRecords[1]?.reviewValues;
+
+    const afterFirstApproval = await approveWriteProposal(
+      plannerResult.batchId,
+      firstProposal!.writeProposalId,
+      {
+        amount: "12.99",
+        category: "expense",
+        date: "2026-03-03",
+        description: "Coffee beans adjusted",
+        notes: "only first candidate approved",
+        source: "Business Card",
+        target: "Blue Bottle",
+        taxCategory: "meals",
+      },
+    );
+
+    expect(afterFirstApproval.batchState).toBe("partially_approved");
+    expect(afterFirstApproval.candidateRecords[0]?.state).toBe("persisted_final");
+    expect(afterFirstApproval.candidateRecords[0]?.reviewValues.description).toBe(
+      "Coffee beans adjusted",
+    );
+    expect(afterFirstApproval.candidateRecords[1]?.candidateId).toBe(secondCandidateId);
+    expect(afterFirstApproval.candidateRecords[1]?.state).toBe("validated");
+    expect(afterFirstApproval.candidateRecords[1]?.reviewValues).toEqual(
+      secondCandidateOriginalReview,
+    );
+  });
+
+  it("fails when multi-candidate planner output omits explicit candidate routing", async () => {
+    vi.spyOn(remoteParse, "planEvidenceDbUpdates").mockResolvedValueOnce({
+      businessEvents: ["Two receipt payments"],
+      candidateRecords: [
+        {
+          amountCents: 1299,
+          currency: "USD",
+          date: "2026-03-01",
+          description: "Coffee beans",
+          evidenceId: "evidence-web-multi-invalid",
+          recordKind: "expense",
+          sourceLabel: "Business Card",
+          targetLabel: "Blue Bottle",
+        },
+        {
+          amountCents: 4599,
+          currency: "USD",
+          date: "2026-03-02",
+          description: "Printer ink",
+          evidenceId: "evidence-web-multi-invalid",
+          recordKind: "expense",
+          sourceLabel: "Business Card",
+          targetLabel: "Staples",
+        },
+      ],
+      classifiedFacts: [],
+      counterpartyResolutions: [],
+      duplicateHints: [],
+      readTasks: [
+        { readTaskId: "read-1", rationale: "Lookup counterparties", status: "pending", taskType: "counterparty_lookup" },
+        { readTaskId: "read-2", rationale: "Check duplicate receipts", status: "pending", taskType: "duplicate_lookup" },
+      ],
+      summary: "Two expense records from one upload.",
+      warnings: [],
+      writeProposals: [
+        {
+          proposalType: "persist_candidate_record",
+          reviewFields: ["amount", "date", "source", "target"],
+          values: {},
+        },
+      ],
+    });
+
+    await expect(
+      runPlanner({
+        fileName: "multi-receipt-invalid.pdf",
+        mimeType: "application/pdf",
+        model: "gpt-5",
+        rawJson: {
+          candidates: {
+            amountCents: 1299,
+            category: "expense",
+            date: "2026-03-01",
+            description: "Coffee beans",
+            notes: null,
+            source: "Business Card",
+            target: "Blue Bottle",
+            taxCategory: "meals",
+          },
+          fields: {
+            amountCents: 1299,
+            category: "expense",
+            date: "2026-03-01",
+            description: "Coffee beans",
+            notes: null,
+            source: "Business Card",
+            target: "Blue Bottle",
+            taxCategory: "meals",
+          },
+          model: "gpt-5",
+          parser: "openai_gpt",
+          rawSummary: "Two receipts in one PDF",
+          rawText: "Blue Bottle 03/01/2026 $12.99\nStaples 03/02/2026 $45.99",
+          records: [
+            {
+              candidates: {
+                amountCents: 1299,
+                category: "expense",
+                date: "2026-03-01",
+                description: "Coffee beans",
+                notes: null,
+                source: "Business Card",
+                target: "Blue Bottle",
+                taxCategory: "meals",
+              },
+              fields: {
+                amountCents: 1299,
+                category: "expense",
+                date: "2026-03-01",
+                description: "Coffee beans",
+                notes: null,
+                source: "Business Card",
+                target: "Blue Bottle",
+                taxCategory: "meals",
+              },
+            },
+            {
+              candidates: {
+                amountCents: 4599,
+                category: "expense",
+                date: "2026-03-02",
+                description: "Printer ink",
+                notes: null,
+                source: "Business Card",
+                target: "Staples",
+                taxCategory: "office",
+              },
+              fields: {
+                amountCents: 4599,
+                category: "expense",
+                date: "2026-03-02",
+                description: "Printer ink",
+                notes: null,
+                source: "Business Card",
+                target: "Staples",
+                taxCategory: "office",
+              },
+            },
+          ],
+          warnings: [],
+        },
+        rawText: "Blue Bottle 03/01/2026 $12.99\nStaples 03/02/2026 $45.99",
+      }),
+    ).rejects.toThrow(
+      "Planner payload must include explicit candidateIndex routing for persist_candidate_record when multiple candidate records exist.",
+    );
   });
 
   it("takes a camera photo and returns an upload candidate", async () => {

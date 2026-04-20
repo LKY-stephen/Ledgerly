@@ -43,6 +43,30 @@ describe("POST /api/parse-evidence compatibility route", () => {
             parser: "openai_gpt",
             rawSummary: "Monthly platform payout PDF.",
             rawText: "March payout statement",
+            records: [
+              {
+                candidates: {
+                  amountCents: 124500,
+                  category: "income",
+                  date: "2026-03-31",
+                  description: "Platform payout",
+                  notes: null,
+                  source: "YouTube",
+                  target: "Business checking",
+                  taxCategory: null,
+                },
+                fields: {
+                  amountCents: 124500,
+                  category: "income",
+                  date: "2026-03-31",
+                  description: "Platform payout",
+                  notes: null,
+                  source: "YouTube",
+                  target: "Business checking",
+                  taxCategory: null,
+                },
+              },
+            ],
             warnings: ["Target inferred from payout language."],
           }),
         }),
@@ -99,6 +123,30 @@ describe("POST /api/parse-evidence compatibility route", () => {
       parser: "openai_gpt",
       rawSummary: "Monthly platform payout PDF.",
       rawText: "March payout statement",
+      records: [
+        {
+          candidates: {
+            amountCents: 124500,
+            category: "income",
+            date: "2026-03-31",
+            description: "Platform payout",
+            notes: null,
+            source: "YouTube",
+            target: "Business checking",
+            taxCategory: null,
+          },
+          fields: {
+            amountCents: 124500,
+            category: "income",
+            date: "2026-03-31",
+            description: "Platform payout",
+            notes: null,
+            source: "YouTube",
+            target: "Business checking",
+            taxCategory: null,
+          },
+        },
+      ],
       warnings: ["Target inferred from payout language."],
     });
     expect(fetchMock).toHaveBeenCalledTimes(1);

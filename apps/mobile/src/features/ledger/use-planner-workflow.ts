@@ -5,6 +5,7 @@ import type {
   LedgerReviewValues,
   ProposalApprovalOptions,
 } from "./ledger-domain";
+import { createEmptyReviewValues } from "./ledger-domain";
 import {
   approveWriteProposal,
   rejectWriteProposal,
@@ -26,19 +27,13 @@ export function usePlannerWorkflow(input: {
   const [plannerResult, setPlannerResult] = useState<PlannerResult | null>(
     null,
   );
-  const [review, setReview] = useState<LedgerReviewValues>({
-    amount: "",
-    category: "expense",
-    date: "",
-    description: "",
-    notes: "",
-    source: "",
-    target: "",
-    taxCategory: "",
-  });
+  const [selectedCandidateIndex, setSelectedCandidateIndex] = useState(0);
   const [isPlanning, setIsPlanning] = useState(false);
   const [isApproving, setIsApproving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const review =
+    plannerResult?.candidateRecords[selectedCandidateIndex]?.reviewValues ??
+    createEmptyReviewValues();
 
   const startPlanner = useCallback(async () => {
     setIsPlanning(true);
@@ -56,7 +51,7 @@ export function usePlannerWorkflow(input: {
       });
 
       setPlannerResult(result);
-      setReview(result.reviewValues);
+      setSelectedCandidateIndex(0);
     } catch (err) {
       setError(err instanceof Error ? err.message : parseCopy.plannerFailed);
     } finally {
@@ -82,20 +77,32 @@ export function usePlannerWorkflow(input: {
       setError(null);
 
       try {
+        const proposal = plannerResult.writeProposals.find(
+          (item) => item.writeProposalId === writeProposalId,
+        );
+        const proposalReview = proposal?.candidateId
+          ? plannerResult.candidateRecords.find(
+              (candidate) => candidate.candidateId === proposal.candidateId,
+            )?.reviewValues ?? review
+          : review;
         const result = await approveWriteProposal(
           plannerResult.batchId,
           writeProposalId,
-          review,
+          proposalReview,
           options,
         );
 
         setPlannerResult(result);
+        setSelectedCandidateIndex((current) =>
+          result.candidateRecords.length === 0
+            ? 0
+            : Math.min(current, result.candidateRecords.length - 1),
+        );
 
-        if (result.reviewValues) {
-          setReview(result.reviewValues);
-        }
-
-        if (result.batchState === "approved") {
+        if (
+          result.batchState === "approved" ||
+          result.batchState === "partially_approved"
+        ) {
           bumpStorageRevision();
         }
       } catch (err) {
@@ -121,6 +128,11 @@ export function usePlannerWorkflow(input: {
         );
 
         setPlannerResult(result);
+        setSelectedCandidateIndex((current) =>
+          result.candidateRecords.length === 0
+            ? 0
+            : Math.min(current, result.candidateRecords.length - 1),
+        );
       } catch (err) {
         setError(
           err instanceof Error ? err.message : parseCopy.rejectionFailed,
@@ -134,9 +146,40 @@ export function usePlannerWorkflow(input: {
 
   const updateField = useCallback(
     (field: keyof LedgerReviewValues, value: string) => {
-      setReview((prev) => ({ ...prev, [field]: value }));
+      setPlannerResult((current) => {
+        if (!current) {
+          return current;
+        }
+
+        const candidate = current.candidateRecords[selectedCandidateIndex];
+
+        if (!candidate) {
+          return current;
+        }
+
+        const nextReview = {
+          ...candidate.reviewValues,
+          [field]: value,
+        };
+        const candidateRecords = current.candidateRecords.map((item, index) =>
+          index === selectedCandidateIndex
+            ? {
+                ...item,
+                reviewValues: nextReview,
+              }
+            : item,
+        );
+
+        return {
+          ...current,
+          candidateRecords,
+          reviewValues:
+            candidateRecords[selectedCandidateIndex]?.reviewValues ??
+            createEmptyReviewValues(),
+        };
+      });
     },
-    [],
+    [selectedCandidateIndex],
   );
 
   return {
@@ -147,6 +190,8 @@ export function usePlannerWorkflow(input: {
     plannerResult,
     rejectProposal,
     review,
+    selectedCandidateIndex,
+    selectCandidate: setSelectedCandidateIndex,
     startPlanner,
     updateField,
   };
