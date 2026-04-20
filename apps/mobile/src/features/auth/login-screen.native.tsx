@@ -36,12 +36,7 @@ export function LoginScreen() {
     await continueAsGuest();
     router.replace("/");
   };
-  const poemLines = [
-    "The moment you start tracking your money,",
-    "you stop being random.",
-    "You become governable,",
-    "not by others but by yourself.",
-  ] as const;
+  const poemLines = copy.login.poemLines;
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: palette.paper }]}>
@@ -69,11 +64,11 @@ export function LoginScreen() {
         </View>
 
         <View style={styles.poemStack}>
-          {poemLines.map((line, index) => (
+          {poemLines.map((line) => (
             <Text
               key={line}
               style={[
-                index === 0 ? styles.poemTitle : styles.poemLine,
+                styles.poemLine,
                 { color: palette.ink },
               ]}
             >
@@ -227,12 +222,5 @@ const styles = StyleSheet.create({
   poemStack: {
     alignItems: "center",
     gap: 2,
-  },
-  poemTitle: {
-    fontSize: 24,
-    fontWeight: "800",
-    letterSpacing: -0.3,
-    lineHeight: 31,
-    textAlign: "center",
   },
 });

@@ -39,12 +39,7 @@ export function LoginScreen() {
     await continueAsGuest();
     router.replace("/");
   };
-  const poemLines = [
-    "The moment you start tracking your money,",
-    "you stop being random.",
-    "You become governable,",
-    "not by others but by yourself.",
-  ] as const;
+  const poemLines = copy.login.poemLines;
 
   if (isWide) {
     return (
@@ -68,16 +63,16 @@ export function LoginScreen() {
                 {copy.login.brandSubtitle}
               </Text>
               <Text style={[styles.messageTitle, { color: palette.ink }]}>
-                The moment you start tracking your money,
+                {poemLines[0]}
               </Text>
               <Text style={[styles.messageBody, { color: palette.ink }]}>
-                you stop being random.
+                {poemLines[1]}
               </Text>
               <Text style={[styles.messageBody, { color: palette.ink }]}>
-                You become governable,
+                {poemLines[2]}
               </Text>
               <Text style={[styles.messageBody, { color: palette.ink }]}>
-                not by others but by yourself.
+                {poemLines[3]}
               </Text>
               <View style={styles.privacyMetrics}>
                 <View
@@ -173,11 +168,11 @@ export function LoginScreen() {
         </View>
 
         <View style={styles.poemStack}>
-          {poemLines.map((line, index) => (
+          {poemLines.map((line) => (
             <Text
               key={line}
               style={[
-                index === 0 ? styles.mobilePoemTitle : styles.mobilePoemLine,
+                styles.mobilePoemLine,
                 { color: palette.ink },
               ]}
             >
@@ -442,30 +437,12 @@ const styles = StyleSheet.create({
     shadowRadius: 32,
     width: 260,
   },
-  tryNowIconWrap: {
-    alignItems: "center",
-    borderRadius: 28,
-    borderWidth: 1,
-    height: 260,
-    justifyContent: "center",
-    shadowOffset: { height: 18, width: 0 },
-    shadowOpacity: 0.08,
-    shadowRadius: 32,
-    width: 260,
-  },
   topBlock: {
     alignItems: "center",
     gap: 10,
     marginTop: 8,
   },
   mobilePoemLine: {
-    fontSize: 24,
-    fontWeight: "800",
-    letterSpacing: -0.3,
-    lineHeight: 31,
-    textAlign: "center",
-  },
-  mobilePoemTitle: {
     fontSize: 24,
     fontWeight: "800",
     letterSpacing: -0.3,

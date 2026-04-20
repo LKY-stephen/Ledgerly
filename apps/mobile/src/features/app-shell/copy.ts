@@ -420,6 +420,7 @@ export interface AppCopy {
     googleCancelled: string;
     googleHint: string;
     googleUnavailable: string;
+    poemLines: [string, string, string, string];
     privacyEyebrow: string;
     privacyMetrics: [string, string];
     privacySummary: string;
@@ -1022,6 +1023,12 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
       googleCancelled: "Google sign-in canceled. Retry or continue as a guest.",
       googleHint: "Sign in with Google to use Gemini AI without an API key.",
       googleUnavailable: "Google sign-in is not available right now.",
+      poemLines: [
+        "The moment you start tracking your money,",
+        "you stop being random.",
+        "You become governable,",
+        "not by others but by yourself.",
+      ],
       privacyEyebrow: "Privacy first",
       privacyMetrics: ["AES-256 local encryption", "Zero cloud sync default"],
       privacySummary: "Your records stay organized on-device first.",
@@ -1606,6 +1613,12 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
       googleCancelled: "已取消 Google 登录，你可以重试或先以游客进入。",
       googleHint: "使用 Google 登录后可直接使用 Gemini AI，无需 API Key。",
       googleUnavailable: "Google 登录暂不可用，请稍后重试。",
+      poemLines: [
+        "当你开始追踪自己的每一笔钱，",
+        "你就不再是随机漂流。",
+        "你开始变得可以自我治理，",
+        "不是被别人，而是被你自己。",
+      ],
       privacyEyebrow: "隐私优先",
       privacyMetrics: ["AES-256 本地加密", "默认不启用云同步"],
       privacySummary: "你的记录会优先保存在本机并保持有序。",
