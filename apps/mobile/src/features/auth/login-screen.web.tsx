@@ -442,6 +442,17 @@ const styles = StyleSheet.create({
     shadowRadius: 32,
     width: 260,
   },
+  tryNowIconWrap: {
+    alignItems: "center",
+    borderRadius: 28,
+    borderWidth: 1,
+    height: 260,
+    justifyContent: "center",
+    shadowOffset: { height: 18, width: 0 },
+    shadowOpacity: 0.08,
+    shadowRadius: 32,
+    width: 260,
+  },
   topBlock: {
     alignItems: "center",
     gap: 10,
