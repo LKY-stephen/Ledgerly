@@ -106,7 +106,7 @@ interface AppShellContextValue {
 
 const AppShellContext = createContext<AppShellContextValue | null>(null);
 
-const defaultAiProvider: AiProvider = "infer";
+const defaultAiProvider: AiProvider = "openai";
 
 const initialState: PersistedAppState = {
   aiProvider: defaultAiProvider,

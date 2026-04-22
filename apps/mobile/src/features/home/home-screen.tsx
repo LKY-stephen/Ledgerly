@@ -2,6 +2,7 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import {
+  ActivityIndicator,
   Platform,
   Pressable,
   RefreshControl,
@@ -23,6 +24,8 @@ import {
 import { useHomeScreenData } from "./use-home-screen-data";
 import { useAppShell } from "../app-shell/provider";
 import { getButtonColors, withAlpha } from "../app-shell/theme-utils";
+import { AgentChat } from "../agent/agent-chat";
+import { useAgentContext } from "../agent/agent-provider";
 
 function ActivityIcon({ color, icon }: { color: string; icon: string }) {
   if (icon === "cash-plus") {
@@ -51,11 +54,35 @@ export function HomeScreen() {
     refresh,
     snapshot,
   } = useHomeScreenData();
+  const agent = useAgentContext();
+  const [chatExpanded, setChatExpanded] = useState(false);
   const screenCopy = copy.homeScreen;
   const primaryButton = getButtonColors(palette, "primary");
   const [selectedTrendDate, setSelectedTrendDate] = useState<string | null>(
     null,
   );
+  const isAssistantInitializing = agent.isConfigured && !agent.isReady;
+  const assistantCollapsedLabel = !agent.isConfigured
+    ? resolvedLocale === "zh-CN"
+      ? "配置 AI 助手"
+      : "Set Up AI Assistant"
+    : resolvedLocale === "zh-CN"
+      ? "打开 AI 助手"
+      : "Open AI Assistant";
+  const assistantPromptTitle = isAssistantInitializing
+    ? resolvedLocale === "zh-CN"
+      ? "正在准备助手"
+      : "Preparing Assistant"
+    : resolvedLocale === "zh-CN"
+      ? "先完成 AI 设置"
+      : "Finish AI Setup";
+  const assistantPromptBody = isAssistantInitializing
+    ? resolvedLocale === "zh-CN"
+      ? "本地账本和 AI 会话正在初始化，几秒后就可以直接提问。"
+      : "The local ledger and AI session are initializing. You can ask questions in a moment."
+    : resolvedLocale === "zh-CN"
+      ? "前往设置页选择 AI Provider 并填写 API Key，然后就可以在这里直接记账、查账和追问本地账本。"
+      : "Choose an AI provider and enter an API key in Settings, then come back here to add records, query totals, and ask follow-up questions.";
 
   const incomeLabel = formatCurrencyFromCents(snapshot.metrics.incomeCents);
   const outflowLabel = formatCurrencyFromCents(snapshot.metrics.outflowCents);
@@ -434,6 +461,96 @@ export function HomeScreen() {
           </View>
         </View>
       </ScrollView>
+
+      {/* ── Agent Chat Panel ── */}
+      <View
+        style={[
+          chatExpanded ? styles.chatExpanded : styles.chatCollapsed,
+          { backgroundColor: palette.paper, borderColor: palette.divider },
+        ]}
+      >
+        {chatExpanded ? (
+          <>
+            <Pressable
+              onPress={() => setChatExpanded(false)}
+              style={[styles.chatToggle, { borderBottomColor: palette.divider }]}
+            >
+              <Ionicons name="chevron-down" size={18} color={palette.inkMuted} />
+              <Text style={[styles.chatToggleLabel, { color: palette.ink }]}>
+                {resolvedLocale === "zh-CN" ? "收起助手" : "Collapse Assistant"}
+              </Text>
+            </Pressable>
+            {agent.isReady ? (
+              <AgentChat
+                messages={agent.messages}
+                isProcessing={agent.isProcessing}
+                error={agent.error}
+                onSend={async (text) => {
+                  await agent.sendMessage(text);
+                  await agent.refreshContext();
+                  refresh();
+                }}
+                onClear={agent.clearChat}
+                locale={resolvedLocale === "zh-CN" ? "zh-CN" : "en"}
+              />
+            ) : (
+              <View style={styles.chatPrompt}>
+                {isAssistantInitializing ? (
+                  <ActivityIndicator color={palette.accent} size="small" />
+                ) : (
+                  <Ionicons
+                    name="settings-outline"
+                    size={28}
+                    color={palette.accent}
+                  />
+                )}
+                <Text style={[styles.chatPromptTitle, { color: palette.ink }]}>
+                  {assistantPromptTitle}
+                </Text>
+                <Text style={[styles.chatPromptBody, { color: palette.inkMuted }]}>
+                  {assistantPromptBody}
+                </Text>
+                {!isAssistantInitializing ? (
+                  <Pressable
+                    accessibilityRole="button"
+                    onPress={() => router.push("/profile")}
+                    style={({ pressed }) => [
+                      styles.chatPromptButton,
+                      {
+                        backgroundColor: pressed
+                          ? primaryButton.pressedBackground
+                          : primaryButton.background,
+                        borderColor: primaryButton.border,
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.chatPromptButtonLabel,
+                        { color: primaryButton.text },
+                      ]}
+                    >
+                      {resolvedLocale === "zh-CN" ? "去设置" : "Open Settings"}
+                    </Text>
+                  </Pressable>
+                ) : null}
+              </View>
+            )}
+          </>
+        ) : (
+          <Pressable
+            onPress={() => setChatExpanded(true)}
+            style={[styles.chatToggle, { borderTopColor: palette.divider }]}
+          >
+            <Ionicons name="chatbubbles-outline" size={18} color={palette.accent} />
+            <Text style={[styles.chatToggleLabel, { color: palette.ink }]}>
+              {assistantCollapsedLabel}
+            </Text>
+            <Ionicons name="chevron-up" size={18} color={palette.inkMuted} />
+          </Pressable>
+        )}
+      </View>
+
     </SafeAreaView>
   );
 }
@@ -957,5 +1074,52 @@ const styles = StyleSheet.create({
   },
   wideRight: {
     flex: 45,
+  },
+  chatExpanded: {
+    height: 420,
+    borderTopWidth: 1,
+    borderRadius: 0,
+  },
+  chatCollapsed: {
+    borderTopWidth: 1,
+  },
+  chatToggle: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  chatToggleLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  chatPrompt: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
+    paddingHorizontal: 24,
+    paddingVertical: 24,
+  },
+  chatPromptTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+  },
+  chatPromptBody: {
+    fontSize: 14,
+    lineHeight: 20,
+    textAlign: "center",
+  },
+  chatPromptButton: {
+    borderRadius: 999,
+    borderWidth: 1,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+  },
+  chatPromptButtonLabel: {
+    fontSize: 14,
+    fontWeight: "600",
   },
 });

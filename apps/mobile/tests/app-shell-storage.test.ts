@@ -71,10 +71,10 @@ afterEach(() => {
 });
 
 describe("app-shell storage runtime overrides", () => {
-  it("defaults the AI provider to infer when nothing is persisted", async () => {
+  it("defaults the AI provider to openai when nothing is persisted", async () => {
     const storage = await import("../src/features/app-shell/storage");
 
-    await expect(storage.loadPersistedAiProvider()).resolves.toBe("infer");
+    await expect(storage.loadPersistedAiProvider()).resolves.toBe("openai");
   });
 
   it("returns the latest OpenAI API key before the async storage write finishes", async () => {

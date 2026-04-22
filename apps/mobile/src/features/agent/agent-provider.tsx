@@ -1,0 +1,120 @@
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  type PropsWithChildren,
+} from "react";
+import { LedgerlySDK } from "@ledgerly/sdk";
+import type { WritableStorageDatabase } from "@ledgerly/storage";
+import type { AgentConfig, AgentMessage } from "@ledgerly/agent";
+import { useAppShell } from "../app-shell/provider";
+import { useAgent } from "./use-agent";
+
+interface AgentContextValue {
+  messages: AgentMessage[];
+  isProcessing: boolean;
+  error: string | null;
+  sendMessage: (text: string) => Promise<AgentMessage | undefined>;
+  clearChat: () => void;
+  refreshContext: () => Promise<void>;
+  isConfigured: boolean;
+  isReady: boolean;
+}
+
+const AgentContext = createContext<AgentContextValue | null>(null);
+
+interface AgentProviderProps extends PropsWithChildren {
+  database: WritableStorageDatabase | null;
+}
+
+export function AgentProvider({ children, database }: AgentProviderProps) {
+  const {
+    aiProvider,
+    openAiApiKey,
+    geminiApiKey,
+    inferApiKey,
+    inferBaseUrl,
+    inferModel,
+    resolvedLocale,
+  } = useAppShell();
+
+  const sdk = useMemo(() => {
+    if (!database) return null;
+    return new LedgerlySDK(database);
+  }, [database]);
+
+  const agentConfig: AgentConfig | null = useMemo(() => {
+    let apiKey = "";
+    let baseUrl: string | undefined;
+    let model: string | undefined;
+
+    if (aiProvider === "openai" && openAiApiKey) {
+      apiKey = openAiApiKey;
+      baseUrl =
+        (process.env.EXPO_PUBLIC_OPENAI_BASE_URL ?? "").trim().replace(/\/+$/g, "") || undefined;
+      model = (process.env.EXPO_PUBLIC_OPENAI_MODEL ?? "").trim() || undefined;
+    } else if (aiProvider === "gemini") {
+      apiKey = geminiApiKey;
+      baseUrl =
+        (process.env.EXPO_PUBLIC_GEMINI_BASE_URL ?? "").trim().replace(/\/+$/g, "") || undefined;
+      model = (process.env.EXPO_PUBLIC_GEMINI_MODEL ?? "").trim() || undefined;
+    } else if (aiProvider === "infer" && inferApiKey) {
+      apiKey = inferApiKey;
+      baseUrl = inferBaseUrl || undefined;
+      model = inferModel || undefined;
+    } else {
+      return null;
+    }
+
+    if (!apiKey) return null;
+
+    return {
+      provider: aiProvider,
+      apiKey,
+      baseUrl,
+      model,
+      locale: resolvedLocale === "zh-CN" ? "zh-CN" : "en",
+    };
+  }, [
+    aiProvider,
+    openAiApiKey,
+    geminiApiKey,
+    inferApiKey,
+    inferBaseUrl,
+    inferModel,
+    resolvedLocale,
+  ]);
+
+  const agent = useAgent(agentConfig, sdk);
+
+  useEffect(() => {
+    if (sdk && agentConfig) {
+      void sdk.ensureDefaultEntity().then(() => agent.initSession());
+    }
+  }, [sdk, agentConfig, agent.initSession]);
+
+  const contextValue: AgentContextValue = useMemo(
+    () => ({
+      messages: agent.messages,
+      isProcessing: agent.isProcessing,
+      error: agent.error,
+      sendMessage: agent.sendMessage,
+      clearChat: agent.clearChat,
+      refreshContext: agent.refreshContext,
+      isConfigured: !!agentConfig,
+      isReady: !!sdk && !!agentConfig,
+    }),
+    [agent.messages, agent.isProcessing, agent.error, agent.sendMessage, agent.clearChat, agent.refreshContext, sdk, agentConfig],
+  );
+
+  return <AgentContext.Provider value={contextValue}>{children}</AgentContext.Provider>;
+}
+
+export function useAgentContext() {
+  const context = useContext(AgentContext);
+  if (!context) {
+    throw new Error("useAgentContext must be used inside AgentProvider.");
+  }
+  return context;
+}

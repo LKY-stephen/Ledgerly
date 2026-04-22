@@ -99,3 +99,9 @@ pnpm smoke
     - 填入有效 Infer Base URL 与 Infer API Key 并保存，退出重进后 provider、Base URL 和 key 均回显正确
     - 切换到 Infer API 后上传文件 → Parse → 确认请求走 Infer 配置的 Base URL
     - 回归 OpenAI / Gemini，确认原有 provider 未被破坏
+21. 返回首页验证 AI 助手闭环：
+    - 首页底部始终可见 AI 助手入口；未配置 provider 或 key 时，展开后会提示前往设置
+    - 完成 OpenAI / Gemini API key 或 Infer 配置后，首页展开助手，确认可见聊天输入框
+    - 输入“本月收入多少”或类似问题，确认助手返回基于本地账本的回答
+    - 输入“记一笔今天的午餐支出 18 美元”或类似自然语言，确认助手返回新增成功提示
+    - 回到首页指标与 Recent Activity，确认新增记录已反映到本地数据
