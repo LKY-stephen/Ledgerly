@@ -26,6 +26,12 @@ import { useAppShell } from "../app-shell/provider";
 import { getButtonColors, withAlpha } from "../app-shell/theme-utils";
 import { AgentChat } from "../agent/agent-chat";
 import { useAgentContext } from "../agent/agent-provider";
+import { pickDocumentUploadCandidates } from "../ledger/ledger-runtime";
+import {
+  parseFileWithOpenAiFromBlob,
+  type ParseResult,
+} from "../ledger/remote-parse";
+import { getReceiptParseRecords } from "@ledgerly/schemas";
 
 function ActivityIcon({ color, icon }: { color: string; icon: string }) {
   if (icon === "cash-plus") {
@@ -57,6 +63,55 @@ export function HomeScreen() {
   const agent = useAgentContext();
   const [chatExpanded, setChatExpanded] = useState(false);
   const screenCopy = copy.homeScreen;
+
+  const handleAttachFile = async () => {
+    try {
+      const candidates = await pickDocumentUploadCandidates();
+      if (candidates.length === 0) return;
+
+      const file = candidates[0];
+      const response = await fetch(file.uri);
+      const blob = await response.blob();
+      const result: ParseResult = await parseFileWithOpenAiFromBlob({
+        fileName: file.originalFileName,
+        blob,
+        mimeType: file.mimeType,
+      });
+
+      if (result.error || !result.rawJson) {
+        const errorText = result.error ?? "Failed to parse file.";
+        await agent.sendMessage(
+          `[Uploaded: ${file.originalFileName}]\nParse error: ${errorText}\nPlease try again or add the record manually.`,
+        );
+        return;
+      }
+
+      const records = getReceiptParseRecords(result.rawJson);
+      const lines: string[] = [`[Uploaded: ${file.originalFileName}]`, "Parsed receipt data:"];
+
+      for (const rec of records) {
+        const f = rec.fields;
+        if (f.amountCents != null) lines.push(`- Amount: $${(Math.abs(f.amountCents) / 100).toFixed(2)}`);
+        if (f.target) lines.push(`- Vendor/Payee: ${f.target}`);
+        if (f.source) lines.push(`- Payer/Source: ${f.source}`);
+        if (f.date) lines.push(`- Date: ${f.date}`);
+        if (f.description) lines.push(`- Description: ${f.description}`);
+        if (f.category) lines.push(`- Category: ${f.category}`);
+        if (f.taxCategory) lines.push(`- Tax category: ${f.taxCategory}`);
+        if (f.notes) lines.push(`- Notes: ${f.notes}`);
+        if (records.length > 1) lines.push("---");
+      }
+
+      lines.push("", "Please create this record or let me know if you'd like to adjust anything.");
+
+      await agent.sendMessage(lines.join("\n"));
+      await agent.refreshContext();
+      refresh();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "File upload failed";
+      await agent.sendMessage(`File upload error: ${msg}`);
+    }
+  };
   const primaryButton = getButtonColors(palette, "primary");
   const [selectedTrendDate, setSelectedTrendDate] = useState<string | null>(
     null,
@@ -491,6 +546,7 @@ export function HomeScreen() {
                   refresh();
                 }}
                 onClear={agent.clearChat}
+                onAttachFile={handleAttachFile}
                 locale={resolvedLocale === "zh-CN" ? "zh-CN" : "en"}
               />
             ) : (

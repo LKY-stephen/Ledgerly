@@ -80,6 +80,8 @@ export interface CreateRecordInput {
   target: string;
   recordKind: "income" | "non_business_income" | "expense" | "personal_spending";
   entityId?: string;
+  taxCategoryCode?: string;
+  taxLineCode?: string;
 }
 
 export interface UpdateRecordInput {

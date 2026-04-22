@@ -5,7 +5,15 @@ import type {
 import {
   resolveStandardReceiptEntry,
   persistResolvedStandardReceiptEntry,
+  loadProfitAndLossSummary,
+  loadBalanceSheetSummary,
+  loadGeneralLedgerSummary,
+  loadTaxHelperSnapshot,
   type StandardReceiptUserClassification,
+  type ProfitAndLossSummary,
+  type BalanceSheetSummary,
+  type GeneralLedgerSummary,
+  type TaxHelperSnapshot,
 } from "@ledgerly/storage";
 import type {
   LedgerlySdkConfig,
@@ -172,6 +180,13 @@ export class LedgerlySDK {
     );
 
     await persistResolvedStandardReceiptEntry(this.db, resolved);
+
+    if (input.taxCategoryCode || input.taxLineCode) {
+      const taxUpdates: UpdateRecordInput = {};
+      if (input.taxCategoryCode) taxUpdates.taxCategoryCode = input.taxCategoryCode;
+      if (input.taxLineCode) taxUpdates.taxLineCode = input.taxLineCode;
+      await this.updateRecord(recordId, taxUpdates);
+    }
 
     return (await this.getRecord(recordId))!;
   }
@@ -403,5 +418,25 @@ export class LedgerlySDK {
       recentRecords,
       counterpartyCount: cpRow?.count ?? 0,
     };
+  }
+
+  // ── Financial Reports ──
+
+  async getProfitAndLoss(startDate: string, endDate: string, entityId?: string): Promise<ProfitAndLossSummary> {
+    return loadProfitAndLossSummary(this.db, this.entityId(entityId), { startDate, endDate });
+  }
+
+  async getBalanceSheet(startDate: string, endDate: string, entityId?: string): Promise<BalanceSheetSummary> {
+    return loadBalanceSheetSummary(this.db, this.entityId(entityId), { startDate, endDate });
+  }
+
+  async getGeneralLedger(startDate: string, endDate: string, entityId?: string): Promise<GeneralLedgerSummary> {
+    return loadGeneralLedgerSummary(this.db, this.entityId(entityId), { startDate, endDate });
+  }
+
+  // ── Tax ──
+
+  async getTaxSummary(taxYear: number, entityId?: string): Promise<TaxHelperSnapshot> {
+    return loadTaxHelperSnapshot(this.db, { entityId: this.entityId(entityId), taxYear });
   }
 }

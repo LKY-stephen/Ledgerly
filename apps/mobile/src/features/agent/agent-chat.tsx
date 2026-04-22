@@ -21,6 +21,7 @@ interface AgentChatProps {
   error: string | null;
   onSend: (text: string) => void;
   onClear: () => void;
+  onAttachFile?: () => void;
   locale: "en" | "zh-CN";
 }
 
@@ -84,6 +85,7 @@ export function AgentChat({
   error,
   onSend,
   onClear,
+  onAttachFile,
   locale,
 }: AgentChatProps) {
   const { palette } = useAppShell();
@@ -170,6 +172,21 @@ export function AgentChat({
       </ScrollView>
 
       <View style={[styles.inputRow, { borderTopColor: palette.border, backgroundColor: palette.shell }]}>
+        {onAttachFile ? (
+          <Pressable
+            onPress={onAttachFile}
+            disabled={isProcessing}
+            style={({ pressed }) => [
+              styles.attachButton,
+              {
+                backgroundColor: pressed ? withAlpha(palette.accent, 0.15) : "transparent",
+                opacity: isProcessing ? 0.4 : 1,
+              },
+            ]}
+          >
+            <Ionicons name="attach" size={22} color={palette.accent} />
+          </Pressable>
+        ) : null}
         <TextInput
           style={[
             styles.input,
@@ -317,6 +334,13 @@ const styles = StyleSheet.create({
     minHeight: 40,
   },
   sendButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  attachButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
