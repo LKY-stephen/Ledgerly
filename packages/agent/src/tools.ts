@@ -106,6 +106,15 @@ export const ledgerTools: ToolDefinition[] = [
           type: "string",
           description: "Currency code (default USD)",
         },
+        taxLineCode: {
+          type: "string",
+          description: "IRS Schedule C tax line code for expenses",
+          enum: ["line1", "line8", "line10", "line11", "line15", "line16b", "line17", "line18", "line20a", "line20b", "line21", "line22", "line23", "line24a", "line25", "line27a"],
+        },
+        taxCategoryCode: {
+          type: "string",
+          description: "Tax category code (e.g. schedule-c-other-expense, meals, travel)",
+        },
       },
       required: ["description", "amountCents", "occurredOn", "recordKind"],
     },
@@ -140,6 +149,15 @@ export const ledgerTools: ToolDefinition[] = [
           type: "string",
           description: "New record type",
           enum: ["income", "non_business_income", "expense", "personal_spending"],
+        },
+        taxLineCode: {
+          type: "string",
+          description: "IRS Schedule C tax line code",
+          enum: ["line1", "line8", "line10", "line11", "line15", "line16b", "line17", "line18", "line20a", "line20b", "line21", "line22", "line23", "line24a", "line25", "line27a"],
+        },
+        taxCategoryCode: {
+          type: "string",
+          description: "Tax category code",
         },
       },
       required: ["recordId"],
@@ -233,6 +251,78 @@ export const ledgerTools: ToolDefinition[] = [
       properties: {},
     },
   },
+  {
+    name: "get_profit_and_loss",
+    description:
+      "Generate a Profit & Loss (income statement) report. Shows revenue and expenses grouped by counterparty with totals and net income.",
+    parameters: {
+      type: "object",
+      properties: {
+        startDate: {
+          type: "string",
+          description: "Start date (YYYY-MM-DD)",
+        },
+        endDate: {
+          type: "string",
+          description: "End date exclusive (YYYY-MM-DD)",
+        },
+      },
+      required: ["startDate", "endDate"],
+    },
+  },
+  {
+    name: "get_balance_sheet",
+    description:
+      "Generate a Balance Sheet report. Shows opening balance, period revenue and expenses, and closing balance.",
+    parameters: {
+      type: "object",
+      properties: {
+        startDate: {
+          type: "string",
+          description: "Period start date (YYYY-MM-DD)",
+        },
+        endDate: {
+          type: "string",
+          description: "Period end date exclusive (YYYY-MM-DD)",
+        },
+      },
+      required: ["startDate", "endDate"],
+    },
+  },
+  {
+    name: "get_general_ledger",
+    description:
+      "Generate a General Ledger report. Shows all posting entries with debit/credit details for a date range.",
+    parameters: {
+      type: "object",
+      properties: {
+        startDate: {
+          type: "string",
+          description: "Start date (YYYY-MM-DD)",
+        },
+        endDate: {
+          type: "string",
+          description: "End date exclusive (YYYY-MM-DD)",
+        },
+      },
+      required: ["startDate", "endDate"],
+    },
+  },
+  {
+    name: "get_tax_summary",
+    description:
+      "Get tax helper data for a given year. Returns Schedule C line item aggregations, Schedule SE preview, and review notices.",
+    parameters: {
+      type: "object",
+      properties: {
+        taxYear: {
+          type: "string",
+          description: "Tax year (e.g. 2026)",
+        },
+      },
+      required: ["taxYear"],
+    },
+  },
 ];
 
 export const toolExecutors: Record<string, ToolExecutor> = {
@@ -267,6 +357,8 @@ export const toolExecutors: Record<string, ToolExecutor> = {
       target: (args.target as string | undefined)?.trim() || defaultParties.target,
       memo: args.memo as string | undefined,
       currency: args.currency as string | undefined,
+      taxLineCode: args.taxLineCode as string | undefined,
+      taxCategoryCode: args.taxCategoryCode as string | undefined,
     });
   },
 
@@ -277,6 +369,8 @@ export const toolExecutors: Record<string, ToolExecutor> = {
     if (args.occurredOn) updates.occurredOn = args.occurredOn;
     if (args.memo) updates.memo = args.memo;
     if (args.recordKind) updates.recordKind = args.recordKind;
+    if (args.taxLineCode) updates.taxLineCode = args.taxLineCode;
+    if (args.taxCategoryCode) updates.taxCategoryCode = args.taxCategoryCode;
 
     const record = await sdk.updateRecord(args.recordId as string, updates);
     if (!record) return { error: "Record not found" };
@@ -310,6 +404,22 @@ export const toolExecutors: Record<string, ToolExecutor> = {
 
   async get_context_snapshot(sdk) {
     return sdk.getContextSnapshot();
+  },
+
+  async get_profit_and_loss(sdk, args) {
+    return sdk.getProfitAndLoss(args.startDate as string, args.endDate as string);
+  },
+
+  async get_balance_sheet(sdk, args) {
+    return sdk.getBalanceSheet(args.startDate as string, args.endDate as string);
+  },
+
+  async get_general_ledger(sdk, args) {
+    return sdk.getGeneralLedger(args.startDate as string, args.endDate as string);
+  },
+
+  async get_tax_summary(sdk, args) {
+    return sdk.getTaxSummary(parseInt(args.taxYear as string, 10));
   },
 };
 

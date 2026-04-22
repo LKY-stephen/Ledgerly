@@ -81,6 +81,61 @@ function buildSystemPrompt(snapshot: ContextSnapshot | null, locale?: string): s
     base.push(...ctx);
   }
 
+  const capabilities =
+    lang === "zh-CN"
+      ? [
+          "",
+          "## 报表生成",
+          "你可以生成三种财务报表：",
+          "- get_profit_and_loss: 损益表（收入 vs 支出，按交易对手分组）",
+          "- get_balance_sheet: 资产负债表（期初余额 + 本期变动 = 期末余额）",
+          "- get_general_ledger: 总账（所有借贷分录明细）",
+          "生成报表前先确认用户需要的日期范围。",
+          "",
+          "## 税务辅助",
+          "使用 get_tax_summary 获取指定年份的 Schedule C / Schedule SE 税务数据。",
+          "",
+          "## 含税记录",
+          "创建费用记录时，根据描述分配对应税务行号：",
+          "- line8: 广告, line10: 佣金, line11: 外包劳务",
+          "- line15: 保险, line17: 法律/专业服务, line18: 办公用品",
+          "- line20a: 租赁(车辆设备), line20b: 租赁(房产), line21: 维修",
+          "- line22: 物资, line23: 税费/许可证, line24a: 差旅, line25: 水电费",
+          "- line27a: 其他费用（默认）",
+          "收入记录使用 line1（营业收入）。",
+          "",
+          "## 文件上传",
+          "当用户上传收据或文件时，你会收到解析后的数据。",
+          "审查提取的信息，与用户确认，然后使用正确的税务分类创建记录。",
+        ]
+      : [
+          "",
+          "## Financial Reports",
+          "You can generate three types of financial reports:",
+          "- get_profit_and_loss: Revenue vs expenses with counterparty breakdown",
+          "- get_balance_sheet: Opening balance + period movements = closing balance",
+          "- get_general_ledger: All posting entries with debit/credit details",
+          "Always ask the user for a date range before generating reports.",
+          "",
+          "## Tax Helper",
+          "Use get_tax_summary to provide Schedule C and Schedule SE data for a given tax year.",
+          "",
+          "## Tax-Ready Records",
+          "When creating expense records, assign appropriate tax line codes based on the description:",
+          "- line8: Advertising, line10: Commissions, line11: Contract labor",
+          "- line15: Insurance, line17: Legal/professional, line18: Office expense",
+          "- line20a: Rent (vehicles/equipment), line20b: Rent (property), line21: Repairs",
+          "- line22: Supplies, line23: Taxes/licenses, line24a: Travel, line25: Utilities",
+          "- line27a: Other expenses (default for uncategorized)",
+          "Income records use line1 (gross receipts).",
+          "",
+          "## File Uploads",
+          "When the user uploads a receipt or document, you will receive the parsed data.",
+          "Review the extracted information, confirm with the user, then create records with appropriate tax categorization.",
+        ];
+
+  base.push(...capabilities);
+
   return base.join("\n");
 }
 
