@@ -8,6 +8,7 @@ import {
 import { LedgerlySDK } from "@ledgerly/sdk";
 import type { WritableStorageDatabase } from "@ledgerly/storage";
 import type { AgentConfig, AgentMessage } from "@ledgerly/agent";
+import type { AiProvider } from "../app-shell/types";
 import { useAppShell } from "../app-shell/provider";
 import { useAgent } from "./use-agent";
 
@@ -30,7 +31,6 @@ interface AgentProviderProps extends PropsWithChildren {
 
 export function AgentProvider({ children, database }: AgentProviderProps) {
   const {
-    aiProvider,
     openAiApiKey,
     geminiApiKey,
     inferApiKey,
@@ -45,44 +45,50 @@ export function AgentProvider({ children, database }: AgentProviderProps) {
   }, [database]);
 
   const agentConfig: AgentConfig | null = useMemo(() => {
-    let apiKey = "";
-    let baseUrl: string | undefined;
-    let model: string | undefined;
+    const candidates: Array<{
+      provider: AiProvider;
+      apiKey: string;
+      baseUrl?: string;
+      model?: string;
+    }> = [
+      {
+        provider: "openai",
+        apiKey: openAiApiKey,
+        baseUrl:
+          (process.env.EXPO_PUBLIC_OPENAI_BASE_URL ?? "").trim().replace(/\/+$/g, "") || undefined,
+        model: (process.env.EXPO_PUBLIC_OPENAI_MODEL ?? "").trim() || undefined,
+      },
+      {
+        provider: "infer",
+        apiKey: inferApiKey,
+        baseUrl: inferBaseUrl || undefined,
+        model: inferModel || undefined,
+      },
+      {
+        provider: "gemini",
+        apiKey: geminiApiKey,
+        baseUrl:
+          (process.env.EXPO_PUBLIC_GEMINI_BASE_URL ?? "").trim().replace(/\/+$/g, "") || undefined,
+        model: (process.env.EXPO_PUBLIC_GEMINI_MODEL ?? "").trim() || undefined,
+      },
+    ];
 
-    if (aiProvider === "openai" && openAiApiKey) {
-      apiKey = openAiApiKey;
-      baseUrl =
-        (process.env.EXPO_PUBLIC_OPENAI_BASE_URL ?? "").trim().replace(/\/+$/g, "") || undefined;
-      model = (process.env.EXPO_PUBLIC_OPENAI_MODEL ?? "").trim() || undefined;
-    } else if (aiProvider === "gemini") {
-      apiKey = geminiApiKey;
-      baseUrl =
-        (process.env.EXPO_PUBLIC_GEMINI_BASE_URL ?? "").trim().replace(/\/+$/g, "") || undefined;
-      model = (process.env.EXPO_PUBLIC_GEMINI_MODEL ?? "").trim() || undefined;
-    } else if (aiProvider === "infer" && inferApiKey) {
-      apiKey = inferApiKey;
-      baseUrl = inferBaseUrl || undefined;
-      model = inferModel || undefined;
-    } else {
-      return null;
-    }
-
-    if (!apiKey) return null;
+    const match = candidates.find((c) => c.apiKey);
+    if (!match) return null;
 
     return {
-      provider: aiProvider,
-      apiKey,
-      baseUrl,
-      model,
+      provider: match.provider,
+      apiKey: match.apiKey,
+      baseUrl: match.baseUrl,
+      model: match.model,
       locale: resolvedLocale === "zh-CN" ? "zh-CN" : "en",
     };
   }, [
-    aiProvider,
     openAiApiKey,
-    geminiApiKey,
     inferApiKey,
     inferBaseUrl,
     inferModel,
+    geminiApiKey,
     resolvedLocale,
   ]);
 
