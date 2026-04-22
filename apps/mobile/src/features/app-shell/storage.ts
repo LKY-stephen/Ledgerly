@@ -61,7 +61,7 @@ const LEGACY_STORAGE_KEYS = {
 
 type StorageKeyName = keyof typeof STORAGE_KEYS;
 
-const defaultAiProvider: AiProvider = "infer";
+const defaultAiProvider: AiProvider = "openai";
 
 const ALL_STORAGE_KEYS = [
   ...new Set(
@@ -166,9 +166,11 @@ export async function loadPersistedAppState(): Promise<PersistedAppState> {
     aiProvider:
       rawAiProvider === "gemini"
         ? "gemini"
-        : rawAiProvider === "openai"
-          ? "openai"
-          : defaultAiProvider,
+        : rawAiProvider === "infer"
+          ? "infer"
+          : rawAiProvider === "openai"
+            ? "openai"
+            : defaultAiProvider,
     geminiApiKey: String(resolveStoredValue(values, "geminiApiKey") ?? "").trim(),
     geminiAuthMode: rawGeminiAuthMode === "google_oauth" ? "google_oauth" : "api_key",
     googleAccessToken: String(resolveStoredValue(values, "googleAccessToken") ?? "").trim(),
@@ -290,6 +292,7 @@ export async function loadPersistedAiProvider(): Promise<AiProvider> {
 
   const raw = String((await readStoredValue("aiProvider")) ?? "").trim();
   if (raw === "gemini") return "gemini";
+  if (raw === "infer") return "infer";
   if (raw === "openai") return "openai";
   return defaultAiProvider;
 }

@@ -40,7 +40,7 @@ import Constants from "expo-constants";
 WebBrowser.maybeCompleteAuthSession();
 
 function shouldRenderAiParseSection() {
-  return false;
+  return true;
 }
 
 function PreferencePill(props: {
@@ -569,7 +569,6 @@ export function ProfileScreen() {
         </View>
 
         <View style={isExpanded ? styles.wideRight : undefined}>
-        {/* Temporarily hidden. Keep the implementation intact for future re-enable. */}
         {shouldRenderAiParseSection() ? (
           <SectionCard
             eyebrow={copy.meScreen.apiSectionEyebrow}

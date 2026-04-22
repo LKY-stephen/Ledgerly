@@ -2,9 +2,9 @@
 
 ## Version
 
-- version: 0.5.0
-- updated_at: 2026-04-07
-- scope: see `0.5.0_context.md` for the planner-mediated upload workflow covering PDF parsing, workflow persistence, and approval-gated writes
+- version: 0.6.0
+- updated_at: 2026-04-22
+- scope: see `0.6.0_context.md` for the home AI assistant slice covering configurable LLM chat, local tool execution, and natural-language ledger quick entry
 
 ## Active Decisions
 
@@ -18,13 +18,16 @@
 - Android and Web stay on fallback parsing for upload review.
 - Upload review now persists explicit workflow state through upload batches, extraction runs, planner runs, candidate records, read tasks, and write proposals.
 - Parser output is now a validated DTO snapshot; planner output is a validated DTO plus local enrichment, not an implicit records mapping.
+- Home now includes a local-first AI assistant entry point that can answer against the local ledger and create records through shared package tools.
 
 ## Implemented Structure
 
-- `apps/mobile`: Expo Router app with login gate, animated svg tab icons, planner-mediated local upload review flows, SQLite-backed Home metrics, and stronger light-theme CTA/tab contrast.
+- `apps/mobile`: Expo Router app with login gate, animated svg tab icons, planner-mediated local upload review flows, SQLite-backed Home metrics, stronger light-theme CTA/tab contrast, and a configurable home assistant panel.
 - `packages/storage`: storage contract v5, path helpers, and contract tests.
 - `packages/ui`: React Native presentation primitives.
 - `packages/schemas`: creator product modules, platforms, workflow principles, strict parser DTOs, strict planner DTOs, and workflow enums.
+- `packages/sdk`: shared CRUD and context helpers for local ledger access from product UI and the assistant.
+- `packages/agent`: tool-call based assistant session logic for local bookkeeping chat flows.
 - `modules/ios-ocr`: Apple Vision OCR bridge for iOS development builds.
 - `docs/tax-parsing-logic.md`: tax parsing blueprint for 2025 `Form 1040`, `Schedule C`, `Schedule SE`, and `1099-NEC` handoff flows.
 - `docs/upload-planner-workflow.md`: parser -> planner -> local validation -> approval-gated persistence workflow spec.
@@ -45,6 +48,7 @@
 - Decide whether Apple sign-in should later sync to a backend account once a future PRD introduces one.
 - Only reintroduce backend or sync infrastructure through a new PRD.
 - Decide whether Android should later gain native OCR and whether Web should move beyond fallback runtime behavior.
+- Decide whether the assistant should adopt token streaming and richer approval UX for write actions in a later slice.
 
 ## Maintenance
 

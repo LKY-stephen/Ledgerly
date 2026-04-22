@@ -16,7 +16,9 @@
     "web": "CORS_PROXY_HOST=127.0.0.1 EXPO_PUBLIC_CORS_PROXY_URL=http://127.0.0.1:19007 node scripts/cors-proxy.js & CORS_PROXY_HOST=127.0.0.1 EXPO_PUBLIC_CORS_PROXY_URL=http://127.0.0.1:19007 expo start --web --port 8088"
   },
   "dependencies": {
+    "@ledgerly/agent": "workspace:*",
     "@ledgerly/schemas": "workspace:*",
+    "@ledgerly/sdk": "workspace:*",
     "@ledgerly/storage": "workspace:*",
     "@ledgerly/ui": "workspace:*",
     "@react-native-async-storage/async-storage": "2.2.0",

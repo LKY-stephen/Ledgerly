@@ -388,7 +388,7 @@ export async function parseFileWithOpenAi(input: {
     const filePart = createInputFilePart({ base64, fileName: input.fileName, mimeType });
     return await callOpenAiParseApi(settings, filePart, input.fileName, mimeType, aiProvider);
   } catch (error) {
-    const aiProvider = await loadPersistedAiProvider().catch(() => "infer" as AiProvider);
+    const aiProvider = await loadPersistedAiProvider().catch(() => "openai" as AiProvider);
     return {
       rawJson: null,
       rawText: "",
@@ -419,7 +419,7 @@ export async function parseFileWithOpenAiFromBlob(input: {
     const filePart = createInputFilePart({ base64, fileName: input.fileName, mimeType });
     return await callOpenAiParseApi(settings, filePart, input.fileName, mimeType, aiProvider);
   } catch (error) {
-    const aiProvider = await loadPersistedAiProvider().catch(() => "infer" as AiProvider);
+    const aiProvider = await loadPersistedAiProvider().catch(() => "openai" as AiProvider);
     return {
       rawJson: null,
       rawText: "",
