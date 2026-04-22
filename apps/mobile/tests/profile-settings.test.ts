@@ -7,7 +7,7 @@ vi.mock("../src/features/app-shell/storage", () => ({
   loadPersistedInferApiKey: vi.fn(async () => ""),
   loadPersistedInferBaseUrl: vi.fn(async () => ""),
   loadPersistedInferModel: vi.fn(async () => ""),
-  loadPersistedOpenAiApiKey: vi.fn(async () => ""),
+  loadPersistedOpenAiApiKey: vi.fn(async () => "test-openai-key"),
 }));
 
 import { planEvidenceDbUpdates, resetRemoteParseRuntimeStateForTests } from "../src/features/ledger/remote-parse";
@@ -238,6 +238,7 @@ describe("planner sourceProfileInfo", () => {
 describe("infer provider routing", () => {
   it("routes planner call through Infer base URL when ai_provider is infer", async () => {
     const storageMock = await import("../src/features/app-shell/storage");
+    vi.mocked(storageMock.loadPersistedOpenAiApiKey).mockResolvedValue("");
     vi.mocked(storageMock.loadPersistedAiProvider).mockResolvedValue("infer");
     vi.mocked(storageMock.loadPersistedInferApiKey).mockResolvedValue("infer-key-123");
     vi.mocked(storageMock.loadPersistedInferBaseUrl).mockResolvedValue("https://infer.example.com/v1");
@@ -266,8 +267,9 @@ describe("infer provider routing", () => {
     expect(result.summary).toBe("One expense record.");
   });
 
-  it("throws missing_config when Infer base URL is empty", async () => {
+  it("falls through to error when Infer base URL is empty", async () => {
     const storageMock = await import("../src/features/app-shell/storage");
+    vi.mocked(storageMock.loadPersistedOpenAiApiKey).mockResolvedValue("");
     vi.mocked(storageMock.loadPersistedAiProvider).mockResolvedValue("infer");
     vi.mocked(storageMock.loadPersistedInferApiKey).mockResolvedValue("infer-key-123");
     vi.mocked(storageMock.loadPersistedInferBaseUrl).mockResolvedValue("");
@@ -279,11 +281,12 @@ describe("infer provider routing", () => {
         mimeType: "application/pdf",
         rawJson: { total: 50 },
       }),
-    ).rejects.toThrow("Missing Infer Base URL");
+    ).rejects.toThrow("No AI provider configured");
   });
 
-  it("throws missing_config when Infer API Key is empty", async () => {
+  it("falls through to error when Infer API Key is empty", async () => {
     const storageMock = await import("../src/features/app-shell/storage");
+    vi.mocked(storageMock.loadPersistedOpenAiApiKey).mockResolvedValue("");
     vi.mocked(storageMock.loadPersistedAiProvider).mockResolvedValue("infer");
     vi.mocked(storageMock.loadPersistedInferApiKey).mockResolvedValue("");
     vi.mocked(storageMock.loadPersistedInferBaseUrl).mockResolvedValue("https://infer.example.com/v1");
@@ -295,6 +298,6 @@ describe("infer provider routing", () => {
         mimeType: "application/pdf",
         rawJson: { total: 50 },
       }),
-    ).rejects.toThrow("Missing Infer API Key");
+    ).rejects.toThrow("No AI provider configured");
   });
 });

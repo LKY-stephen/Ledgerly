@@ -110,7 +110,7 @@ const defaultAiProvider: AiProvider = "openai";
 
 const initialState: PersistedAppState = {
   aiProvider: defaultAiProvider,
-  geminiApiKey: "",
+  geminiApiKey: (process.env.EXPO_PUBLIC_GEMINI_API_KEY ?? "").trim(),
   geminiAuthMode: "api_key",
   googleAccessToken: "",
   googleRefreshToken: "",
@@ -119,7 +119,7 @@ const initialState: PersistedAppState = {
   inferBaseUrl: (process.env.EXPO_PUBLIC_INFER_BASE_URL ?? "").trim().replace(/\/+$/g, ""),
   inferModel: (process.env.EXPO_PUBLIC_INFER_MODEL ?? "").trim(),
   localePreference: "system",
-  openAiApiKey: "",
+  openAiApiKey: (process.env.EXPO_PUBLIC_OPENAI_API_KEY ?? "").trim(),
   parseApiBaseUrl: "",
   profileInfo: {
     email: "",

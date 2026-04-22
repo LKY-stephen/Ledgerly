@@ -7,7 +7,7 @@ vi.mock("../src/features/app-shell/storage", () => ({
   loadPersistedInferApiKey: vi.fn(async () => ""),
   loadPersistedInferBaseUrl: vi.fn(async () => ""),
   loadPersistedInferModel: vi.fn(async () => ""),
-  loadPersistedOpenAiApiKey: vi.fn(async () => ""),
+  loadPersistedOpenAiApiKey: vi.fn(async () => "test-openai-key"),
 }));
 
 import {
@@ -15,6 +15,7 @@ import {
   loadPersistedInferApiKey,
   loadPersistedInferBaseUrl,
   loadPersistedInferModel,
+  loadPersistedOpenAiApiKey,
 } from "../src/features/app-shell/storage";
 import {
   buildFallbackModelListForTests,
@@ -93,7 +94,7 @@ describe("remote parse client", () => {
     const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
       expect(String(url)).toBe("https://api.openai.com/v1/responses");
       expect(init?.headers).toMatchObject({
-        Authorization: "Bearer sk-test",
+        Authorization: "Bearer test-openai-key",
         "Content-Type": "application/json",
       });
 
@@ -290,6 +291,7 @@ describe("remote parse client", () => {
   });
 
   it("returns a readable Infer error when the provider responds with non-JSON content", async () => {
+    vi.mocked(loadPersistedOpenAiApiKey).mockResolvedValue("");
     vi.mocked(loadPersistedAiProvider).mockResolvedValue("infer");
     vi.mocked(loadPersistedInferApiKey).mockResolvedValue("infer-test-key");
     vi.mocked(loadPersistedInferBaseUrl).mockResolvedValue("https://infer.example/v1");
@@ -392,9 +394,9 @@ describe("remote parse client", () => {
     ]);
   });
 
-  it("returns error when API key is missing", async () => {
+  it("returns error when no API keys are configured", async () => {
+    vi.mocked(loadPersistedOpenAiApiKey).mockResolvedValue("");
     delete process.env.EXPO_PUBLIC_OPENAI_API_KEY;
-    process.env.EXPO_PUBLIC_OPENAI_BASE_URL = "https://api.openai.com/v1";
 
     const result = await parseFileWithOpenAiFromBlob({
       blob: new Blob(["pdf-bytes"], { type: "application/pdf" }),
@@ -402,7 +404,7 @@ describe("remote parse client", () => {
       mimeType: "application/pdf",
     });
 
-    expect(result.error).toContain("Missing OpenAI API key");
+    expect(result.error).toContain("No AI provider configured");
     expect(result.rawJson).toBeNull();
   });
 });

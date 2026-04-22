@@ -74,15 +74,15 @@ export function HomeScreen() {
       ? "正在准备助手"
       : "Preparing Assistant"
     : resolvedLocale === "zh-CN"
-      ? "先完成 AI 设置"
-      : "Finish AI Setup";
+      ? "未检测到 API Key"
+      : "No API Key Found";
   const assistantPromptBody = isAssistantInitializing
     ? resolvedLocale === "zh-CN"
       ? "本地账本和 AI 会话正在初始化，几秒后就可以直接提问。"
       : "The local ledger and AI session are initializing. You can ask questions in a moment."
     : resolvedLocale === "zh-CN"
-      ? "前往设置页选择 AI Provider 并填写 API Key，然后就可以在这里直接记账、查账和追问本地账本。"
-      : "Choose an AI provider and enter an API key in Settings, then come back here to add records, query totals, and ask follow-up questions.";
+      ? "请在 .env 文件中填入至少一个 AI API Key（OpenAI / Infer / Gemini），然后重启应用即可使用助手。"
+      : "Add at least one AI API key (OpenAI / Infer / Gemini) to your .env file, then restart the app to use the assistant.";
 
   const incomeLabel = formatCurrencyFromCents(snapshot.metrics.incomeCents);
   const outflowLabel = formatCurrencyFromCents(snapshot.metrics.outflowCents);
@@ -510,30 +510,6 @@ export function HomeScreen() {
                 <Text style={[styles.chatPromptBody, { color: palette.inkMuted }]}>
                   {assistantPromptBody}
                 </Text>
-                {!isAssistantInitializing ? (
-                  <Pressable
-                    accessibilityRole="button"
-                    onPress={() => router.push("/profile")}
-                    style={({ pressed }) => [
-                      styles.chatPromptButton,
-                      {
-                        backgroundColor: pressed
-                          ? primaryButton.pressedBackground
-                          : primaryButton.background,
-                        borderColor: primaryButton.border,
-                      },
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.chatPromptButtonLabel,
-                        { color: primaryButton.text },
-                      ]}
-                    >
-                      {resolvedLocale === "zh-CN" ? "去设置" : "Open Settings"}
-                    </Text>
-                  </Pressable>
-                ) : null}
               </View>
             )}
           </>

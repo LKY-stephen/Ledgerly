@@ -40,7 +40,7 @@ import Constants from "expo-constants";
 WebBrowser.maybeCompleteAuthSession();
 
 function shouldRenderAiParseSection() {
-  return true;
+  return false;
 }
 
 function PreferencePill(props: {

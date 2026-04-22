@@ -302,7 +302,11 @@ export async function loadPersistedGeminiApiKey(): Promise<string> {
     return runtimeOverrides.geminiApiKey ?? "";
   }
 
-  return String((await readStoredValue("geminiApiKey")) ?? "").trim();
+  const stored = String((await readStoredValue("geminiApiKey")) ?? "").trim();
+
+  if (stored) return stored;
+
+  return (process.env.EXPO_PUBLIC_GEMINI_API_KEY ?? "").trim();
 }
 
 export async function loadPersistedOpenAiApiKey(): Promise<string> {
@@ -310,9 +314,13 @@ export async function loadPersistedOpenAiApiKey(): Promise<string> {
     return runtimeOverrides.openAiApiKey ?? "";
   }
 
-  return String(
+  const stored = String(
     (await readStoredValue("openAiApiKey")) ?? "",
   ).trim();
+
+  if (stored) return stored;
+
+  return (process.env.EXPO_PUBLIC_OPENAI_API_KEY ?? "").trim();
 }
 
 export async function persistInferApiKey(value: string) {
