@@ -102,6 +102,15 @@ function resolveStoredValue(
   return null;
 }
 
+function resolveStoredOrEnvValue(
+  values: Record<string, string | null | undefined>,
+  keyName: StorageKeyName,
+  envValue: string,
+): string {
+  const stored = String(resolveStoredValue(values, keyName) ?? "").trim();
+  return stored || envValue;
+}
+
 async function readStoredValue(keyName: StorageKeyName): Promise<string | null> {
   const primaryValue = await AsyncStorage.getItem(STORAGE_KEYS[keyName]);
 
@@ -169,18 +178,38 @@ export async function loadPersistedAppState(): Promise<PersistedAppState> {
         : rawAiProvider === "infer"
           ? "infer"
           : rawAiProvider === "openai"
-            ? "openai"
+          ? "openai"
             : defaultAiProvider,
-    geminiApiKey: String(resolveStoredValue(values, "geminiApiKey") ?? "").trim(),
+    geminiApiKey: resolveStoredOrEnvValue(
+      values,
+      "geminiApiKey",
+      (process.env.EXPO_PUBLIC_GEMINI_API_KEY ?? "").trim(),
+    ),
     geminiAuthMode: rawGeminiAuthMode === "google_oauth" ? "google_oauth" : "api_key",
     googleAccessToken: String(resolveStoredValue(values, "googleAccessToken") ?? "").trim(),
     googleRefreshToken: String(resolveStoredValue(values, "googleRefreshToken") ?? "").trim(),
     googleTokenExpiresAt: String(resolveStoredValue(values, "googleTokenExpiresAt") ?? "").trim(),
-    inferApiKey: String(resolveStoredValue(values, "inferApiKey") ?? "").trim(),
-    inferBaseUrl: String(resolveStoredValue(values, "inferBaseUrl") ?? "").trim().replace(/\/+$/g, ""),
-    inferModel: String(resolveStoredValue(values, "inferModel") ?? "").trim(),
+    inferApiKey: resolveStoredOrEnvValue(
+      values,
+      "inferApiKey",
+      (process.env.EXPO_PUBLIC_INFER_API_KEY ?? "").trim(),
+    ),
+    inferBaseUrl: resolveStoredOrEnvValue(
+      values,
+      "inferBaseUrl",
+      (process.env.EXPO_PUBLIC_INFER_BASE_URL ?? "").trim(),
+    ).replace(/\/+$/g, ""),
+    inferModel: resolveStoredOrEnvValue(
+      values,
+      "inferModel",
+      (process.env.EXPO_PUBLIC_INFER_MODEL ?? "").trim(),
+    ),
     localePreference: coerceLocalePreference(resolveStoredValue(values, "localePreference")),
-    openAiApiKey: String(resolveStoredValue(values, "openAiApiKey") ?? "").trim(),
+    openAiApiKey: resolveStoredOrEnvValue(
+      values,
+      "openAiApiKey",
+      (process.env.EXPO_PUBLIC_OPENAI_API_KEY ?? "").trim(),
+    ),
     parseApiBaseUrl: String(resolveStoredValue(values, "parseApiBaseUrl") ?? "")
       .trim()
       .replace(/\/+$/g, ""),
