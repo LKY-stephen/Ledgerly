@@ -76,13 +76,13 @@ app/
 
 | Module | Purpose |
 |---|---|
-| `app-shell/` | Global state: theme, locale, auth session, AI config, storage gate |
+| `app-shell/` | Global state: theme, locale, auth session, profile info, storage gate, and middleware hydration |
 | `home/` | Dashboard: balance overview, trend chart, recent activity, AI chat panel |
 | `ledger/` | Core ledger: receipt upload, AI parsing, planner workflow, GL reporting |
 | `agent/` | AI chat: AgentProvider, AgentChat UI, useAgent hook |
-| `profile/` | Settings: AI provider, API keys, theme, locale, database import/export |
+| `profile/` | Settings: theme, locale, profile info, database import/export, and internal compatibility controls |
 | `discover/` | News feed with financial content |
-| `auth/` | Apple Sign-In, Google OAuth |
+| `auth/` | Apple Sign-In and session flows |
 | `navigation/` | Tab bar config, desktop sidebar |
 | `storage-setup/` | Database onboarding flow |
 | `database-demo/` | Demo data seeding |
@@ -96,7 +96,7 @@ app/
 
 Files use `.native.ts` / `.web.ts` suffixes for platform-specific implementations:
 - Database access: expo-sqlite (native) vs sql.js + IndexedDB (web)
-- Auth flows: native Apple/Google SDK vs web OAuth redirects
+- Auth flows: native auth integrations vs web redirect/session handling
 - File access: expo-file-system (native) vs Blob/File API (web)
 
 ### Storage Layer
@@ -105,7 +105,7 @@ Files use `.native.ts` / `.web.ts` suffixes for platform-specific implementation
 |---|---|---|
 | SQLite | Structured data (entities, records, counterparties, evidence, tax) | `WritableStorageDatabase` |
 | File Vault | Receipt images, documents | Platform-specific file APIs |
-| AsyncStorage | User preferences, auth session, AI config | Key-value strings |
+| AsyncStorage | User preferences, auth session, profile info, and internal compatibility state | Key-value strings |
 
 Database initialization flow: `inspectStorageGateState()` → schema bootstrap → pragma setup (WAL, FK) → ready.
 
@@ -147,39 +147,86 @@ Home screen loads
 
 `AgentSession` manages conversations with tool calling:
 - **10 Tools**: `list_records`, `get_record`, `create_record`, `update_record`, `delete_record`, `get_monthly_metrics`, `get_daily_trend`, `list_counterparties`, `create_counterparty`, `get_context_snapshot`
-- **Providers**: OpenAI, Gemini, Infer (all via OpenAI-compatible Chat Completions API)
+- **Providers**: OpenAI, Infer, Gemini
 - **Session**: Message history, context refresh, subscriber pattern, abort support
 - **Bilingual**: System prompt in English or zh-CN based on locale
 
 ### Chat UI (`apps/mobile/src/features/agent/`)
 
 - `AgentChat`: Message bubbles, tool call indicators, input with send button
-- `AgentProvider`: Wires SDK + AI config into React context
+- `AgentProvider`: Wires SDK + assistant middleware resolution into React context
 - `useAgent`: Manages AgentSession lifecycle, message state, error handling
 - `useWritableDatabase.{native,web}`: Platform-specific database access
 
 ---
 
-## AI Provider Configuration
+## AI Provider Middleware
 
-All AI features (receipt parsing + agent chat) share the same configuration:
+Ledgerly currently documents AI configuration as one env-backed `ai_provider` middleware concept with multiple consumers.
 
-| Setting | Storage | Env Fallback |
+Supported/current configuration comes from environment variables:
+
+| Provider | Required Env | Optional Env |
 |---|---|---|
-| Provider selection | `@ledgerly/device_state/ai_provider` | — |
-| OpenAI API Key | `@ledgerly/device_state/openai_api_key` | `EXPO_PUBLIC_OPENAI_API_KEY` |
-| OpenAI Base URL | — | `EXPO_PUBLIC_OPENAI_BASE_URL` |
-| OpenAI Model | — | `EXPO_PUBLIC_OPENAI_MODEL` |
-| Gemini API Key | `@ledgerly/device_state/gemini_api_key` | `EXPO_PUBLIC_GEMINI_API_KEY` |
-| Gemini Base URL | — | `EXPO_PUBLIC_GEMINI_BASE_URL` |
-| Gemini Model | — | `EXPO_PUBLIC_GEMINI_MODEL` |
-| Infer API Key | `@ledgerly/device_state/infer_api_key` | `EXPO_PUBLIC_INFER_API_KEY` |
-| Infer Base URL | `@ledgerly/device_state/infer_base_url` | `EXPO_PUBLIC_INFER_BASE_URL` |
-| Infer Model | `@ledgerly/device_state/infer_model` | `EXPO_PUBLIC_INFER_MODEL` |
+| OpenAI | `EXPO_PUBLIC_OPENAI_API_KEY` | `EXPO_PUBLIC_OPENAI_BASE_URL`, `EXPO_PUBLIC_OPENAI_MODEL` |
+| Infer | `EXPO_PUBLIC_INFER_API_KEY` | `EXPO_PUBLIC_INFER_BASE_URL`, `EXPO_PUBLIC_INFER_MODEL` |
+| Gemini | `EXPO_PUBLIC_GEMINI_API_KEY` | `EXPO_PUBLIC_GEMINI_BASE_URL`, `EXPO_PUBLIC_GEMINI_MODEL` |
 
-Default models: OpenAI `gpt-4o`, Gemini `gemini-2.5-flash`, Infer `gpt-4o`.
+Default endpoints/models:
 
-Receipt parsing uses the OpenAI Responses API (`/responses`); agent chat uses Chat Completions API (`/chat/completions`).
+- OpenAI base URL defaults to `https://api.openai.com/v1`
+- OpenAI model defaults to `gpt-4o`
+- Infer base URL defaults to `https://api.infer.ai/v1`
+- Infer model defaults to `gpt-4o`
+- Gemini base URL defaults to `https://generativelanguage.googleapis.com/v1beta`
+- Gemini model defaults to `gemini-2.5-flash`
+
+Current/public architecture docs intentionally describe the env-backed path only. Older settings-driven or persisted device-state fields still exist in the codebase as implementation detail and compatibility residue, but they are not the supported/current AI-provider contract described here.
+
+### Consumer Priority Summary
+
+| Consumer | 1st Priority | 2nd Priority | 3rd Priority |
+|---|---|---|---|
+| Assistant chat | OpenAI when `EXPO_PUBLIC_OPENAI_API_KEY` is present | Infer when an Infer API key is available | Gemini when `EXPO_PUBLIC_GEMINI_API_KEY` is present |
+| Parse + planner | OpenAI when `EXPO_PUBLIC_OPENAI_API_KEY` is present | Infer only when both `EXPO_PUBLIC_INFER_API_KEY` and `EXPO_PUBLIC_INFER_BASE_URL` are present | Gemini when `EXPO_PUBLIC_GEMINI_API_KEY` is present |
+
+The key difference is that the assistant can resolve Infer from the Infer key path, while parse/planner only treats Infer as complete when both the key and base URL are present.
+
+### Assistant Consumer
+
+The home assistant consumes the middleware through `@ledgerly/agent` and uses chat-completions style requests:
+
+- OpenAI: `/chat/completions`
+- Infer: `/chat/completions`
+- Gemini: `/openai/chat/completions`
+
+Assistant activation is API-key-driven in the current/public contract:
+
+- OpenAI assistant path activates when `EXPO_PUBLIC_OPENAI_API_KEY` is present
+- Infer assistant path activates when the assistant resolves to the Infer key path; `EXPO_PUBLIC_INFER_BASE_URL` and `EXPO_PUBLIC_INFER_MODEL` are optional overrides rather than activation requirements in the published contract
+- Gemini assistant path activates from `EXPO_PUBLIC_GEMINI_API_KEY`
+
+Practical assistant implications:
+
+- assistant and parse/planner do not have to use the same provider/model path at runtime
+- assistant Infer usage is decided by the assistant's middleware resolution path, not by a persisted settings toggle
+- assistant docs currently expose API-key configuration only
+
+### Parse And Planner Consumer
+
+Receipt parsing and planner prompting consume the same env-backed middleware, but they apply parse-specific completeness and request rules:
+
+- OpenAI and Infer use Responses-style calls
+- Gemini uses native `generateContent`
+- Infer parse/planner path requires both an Infer API key and an Infer base URL to be considered complete
+- Parse/planner model selection can apply provider-specific fallback behavior that differs from assistant chat
+
+Practical parse/planner implications:
+
+- OpenAI remains the default direct path when OpenAI env configuration is present
+- Infer is used only when the parse/planner middleware path resolves to a complete Infer configuration
+- Gemini remains an env-key-based parse option in the current/public docs
+- hidden/future auth-based paths are intentionally omitted from the current/public architecture story
 
 ---
 

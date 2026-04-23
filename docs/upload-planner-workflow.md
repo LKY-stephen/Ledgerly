@@ -51,12 +51,26 @@ This document defines the current local-first upload workflow for receipts, PDFs
 - A rejected proposal does not roll back already executed approvals; only downstream blocked proposals are recomputed.
 - when only some candidates from one upload are resolved, the batch remains `partially_approved` until the remaining candidate-scoped proposals are resolved.
 
-## OpenAI Responsibilities
+## Supported AI Middleware Path
+
+Parse/planner is a separate consumer of the env-backed `ai_provider` middleware. The current/public contract documents environment-based configuration only and does not use persisted `ai_provider` or hidden/future auth-based setup as the supported story.
+
+| Provider | Parse/Planner Completeness Rule | Transport | Priority |
+|---|---|---|---|
+| OpenAI | `EXPO_PUBLIC_OPENAI_API_KEY` present | `/responses` | 1st |
+| Infer | both `EXPO_PUBLIC_INFER_API_KEY` and `EXPO_PUBLIC_INFER_BASE_URL` present | `/responses` | 2nd |
+| Gemini | `EXPO_PUBLIC_GEMINI_API_KEY` present | `:generateContent` | 3rd |
+
+This precedence differs from the assistant contract because parse/planner requires a complete Infer base URL before Infer is treated as active.
+
+## Remote Provider Responsibilities
 
 - Parser call: returns only the strict parser DTO for the current file and never claims final bookkeeping truth.
 - If the file contains multiple distinct receipts or transactions, the parser returns them in ordered `records[]` entries instead of collapsing them into one blended field set.
 - Planner call: returns only the strict planner DTO for reads, resolutions, candidate skeletons, and proposal intent.
 - Local code remains the final authority for DTO validation, duplicate checks, duplicate overlap grouping, counterparty lookup, dependency ordering, candidate state derivation, and record persistence.
+
+Current/public architecture docs describe this remote path as an env-backed AI-provider middleware consumer. Assistant chat and parse/planner may resolve providers/models differently, but parse/planner still remains provider-aware rather than OpenAI-only in the published contract.
 
 ## Merge Rules
 
