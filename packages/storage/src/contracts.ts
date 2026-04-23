@@ -550,37 +550,37 @@ export const deviceStateContract = {
     {
       key: "openai_api_key",
       summary:
-        "Persist the user-provided OpenAI API key locally on-device for direct OpenAI parse requests.",
+        "Persist the locally stored OpenAI API key for compatibility and internal AI-provider settings state.",
       valueShape: "string",
     },
     {
       key: "ai_provider",
       summary:
-        "Persist the user's selected AI provider for document parsing and planning.",
+        "Persist the locally stored AI provider preference for compatibility and internal AI-provider settings state; it is not the supported runtime selector in the published middleware contract.",
       valueShape: '"openai" | "gemini" | "infer"',
     },
     {
       key: "gemini_api_key",
       summary:
-        "Persist the user-provided Gemini API key locally on-device for direct Gemini parse requests.",
+        "Persist the locally stored Gemini API key for compatibility and internal AI-provider settings state.",
       valueShape: "string",
     },
     {
       key: "infer_api_key",
       summary:
-        "Persist the user-provided Infer API key locally on-device for OpenAI-compatible parse requests via Infer.",
+        "Persist the locally stored Infer API key for compatibility and internal AI-provider settings state.",
       valueShape: "string",
     },
     {
       key: "infer_base_url",
       summary:
-        "Persist the user-provided Infer base URL locally on-device for OpenAI-compatible parse requests via Infer.",
+        "Persist the locally stored Infer base URL for compatibility and internal AI-provider settings state.",
       valueShape: "string",
     },
     {
       key: "infer_model",
       summary:
-        "Persist the user-selected model name for Infer API parse requests.",
+        "Persist the locally stored Infer model override for compatibility and internal AI-provider settings state.",
       valueShape: "string",
     },
     {
@@ -600,22 +600,23 @@ export const deviceStateContract = {
     },
     {
       key: "gemini_auth_mode",
-      summary: "Persist whether Gemini uses a manual API key or the Google OAuth token.",
+      summary:
+        "Persist hidden/internal Gemini auth mode state for compatibility work; it is not part of the current supported public AI-provider contract.",
       valueShape: '"api_key" | "google_oauth"',
     },
     {
       key: "google_access_token",
-      summary: "Persist the Google OAuth access token for direct Gemini API calls.",
+      summary: "Persist hidden/future provider auth token state for compatibility work.",
       valueShape: "string",
     },
     {
       key: "google_refresh_token",
-      summary: "Persist the Google OAuth refresh token for silent token renewal.",
+      summary: "Persist hidden/future provider refresh token state for compatibility work.",
       valueShape: "string",
     },
     {
       key: "google_token_expires_at",
-      summary: "Persist the ISO timestamp when the current Google access token expires.",
+      summary: "Persist hidden/future provider token expiry state for compatibility work.",
       valueShape: "string (ISO 8601)",
     },
   ],

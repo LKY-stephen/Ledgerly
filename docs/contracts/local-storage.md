@@ -170,21 +170,33 @@ Compatibility notes:
 
 The device-state contract is now at version `7`. In addition to theme, locale, and session, the app persists:
 
-- `openai_api_key`: the user-provided OpenAI API key used only for outbound parse requests
-- `ai_provider`: the user's selected AI provider for document parsing and planning (`"openai"`, `"gemini"`, or `"infer"`, default `"openai"`)
-- `gemini_api_key`: the user-provided Gemini API key for direct Gemini parse requests
-- `infer_api_key`: the user-provided Infer API key for OpenAI-compatible parse requests via Infer
-- `infer_base_url`: the user-provided Infer base URL for OpenAI-compatible parse requests via Infer
-- `infer_model`: the user-selected model name for Infer API parse requests (e.g. `deepseek-chat`)
-- `gemini_auth_mode`: whether Gemini uses a manual API key or Google OAuth token (`"api_key"` or `"google_oauth"`, default `"api_key"`)
-- `google_access_token`: the Google OAuth access token for direct Gemini API calls when using `google_oauth` auth mode
-- `google_refresh_token`: the Google OAuth refresh token for silent token renewal
-- `google_token_expires_at`: the ISO 8601 timestamp when the current Google access token expires
 - `profile_name`: profile name used as mapping source context
 - `profile_email`: profile email used as mapping source context
 - `profile_phone`: profile phone used as mapping source context
 
-The OpenAI base URL and model now come from the runtime env (`EXPO_PUBLIC_OPENAI_BASE_URL`, `EXPO_PUBLIC_OPENAI_MODEL`) rather than local device state. Gemini base URL and model come from `EXPO_PUBLIC_GEMINI_BASE_URL` and `EXPO_PUBLIC_GEMINI_MODEL` respectively. Infer model can be overridden via `EXPO_PUBLIC_INFER_MODEL`.
+### Supported Current AI Configuration
+
+The supported/current AI-provider contract is env-backed:
+
+- OpenAI: `EXPO_PUBLIC_OPENAI_API_KEY`, optional `EXPO_PUBLIC_OPENAI_BASE_URL`, optional `EXPO_PUBLIC_OPENAI_MODEL`
+- Infer: `EXPO_PUBLIC_INFER_API_KEY`, optional `EXPO_PUBLIC_INFER_BASE_URL`, optional `EXPO_PUBLIC_INFER_MODEL`
+- Gemini: `EXPO_PUBLIC_GEMINI_API_KEY`, optional `EXPO_PUBLIC_GEMINI_BASE_URL`, optional `EXPO_PUBLIC_GEMINI_MODEL`
+
+Current/public architecture docs describe `ai_provider` as middleware that reads env configuration and then serves different consumers such as assistant chat and parse/planner. Those consumers can apply different provider/model priority rules.
+
+### Internal AI-Related Device State
+
+The current codebase still persists several AI-related device-state fields for local settings, compatibility, and future work:
+
+- `openai_api_key`: device-local compatibility copy of the OpenAI credential path
+- `ai_provider`: compatibility label for settings UI and fallback display text, not the supported runtime selector
+- `gemini_api_key`: device-local compatibility copy of the Gemini credential path
+- `infer_api_key`: device-local compatibility copy of the Infer credential path
+- `infer_base_url`: persisted Infer override that current implementations may still read, even though public/current docs describe env-backed configuration
+- `infer_model`: persisted Infer model override for compatibility paths
+- `gemini_auth_mode` and internal future auth token fields: hidden/internal state that stays outside the current supported public architecture story
+
+These persisted fields should not be treated as the supported/current public runtime contract for AI-provider activation. Public/current docs mention environment-based configuration only, and future/hidden auth-oriented state is intentionally not part of the current published setup path.
 
 Compatibility migration notes:
 
