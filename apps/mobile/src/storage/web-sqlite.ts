@@ -23,7 +23,7 @@ export interface WebSqliteDatabase {
   runAsync(source: string, ...params: StorageSqlValue[]): Promise<void>;
   execAsync(source: string): Promise<void>;
   exportDatabase(): Uint8Array;
-  close(): void;
+  close(options?: { persist?: boolean }): void;
 }
 
 let activeDatabase: WebSqliteDatabase | null = null;
@@ -36,18 +36,20 @@ export function getActiveWebDatabase(): WebSqliteDatabase | null {
   return activeDatabase;
 }
 
-export async function openWebSqliteDatabase(): Promise<WebSqliteDatabase> {
-  if (activeDatabase) {
-    return activeDatabase;
-  }
-
+async function createWebSqliteDatabase(input: {
+  persistChanges: boolean;
+  seedData?: Uint8Array | null;
+}): Promise<WebSqliteDatabase> {
   const SQL = await getSqlJs();
-  const savedData = await loadDatabaseFromIndexedDB();
-  const raw: SqlJsDatabase = savedData ? new SQL.Database(savedData) : new SQL.Database();
+  const raw: SqlJsDatabase = input.seedData ? new SQL.Database(input.seedData) : new SQL.Database();
 
   let saveTimer: ReturnType<typeof setTimeout> | null = null;
 
   function schedulePersist() {
+    if (!input.persistChanges) {
+      return;
+    }
+
     if (saveTimer !== null) {
       clearTimeout(saveTimer);
     }
@@ -128,17 +130,49 @@ export async function openWebSqliteDatabase(): Promise<WebSqliteDatabase> {
       return raw.export();
     },
 
-    close() {
+    close(options) {
+      const persist = options?.persist ?? input.persistChanges;
+
       if (saveTimer !== null) {
         clearTimeout(saveTimer);
+        saveTimer = null;
+      }
+
+      if (persist) {
         const data = raw.export();
         saveDatabaseToIndexedDB(data).catch(() => {});
       }
 
       raw.close();
-      activeDatabase = null;
+
+      if (activeDatabase === db) {
+        activeDatabase = null;
+      }
     },
   };
+
+  return db;
+}
+
+export async function createTransientWebSqliteDatabase(
+  seedData?: Uint8Array | null,
+): Promise<WebSqliteDatabase> {
+  return createWebSqliteDatabase({
+    persistChanges: false,
+    seedData,
+  });
+}
+
+export async function openWebSqliteDatabase(): Promise<WebSqliteDatabase> {
+  if (activeDatabase) {
+    return activeDatabase;
+  }
+
+  const savedData = await loadDatabaseFromIndexedDB();
+  const db = await createWebSqliteDatabase({
+    persistChanges: true,
+    seedData: savedData,
+  });
 
   activeDatabase = db;
   return db;
