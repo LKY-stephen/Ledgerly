@@ -126,7 +126,7 @@ Database initialization flow: `inspectStorageGateState()` → schema bootstrap �
 Home screen loads
   → LocalStorageProvider initializes SQLite
   → AgentProvider creates LedgerlySDK + AgentSession
-  → AgentSession registers 10 CRUD tools
+  → AgentSession registers Ledgerly CRUD, workflow inspection, and tax drill-down tools
   → System prompt includes current ledger context snapshot
   → User sends message via chat panel
   → AgentSession calls AI model (OpenAI-compatible API)
@@ -140,13 +140,16 @@ Home screen loads
 - **Records**: list, get, create, update, delete (with filter, pagination, search)
 - **Entities**: list, get, ensure default
 - **Counterparties**: list, get, create
-- **Metrics**: monthly income/expense/net, daily trend
+- **Storage**: storage overview, bootstrap metadata, package helper paths
+- **Workflow/Evidence**: evidence, upload batches, extraction/planner runs, candidate records, write proposals, audit events
+- **Metrics**: monthly income/expense/net, daily trend, date-range search
+- **Tax Drill-down**: Schedule C candidates/aggregation, Schedule SE preview, tax-helper evidence links
 - **Context**: snapshot for AI system prompt (entity, totals, recent records)
 
 ### Agent Layer (`@ledgerly/agent`)
 
 `AgentSession` manages conversations with tool calling:
-- **10 Tools**: `list_records`, `get_record`, `create_record`, `update_record`, `delete_record`, `get_monthly_metrics`, `get_daily_trend`, `list_counterparties`, `create_counterparty`, `get_context_snapshot`
+- **Tool groups**: record CRUD, reporting, tax summary, storage overview, evidence/workflow inspection, and lower-level tax drill-down
 - **Providers**: OpenAI, Infer, Gemini
 - **Session**: Message history, context refresh, subscriber pattern, abort support
 - **Bilingual**: System prompt in English or zh-CN based on locale
