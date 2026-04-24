@@ -20,6 +20,19 @@ const defaultRecordParties = {
   },
 } as const;
 
+function parseCommaSeparated(value: unknown): string[] | undefined {
+  if (typeof value !== "string") {
+    return undefined;
+  }
+
+  const normalizedValues = value
+    .split(",")
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0);
+
+  return normalizedValues.length > 0 ? normalizedValues : undefined;
+}
+
 export const ledgerTools: ToolDefinition[] = [
   {
     name: "list_records",
@@ -323,6 +336,305 @@ export const ledgerTools: ToolDefinition[] = [
       required: ["taxYear"],
     },
   },
+  {
+    name: "get_storage_overview",
+    description:
+      "Get the local storage overview for the active Ledgerly package. Use this to understand the local schema and file-vault footprint available to the assistant.",
+    parameters: {
+      type: "object",
+      properties: {},
+    },
+  },
+  {
+    name: "search_records_by_date_range",
+    description:
+      "Search records by date range using the SDK's storage-backed date-range query wrapper.",
+    parameters: {
+      type: "object",
+      properties: {
+        startDate: {
+          type: "string",
+          description: "Inclusive start date (YYYY-MM-DD)",
+        },
+        endDate: {
+          type: "string",
+          description: "Inclusive end date (YYYY-MM-DD)",
+        },
+        endExclusiveDate: {
+          type: "string",
+          description: "Exclusive end date (YYYY-MM-DD). Use instead of endDate when needed.",
+        },
+        recordKinds: {
+          type: "string",
+          description: "Comma-separated record kinds to include",
+        },
+        recordStatuses: {
+          type: "string",
+          description: "Comma-separated record statuses to include",
+        },
+        limit: {
+          type: "string",
+          description: "Max number of records to return",
+        },
+      },
+    },
+  },
+  {
+    name: "list_evidences",
+    description:
+      "List evidence items tracked in the local workflow. Use this to inspect uploaded or parsed documents.",
+    parameters: {
+      type: "object",
+      properties: {
+        parseStatus: {
+          type: "string",
+          description: "Filter by parse status",
+          enum: ["pending", "parsed", "failed"],
+        },
+        limit: {
+          type: "string",
+          description: "Max number of evidence rows to return",
+        },
+      },
+    },
+  },
+  {
+    name: "get_evidence",
+    description: "Get a single evidence item by ID.",
+    parameters: {
+      type: "object",
+      properties: {
+        evidenceId: {
+          type: "string",
+          description: "The evidence ID to look up",
+        },
+      },
+      required: ["evidenceId"],
+    },
+  },
+  {
+    name: "list_evidence_files",
+    description: "List stored files for a given evidence item.",
+    parameters: {
+      type: "object",
+      properties: {
+        evidenceId: {
+          type: "string",
+          description: "Evidence ID whose files should be returned",
+        },
+      },
+      required: ["evidenceId"],
+    },
+  },
+  {
+    name: "list_upload_batches",
+    description:
+      "List upload workflow batches. Use this to inspect the current state of uploaded evidence and downstream workflow progress.",
+    parameters: {
+      type: "object",
+      properties: {
+        state: {
+          type: "string",
+          description: "Optional batch state filter",
+        },
+        limit: {
+          type: "string",
+          description: "Max number of batches to return",
+        },
+      },
+    },
+  },
+  {
+    name: "get_upload_batch",
+    description: "Get a single upload batch by its batch ID.",
+    parameters: {
+      type: "object",
+      properties: {
+        batchId: {
+          type: "string",
+          description: "The upload batch ID to look up",
+        },
+      },
+      required: ["batchId"],
+    },
+  },
+  {
+    name: "list_extraction_runs",
+    description: "List extraction runs for a batch or evidence item.",
+    parameters: {
+      type: "object",
+      properties: {
+        batchId: {
+          type: "string",
+          description: "Filter by batch ID",
+        },
+        evidenceId: {
+          type: "string",
+          description: "Filter by evidence ID",
+        },
+      },
+    },
+  },
+  {
+    name: "list_planner_runs",
+    description: "List planner runs for a batch or evidence item.",
+    parameters: {
+      type: "object",
+      properties: {
+        batchId: {
+          type: "string",
+          description: "Filter by batch ID",
+        },
+        evidenceId: {
+          type: "string",
+          description: "Filter by evidence ID",
+        },
+      },
+    },
+  },
+  {
+    name: "list_planner_read_tasks",
+    description: "List planner read tasks for a planner run.",
+    parameters: {
+      type: "object",
+      properties: {
+        plannerRunId: {
+          type: "string",
+          description: "Planner run ID",
+        },
+      },
+      required: ["plannerRunId"],
+    },
+  },
+  {
+    name: "list_candidate_records",
+    description: "List workflow candidate records generated during planner review.",
+    parameters: {
+      type: "object",
+      properties: {
+        batchId: {
+          type: "string",
+          description: "Filter by batch ID",
+        },
+        evidenceId: {
+          type: "string",
+          description: "Filter by evidence ID",
+        },
+        plannerRunId: {
+          type: "string",
+          description: "Filter by planner run ID",
+        },
+        states: {
+          type: "string",
+          description: "Comma-separated candidate record states",
+        },
+      },
+    },
+  },
+  {
+    name: "list_workflow_write_proposals",
+    description:
+      "List workflow write proposals generated during review. Useful for inspecting pending approval items and downstream workflow dependencies.",
+    parameters: {
+      type: "object",
+      properties: {
+        plannerRunId: {
+          type: "string",
+          description: "Filter by planner run ID",
+        },
+        candidateId: {
+          type: "string",
+          description: "Filter by candidate ID",
+        },
+        proposalType: {
+          type: "string",
+          description: "Filter by workflow proposal type",
+        },
+        states: {
+          type: "string",
+          description: "Comma-separated workflow proposal states",
+        },
+      },
+    },
+  },
+  {
+    name: "list_workflow_audit_events",
+    description: "List workflow audit events for a batch, candidate, planner run, or write proposal.",
+    parameters: {
+      type: "object",
+      properties: {
+        batchId: {
+          type: "string",
+          description: "Filter by batch ID",
+        },
+        plannerRunId: {
+          type: "string",
+          description: "Filter by planner run ID",
+        },
+        candidateId: {
+          type: "string",
+          description: "Filter by candidate ID",
+        },
+        writeProposalId: {
+          type: "string",
+          description: "Filter by write proposal ID",
+        },
+        limit: {
+          type: "string",
+          description: "Max number of audit events to return",
+        },
+      },
+    },
+  },
+  {
+    name: "get_schedule_c_aggregation",
+    description:
+      "Get the lower-level Schedule C aggregation for a tax year. Use this when the user needs line-level tax detail beyond the summary helper.",
+    parameters: {
+      type: "object",
+      properties: {
+        taxYear: {
+          type: "string",
+          description: "Tax year (e.g. 2026)",
+        },
+      },
+      required: ["taxYear"],
+    },
+  },
+  {
+    name: "get_schedule_se_preview",
+    description:
+      "Get the lower-level Schedule SE preview for a tax year. Use this when the user needs the net-profit preview rather than the full tax summary.",
+    parameters: {
+      type: "object",
+      properties: {
+        taxYear: {
+          type: "string",
+          description: "Tax year (e.g. 2026)",
+        },
+      },
+      required: ["taxYear"],
+    },
+  },
+  {
+    name: "get_tax_helper_evidence_file_links",
+    description:
+      "Get the evidence-file links for specific record IDs in a tax year. Use this when the user needs the supporting files behind tax-related records.",
+    parameters: {
+      type: "object",
+      properties: {
+        taxYear: {
+          type: "string",
+          description: "Tax year (e.g. 2026)",
+        },
+        recordIds: {
+          type: "string",
+          description: "Comma-separated record IDs to look up",
+        },
+      },
+      required: ["taxYear", "recordIds"],
+    },
+  },
 ];
 
 export const toolExecutors: Record<string, ToolExecutor> = {
@@ -420,6 +732,152 @@ export const toolExecutors: Record<string, ToolExecutor> = {
 
   async get_tax_summary(sdk, args) {
     return sdk.getTaxSummary(parseInt(args.taxYear as string, 10));
+  },
+
+  async get_storage_overview(sdk) {
+    return sdk.getStorageOverview();
+  },
+
+  async search_records_by_date_range(sdk, args) {
+    return sdk.searchRecordsByDateRange({
+      endExclusiveOn: args.endExclusiveDate as string | undefined,
+      endOn: args.endDate as string | undefined,
+      limit: args.limit ? parseInt(args.limit as string, 10) : undefined,
+      recordKinds: parseCommaSeparated(args.recordKinds),
+      recordStatuses: parseCommaSeparated(args.recordStatuses),
+      startOn: args.startDate as string | undefined,
+    });
+  },
+
+  async list_evidences(sdk, args) {
+    return sdk.listEvidences({
+      limit: args.limit ? parseInt(args.limit as string, 10) : undefined,
+      parseStatus: args.parseStatus as "failed" | "parsed" | "pending" | undefined,
+    });
+  },
+
+  async get_evidence(sdk, args) {
+    const evidence = await sdk.getEvidence(args.evidenceId as string);
+    if (!evidence) return { error: "Evidence not found" };
+    return evidence;
+  },
+
+  async list_evidence_files(sdk, args) {
+    return sdk.listEvidenceFiles(args.evidenceId as string);
+  },
+
+  async list_upload_batches(sdk, args) {
+    return sdk.listUploadBatches({
+      limit: args.limit ? parseInt(args.limit as string, 10) : undefined,
+      states: args.state
+        ? ([args.state as string] as Array<
+            | "approved"
+            | "candidates_generated"
+            | "duplicate_file"
+            | "evidence_registered"
+            | "failed"
+            | "no_match"
+            | "parse_complete"
+            | "parse_pending"
+            | "parsing"
+            | "partially_approved"
+            | "planning"
+            | "rejected"
+            | "review_required"
+            | "uploaded"
+            | "write_proposal_ready"
+          >)
+        : undefined,
+    });
+  },
+
+  async get_upload_batch(sdk, args) {
+    const batch = await sdk.getUploadBatch(args.batchId as string);
+    if (!batch) return { error: "Upload batch not found" };
+    return batch;
+  },
+
+  async list_extraction_runs(sdk, args) {
+    return sdk.listExtractionRuns({
+      batchId: args.batchId as string | undefined,
+      evidenceId: args.evidenceId as string | undefined,
+    });
+  },
+
+  async list_planner_runs(sdk, args) {
+    return sdk.listPlannerRuns({
+      batchId: args.batchId as string | undefined,
+      evidenceId: args.evidenceId as string | undefined,
+    });
+  },
+
+  async list_planner_read_tasks(sdk, args) {
+    return sdk.listPlannerReadTasks(args.plannerRunId as string);
+  },
+
+  async list_candidate_records(sdk, args) {
+    return sdk.listCandidateRecords({
+      batchId: args.batchId as string | undefined,
+      evidenceId: args.evidenceId as string | undefined,
+      plannerRunId: args.plannerRunId as string | undefined,
+      states: parseCommaSeparated(args.states) as
+        | Array<
+            | "approved"
+            | "candidate"
+            | "duplicate"
+            | "failed"
+            | "needs_review"
+            | "persisted_draft"
+            | "persisted_final"
+            | "proposed_write_pending"
+            | "rejected"
+            | "validated"
+          >
+        | undefined,
+    });
+  },
+
+  async list_workflow_write_proposals(sdk, args) {
+    return sdk.listWorkflowWriteProposals({
+      candidateId: args.candidateId as string | undefined,
+      plannerRunId: args.plannerRunId as string | undefined,
+      proposalType: args.proposalType as
+        | "create_counterparty"
+        | "merge_counterparty"
+        | "persist_candidate_record"
+        | "resolve_duplicate_receipt"
+        | "update_candidate_record"
+        | "update_workflow_state"
+        | undefined,
+      states: parseCommaSeparated(args.states) as
+        | Array<"approved" | "blocked" | "executed" | "failed" | "pending_approval" | "rejected">
+        | undefined,
+    });
+  },
+
+  async list_workflow_audit_events(sdk, args) {
+    return sdk.listWorkflowAuditEvents({
+      batchId: args.batchId as string | undefined,
+      candidateId: args.candidateId as string | undefined,
+      limit: args.limit ? parseInt(args.limit as string, 10) : undefined,
+      plannerRunId: args.plannerRunId as string | undefined,
+      writeProposalId: args.writeProposalId as string | undefined,
+    });
+  },
+
+  async get_schedule_c_aggregation(sdk, args) {
+    return sdk.getScheduleCAggregation(parseInt(args.taxYear as string, 10));
+  },
+
+  async get_schedule_se_preview(sdk, args) {
+    return sdk.getScheduleSEPreview(parseInt(args.taxYear as string, 10));
+  },
+
+  async get_tax_helper_evidence_file_links(sdk, args) {
+    return sdk.getTaxHelperEvidenceFileLinks(
+      parseInt(args.taxYear as string, 10),
+      parseCommaSeparated(args.recordIds) ?? [],
+    );
   },
 };
 
