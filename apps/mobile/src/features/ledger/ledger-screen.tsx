@@ -1,4 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
+import {
+  LedgerGeneralLedgerDetailModal,
+  LedgerReportBody,
+  type LedgerReportCopy,
+} from "@ledgerly/ui";
 import { useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -16,15 +21,11 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { CfoAvatar } from "../../components/cfo-avatar";
 import { useAppShell } from "../app-shell/provider";
 import { getButtonColors, withAlpha } from "../app-shell/theme-utils";
-import { formatCurrencyFromCents } from "./ledger-domain";
 import type {
   GeneralLedgerEntry,
-  LedgerEquationSnapshot,
-  GeneralLedgerPostingLine,
-  LedgerMetricCard,
   LedgerPeriodOption,
   LedgerScopeId,
-  LedgerSectionRow,
+  LedgerScreenSnapshot,
   LedgerViewId,
 } from "./ledger-reporting";
 import { getLedgerRuntimeCopy } from "./ledger-localization";
@@ -36,12 +37,14 @@ import {
   type LedgerQuarterPickerOption,
   type LedgerQuarterSegmentId,
 } from "./ledger-screen-state";
+import { useBusinessLedgerReports } from "./use-business-ledger-reports";
 
 export function LedgerScreen() {
   const router = useRouter();
-  const { copy, palette } = useAppShell();
+  const { copy, palette, resolvedLocale } = useAppShell();
   const screenCopy = copy.ledgerScreen;
   const ledgerCopy = copy.ledger;
+  const runtimeCopy = getLedgerRuntimeCopy(resolvedLocale);
   const primaryButton = getButtonColors(palette, "primary");
   const [isSelectorOpen, setIsSelectorOpen] = useState(false);
   const [selectedEntry, setSelectedEntry] =
@@ -67,6 +70,61 @@ export function LedgerScreen() {
   } = useLedgerScreen();
 
   const selectedPeriod = snapshot.selectedPeriod;
+  const businessReports = useBusinessLedgerReports({
+    reloadToken: `${selectedPeriod.id}:${isRefreshing ? "refreshing" : "steady"}`,
+    selectedPeriod,
+    selectedScope,
+  });
+  const effectiveError =
+    error ??
+    (selectedScope === "business" && businessReports.status === "error"
+      ? businessReports.error
+      : null);
+  const isReportBodyLoading =
+    selectedScope === "business" && businessReports.status === "loading";
+  const activeSnapshot: LedgerScreenSnapshot =
+    selectedScope === "business" && businessReports.status === "ready"
+      ? businessReports.snapshot
+      : snapshot;
+  const reportCopy = useMemo<LedgerReportCopy>(
+    () => ({
+      cashAndBankLabel: runtimeCopy.journal.cashAndBank,
+      fields: {
+        amount: copy.ledger.parse.fieldAmount,
+        date: copy.ledger.parse.fieldDate,
+        description: copy.ledger.parse.fieldDescription,
+        source: copy.ledger.parse.fieldSource,
+        target: copy.ledger.parse.fieldTarget,
+      },
+      recordCard: {
+        emptyValue: screenCopy.recordCard.emptyValue,
+        equationResult: screenCopy.recordCard.equationResult,
+        equationTitle: screenCopy.recordCard.equationTitle,
+        memo: screenCopy.recordCard.memo,
+        nonOwnerRule: screenCopy.recordCard.nonOwnerRule,
+        ownerRule: screenCopy.recordCard.ownerRule,
+        recordId: screenCopy.recordCard.recordId,
+        side: screenCopy.recordCard.side,
+        title: screenCopy.recordCard.title,
+      },
+      sections: {
+        assets: screenCopy.sections.assets,
+        credit: screenCopy.sections.credit,
+        debit: screenCopy.sections.debit,
+        equity: screenCopy.sections.equity,
+        expenses: screenCopy.sections.expenses,
+        journalPersonal: screenCopy.sections.journalPersonal,
+        journalRecent: screenCopy.sections.journalRecent,
+        liabilities: screenCopy.sections.liabilities,
+        netIncome: screenCopy.sections.netIncome,
+        netIncomeSummary: screenCopy.sections.netIncomeSummary,
+        pnlOnlyBody: screenCopy.sections.pnlOnlyBody,
+        pnlOnlyTitle: screenCopy.sections.pnlOnlyTitle,
+        revenue: screenCopy.sections.revenue,
+      },
+    }),
+    [copy.ledger.parse, runtimeCopy.journal.cashAndBank, screenCopy],
+  );
   const hasSelectablePeriods = snapshot.yearOptions.length > 0;
   const ledgerViews: ReadonlyArray<{ id: LedgerViewId; label: string }> = [
     { id: "general-ledger", label: screenCopy.sections.viewJournal },
@@ -373,26 +431,26 @@ export function LedgerScreen() {
           </View>
         </View>
 
-        {!isLoaded ? (
+        {!isLoaded || isReportBodyLoading ? (
           <StatusCard
             body={screenCopy.sections.preparingBody}
             title={screenCopy.sections.preparingTitle}
           />
-        ) : error ? (
+        ) : effectiveError ? (
           <StatusCard
             actionLabel={
               isRefreshing
                 ? screenCopy.sections.retrying
                 : screenCopy.sections.retry
             }
-            body={error}
+            body={effectiveError}
             disabled={isRefreshing}
             onPress={() => {
               void refresh();
             }}
             title={screenCopy.sections.unavailableTitle}
           />
-        ) : snapshot.isEmpty ? (
+        ) : activeSnapshot.isEmpty ? (
           <StatusCard
             body={
               selectedScope === "personal"
@@ -406,108 +464,17 @@ export function LedgerScreen() {
             }
           />
         ) : (
-          <>
-            {selectedView === "general-ledger" ? (
-              <>
-                <MetricGrid cards={snapshot.generalLedger.metricCards} />
-                <View style={styles.sectionHeader}>
-                  <Text style={[styles.sectionTitle, { color: palette.ink }]}>
-                    {selectedScope === "personal"
-                      ? screenCopy.sections.journalPersonal
-                      : screenCopy.sections.journalRecent}
-                  </Text>
-                  <Text style={[styles.sectionMeta, { color: palette.inkMuted }]}>
-                    {snapshot.generalLedger.recordCountLabel}
-                  </Text>
-                </View>
-                <View style={styles.sectionStack}>
-                  {snapshot.generalLedger.entries.map((entry) => (
-                    <GeneralLedgerCard
-                      entry={entry}
-                      key={entry.id}
-                      onSelectEntry={setSelectedEntry}
-                    />
-                  ))}
-                </View>
-                <GeneralLedgerEquationCard
-                  equation={snapshot.generalLedger.equation}
-                />
-              </>
-            ) : null}
-
-            {selectedView === "balance-sheet" ? (
-              <>
-                <MetricGrid cards={snapshot.balanceSheet.metricCards} />
-                <SectionCard
-                  rows={snapshot.balanceSheet.assetRows}
-                  title={screenCopy.sections.assets}
-                />
-                <SectionCard
-                  rows={snapshot.balanceSheet.liabilityRows}
-                  title={screenCopy.sections.liabilities}
-                />
-                <SectionCard
-                  rows={snapshot.balanceSheet.equityRows}
-                  title={screenCopy.sections.equity}
-                />
-                <GeneralLedgerEquationCard
-                  equation={snapshot.balanceSheet.equation}
-                />
-              </>
-            ) : null}
-
-            {selectedView === "profit-loss" ? (
-              selectedScope === "personal" ? (
-                <>
-                  <MetricGrid cards={snapshot.profitAndLoss.metricCards} />
-                  <StatusCard
-                    body={screenCopy.sections.pnlOnlyBody}
-                    title={screenCopy.sections.pnlOnlyTitle}
-                  />
-                </>
-              ) : (
-                <>
-                  <MetricGrid cards={snapshot.profitAndLoss.metricCards} />
-                  <SectionCard
-                    rows={snapshot.profitAndLoss.revenueRows}
-                    title={screenCopy.sections.revenue}
-                  />
-                  <SectionCard
-                    rows={snapshot.profitAndLoss.expenseRows}
-                    title={screenCopy.sections.expenses}
-                  />
-                  <View
-                    style={[
-                      styles.equationCard,
-                      {
-                        backgroundColor: palette.paper,
-                        borderColor: palette.border,
-                      },
-                    ]}
-                  >
-                    <Text
-                      style={[styles.equationEyebrow, { color: palette.inkMuted }]}
-                    >
-                      {screenCopy.sections.netIncome}
-                    </Text>
-                    <Text
-                      adjustsFontSizeToFit
-                      minimumFontScale={0.7}
-                      numberOfLines={1}
-                      style={[styles.netIncomeValue, { color: palette.ink }]}
-                    >
-                      {snapshot.profitAndLoss.netIncomeLabel}
-                    </Text>
-                    <Text
-                      style={[styles.equationSummary, { color: palette.inkMuted }]}
-                    >
-                      {screenCopy.sections.netIncomeSummary}
-                    </Text>
-                  </View>
-                </>
-              )
-            ) : null}
-          </>
+          <LedgerReportBody
+            copy={reportCopy}
+            onSelectEntry={(entry) => {
+              setSelectedEntry(entry as GeneralLedgerEntry);
+            }}
+            palette={palette}
+            selectedScope={selectedScope}
+            selectedView={selectedView}
+            snapshot={activeSnapshot}
+            testID={`ledger-${selectedScope}-${selectedView}-report-body`}
+          />
         )}
 
         <LedgerTaxHelper
@@ -554,9 +521,11 @@ export function LedgerScreen() {
         screenCopy={screenCopy}
         yearOptions={snapshot.yearOptions}
       />
-      <GroupedEntryDetailModal
+      <LedgerGeneralLedgerDetailModal
+        copy={reportCopy}
         entry={selectedEntry}
         onClose={() => setSelectedEntry(null)}
+        palette={palette}
       />
     </SafeAreaView>
   );
@@ -1030,504 +999,6 @@ function getQuarterIdForSegment(
   }
 
   return null;
-}
-
-function MetricGrid({ cards }: { cards: readonly LedgerMetricCard[] }) {
-  const { palette } = useAppShell();
-
-  return (
-    <View style={styles.metricGrid}>
-      {cards.map((card) => (
-        <View
-          key={card.id}
-          style={[
-            styles.metricCard,
-            { backgroundColor: palette.paper, borderColor: palette.border },
-          ]}
-        >
-          <Text numberOfLines={2} style={[styles.metricLabel, { color: palette.inkMuted }]}>
-            {card.label}
-          </Text>
-          <Text
-            adjustsFontSizeToFit
-            minimumFontScale={0.62}
-            numberOfLines={1}
-            style={[styles.metricValue, { color: palette.ink }]}
-          >
-            {card.value}
-          </Text>
-          <View
-            style={[
-              styles.metricAccentBar,
-              {
-                backgroundColor:
-                  card.accent === "danger"
-                    ? palette.destructive
-                    : card.accent === "neutral"
-                      ? palette.ink
-                      : palette.success,
-              },
-            ]}
-          />
-        </View>
-      ))}
-    </View>
-  );
-}
-
-function GeneralLedgerCard({
-  entry,
-  onSelectEntry,
-}: {
-  entry: GeneralLedgerEntry;
-  onSelectEntry: (entry: GeneralLedgerEntry) => void;
-}) {
-  const { palette } = useAppShell();
-
-  return (
-    <View
-      style={[
-        styles.transactionCard,
-        {
-          backgroundColor: palette.paper,
-          borderColor: palette.border,
-          borderLeftColor:
-            entry.kind === "income"
-              ? withAlpha(palette.success, palette.name === "dark" ? 0.45 : 0.24)
-              : entry.kind === "personal"
-                ? withAlpha(palette.accent, palette.name === "dark" ? 0.42 : 0.22)
-                : withAlpha(
-                    palette.destructive,
-                    palette.name === "dark" ? 0.45 : 0.18,
-                  ),
-        },
-      ]}
-    >
-      <View style={[styles.transactionHeader, { borderBottomColor: palette.divider }]}>
-        <View style={styles.transactionLeft}>
-          <View
-            style={[
-              styles.transactionIconWrap,
-              {
-                backgroundColor:
-                  entry.kind === "income"
-                    ? withAlpha(palette.success, palette.name === "dark" ? 0.22 : 0.16)
-                    : entry.kind === "personal"
-                      ? withAlpha(palette.accent, palette.name === "dark" ? 0.2 : 0.14)
-                      : withAlpha(palette.destructive, palette.name === "dark" ? 0.22 : 0.14),
-              },
-            ]}
-          >
-            <Ionicons
-              color={
-                entry.kind === "income"
-                  ? palette.success
-                  : entry.kind === "personal"
-                    ? palette.accent
-                    : palette.destructive
-              }
-              name={
-                entry.kind === "income"
-                  ? "arrow-down-outline"
-                  : "arrow-up-outline"
-              }
-              size={18}
-            />
-          </View>
-          <View style={styles.transactionCopy}>
-            <Text numberOfLines={2} style={[styles.transactionTitle, { color: palette.ink }]}>
-              {entry.title}
-            </Text>
-            <Text numberOfLines={2} style={[styles.transactionMeta, { color: palette.inkMuted }]}>
-              {entry.subtitle}
-            </Text>
-          </View>
-        </View>
-        <View style={styles.transactionRight}>
-          <Text
-            adjustsFontSizeToFit
-            minimumFontScale={0.72}
-            numberOfLines={1}
-            style={[
-              styles.transactionAmount,
-              {
-                color:
-                  entry.kind === "income"
-                    ? palette.success
-                    : entry.kind === "personal"
-                      ? palette.accent
-                      : palette.destructive,
-              },
-            ]}
-          >
-            {entry.amount}
-          </Text>
-          {entry.dateLabel ? (
-            <Text style={[styles.transactionSource, { color: palette.inkMuted }]}>{entry.dateLabel}</Text>
-          ) : null}
-        </View>
-      </View>
-
-      <View style={[styles.postingLineStack, { borderTopColor: palette.divider }]}>
-        {entry.lines.map((line, index) => (
-          <PostingLine
-            isFirst={index === 0}
-            key={line.id}
-            line={line}
-            onPress={() => onSelectEntry(entry)}
-          />
-        ))}
-      </View>
-    </View>
-  );
-}
-
-function PostingLine({
-  isFirst,
-  line,
-  onPress,
-}: {
-  isFirst: boolean;
-  line: GeneralLedgerPostingLine;
-  onPress: () => void;
-}) {
-  const { copy, palette, resolvedLocale } = useAppShell();
-  const isDebit = line.side === "debit";
-  const positive = isPositivePostingLine(line, resolvedLocale);
-  const postingAccent = positive ? palette.success : palette.destructive;
-
-  return (
-    <Pressable
-      accessibilityRole="button"
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.postingLineRow,
-        !isFirst ? [styles.listRowSplit, { borderTopColor: palette.divider }] : null,
-        pressed
-          ? [
-              styles.postingLineRowPressed,
-              { backgroundColor: withAlpha(palette.ink, palette.name === "dark" ? 0.08 : 0.03) },
-            ]
-          : null,
-      ]}
-      testID={`ledger-posting-line-${line.id}`}
-    >
-      <View style={styles.postingLineCopy}>
-        <Text numberOfLines={1} style={[styles.postingLineTitle, { color: palette.ink }]}>
-          {isDebit
-            ? copy.ledgerScreen.sections.debit
-            : copy.ledgerScreen.sections.credit}{" "}
-          · {line.accountName}
-        </Text>
-        <Text numberOfLines={2} style={[styles.postingLineDetail, { color: palette.inkMuted }]}>
-          {line.detail}
-        </Text>
-      </View>
-      <View style={styles.postingLineRight}>
-        <Text style={[styles.postingLineDate, { color: palette.inkMuted }]}>{line.record.dateLabel}</Text>
-        <Text
-          numberOfLines={1}
-          style={[
-            styles.postingLineAmount,
-            { color: postingAccent },
-          ]}
-        >
-          {formatSignedCurrencyLabel(line.amount, positive)}
-        </Text>
-      </View>
-    </Pressable>
-  );
-}
-
-function GroupedEntryDetailModal({
-  entry,
-  onClose,
-}: {
-  entry: GeneralLedgerEntry | null;
-  onClose: () => void;
-}) {
-  const { copy, palette, resolvedLocale } = useAppShell();
-  const recordCopy = copy.ledgerScreen.recordCard;
-  const runtimeCopy = getLedgerRuntimeCopy(resolvedLocale);
-
-  if (!entry) {
-    return null;
-  }
-
-  const isOwnerGroup = entry.title === runtimeCopy.journal.cashAndBank;
-  const debitTotalCents = entry.lines.reduce(
-    (total, line) =>
-      total + (line.side === "debit" ? parseCurrencyLabelToCents(line.amount) : 0),
-    0,
-  );
-  const creditTotalCents = entry.lines.reduce(
-    (total, line) =>
-      total + (line.side === "credit" ? parseCurrencyLabelToCents(line.amount) : 0),
-    0,
-  );
-  const displayAmountCents = isOwnerGroup
-    ? debitTotalCents - creditTotalCents
-    : creditTotalCents - debitTotalCents;
-
-  return (
-    <Modal
-      animationType="fade"
-      onRequestClose={onClose}
-      presentationStyle="overFullScreen"
-      transparent
-      visible
-    >
-      <View
-        style={[
-          styles.modalBackdrop,
-          {
-            backgroundColor: withAlpha(
-              palette.ink,
-              palette.name === "dark" ? 0.52 : 0.28,
-            ),
-          },
-        ]}
-      >
-        <Pressable onPress={onClose} style={StyleSheet.absoluteFillObject} />
-        <View
-          style={[styles.recordModalCard, { backgroundColor: palette.shellMuted }]}
-        >
-          <View style={styles.modalHeader}>
-            <View style={styles.modalHeaderCopy}>
-              <Text style={[styles.modalEyebrow, { color: palette.inkMuted }]}>{recordCopy.title}</Text>
-              <Text style={[styles.modalTitle, { color: palette.ink }]}>{entry.title}</Text>
-              <Text style={[styles.modalSummary, { color: palette.inkMuted }]}>
-                {entry.amount} · {entry.subtitle}
-              </Text>
-            </View>
-            <Pressable
-              accessibilityRole="button"
-              onPress={onClose}
-              style={({ pressed }) => [
-                styles.modalCloseButton,
-                {
-                  backgroundColor: pressed ? palette.paperMuted : palette.paper,
-                  borderColor: palette.border,
-                },
-              ]}
-            >
-              <Ionicons color={palette.ink} name="close" size={18} />
-            </Pressable>
-          </View>
-
-          <ScrollView
-            contentContainerStyle={styles.recordFieldStack}
-            showsVerticalScrollIndicator={false}
-          >
-            {entry.lines.map((line) => {
-              const fields = [
-                { label: copy.ledger.parse.fieldDate, value: line.record.dateLabel },
-                { label: recordCopy.recordId, value: line.record.recordId },
-                { label: copy.ledger.parse.fieldDescription, value: line.record.description },
-                { label: copy.ledger.parse.fieldAmount, value: line.record.amount },
-                {
-                  label: recordCopy.side,
-                  value:
-                    line.side === "debit"
-                      ? copy.ledgerScreen.sections.debit
-                      : copy.ledgerScreen.sections.credit,
-                },
-                { label: copy.ledger.parse.fieldSource, value: line.record.sourceLabel },
-                { label: copy.ledger.parse.fieldTarget, value: line.record.targetLabel },
-              ];
-
-              if (line.record.memo) {
-                fields.push({ label: recordCopy.memo, value: line.record.memo });
-              }
-
-              return (
-                <View
-                  key={line.id}
-                  style={[
-                    styles.groupedRecordCard,
-                    { backgroundColor: palette.paper, borderColor: palette.border },
-                  ]}
-                >
-                  <Text style={[styles.groupedRecordTitle, { color: palette.ink }]}>{line.detail}</Text>
-                  <View style={styles.groupedRecordMetaRow}>
-                    <View style={styles.groupedRecordMetaCopy}>
-                      <Text style={[styles.groupedRecordSummary, { color: palette.inkMuted }]}>
-                        {line.record.dateLabel} ·{" "}
-                        {line.side === "debit"
-                          ? copy.ledgerScreen.sections.debit
-                          : copy.ledgerScreen.sections.credit}{" "}
-                        · {line.accountName}
-                      </Text>
-                    </View>
-                    <Text
-                      style={[
-                        styles.groupedRecordAmount,
-                        {
-                          color: isPositiveSignal(line, isOwnerGroup)
-                            ? palette.success
-                            : palette.destructive,
-                        },
-                      ]}
-                    >
-                      {formatSignedCurrencyLabel(
-                        line.amount,
-                        isPositiveSignal(line, isOwnerGroup),
-                      )}
-                    </Text>
-                  </View>
-                  {fields.map((field) => (
-                    <View key={`${line.id}-${field.label}`} style={styles.recordFieldRow}>
-                      <Text style={[styles.recordFieldLabel, { color: palette.inkMuted }]}>{field.label}</Text>
-                      <Text style={[styles.recordFieldValue, { color: palette.ink }]}>
-                        {field.value || recordCopy.emptyValue}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
-              );
-            })}
-
-            <View style={[styles.equationDetailCard, { backgroundColor: palette.paper, borderColor: palette.border }]}>
-              <Text style={[styles.equationDetailTitle, { color: palette.ink }]}>
-                {recordCopy.equationTitle}
-              </Text>
-              <Text style={[styles.equationDetailBody, { color: palette.inkMuted }]}>
-                {isOwnerGroup ? recordCopy.ownerRule : recordCopy.nonOwnerRule}
-              </Text>
-              <Text style={[styles.equationDetailFormula, { color: palette.ink }]}>
-                {isOwnerGroup
-                  ? `${copy.ledgerScreen.sections.debit} ${formatCurrencyFromCents(debitTotalCents)} - ${copy.ledgerScreen.sections.credit} ${formatCurrencyFromCents(creditTotalCents)} = ${recordCopy.equationResult} ${formatCurrencyFromCents(displayAmountCents)}`
-                  : `${copy.ledgerScreen.sections.credit} ${formatCurrencyFromCents(creditTotalCents)} - ${copy.ledgerScreen.sections.debit} ${formatCurrencyFromCents(debitTotalCents)} = ${recordCopy.equationResult} ${formatCurrencyFromCents(displayAmountCents)}`}
-              </Text>
-            </View>
-          </ScrollView>
-        </View>
-      </View>
-    </Modal>
-  );
-}
-
-function GeneralLedgerEquationCard({
-  equation,
-}: {
-  equation: LedgerEquationSnapshot;
-}) {
-  const { palette } = useAppShell();
-
-  return (
-    <View style={[styles.equationDetailCard, { backgroundColor: palette.paper, borderColor: palette.border }]}>
-      <Text style={[styles.equationDetailTitle, { color: palette.ink }]}>{equation.label}</Text>
-      <Text style={[styles.equationDetailBody, { color: palette.inkMuted }]}>{equation.summary}</Text>
-      <View style={styles.equationBreakdownStack}>
-        {equation.rows.map((row, index) => (
-          <View
-            key={row.id}
-            style={[
-              styles.equationBreakdownRow,
-              index > 0 ? [styles.listRowSplit, { borderTopColor: palette.divider }] : null,
-            ]}
-          >
-            <Text style={[styles.equationBreakdownLabel, { color: palette.ink }]}>{row.label}</Text>
-            <Text
-              style={[
-                styles.equationBreakdownAmount,
-                row.accent === "danger"
-                  ? styles.equationBreakdownAmountDanger
-                  : row.accent === "success"
-                    ? styles.equationBreakdownAmountSuccess
-                    : null,
-                {
-                  color:
-                    row.accent === "danger"
-                      ? palette.destructive
-                      : row.accent === "success"
-                        ? palette.success
-                        : palette.ink,
-                },
-              ]}
-            >
-              {row.value}
-            </Text>
-          </View>
-        ))}
-      </View>
-    </View>
-  );
-}
-
-function isPositiveSignal(
-  line: GeneralLedgerPostingLine,
-  isOwnerGroup: boolean,
-): boolean {
-  return isOwnerGroup ? line.side === "debit" : line.side === "credit";
-}
-
-function isPositivePostingLine(
-  line: GeneralLedgerPostingLine,
-  locale: ReturnType<typeof useAppShell>["resolvedLocale"],
-): boolean {
-  return isPositiveSignal(
-    line,
-    line.accountName === getLedgerRuntimeCopy(locale).journal.cashAndBank,
-  );
-}
-
-function formatSignedCurrencyLabel(amount: string, positive: boolean): string {
-  return `${positive ? "+" : "-"}${amount}`;
-}
-
-function parseCurrencyLabelToCents(value: string): number {
-  const normalized = value.replace(/[^0-9.-]/g, "");
-  const parsed = Number.parseFloat(normalized);
-
-  if (!Number.isFinite(parsed)) {
-    return 0;
-  }
-
-  return Math.round(parsed * 100);
-}
-
-function SectionCard({
-  rows,
-  title,
-}: {
-  rows: readonly LedgerSectionRow[];
-  title: string;
-}) {
-  const { palette } = useAppShell();
-
-  return (
-    <View style={[styles.sheetCard, { backgroundColor: palette.paper, borderColor: palette.border }]}>
-      <View style={[styles.sheetHeader, { borderBottomColor: palette.divider }]}>
-        <Text style={[styles.sheetTitle, { color: palette.ink }]}>{title}</Text>
-      </View>
-      <View style={styles.sheetRowStack}>
-        {rows.map((row, index) => (
-          <View
-            key={row.id}
-            style={[styles.sheetRow, index > 0 ? [styles.listRowSplit, { borderTopColor: palette.divider }] : null]}
-          >
-            <View style={styles.sheetCopy}>
-              <Text numberOfLines={2} style={[styles.sheetLabel, { color: palette.ink }]}>
-                {row.label}
-              </Text>
-              <Text numberOfLines={3} style={[styles.sheetNote, { color: palette.inkMuted }]}>
-                {row.note}
-              </Text>
-            </View>
-            <Text
-              adjustsFontSizeToFit
-              minimumFontScale={0.72}
-              numberOfLines={1}
-              style={[styles.sheetAmount, { color: palette.ink }]}
-            >
-              {row.amount}
-            </Text>
-          </View>
-        ))}
-      </View>
-    </View>
-  );
 }
 
 function StatusCard({

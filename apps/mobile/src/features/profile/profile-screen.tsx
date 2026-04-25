@@ -569,7 +569,6 @@ export function ProfileScreen() {
         </View>
 
         <View style={isExpanded ? styles.wideRight : undefined}>
-        {/* Temporarily hidden. Keep the implementation intact for future re-enable. */}
         {shouldRenderAiParseSection() ? (
           <SectionCard
             eyebrow={copy.meScreen.apiSectionEyebrow}

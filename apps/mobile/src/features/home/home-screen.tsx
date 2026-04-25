@@ -2,6 +2,7 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import {
+  ActivityIndicator,
   Platform,
   Pressable,
   RefreshControl,
@@ -23,6 +24,14 @@ import {
 import { useHomeScreenData } from "./use-home-screen-data";
 import { useAppShell } from "../app-shell/provider";
 import { getButtonColors, withAlpha } from "../app-shell/theme-utils";
+import { AgentChat } from "../agent/agent-chat";
+import { useAgentContext } from "../agent/agent-provider";
+import { pickDocumentUploadCandidates } from "../ledger/ledger-runtime";
+import {
+  parseFileWithOpenAiFromBlob,
+  type ParseResult,
+} from "../ledger/remote-parse";
+import { getReceiptParseRecords } from "@ledgerly/schemas";
 
 function ActivityIcon({ color, icon }: { color: string; icon: string }) {
   if (icon === "cash-plus") {
@@ -51,11 +60,84 @@ export function HomeScreen() {
     refresh,
     snapshot,
   } = useHomeScreenData();
+  const agent = useAgentContext();
+  const [chatExpanded, setChatExpanded] = useState(false);
   const screenCopy = copy.homeScreen;
+
+  const handleAttachFile = async () => {
+    try {
+      const candidates = await pickDocumentUploadCandidates();
+      if (candidates.length === 0) return;
+
+      const file = candidates[0];
+      const response = await fetch(file.uri);
+      const blob = await response.blob();
+      const result: ParseResult = await parseFileWithOpenAiFromBlob({
+        fileName: file.originalFileName,
+        blob,
+        mimeType: file.mimeType,
+      });
+
+      if (result.error || !result.rawJson) {
+        const errorText = result.error ?? "Failed to parse file.";
+        await agent.sendMessage(
+          `[Uploaded: ${file.originalFileName}]\nParse error: ${errorText}\nPlease try again or add the record manually.`,
+        );
+        return;
+      }
+
+      const records = getReceiptParseRecords(result.rawJson);
+      const lines: string[] = [`[Uploaded: ${file.originalFileName}]`, "Parsed receipt data:"];
+
+      for (const rec of records) {
+        const f = rec.fields;
+        if (f.amountCents != null) lines.push(`- Amount: $${(Math.abs(f.amountCents) / 100).toFixed(2)}`);
+        if (f.target) lines.push(`- Vendor/Payee: ${f.target}`);
+        if (f.source) lines.push(`- Payer/Source: ${f.source}`);
+        if (f.date) lines.push(`- Date: ${f.date}`);
+        if (f.description) lines.push(`- Description: ${f.description}`);
+        if (f.category) lines.push(`- Category: ${f.category}`);
+        if (f.taxCategory) lines.push(`- Tax category: ${f.taxCategory}`);
+        if (f.notes) lines.push(`- Notes: ${f.notes}`);
+        if (records.length > 1) lines.push("---");
+      }
+
+      lines.push("", "Please create this record or let me know if you'd like to adjust anything.");
+
+      await agent.sendMessage(lines.join("\n"));
+      await agent.refreshContext();
+      refresh();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "File upload failed";
+      await agent.sendMessage(`File upload error: ${msg}`);
+    }
+  };
   const primaryButton = getButtonColors(palette, "primary");
   const [selectedTrendDate, setSelectedTrendDate] = useState<string | null>(
     null,
   );
+  const isAssistantInitializing = agent.isConfigured && !agent.isReady;
+  const assistantCollapsedLabel = !agent.isConfigured
+    ? resolvedLocale === "zh-CN"
+      ? "配置 AI 助手"
+      : "Set Up AI Assistant"
+    : resolvedLocale === "zh-CN"
+      ? "打开 AI 助手"
+      : "Open AI Assistant";
+  const assistantPromptTitle = isAssistantInitializing
+    ? resolvedLocale === "zh-CN"
+      ? "正在准备助手"
+      : "Preparing Assistant"
+    : resolvedLocale === "zh-CN"
+      ? "未检测到 API Key"
+      : "No API Key Found";
+  const assistantPromptBody = isAssistantInitializing
+    ? resolvedLocale === "zh-CN"
+      ? "本地账本和 AI 会话正在初始化，几秒后就可以直接提问。"
+      : "The local ledger and AI session are initializing. You can ask questions in a moment."
+    : resolvedLocale === "zh-CN"
+      ? "请在 .env 文件中填入至少一个 AI API Key（OpenAI / Infer / Gemini），然后重启应用即可使用助手。"
+      : "Add at least one AI API key (OpenAI / Infer / Gemini) to your .env file, then restart the app to use the assistant.";
 
   const incomeLabel = formatCurrencyFromCents(snapshot.metrics.incomeCents);
   const outflowLabel = formatCurrencyFromCents(snapshot.metrics.outflowCents);
@@ -434,6 +516,73 @@ export function HomeScreen() {
           </View>
         </View>
       </ScrollView>
+
+      {/* ── Agent Chat Panel ── */}
+      <View
+        style={[
+          chatExpanded ? styles.chatExpanded : styles.chatCollapsed,
+          { backgroundColor: palette.paper, borderColor: palette.divider },
+        ]}
+      >
+        {chatExpanded ? (
+          <>
+            <Pressable
+              onPress={() => setChatExpanded(false)}
+              style={[styles.chatToggle, { borderBottomColor: palette.divider }]}
+            >
+              <Ionicons name="chevron-down" size={18} color={palette.inkMuted} />
+              <Text style={[styles.chatToggleLabel, { color: palette.ink }]}>
+                {resolvedLocale === "zh-CN" ? "收起助手" : "Collapse Assistant"}
+              </Text>
+            </Pressable>
+            {agent.isReady ? (
+              <AgentChat
+                messages={agent.messages}
+                isProcessing={agent.isProcessing}
+                error={agent.error}
+                onSend={async (text) => {
+                  await agent.sendMessage(text);
+                  await agent.refreshContext();
+                  refresh();
+                }}
+                onClear={agent.clearChat}
+                onAttachFile={handleAttachFile}
+                locale={resolvedLocale === "zh-CN" ? "zh-CN" : "en"}
+              />
+            ) : (
+              <View style={styles.chatPrompt}>
+                {isAssistantInitializing ? (
+                  <ActivityIndicator color={palette.accent} size="small" />
+                ) : (
+                  <Ionicons
+                    name="settings-outline"
+                    size={28}
+                    color={palette.accent}
+                  />
+                )}
+                <Text style={[styles.chatPromptTitle, { color: palette.ink }]}>
+                  {assistantPromptTitle}
+                </Text>
+                <Text style={[styles.chatPromptBody, { color: palette.inkMuted }]}>
+                  {assistantPromptBody}
+                </Text>
+              </View>
+            )}
+          </>
+        ) : (
+          <Pressable
+            onPress={() => setChatExpanded(true)}
+            style={[styles.chatToggle, { borderTopColor: palette.divider }]}
+          >
+            <Ionicons name="chatbubbles-outline" size={18} color={palette.accent} />
+            <Text style={[styles.chatToggleLabel, { color: palette.ink }]}>
+              {assistantCollapsedLabel}
+            </Text>
+            <Ionicons name="chevron-up" size={18} color={palette.inkMuted} />
+          </Pressable>
+        )}
+      </View>
+
     </SafeAreaView>
   );
 }
@@ -957,5 +1106,52 @@ const styles = StyleSheet.create({
   },
   wideRight: {
     flex: 45,
+  },
+  chatExpanded: {
+    height: 420,
+    borderTopWidth: 1,
+    borderRadius: 0,
+  },
+  chatCollapsed: {
+    borderTopWidth: 1,
+  },
+  chatToggle: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  chatToggleLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  chatPrompt: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
+    paddingHorizontal: 24,
+    paddingVertical: 24,
+  },
+  chatPromptTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+  },
+  chatPromptBody: {
+    fontSize: 14,
+    lineHeight: 20,
+    textAlign: "center",
+  },
+  chatPromptButton: {
+    borderRadius: 999,
+    borderWidth: 1,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+  },
+  chatPromptButtonLabel: {
+    fontSize: 14,
+    fontWeight: "600",
   },
 });

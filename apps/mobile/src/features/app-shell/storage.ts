@@ -61,7 +61,7 @@ const LEGACY_STORAGE_KEYS = {
 
 type StorageKeyName = keyof typeof STORAGE_KEYS;
 
-const defaultAiProvider: AiProvider = "infer";
+const defaultAiProvider: AiProvider = "openai";
 
 const ALL_STORAGE_KEYS = [
   ...new Set(
@@ -100,6 +100,15 @@ function resolveStoredValue(
   }
 
   return null;
+}
+
+function resolveStoredOrEnvValue(
+  values: Record<string, string | null | undefined>,
+  keyName: StorageKeyName,
+  envValue: string,
+): string {
+  const stored = String(resolveStoredValue(values, keyName) ?? "").trim();
+  return stored || envValue;
 }
 
 async function readStoredValue(keyName: StorageKeyName): Promise<string | null> {
@@ -166,19 +175,41 @@ export async function loadPersistedAppState(): Promise<PersistedAppState> {
     aiProvider:
       rawAiProvider === "gemini"
         ? "gemini"
-        : rawAiProvider === "openai"
+        : rawAiProvider === "infer"
+          ? "infer"
+          : rawAiProvider === "openai"
           ? "openai"
-          : defaultAiProvider,
-    geminiApiKey: String(resolveStoredValue(values, "geminiApiKey") ?? "").trim(),
+            : defaultAiProvider,
+    geminiApiKey: resolveStoredOrEnvValue(
+      values,
+      "geminiApiKey",
+      (process.env.EXPO_PUBLIC_GEMINI_API_KEY ?? "").trim(),
+    ),
     geminiAuthMode: rawGeminiAuthMode === "google_oauth" ? "google_oauth" : "api_key",
     googleAccessToken: String(resolveStoredValue(values, "googleAccessToken") ?? "").trim(),
     googleRefreshToken: String(resolveStoredValue(values, "googleRefreshToken") ?? "").trim(),
     googleTokenExpiresAt: String(resolveStoredValue(values, "googleTokenExpiresAt") ?? "").trim(),
-    inferApiKey: String(resolveStoredValue(values, "inferApiKey") ?? "").trim(),
-    inferBaseUrl: String(resolveStoredValue(values, "inferBaseUrl") ?? "").trim().replace(/\/+$/g, ""),
-    inferModel: String(resolveStoredValue(values, "inferModel") ?? "").trim(),
+    inferApiKey: resolveStoredOrEnvValue(
+      values,
+      "inferApiKey",
+      (process.env.EXPO_PUBLIC_INFER_API_KEY ?? "").trim(),
+    ),
+    inferBaseUrl: resolveStoredOrEnvValue(
+      values,
+      "inferBaseUrl",
+      (process.env.EXPO_PUBLIC_INFER_BASE_URL ?? "").trim(),
+    ).replace(/\/+$/g, ""),
+    inferModel: resolveStoredOrEnvValue(
+      values,
+      "inferModel",
+      (process.env.EXPO_PUBLIC_INFER_MODEL ?? "").trim(),
+    ),
     localePreference: coerceLocalePreference(resolveStoredValue(values, "localePreference")),
-    openAiApiKey: String(resolveStoredValue(values, "openAiApiKey") ?? "").trim(),
+    openAiApiKey: resolveStoredOrEnvValue(
+      values,
+      "openAiApiKey",
+      (process.env.EXPO_PUBLIC_OPENAI_API_KEY ?? "").trim(),
+    ),
     parseApiBaseUrl: String(resolveStoredValue(values, "parseApiBaseUrl") ?? "")
       .trim()
       .replace(/\/+$/g, ""),
@@ -290,6 +321,7 @@ export async function loadPersistedAiProvider(): Promise<AiProvider> {
 
   const raw = String((await readStoredValue("aiProvider")) ?? "").trim();
   if (raw === "gemini") return "gemini";
+  if (raw === "infer") return "infer";
   if (raw === "openai") return "openai";
   return defaultAiProvider;
 }
@@ -299,7 +331,11 @@ export async function loadPersistedGeminiApiKey(): Promise<string> {
     return runtimeOverrides.geminiApiKey ?? "";
   }
 
-  return String((await readStoredValue("geminiApiKey")) ?? "").trim();
+  const stored = String((await readStoredValue("geminiApiKey")) ?? "").trim();
+
+  if (stored) return stored;
+
+  return (process.env.EXPO_PUBLIC_GEMINI_API_KEY ?? "").trim();
 }
 
 export async function loadPersistedOpenAiApiKey(): Promise<string> {
@@ -307,9 +343,13 @@ export async function loadPersistedOpenAiApiKey(): Promise<string> {
     return runtimeOverrides.openAiApiKey ?? "";
   }
 
-  return String(
+  const stored = String(
     (await readStoredValue("openAiApiKey")) ?? "",
   ).trim();
+
+  if (stored) return stored;
+
+  return (process.env.EXPO_PUBLIC_OPENAI_API_KEY ?? "").trim();
 }
 
 export async function persistInferApiKey(value: string) {
