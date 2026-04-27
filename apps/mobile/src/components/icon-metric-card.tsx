@@ -44,24 +44,21 @@ export function IconMetricCard({
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 24,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     gap: 8,
     padding: 16,
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 1,
-    shadowRadius: 24,
   },
   iconWrap: {
     alignItems: "center",
-    borderRadius: 14,
+    borderRadius: 999,
     height: 36,
     justifyContent: "center",
     width: 36,
   },
   label: {
     fontSize: 15,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   summary: {
     fontSize: 13,

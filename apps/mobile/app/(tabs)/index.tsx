@@ -1,5 +1,5 @@
-import { HomeScreen } from "../../src/features/home/home-screen";
+import { HomeTabRoute } from "../../src/features/home/home-tab-route";
 
-export default function HomeTabRoute() {
-  return <HomeScreen />;
+export default function HomeTabRouteEntry() {
+  return <HomeTabRoute />;
 }

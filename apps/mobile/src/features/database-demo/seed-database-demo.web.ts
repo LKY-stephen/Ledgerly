@@ -37,7 +37,7 @@ export async function startNewLedger(): Promise<void> {
   const existingDb = getActiveWebDatabase();
 
   if (existingDb) {
-    existingDb.close();
+    existingDb.close({ persist: false });
   }
 
   await deleteDatabaseFromIndexedDB();

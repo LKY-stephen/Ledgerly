@@ -31,20 +31,17 @@ export function SectionCard({
 
 const styles = StyleSheet.create({
   card: {
-    gap: 12,
-    padding: 18,
-    borderRadius: 24,
-    backgroundColor: "#fffaf2",
-    borderWidth: 1,
-    borderColor: "rgba(15, 118, 110, 0.16)",
+    gap: 14,
+    padding: 20,
+    borderRadius: 12,
+    borderWidth: 2,
   },
   content: {
-    gap: 12,
+    gap: 14,
   },
   eyebrow: {
-    color: "#0f766e",
     fontSize: 11,
-    fontWeight: "700",
+    fontWeight: "800",
     letterSpacing: 1.2,
     textTransform: "uppercase",
   },
@@ -52,8 +49,7 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   title: {
-    color: "#14213d",
     fontSize: 20,
-    fontWeight: "700",
+    fontWeight: "800",
   },
 });

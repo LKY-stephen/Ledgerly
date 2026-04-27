@@ -12,6 +12,26 @@ import type { AiProvider, GeminiAuthMode } from "../app-shell/types";
 import { getValidGoogleAccessToken } from "../auth/google-token-runtime";
 import { receiptDbUpdatePlannerSkill, receiptParseSkill } from "./prompt-skills";
 
+async function resolveAvailableProvider(): Promise<AiProvider> {
+  const openAiKey = await loadPersistedOpenAiApiKey();
+  if (openAiKey) return "openai";
+
+  const inferKey = await loadPersistedInferApiKey();
+  const inferUrl = await loadPersistedInferBaseUrl();
+  if (inferKey && inferUrl) return "infer";
+
+  const geminiKey = await loadPersistedGeminiApiKey();
+  if (geminiKey) return "gemini";
+
+  const authMode = await loadPersistedGeminiAuthMode();
+  if (authMode === "google_oauth") return "gemini";
+
+  throw new ParseEvidenceClientError(
+    "No AI provider configured. Please set an API key in .env or Settings.",
+    "missing_config",
+  );
+}
+
 export interface ParseResult {
   rawJson: ReceiptParsePayload | null;
   rawText: string;
@@ -37,7 +57,7 @@ export async function planEvidenceDbUpdates(input: {
   profileInfo?: { name: string; email: string; phone: string };
   rawJson: unknown;
 }): Promise<ReceiptPlannerPayload> {
-  const aiProvider = await loadPersistedAiProvider();
+  const aiProvider = await resolveAvailableProvider();
 
   const exampleOutput = JSON.stringify({
     businessEvents: ["Receipt payment for subscription service"],
@@ -374,7 +394,7 @@ export async function parseFileWithOpenAi(input: {
   mimeType: string | null;
 }): Promise<ParseResult> {
   try {
-    const aiProvider = await loadPersistedAiProvider();
+    const aiProvider = await resolveAvailableProvider();
     const mimeType = input.mimeType ?? inferMimeType(input.fileName);
     const base64 = await readNativeFileAsBase64(input.fileUri);
 
@@ -388,7 +408,7 @@ export async function parseFileWithOpenAi(input: {
     const filePart = createInputFilePart({ base64, fileName: input.fileName, mimeType });
     return await callOpenAiParseApi(settings, filePart, input.fileName, mimeType, aiProvider);
   } catch (error) {
-    const aiProvider = await loadPersistedAiProvider().catch(() => "infer" as AiProvider);
+    const aiProvider = await loadPersistedAiProvider().catch(() => "openai" as AiProvider);
     return {
       rawJson: null,
       rawText: "",
@@ -405,7 +425,7 @@ export async function parseFileWithOpenAiFromBlob(input: {
   mimeType: string | null;
 }): Promise<ParseResult> {
   try {
-    const aiProvider = await loadPersistedAiProvider();
+    const aiProvider = await resolveAvailableProvider();
     const mimeType = input.mimeType ?? input.blob.type ?? inferMimeType(input.fileName);
     const base64 = await blobToBase64(input.blob);
 
@@ -419,7 +439,7 @@ export async function parseFileWithOpenAiFromBlob(input: {
     const filePart = createInputFilePart({ base64, fileName: input.fileName, mimeType });
     return await callOpenAiParseApi(settings, filePart, input.fileName, mimeType, aiProvider);
   } catch (error) {
-    const aiProvider = await loadPersistedAiProvider().catch(() => "infer" as AiProvider);
+    const aiProvider = await loadPersistedAiProvider().catch(() => "openai" as AiProvider);
     return {
       rawJson: null,
       rawText: "",

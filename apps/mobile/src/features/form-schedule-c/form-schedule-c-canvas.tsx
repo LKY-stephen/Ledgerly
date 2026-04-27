@@ -18,12 +18,12 @@ import type {
   FormScheduleCTaxYear,
 } from "./form-schedule-c-model";
 
-const FORM_INK = "#111827";
-const FORM_MUTED = "#4b5563";
-const FORM_RULE = "#0f172a";
-const FORM_SHEET = "#fffef9";
+const FORM_INK = "#000000";
+const FORM_MUTED = "#555555";
+const FORM_RULE = "#000000";
+const FORM_SHEET = "#FFFFFF";
 const FORM_FONT_FAMILY = "Helvetica";
-const CALCULATED_COLOR = "#2563eb";
+const CALCULATED_COLOR = "#A0E9FF";
 const MIN_PARSED_TEXT_FONT_SIZE = 5.2;
 const PARSED_TEXT_WIDTH_FACTOR = 0.5;
 const PARSED_TEXT_MIN_WIDTH = 3;
@@ -107,7 +107,7 @@ export function FormScheduleCCanvas(props: FormScheduleCCanvasProps) {
               <SvgTextBlock
                 fill={canvasSlot.activeSlot.source === "manual" ? FORM_MUTED : FORM_INK}
                 fontSize={canvasSlot.activeSlot.kind === "amount" ? 8.8 : 7.8}
-                fontWeight="700"
+                fontWeight="800"
                 lines={previewLines}
                 textAnchor={canvasSlot.activeSlot.kind === "amount" ? "end" : "start"}
                 x={canvasSlot.activeSlot.kind === "amount" ? rect.x + rect.width - 4 : rect.x + 4}
@@ -121,8 +121,8 @@ export function FormScheduleCCanvas(props: FormScheduleCCanvasProps) {
                     height={Math.max(visibleRect.height - 1.5, 1)}
                     key={`${canvasSlot.groupId}-selected-${rectIndex}`}
                     rx={Math.max(getSlotRadius(canvasSlot.activeSlot, visibleRect) - 0.5, 1.5)}
-                    stroke="rgba(15, 23, 42, 0.35)"
-                    strokeWidth={0.7}
+                    stroke="rgba(0, 0, 0, 0.4)"
+                    strokeWidth={0.8}
                     width={Math.max(visibleRect.width - 1.5, 1)}
                     x={visibleRect.x + 0.75}
                     y={visibleRect.y + 0.75}
@@ -236,7 +236,7 @@ function renderSpecialParsedText(
         {
           fill: FORM_MUTED,
           fontSize: 8,
-          fontWeight: "700",
+          fontWeight: "800",
           lines: ["(Form 1040)"],
           x: 36.5,
           y: element.top + 8.2,
@@ -244,7 +244,7 @@ function renderSpecialParsedText(
         {
           fill: FORM_MUTED,
           fontSize: 18.4,
-          fontWeight: "700",
+          fontWeight: "800",
           lines: [String(taxYear)],
           textAnchor: "middle",
           x: 532,
@@ -256,7 +256,7 @@ function renderSpecialParsedText(
         {
           fill: FORM_INK,
           fontSize: 8,
-          fontWeight: "700",
+          fontWeight: "800",
           lines: ["Name of proprietor"],
           x: 36,
           y: element.top + 8,
@@ -264,7 +264,7 @@ function renderSpecialParsedText(
         {
           fill: FORM_INK,
           fontSize: 8,
-          fontWeight: "700",
+          fontWeight: "800",
           lines: ["Social security number (SSN)"],
           x: 449.5,
           y: element.top + 8,
@@ -338,7 +338,7 @@ function renderSpecialParsedText(
         {
           fill: FORM_INK,
           fontSize: 10,
-          fontWeight: "700",
+          fontWeight: "800",
           lines: ["Cost of Goods Sold (see instructions)"],
           x: 80,
           y: element.top + 10,
@@ -382,7 +382,7 @@ function renderSpecialParsedText(
         {
           fill: FORM_MUTED,
           fontSize: 8,
-          fontWeight: "700",
+          fontWeight: "800",
           lines: ["Simplified method filers only:"],
           x: 64.8,
           y: element.top + 23.8,
@@ -560,7 +560,7 @@ function getSectionLabelBlock(element: ScheduleCLayoutTextElement, label: string
   return {
     fill: FORM_SHEET,
     fontSize: 8.2,
-    fontWeight: "700",
+    fontWeight: "800",
     lines: [label],
     textAnchor: "middle",
     x: 54,
@@ -741,9 +741,9 @@ function getSlotFill(slot: FormScheduleCSlotState, palette: SurfaceTokens): stri
 function getTextWeight(sourceType: ScheduleCLayoutTextElement["sourceType"]) {
   switch (sourceType) {
     case "heading":
-      return "700";
+      return "800";
     case "caption":
-      return "700";
+      return "800";
     case "list item":
       return "500";
     case "paragraph":

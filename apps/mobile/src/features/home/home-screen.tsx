@@ -2,6 +2,7 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import {
+  ActivityIndicator,
   Platform,
   Pressable,
   RefreshControl,
@@ -23,6 +24,14 @@ import {
 import { useHomeScreenData } from "./use-home-screen-data";
 import { useAppShell } from "../app-shell/provider";
 import { getButtonColors, withAlpha } from "../app-shell/theme-utils";
+import { AgentChat } from "../agent/agent-chat";
+import { useAgentContext } from "../agent/agent-provider";
+import { pickDocumentUploadCandidates } from "../ledger/ledger-runtime";
+import {
+  parseFileWithOpenAiFromBlob,
+  type ParseResult,
+} from "../ledger/remote-parse";
+import { getReceiptParseRecords } from "@ledgerly/schemas";
 
 function ActivityIcon({ color, icon }: { color: string; icon: string }) {
   if (icon === "cash-plus") {
@@ -51,11 +60,84 @@ export function HomeScreen() {
     refresh,
     snapshot,
   } = useHomeScreenData();
+  const agent = useAgentContext();
+  const [chatExpanded, setChatExpanded] = useState(false);
   const screenCopy = copy.homeScreen;
+
+  const handleAttachFile = async () => {
+    try {
+      const candidates = await pickDocumentUploadCandidates();
+      if (candidates.length === 0) return;
+
+      const file = candidates[0];
+      const response = await fetch(file.uri);
+      const blob = await response.blob();
+      const result: ParseResult = await parseFileWithOpenAiFromBlob({
+        fileName: file.originalFileName,
+        blob,
+        mimeType: file.mimeType,
+      });
+
+      if (result.error || !result.rawJson) {
+        const errorText = result.error ?? "Failed to parse file.";
+        await agent.sendMessage(
+          `[Uploaded: ${file.originalFileName}]\nParse error: ${errorText}\nPlease try again or add the record manually.`,
+        );
+        return;
+      }
+
+      const records = getReceiptParseRecords(result.rawJson);
+      const lines: string[] = [`[Uploaded: ${file.originalFileName}]`, "Parsed receipt data:"];
+
+      for (const rec of records) {
+        const f = rec.fields;
+        if (f.amountCents != null) lines.push(`- Amount: $${(Math.abs(f.amountCents) / 100).toFixed(2)}`);
+        if (f.target) lines.push(`- Vendor/Payee: ${f.target}`);
+        if (f.source) lines.push(`- Payer/Source: ${f.source}`);
+        if (f.date) lines.push(`- Date: ${f.date}`);
+        if (f.description) lines.push(`- Description: ${f.description}`);
+        if (f.category) lines.push(`- Category: ${f.category}`);
+        if (f.taxCategory) lines.push(`- Tax category: ${f.taxCategory}`);
+        if (f.notes) lines.push(`- Notes: ${f.notes}`);
+        if (records.length > 1) lines.push("---");
+      }
+
+      lines.push("", "Please create this record or let me know if you'd like to adjust anything.");
+
+      await agent.sendMessage(lines.join("\n"));
+      await agent.refreshContext();
+      refresh();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "File upload failed";
+      await agent.sendMessage(`File upload error: ${msg}`);
+    }
+  };
   const primaryButton = getButtonColors(palette, "primary");
   const [selectedTrendDate, setSelectedTrendDate] = useState<string | null>(
     null,
   );
+  const isAssistantInitializing = agent.isConfigured && !agent.isReady;
+  const assistantCollapsedLabel = !agent.isConfigured
+    ? resolvedLocale === "zh-CN"
+      ? "配置 AI 助手"
+      : "Set Up AI Assistant"
+    : resolvedLocale === "zh-CN"
+      ? "打开 AI 助手"
+      : "Open AI Assistant";
+  const assistantPromptTitle = isAssistantInitializing
+    ? resolvedLocale === "zh-CN"
+      ? "正在准备助手"
+      : "Preparing Assistant"
+    : resolvedLocale === "zh-CN"
+      ? "未检测到 API Key"
+      : "No API Key Found";
+  const assistantPromptBody = isAssistantInitializing
+    ? resolvedLocale === "zh-CN"
+      ? "本地账本和 AI 会话正在初始化，几秒后就可以直接提问。"
+      : "The local ledger and AI session are initializing. You can ask questions in a moment."
+    : resolvedLocale === "zh-CN"
+      ? "请在 .env 文件中填入至少一个 AI API Key（OpenAI / Infer / Gemini），然后重启应用即可使用助手。"
+      : "Add at least one AI API key (OpenAI / Infer / Gemini) to your .env file, then restart the app to use the assistant.";
 
   const incomeLabel = formatCurrencyFromCents(snapshot.metrics.incomeCents);
   const outflowLabel = formatCurrencyFromCents(snapshot.metrics.outflowCents);
@@ -134,8 +216,8 @@ export function HomeScreen() {
         </View>
 
         {/* ---------- Two-column body on expanded, single-column on compact ---------- */}
-        <View style={isExpanded ? styles.wideBody : undefined}>
-          <View style={isExpanded ? styles.wideLeft : undefined}>
+        <View style={isExpanded ? styles.wideBody : styles.compactBody}>
+          <View style={isExpanded ? styles.wideLeft : styles.compactLeft}>
             <View style={[styles.heroBlock, { backgroundColor: palette.shellElevated, borderColor: palette.divider }]}>
               <View style={styles.heroHeader}>
                 <View style={styles.heroHeaderCopy}>
@@ -434,6 +516,73 @@ export function HomeScreen() {
           </View>
         </View>
       </ScrollView>
+
+      {/* ── Agent Chat Panel ── */}
+      <View
+        style={[
+          chatExpanded ? styles.chatExpanded : styles.chatCollapsed,
+          { backgroundColor: palette.paper, borderColor: palette.divider },
+        ]}
+      >
+        {chatExpanded ? (
+          <>
+            <Pressable
+              onPress={() => setChatExpanded(false)}
+              style={[styles.chatToggle, { borderBottomColor: palette.divider }]}
+            >
+              <Ionicons name="chevron-down" size={18} color={palette.inkMuted} />
+              <Text style={[styles.chatToggleLabel, { color: palette.ink }]}>
+                {resolvedLocale === "zh-CN" ? "收起助手" : "Collapse Assistant"}
+              </Text>
+            </Pressable>
+            {agent.isReady ? (
+              <AgentChat
+                messages={agent.messages}
+                isProcessing={agent.isProcessing}
+                error={agent.error}
+                onSend={async (text) => {
+                  await agent.sendMessage(text);
+                  await agent.refreshContext();
+                  refresh();
+                }}
+                onClear={agent.clearChat}
+                onAttachFile={handleAttachFile}
+                locale={resolvedLocale === "zh-CN" ? "zh-CN" : "en"}
+              />
+            ) : (
+              <View style={styles.chatPrompt}>
+                {isAssistantInitializing ? (
+                  <ActivityIndicator color={palette.accent} size="small" />
+                ) : (
+                  <Ionicons
+                    name="settings-outline"
+                    size={28}
+                    color={palette.accent}
+                  />
+                )}
+                <Text style={[styles.chatPromptTitle, { color: palette.ink }]}>
+                  {assistantPromptTitle}
+                </Text>
+                <Text style={[styles.chatPromptBody, { color: palette.inkMuted }]}>
+                  {assistantPromptBody}
+                </Text>
+              </View>
+            )}
+          </>
+        ) : (
+          <Pressable
+            onPress={() => setChatExpanded(true)}
+            style={[styles.chatToggle, { borderTopColor: palette.divider }]}
+          >
+            <Ionicons name="chatbubbles-outline" size={18} color={palette.accent} />
+            <Text style={[styles.chatToggleLabel, { color: palette.ink }]}>
+              {assistantCollapsedLabel}
+            </Text>
+            <Ionicons name="chevron-up" size={18} color={palette.inkMuted} />
+          </Pressable>
+        )}
+      </View>
+
     </SafeAreaView>
   );
 }
@@ -538,15 +687,15 @@ const styles = StyleSheet.create({
   activityAmount: {
     color: "#002045",
     fontSize: 16,
-    fontWeight: "700",
+    fontWeight: "800",
     lineHeight: 24,
     textAlign: "right",
   },
   activityCard: {
     backgroundColor: "#FFFFFF",
     borderColor: "rgba(0, 32, 69, 0.08)",
-    borderRadius: 22,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     overflow: "hidden",
   },
   activityCopy: {
@@ -570,7 +719,7 @@ const styles = StyleSheet.create({
   },
   activityIconWrap: {
     alignItems: "center",
-    borderRadius: 16,
+    borderRadius: 10,
     height: 38,
     justifyContent: "center",
     width: 38,
@@ -578,12 +727,12 @@ const styles = StyleSheet.create({
   activityItemTitle: {
     color: "#002045",
     fontSize: 14,
-    fontWeight: "700",
+    fontWeight: "800",
     lineHeight: 19,
   },
   activityItemType: {
     fontSize: 12,
-    fontWeight: "600",
+    fontWeight: "800",
     lineHeight: 18,
   },
   activityLeft: {
@@ -605,10 +754,10 @@ const styles = StyleSheet.create({
   },
   activityRowBorder: {
     borderTopColor: "rgba(0, 32, 69, 0.08)",
-    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopWidth: 1,
   },
   activitySection: {
-    gap: 14,
+    gap: 20,
   },
   activitySubtitle: {
     color: "#74777F",
@@ -624,7 +773,7 @@ const styles = StyleSheet.create({
   axisLabel: {
     color: "#74777F",
     fontSize: 10,
-    fontWeight: "600",
+    fontWeight: "800",
     lineHeight: 16,
   },
   bar: {
@@ -636,7 +785,7 @@ const styles = StyleSheet.create({
   },
   barColumn: {
     alignItems: "center",
-    borderRadius: 16,
+    borderRadius: 10,
     gap: 8,
     justifyContent: "flex-end",
     paddingHorizontal: 4,
@@ -653,7 +802,7 @@ const styles = StyleSheet.create({
   barLabel: {
     color: "#74777F",
     fontSize: 9,
-    fontWeight: "600",
+    fontWeight: "800",
     lineHeight: 12,
     textAlign: "center",
     width: 36,
@@ -703,10 +852,10 @@ const styles = StyleSheet.create({
   },
   container: {
     backgroundColor: "#F5F6F8",
-    gap: 16,
+    gap: 24,
     paddingBottom: 140,
     paddingHorizontal: 20,
-    paddingTop: 12,
+    paddingTop: 16,
   },
   emptyCardState: {
     gap: 8,
@@ -720,7 +869,7 @@ const styles = StyleSheet.create({
   emptyCardTitle: {
     color: "#002045",
     fontSize: 18,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   heroAction: {
     alignItems: "center",
@@ -738,7 +887,7 @@ const styles = StyleSheet.create({
   heroActionLabel: {
     color: "#FFFFFF",
     fontSize: 15,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   heroAmount: {
     fontSize: 38,
@@ -749,8 +898,8 @@ const styles = StyleSheet.create({
   heroBlock: {
     backgroundColor: "#FFFFFF",
     borderColor: "rgba(0, 32, 69, 0.08)",
-    borderRadius: 22,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     gap: 14,
     padding: 20,
   },
@@ -767,7 +916,7 @@ const styles = StyleSheet.create({
   },
   heroTitle: {
     fontSize: 12,
-    fontWeight: "700",
+    fontWeight: "800",
     letterSpacing: 0.8,
     textTransform: "uppercase",
   },
@@ -784,11 +933,11 @@ const styles = StyleSheet.create({
   },
   loadMoreLabel: {
     fontSize: 14,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   metricItem: {
     backgroundColor: "#F7F8FA",
-    borderRadius: 14,
+    borderRadius: 10,
     flex: 1,
     gap: 4,
     minWidth: 0,
@@ -798,7 +947,7 @@ const styles = StyleSheet.create({
   metricLabel: {
     color: "rgba(0, 32, 69, 0.5)",
     fontSize: 10,
-    fontWeight: "700",
+    fontWeight: "800",
     letterSpacing: 0.8,
     textTransform: "uppercase",
   },
@@ -809,7 +958,7 @@ const styles = StyleSheet.create({
   metricValue: {
     color: "#002045",
     fontSize: 15,
-    fontWeight: "700",
+    fontWeight: "800",
     lineHeight: 20,
   },
   notificationButton: {
@@ -823,8 +972,8 @@ const styles = StyleSheet.create({
   profitCard: {
     backgroundColor: "#FFFFFF",
     borderColor: "rgba(196, 198, 207, 0.18)",
-    borderRadius: 22,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     gap: 14,
     padding: 18,
   },
@@ -849,7 +998,7 @@ const styles = StyleSheet.create({
   secondaryActionLabel: {
     color: "#002045",
     fontSize: 13,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   profitSubtitle: {
     color: "#74777F",
@@ -869,8 +1018,8 @@ const styles = StyleSheet.create({
   trendTooltip: {
     backgroundColor: "#F7F8FA",
     borderColor: "rgba(0, 32, 69, 0.06)",
-    borderRadius: 18,
-    borderWidth: 1,
+    borderRadius: 10,
+    borderWidth: 2,
     gap: 10,
     paddingHorizontal: 14,
     paddingVertical: 12,
@@ -878,7 +1027,7 @@ const styles = StyleSheet.create({
   trendTooltipDate: {
     color: "#002045",
     fontSize: 14,
-    fontWeight: "700",
+    fontWeight: "800",
     lineHeight: 20,
   },
   trendTooltipHeader: {
@@ -888,7 +1037,7 @@ const styles = StyleSheet.create({
   },
   trendTooltipMetric: {
     backgroundColor: "#FFFFFF",
-    borderRadius: 14,
+    borderRadius: 10,
     flex: 1,
     gap: 4,
     minWidth: 0,
@@ -904,7 +1053,7 @@ const styles = StyleSheet.create({
   trendTooltipMetricLabel: {
     color: "rgba(0, 32, 69, 0.55)",
     fontSize: 10,
-    fontWeight: "700",
+    fontWeight: "800",
     letterSpacing: 0.6,
     textTransform: "uppercase",
   },
@@ -914,12 +1063,12 @@ const styles = StyleSheet.create({
   },
   trendTooltipMetricValue: {
     fontSize: 14,
-    fontWeight: "700",
+    fontWeight: "800",
     lineHeight: 19,
   },
   trendTooltipNet: {
     fontSize: 13,
-    fontWeight: "700",
+    fontWeight: "800",
     lineHeight: 18,
   },
   trendTooltipNetNegative: {
@@ -935,7 +1084,7 @@ const styles = StyleSheet.create({
   seeAllLink: {
     color: "#002045",
     fontSize: 13,
-    fontWeight: "700",
+    fontWeight: "800",
     lineHeight: 18,
   },
   topRow: {
@@ -944,9 +1093,15 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 2,
   },
+  compactBody: {
+    gap: 24,
+  },
+  compactLeft: {
+    gap: 20,
+  },
   wideBody: {
     flexDirection: "row",
-    gap: 20,
+    gap: 24,
   },
   wideGapTop: {
     marginTop: 16,
@@ -957,5 +1112,52 @@ const styles = StyleSheet.create({
   },
   wideRight: {
     flex: 45,
+  },
+  chatExpanded: {
+    height: 420,
+    borderTopWidth: 2,
+    borderRadius: 0,
+  },
+  chatCollapsed: {
+    borderTopWidth: 2,
+  },
+  chatToggle: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  chatToggleLabel: {
+    fontSize: 14,
+    fontWeight: "800",
+  },
+  chatPrompt: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
+    paddingHorizontal: 24,
+    paddingVertical: 24,
+  },
+  chatPromptTitle: {
+    fontSize: 18,
+    fontWeight: "800",
+  },
+  chatPromptBody: {
+    fontSize: 14,
+    lineHeight: 20,
+    textAlign: "center",
+  },
+  chatPromptButton: {
+    borderRadius: 999,
+    borderWidth: 2,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+  },
+  chatPromptButtonLabel: {
+    fontSize: 14,
+    fontWeight: "800",
   },
 });

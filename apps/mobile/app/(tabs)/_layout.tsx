@@ -43,10 +43,10 @@ export default function TabLayout() {
         tabBarShowLabel: true,
         tabBarLabelStyle: {
           fontSize: 10,
-          fontWeight: "600",
+          fontWeight: "800",
           letterSpacing: 0.2,
           marginTop: 0,
-          textTransform: "none",
+          textTransform: "uppercase",
         },
         tabBarIconStyle: {
           marginBottom: 1,
@@ -59,18 +59,14 @@ export default function TabLayout() {
           : {
               backgroundColor: navigationTheme.tabBarBackground,
               borderTopColor: navigationTheme.tabBarBorder,
-              borderTopLeftRadius: 18,
-              borderTopRightRadius: 18,
-              borderTopWidth: 1,
+              borderTopLeftRadius: 0,
+              borderTopRightRadius: 0,
+              borderTopWidth: 2,
               elevation: 0,
               height: 82,
               paddingBottom: 12,
               paddingHorizontal: 12,
               paddingTop: 8,
-              shadowColor: "rgba(0, 32, 69, 0.08)",
-              shadowOffset: { height: -4, width: 0 },
-              shadowOpacity: 0.12,
-              shadowRadius: 12,
             },
       }}
     >
@@ -88,7 +84,7 @@ export default function TabLayout() {
             title: screen.title,
             tabBarIcon: ({ color }) => <AppIcon color={color} name={screen.icon} size={screen.iconSize} />,
             tabBarLabel: ({ color }) => (
-              <Text style={{ color, fontSize: 10, fontWeight: "600", letterSpacing: 0.2, textTransform: "none" }}>
+              <Text style={{ color, fontSize: 10, fontWeight: "800", letterSpacing: 0.2, textTransform: "uppercase" }}>
                 {screen.title}
               </Text>
             ),
