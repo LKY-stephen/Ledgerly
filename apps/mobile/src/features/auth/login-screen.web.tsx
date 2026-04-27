@@ -234,12 +234,12 @@ const styles = StyleSheet.create({
   },
   brandSubtitle: {
     fontSize: 18,
-    fontWeight: "600",
+    fontWeight: "800",
     lineHeight: 26,
   },
   brandSubtitleWide: {
     fontSize: 20,
-    fontWeight: "600",
+    fontWeight: "800",
     lineHeight: 28,
   },
   brandTitle: {
@@ -267,15 +267,12 @@ const styles = StyleSheet.create({
   },
   mobileLogoCard: {
     alignItems: "center",
-    borderRadius: 28,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     justifyContent: "center",
     minHeight: 248,
     padding: 24,
     width: "100%",
-    shadowOffset: { height: 16, width: 0 },
-    shadowOpacity: 0.12,
-    shadowRadius: 28,
   },
   leftPanel: {
     flex: 55,
@@ -285,15 +282,12 @@ const styles = StyleSheet.create({
     paddingVertical: 40,
   },
   messageBlock: {
-    borderRadius: 28,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     gap: 12,
     maxWidth: 560,
     paddingHorizontal: 28,
     paddingVertical: 30,
-    shadowOffset: { height: 14, width: 0 },
-    shadowOpacity: 0.08,
-    shadowRadius: 28,
     width: "100%",
   },
   messageBody: {
@@ -339,32 +333,29 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     alignItems: "center",
-    borderRadius: 14,
+    borderRadius: 999,
     height: 52,
     justifyContent: "center",
-    shadowOffset: { height: 6, width: 0 },
-    shadowOpacity: 0.1,
-    shadowRadius: 14,
   },
   primaryLabel: {
     fontSize: 16,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   secondaryButton: {
     alignItems: "center",
-    borderRadius: 14,
-    borderWidth: 1,
+    borderRadius: 999,
+    borderWidth: 2,
     height: 52,
     justifyContent: "center",
   },
   secondaryLabel: {
     fontSize: 16,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   privacyChip: {
     alignItems: "center",
-    borderRadius: 12,
-    borderWidth: 1,
+    borderRadius: 999,
+    borderWidth: 2,
     flexDirection: "row",
     gap: 8,
     paddingHorizontal: 14,
@@ -372,7 +363,7 @@ const styles = StyleSheet.create({
   },
   privacyChipLabel: {
     fontSize: 12,
-    fontWeight: "700",
+    fontWeight: "800",
     letterSpacing: 0.6,
   },
   privacyMetrics: {
@@ -385,7 +376,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 48,
     paddingVertical: 40,
-    borderLeftWidth: 1,
+    borderLeftWidth: 2,
     borderLeftColor: "rgba(0, 32, 69, 0.06)",
   },
   rightPanelInner: {
@@ -409,7 +400,7 @@ const styles = StyleSheet.create({
   signalChip: {
     alignItems: "center",
     borderRadius: 999,
-    borderWidth: 1,
+    borderWidth: 2,
     flexDirection: "row",
     gap: 8,
     paddingHorizontal: 12,
@@ -417,7 +408,7 @@ const styles = StyleSheet.create({
   },
   signalChipLabel: {
     fontSize: 12,
-    fontWeight: "700",
+    fontWeight: "800",
     letterSpacing: 0.5,
   },
   signalRow: {
@@ -428,13 +419,10 @@ const styles = StyleSheet.create({
   },
   tryNowIconWrap: {
     alignItems: "center",
-    borderRadius: 28,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     height: 260,
     justifyContent: "center",
-    shadowOffset: { height: 18, width: 0 },
-    shadowOpacity: 0.08,
-    shadowRadius: 32,
     width: 260,
   },
   topBlock: {

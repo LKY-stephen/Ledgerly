@@ -236,7 +236,7 @@ export function AgentChat({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    borderRadius: 22,
+    borderRadius: 12,
     overflow: "hidden",
   },
   header: {
@@ -245,7 +245,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: 16,
     paddingVertical: 12,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: 2,
   },
   headerLeft: {
     flexDirection: "row",
@@ -254,7 +254,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 16,
-    fontWeight: "600",
+    fontWeight: "800",
   },
   messageList: {
     flex: 1,
@@ -277,7 +277,7 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: 18,
-    fontWeight: "600",
+    fontWeight: "800",
   },
   emptyHint: {
     fontSize: 13,
@@ -298,7 +298,7 @@ const styles = StyleSheet.create({
     maxWidth: "80%",
     paddingHorizontal: 14,
     paddingVertical: 10,
-    borderRadius: 18,
+    borderRadius: 12,
   },
   bubbleUser: {
     borderBottomRightRadius: 6,
@@ -321,12 +321,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     gap: 8,
-    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopWidth: 2,
   },
   input: {
     flex: 1,
-    borderRadius: 20,
-    borderWidth: 1,
+    borderRadius: 999,
+    borderWidth: 2,
     paddingHorizontal: 16,
     paddingVertical: Platform.OS === "web" ? 10 : 8,
     fontSize: 15,
@@ -336,14 +336,14 @@ const styles = StyleSheet.create({
   sendButton: {
     width: 40,
     height: 40,
-    borderRadius: 20,
+    borderRadius: 999,
     alignItems: "center",
     justifyContent: "center",
   },
   attachButton: {
     width: 40,
     height: 40,
-    borderRadius: 20,
+    borderRadius: 999,
     alignItems: "center",
     justifyContent: "center",
   },

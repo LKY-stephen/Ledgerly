@@ -356,7 +356,7 @@ export function LedgerScreen() {
                             {
                               backgroundColor: primaryButton.background,
                               borderColor: primaryButton.border,
-                              borderWidth: 1,
+                              borderWidth: 2,
                             },
                           ]
                         : null,
@@ -409,7 +409,7 @@ export function LedgerScreen() {
                           {
                             backgroundColor: primaryButton.background,
                             borderColor: primaryButton.border,
-                            borderWidth: 1,
+                            borderWidth: 2,
                           },
                         ]
                       : null,
@@ -1076,8 +1076,8 @@ const styles = StyleSheet.create({
   },
   headerUploadButton: {
     alignItems: "center",
-    borderRadius: 14,
-    borderWidth: 1,
+    borderRadius: 999,
+    borderWidth: 2,
     flexDirection: "row",
     gap: 8,
     minHeight: 42,
@@ -1086,7 +1086,7 @@ const styles = StyleSheet.create({
   },
   headerUploadButtonLabel: {
     fontSize: 14,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   endCapBar: {
     backgroundColor: "rgba(26, 54, 93, 0.1)",
@@ -1106,15 +1106,15 @@ const styles = StyleSheet.create({
   equationCard: {
     backgroundColor: "#FFFDF8",
     borderColor: "rgba(0, 32, 69, 0.08)",
-    borderRadius: 20,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     gap: 8,
     padding: 18,
   },
   equationEyebrow: {
     color: "rgba(0, 32, 69, 0.5)",
     fontSize: 11,
-    fontWeight: "700",
+    fontWeight: "800",
     letterSpacing: 1.1,
     textTransform: "uppercase",
   },
@@ -1126,7 +1126,7 @@ const styles = StyleSheet.create({
   equationTitle: {
     color: "#002045",
     fontSize: 20,
-    fontWeight: "700",
+    fontWeight: "800",
     lineHeight: 28,
   },
   metricAccentBar: {
@@ -1150,8 +1150,8 @@ const styles = StyleSheet.create({
   metricCard: {
     backgroundColor: "#FFFFFF",
     borderColor: "rgba(0, 32, 69, 0.08)",
-    borderRadius: 20,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     flex: 1,
     gap: 6,
     minHeight: 114,
@@ -1167,7 +1167,7 @@ const styles = StyleSheet.create({
   metricLabel: {
     color: "rgba(0, 32, 69, 0.55)",
     fontSize: 12,
-    fontWeight: "600",
+    fontWeight: "800",
     letterSpacing: 0.3,
   },
   metricValue: {
@@ -1193,8 +1193,8 @@ const styles = StyleSheet.create({
   modalBlock: {
     backgroundColor: "#FFFFFF",
     borderColor: "rgba(0, 32, 69, 0.08)",
-    borderRadius: 18,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     gap: 6,
     minHeight: 92,
     paddingHorizontal: 14,
@@ -1225,7 +1225,7 @@ const styles = StyleSheet.create({
   },
   modalCard: {
     backgroundColor: "#F9F9F7",
-    borderRadius: 28,
+    borderRadius: 12,
     gap: 16,
     maxHeight: "84%",
     padding: 20,
@@ -1234,8 +1234,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#FFFFFF",
     borderColor: "rgba(0, 32, 69, 0.08)",
-    borderRadius: 16,
-    borderWidth: 1,
+    borderRadius: 999,
+    borderWidth: 2,
     height: 44,
     justifyContent: "center",
     width: 44,
@@ -1243,8 +1243,8 @@ const styles = StyleSheet.create({
   modalDefaultChoice: {
     backgroundColor: "#FFFDF8",
     borderColor: "rgba(0, 32, 69, 0.08)",
-    borderRadius: 18,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     gap: 6,
     padding: 16,
   },
@@ -1264,7 +1264,7 @@ const styles = StyleSheet.create({
   modalEyebrow: {
     color: "rgba(0, 32, 69, 0.5)",
     fontSize: 11,
-    fontWeight: "700",
+    fontWeight: "800",
     letterSpacing: 1.1,
     textTransform: "uppercase",
   },
@@ -1304,7 +1304,7 @@ const styles = StyleSheet.create({
   modalStepLabel: {
     color: "rgba(0, 32, 69, 0.55)",
     fontSize: 12,
-    fontWeight: "700",
+    fontWeight: "800",
     letterSpacing: 0.4,
   },
   modalStepLabelActive: {
@@ -1314,7 +1314,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     borderColor: "rgba(0, 32, 69, 0.08)",
     borderRadius: 999,
-    borderWidth: 1,
+    borderWidth: 2,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
@@ -1329,14 +1329,14 @@ const styles = StyleSheet.create({
   modalSubAction: {
     alignItems: "center",
     backgroundColor: "rgba(0, 32, 69, 0.05)",
-    borderRadius: 14,
+    borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
   modalSubActionLabel: {
     color: "#002045",
     fontSize: 12,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   modalSubActionPressed: {
     opacity: 0.75,
@@ -1355,8 +1355,8 @@ const styles = StyleSheet.create({
   periodChip: {
     backgroundColor: "#FFFFFF",
     borderColor: "rgba(0, 32, 69, 0.08)",
-    borderRadius: 18,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     gap: 4,
     marginRight: 10,
     minWidth: 156,
@@ -1370,7 +1370,7 @@ const styles = StyleSheet.create({
   periodChipLabel: {
     color: "#002045",
     fontSize: 14,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   periodChipLabelActive: {
     color: "#FFFFFF",
@@ -1390,7 +1390,7 @@ const styles = StyleSheet.create({
   periodEyebrow: {
     color: "rgba(0, 32, 69, 0.5)",
     fontSize: 11,
-    fontWeight: "700",
+    fontWeight: "800",
     letterSpacing: 1.2,
     textTransform: "uppercase",
   },
@@ -1401,8 +1401,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#FFFDF8",
     borderColor: "rgba(0, 32, 69, 0.08)",
-    borderRadius: 18,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     flex: 1,
     flexDirection: "row",
     gap: 10,
@@ -1422,8 +1422,8 @@ const styles = StyleSheet.create({
   yearChip: {
     backgroundColor: "#FFFFFF",
     borderColor: "rgba(0, 32, 69, 0.08)",
-    borderRadius: 16,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     marginRight: 10,
     minWidth: 84,
     paddingHorizontal: 18,
@@ -1432,7 +1432,7 @@ const styles = StyleSheet.create({
   yearChipLabel: {
     color: "#002045",
     fontSize: 15,
-    fontWeight: "700",
+    fontWeight: "800",
     textAlign: "center",
   },
   periodSummary: {
@@ -1468,8 +1468,8 @@ const styles = StyleSheet.create({
   groupedRecordCard: {
     backgroundColor: "#FFFFFF",
     borderColor: "rgba(0, 32, 69, 0.08)",
-    borderRadius: 18,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     gap: 10,
     padding: 16,
   },
@@ -1529,7 +1529,7 @@ const styles = StyleSheet.create({
     color: "#002045",
     flex: 1,
     fontSize: 14,
-    fontWeight: "700",
+    fontWeight: "800",
     lineHeight: 19,
   },
   equationBreakdownRow: {
@@ -1545,8 +1545,8 @@ const styles = StyleSheet.create({
   equationDetailCard: {
     backgroundColor: "#F4F9FF",
     borderColor: "rgba(0, 32, 69, 0.08)",
-    borderRadius: 18,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     gap: 10,
     padding: 16,
   },
@@ -1564,7 +1564,7 @@ const styles = StyleSheet.create({
   recordFieldLabel: {
     color: "rgba(0, 32, 69, 0.55)",
     fontSize: 12,
-    fontWeight: "700",
+    fontWeight: "800",
     letterSpacing: 0.3,
     textTransform: "uppercase",
   },
@@ -1581,7 +1581,7 @@ const styles = StyleSheet.create({
   },
   recordModalCard: {
     backgroundColor: "#F9F9F7",
-    borderRadius: 28,
+    borderRadius: 12,
     gap: 18,
     maxHeight: "80%",
     padding: 20,
@@ -1603,7 +1603,7 @@ const styles = StyleSheet.create({
   postingLineDate: {
     color: "rgba(0, 32, 69, 0.5)",
     fontSize: 11,
-    fontWeight: "600",
+    fontWeight: "800",
     textAlign: "right",
   },
   postingLineCopy: {
@@ -1656,7 +1656,7 @@ const styles = StyleSheet.create({
   sectionMeta: {
     color: "rgba(0, 32, 69, 0.5)",
     fontSize: 12,
-    fontWeight: "600",
+    fontWeight: "800",
   },
   sectionStack: {
     gap: 12,
@@ -1669,15 +1669,15 @@ const styles = StyleSheet.create({
   segmentedControl: {
     backgroundColor: "#FFFFFF",
     borderColor: "rgba(0, 32, 69, 0.08)",
-    borderRadius: 18,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     flexDirection: "column",
     gap: 4,
     padding: 4,
     width: 132,
   },
   segmentedItem: {
-    borderRadius: 14,
+    borderRadius: 12,
     minHeight: 54,
     paddingHorizontal: 10,
     paddingVertical: 10,
@@ -1688,7 +1688,7 @@ const styles = StyleSheet.create({
   segmentedLabel: {
     color: "rgba(0, 32, 69, 0.5)",
     fontSize: 12,
-    fontWeight: "700",
+    fontWeight: "800",
     textAlign: "center",
   },
   segmentedLabelActive: {
@@ -1706,8 +1706,8 @@ const styles = StyleSheet.create({
   sheetCard: {
     backgroundColor: "#FFFFFF",
     borderColor: "rgba(0, 32, 69, 0.08)",
-    borderRadius: 20,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     overflow: "hidden",
   },
   sheetCopy: {
@@ -1724,7 +1724,7 @@ const styles = StyleSheet.create({
   sheetLabel: {
     color: "#002045",
     fontSize: 14,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   sheetNote: {
     color: "rgba(0, 32, 69, 0.56)",
@@ -1765,7 +1765,7 @@ const styles = StyleSheet.create({
   statusButtonLabel: {
     color: "#FFFFFF",
     fontSize: 13,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   statusButtonPressed: {
     opacity: 0.85,
@@ -1773,8 +1773,8 @@ const styles = StyleSheet.create({
   statusCard: {
     backgroundColor: "#FFFFFF",
     borderColor: "rgba(0, 32, 69, 0.08)",
-    borderRadius: 20,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     gap: 10,
     padding: 18,
   },
@@ -1807,8 +1807,8 @@ const styles = StyleSheet.create({
   transactionCard: {
     backgroundColor: "#FFFFFF",
     borderColor: "rgba(0, 32, 69, 0.08)",
-    borderRadius: 20,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     overflow: "hidden",
   },
   transactionCardExpense: {
@@ -1849,7 +1849,7 @@ const styles = StyleSheet.create({
   },
   transactionIconWrap: {
     alignItems: "center",
-    borderRadius: 16,
+    borderRadius: 12,
     height: 40,
     justifyContent: "center",
     width: 40,
@@ -1874,7 +1874,7 @@ const styles = StyleSheet.create({
   transactionSource: {
     color: "rgba(0, 32, 69, 0.45)",
     fontSize: 11,
-    fontWeight: "600",
+    fontWeight: "800",
   },
   transactionTitle: {
     color: "#002045",
@@ -1893,7 +1893,7 @@ const styles = StyleSheet.create({
   },
   scopePill: {
     alignItems: "center",
-    borderRadius: 12,
+    borderRadius: 999,
     flex: 1,
     flexDirection: "row",
     gap: 6,
@@ -1909,7 +1909,7 @@ const styles = StyleSheet.create({
   scopePillLabel: {
     color: "rgba(0, 32, 69, 0.6)",
     fontSize: 12,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   scopePillLabelActive: {
     color: "#FFFFFF",
@@ -1920,8 +1920,8 @@ const styles = StyleSheet.create({
   scopeSwitch: {
     backgroundColor: "#FFFFFF",
     borderColor: "rgba(0, 32, 69, 0.08)",
-    borderRadius: 16,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     flexDirection: "row",
     gap: 4,
     minHeight: 44,

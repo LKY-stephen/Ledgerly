@@ -216,8 +216,8 @@ export function HomeScreen() {
         </View>
 
         {/* ---------- Two-column body on expanded, single-column on compact ---------- */}
-        <View style={isExpanded ? styles.wideBody : undefined}>
-          <View style={isExpanded ? styles.wideLeft : undefined}>
+        <View style={isExpanded ? styles.wideBody : styles.compactBody}>
+          <View style={isExpanded ? styles.wideLeft : styles.compactLeft}>
             <View style={[styles.heroBlock, { backgroundColor: palette.shellElevated, borderColor: palette.divider }]}>
               <View style={styles.heroHeader}>
                 <View style={styles.heroHeaderCopy}>
@@ -687,15 +687,15 @@ const styles = StyleSheet.create({
   activityAmount: {
     color: "#002045",
     fontSize: 16,
-    fontWeight: "700",
+    fontWeight: "800",
     lineHeight: 24,
     textAlign: "right",
   },
   activityCard: {
     backgroundColor: "#FFFFFF",
     borderColor: "rgba(0, 32, 69, 0.08)",
-    borderRadius: 22,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     overflow: "hidden",
   },
   activityCopy: {
@@ -719,7 +719,7 @@ const styles = StyleSheet.create({
   },
   activityIconWrap: {
     alignItems: "center",
-    borderRadius: 16,
+    borderRadius: 10,
     height: 38,
     justifyContent: "center",
     width: 38,
@@ -727,12 +727,12 @@ const styles = StyleSheet.create({
   activityItemTitle: {
     color: "#002045",
     fontSize: 14,
-    fontWeight: "700",
+    fontWeight: "800",
     lineHeight: 19,
   },
   activityItemType: {
     fontSize: 12,
-    fontWeight: "600",
+    fontWeight: "800",
     lineHeight: 18,
   },
   activityLeft: {
@@ -754,10 +754,10 @@ const styles = StyleSheet.create({
   },
   activityRowBorder: {
     borderTopColor: "rgba(0, 32, 69, 0.08)",
-    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopWidth: 1,
   },
   activitySection: {
-    gap: 14,
+    gap: 20,
   },
   activitySubtitle: {
     color: "#74777F",
@@ -773,7 +773,7 @@ const styles = StyleSheet.create({
   axisLabel: {
     color: "#74777F",
     fontSize: 10,
-    fontWeight: "600",
+    fontWeight: "800",
     lineHeight: 16,
   },
   bar: {
@@ -785,7 +785,7 @@ const styles = StyleSheet.create({
   },
   barColumn: {
     alignItems: "center",
-    borderRadius: 16,
+    borderRadius: 10,
     gap: 8,
     justifyContent: "flex-end",
     paddingHorizontal: 4,
@@ -802,7 +802,7 @@ const styles = StyleSheet.create({
   barLabel: {
     color: "#74777F",
     fontSize: 9,
-    fontWeight: "600",
+    fontWeight: "800",
     lineHeight: 12,
     textAlign: "center",
     width: 36,
@@ -852,10 +852,10 @@ const styles = StyleSheet.create({
   },
   container: {
     backgroundColor: "#F5F6F8",
-    gap: 16,
+    gap: 24,
     paddingBottom: 140,
     paddingHorizontal: 20,
-    paddingTop: 12,
+    paddingTop: 16,
   },
   emptyCardState: {
     gap: 8,
@@ -869,7 +869,7 @@ const styles = StyleSheet.create({
   emptyCardTitle: {
     color: "#002045",
     fontSize: 18,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   heroAction: {
     alignItems: "center",
@@ -887,7 +887,7 @@ const styles = StyleSheet.create({
   heroActionLabel: {
     color: "#FFFFFF",
     fontSize: 15,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   heroAmount: {
     fontSize: 38,
@@ -898,8 +898,8 @@ const styles = StyleSheet.create({
   heroBlock: {
     backgroundColor: "#FFFFFF",
     borderColor: "rgba(0, 32, 69, 0.08)",
-    borderRadius: 22,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     gap: 14,
     padding: 20,
   },
@@ -916,7 +916,7 @@ const styles = StyleSheet.create({
   },
   heroTitle: {
     fontSize: 12,
-    fontWeight: "700",
+    fontWeight: "800",
     letterSpacing: 0.8,
     textTransform: "uppercase",
   },
@@ -933,11 +933,11 @@ const styles = StyleSheet.create({
   },
   loadMoreLabel: {
     fontSize: 14,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   metricItem: {
     backgroundColor: "#F7F8FA",
-    borderRadius: 14,
+    borderRadius: 10,
     flex: 1,
     gap: 4,
     minWidth: 0,
@@ -947,7 +947,7 @@ const styles = StyleSheet.create({
   metricLabel: {
     color: "rgba(0, 32, 69, 0.5)",
     fontSize: 10,
-    fontWeight: "700",
+    fontWeight: "800",
     letterSpacing: 0.8,
     textTransform: "uppercase",
   },
@@ -958,7 +958,7 @@ const styles = StyleSheet.create({
   metricValue: {
     color: "#002045",
     fontSize: 15,
-    fontWeight: "700",
+    fontWeight: "800",
     lineHeight: 20,
   },
   notificationButton: {
@@ -972,8 +972,8 @@ const styles = StyleSheet.create({
   profitCard: {
     backgroundColor: "#FFFFFF",
     borderColor: "rgba(196, 198, 207, 0.18)",
-    borderRadius: 22,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     gap: 14,
     padding: 18,
   },
@@ -998,7 +998,7 @@ const styles = StyleSheet.create({
   secondaryActionLabel: {
     color: "#002045",
     fontSize: 13,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   profitSubtitle: {
     color: "#74777F",
@@ -1018,8 +1018,8 @@ const styles = StyleSheet.create({
   trendTooltip: {
     backgroundColor: "#F7F8FA",
     borderColor: "rgba(0, 32, 69, 0.06)",
-    borderRadius: 18,
-    borderWidth: 1,
+    borderRadius: 10,
+    borderWidth: 2,
     gap: 10,
     paddingHorizontal: 14,
     paddingVertical: 12,
@@ -1027,7 +1027,7 @@ const styles = StyleSheet.create({
   trendTooltipDate: {
     color: "#002045",
     fontSize: 14,
-    fontWeight: "700",
+    fontWeight: "800",
     lineHeight: 20,
   },
   trendTooltipHeader: {
@@ -1037,7 +1037,7 @@ const styles = StyleSheet.create({
   },
   trendTooltipMetric: {
     backgroundColor: "#FFFFFF",
-    borderRadius: 14,
+    borderRadius: 10,
     flex: 1,
     gap: 4,
     minWidth: 0,
@@ -1053,7 +1053,7 @@ const styles = StyleSheet.create({
   trendTooltipMetricLabel: {
     color: "rgba(0, 32, 69, 0.55)",
     fontSize: 10,
-    fontWeight: "700",
+    fontWeight: "800",
     letterSpacing: 0.6,
     textTransform: "uppercase",
   },
@@ -1063,12 +1063,12 @@ const styles = StyleSheet.create({
   },
   trendTooltipMetricValue: {
     fontSize: 14,
-    fontWeight: "700",
+    fontWeight: "800",
     lineHeight: 19,
   },
   trendTooltipNet: {
     fontSize: 13,
-    fontWeight: "700",
+    fontWeight: "800",
     lineHeight: 18,
   },
   trendTooltipNetNegative: {
@@ -1084,7 +1084,7 @@ const styles = StyleSheet.create({
   seeAllLink: {
     color: "#002045",
     fontSize: 13,
-    fontWeight: "700",
+    fontWeight: "800",
     lineHeight: 18,
   },
   topRow: {
@@ -1093,9 +1093,15 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 2,
   },
+  compactBody: {
+    gap: 24,
+  },
+  compactLeft: {
+    gap: 20,
+  },
   wideBody: {
     flexDirection: "row",
-    gap: 20,
+    gap: 24,
   },
   wideGapTop: {
     marginTop: 16,
@@ -1109,11 +1115,11 @@ const styles = StyleSheet.create({
   },
   chatExpanded: {
     height: 420,
-    borderTopWidth: 1,
+    borderTopWidth: 2,
     borderRadius: 0,
   },
   chatCollapsed: {
-    borderTopWidth: 1,
+    borderTopWidth: 2,
   },
   chatToggle: {
     flexDirection: "row",
@@ -1125,7 +1131,7 @@ const styles = StyleSheet.create({
   },
   chatToggleLabel: {
     fontSize: 14,
-    fontWeight: "600",
+    fontWeight: "800",
   },
   chatPrompt: {
     flex: 1,
@@ -1137,7 +1143,7 @@ const styles = StyleSheet.create({
   },
   chatPromptTitle: {
     fontSize: 18,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   chatPromptBody: {
     fontSize: 14,
@@ -1146,12 +1152,12 @@ const styles = StyleSheet.create({
   },
   chatPromptButton: {
     borderRadius: 999,
-    borderWidth: 1,
+    borderWidth: 2,
     paddingHorizontal: 18,
     paddingVertical: 10,
   },
   chatPromptButtonLabel: {
     fontSize: 14,
-    fontWeight: "600",
+    fontWeight: "800",
   },
 });

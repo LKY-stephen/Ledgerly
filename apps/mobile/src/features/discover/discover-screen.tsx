@@ -234,13 +234,10 @@ export function DiscoverScreen() {
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 18,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     gap: 10,
     padding: 16,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 1,
-    shadowRadius: 16,
   },
   cardMultiCol: {
     flex: 1,
@@ -264,7 +261,7 @@ const styles = StyleSheet.create({
   },
   categoryLabel: {
     fontSize: 12,
-    fontWeight: "700",
+    fontWeight: "800",
     letterSpacing: 0.4,
     textTransform: "uppercase",
   },
@@ -279,8 +276,8 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
   },
   emptyState: {
-    borderRadius: 18,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     gap: 8,
     padding: 18,
   },
@@ -294,7 +291,7 @@ const styles = StyleSheet.create({
   },
   eyebrow: {
     fontSize: 12,
-    fontWeight: "700",
+    fontWeight: "800",
     letterSpacing: 1.2,
     textTransform: "uppercase",
   },
@@ -308,19 +305,19 @@ const styles = StyleSheet.create({
   hero: {
     backgroundColor: "#FFFFFF",
     borderColor: "rgba(0, 32, 69, 0.08)",
-    borderRadius: 18,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     gap: 8,
     padding: 16,
   },
   latestLabel: {
     fontSize: 13,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   loadMoreButton: {
     alignItems: "center",
-    borderRadius: 16,
-    borderWidth: 1,
+    borderRadius: 999,
+    borderWidth: 2,
     flexDirection: "row",
     gap: 8,
     justifyContent: "center",
@@ -329,7 +326,7 @@ const styles = StyleSheet.create({
   },
   loadMoreLabel: {
     fontSize: 15,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   metaItem: {
     alignItems: "center",
@@ -347,12 +344,12 @@ const styles = StyleSheet.create({
   },
   openArticleLabel: {
     fontSize: 14,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   refreshHint: {
     alignItems: "center",
-    borderRadius: 16,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     flexDirection: "row",
     gap: 8,
     paddingHorizontal: 12,
@@ -361,7 +358,7 @@ const styles = StyleSheet.create({
   refreshHintLabel: {
     flex: 1,
     fontSize: 14,
-    fontWeight: "600",
+    fontWeight: "800",
     lineHeight: 19,
   },
   safeArea: {
@@ -369,7 +366,7 @@ const styles = StyleSheet.create({
   },
   sourceLabel: {
     fontSize: 12,
-    fontWeight: "600",
+    fontWeight: "800",
   },
   summary: {
     fontSize: 14,

@@ -196,10 +196,10 @@ const styles = StyleSheet.create({
   activityAmount: {
     fontSize: 15,
     fontVariant: ["tabular-nums"],
-    fontWeight: "700",
+    fontWeight: "800",
   },
   appBar: {
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: 2,
     paddingBottom: 10,
     paddingHorizontal: 18,
   },
@@ -215,8 +215,8 @@ const styles = StyleSheet.create({
   activityCard: {
     backgroundColor: "#FFFFFF",
     borderColor: "rgba(0, 32, 69, 0.08)",
-    borderRadius: 24,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     overflow: "hidden",
   },
   activityCopy: {
@@ -231,7 +231,7 @@ const styles = StyleSheet.create({
   },
   activityIconWrap: {
     alignItems: "center",
-    borderRadius: 18,
+    borderRadius: 12,
     height: 36,
     justifyContent: "center",
     width: 36,
@@ -239,12 +239,12 @@ const styles = StyleSheet.create({
   activityItemTitle: {
     color: "#002045",
     fontSize: 15,
-    fontWeight: "700",
+    fontWeight: "800",
     lineHeight: 20,
   },
   activityItemType: {
     fontSize: 12,
-    fontWeight: "600",
+    fontWeight: "800",
   },
   activityLeft: {
     alignItems: "center",
@@ -267,7 +267,7 @@ const styles = StyleSheet.create({
   },
   activityRowBorder: {
     borderTopColor: "rgba(0, 32, 69, 0.08)",
-    borderTopWidth: 1,
+    borderTopWidth: 2,
   },
   container: {
     backgroundColor: "#F9F9F7",
@@ -294,15 +294,15 @@ const styles = StyleSheet.create({
   heroCard: {
     backgroundColor: "#FFFDF8",
     borderColor: "rgba(0, 32, 69, 0.08)",
-    borderRadius: 24,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     gap: 8,
     padding: 20,
   },
   heroEyebrow: {
     color: "rgba(0, 32, 69, 0.5)",
     fontSize: 11,
-    fontWeight: "700",
+    fontWeight: "800",
     letterSpacing: 1,
     textTransform: "uppercase",
   },
@@ -325,14 +325,14 @@ const styles = StyleSheet.create({
   listCard: {
     backgroundColor: "#FFFFFF",
     borderColor: "rgba(0, 32, 69, 0.08)",
-    borderRadius: 24,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     overflow: "hidden",
   },
   loadMoreButton: {
     alignItems: "center",
     backgroundColor: "#F4F4F2",
-    borderRadius: 18,
+    borderRadius: 12,
     paddingHorizontal: 18,
     paddingVertical: 14,
   },
@@ -342,7 +342,7 @@ const styles = StyleSheet.create({
   loadMoreLabel: {
     color: "#002045",
     fontSize: 14,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   safeArea: {
     backgroundColor: "#F9F9F7",
@@ -361,6 +361,6 @@ const styles = StyleSheet.create({
   secondaryActionLabel: {
     color: "#002045",
     fontSize: 13,
-    fontWeight: "700",
+    fontWeight: "800",
   },
 });

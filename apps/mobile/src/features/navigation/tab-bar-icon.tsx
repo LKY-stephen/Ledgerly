@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
   wrap: {
     alignItems: "center",
     borderRadius: 999,
-    borderWidth: 1,
+    borderWidth: 2,
     justifyContent: "center",
     minWidth: 84,
     minHeight: 46,
