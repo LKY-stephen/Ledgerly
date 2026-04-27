@@ -28,15 +28,12 @@ export function LaunchScreen() {
 const styles = StyleSheet.create({
   card: {
     alignItems: "center",
-    borderRadius: 28,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     gap: 12,
     maxWidth: 320,
     paddingHorizontal: 24,
     paddingVertical: 28,
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 1,
-    shadowRadius: 28,
   },
   container: {
     alignItems: "center",

@@ -476,19 +476,19 @@ const styles = StyleSheet.create({
   },
   netIncomeCard: {
     gap: 4,
-    borderRadius: 20,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     paddingHorizontal: 16,
     paddingVertical: 14,
   },
   netIncomeLabel: {
     fontSize: 12,
-    fontWeight: "600",
+    fontWeight: "800",
     textTransform: "uppercase",
   },
   netIncomeValue: {
     fontSize: 24,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   sectionStack: {
     gap: 12,
@@ -508,7 +508,7 @@ const styles = StyleSheet.create({
   },
   tableHeaderLabel: {
     fontSize: 12,
-    fontWeight: "700",
+    fontWeight: "800",
     letterSpacing: 0.4,
     textTransform: "uppercase",
   },
@@ -519,8 +519,8 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   tableShell: {
-    borderRadius: 20,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     overflow: "hidden",
   },
   tableValue: {
@@ -528,8 +528,8 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   valueList: {
-    borderRadius: 20,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     overflow: "hidden",
   },
   valueRow: {
@@ -542,7 +542,7 @@ const styles = StyleSheet.create({
   },
   valueRowAmount: {
     fontSize: 15,
-    fontWeight: "700",
+    fontWeight: "800",
     lineHeight: 20,
     textAlign: "right",
   },
@@ -552,7 +552,7 @@ const styles = StyleSheet.create({
   },
   valueRowLabel: {
     fontSize: 15,
-    fontWeight: "600",
+    fontWeight: "800",
     lineHeight: 20,
   },
   valueRowNote: {
@@ -560,13 +560,13 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   valueSectionHeader: {
-    borderBottomWidth: 1,
+    borderBottomWidth: 2,
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
   valueSectionTitle: {
     fontSize: 14,
-    fontWeight: "700",
+    fontWeight: "800",
     letterSpacing: 0.4,
     textTransform: "uppercase",
   },

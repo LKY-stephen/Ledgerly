@@ -185,22 +185,19 @@ export function DiscoverDetailScreen() {
 
 const styles = StyleSheet.create({
   appBar: {
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: 2,
     paddingBottom: 12,
     paddingHorizontal: 20,
   },
   bodyCard: {
-    borderRadius: 28,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     gap: 16,
     padding: 22,
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 1,
-    shadowRadius: 24,
   },
   categoryLabel: {
     fontSize: 12,
-    fontWeight: "700",
+    fontWeight: "800",
     letterSpacing: 0.4,
     textTransform: "uppercase",
   },
@@ -220,8 +217,8 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   emptyState: {
-    borderRadius: 28,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     gap: 10,
     padding: 22,
   },
@@ -235,18 +232,15 @@ const styles = StyleSheet.create({
   },
   eyebrow: {
     fontSize: 12,
-    fontWeight: "700",
+    fontWeight: "800",
     letterSpacing: 1,
     textTransform: "uppercase",
   },
   heroCard: {
-    borderRadius: 28,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     gap: 18,
     padding: 22,
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 1,
-    shadowRadius: 24,
   },
   heroTop: {
     alignItems: "center",
@@ -254,8 +248,8 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   metaCard: {
-    borderRadius: 18,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     flex: 1,
     gap: 6,
     padding: 14,
@@ -266,11 +260,11 @@ const styles = StyleSheet.create({
   },
   metaLabel: {
     fontSize: 12,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   metaValue: {
     fontSize: 14,
-    fontWeight: "600",
+    fontWeight: "800",
     lineHeight: 20,
   },
   paragraph: {
@@ -281,7 +275,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     alignSelf: "flex-start",
     borderRadius: 999,
-    borderWidth: 1,
+    borderWidth: 2,
     flexDirection: "row",
     gap: 8,
     paddingHorizontal: 12,
@@ -289,7 +283,7 @@ const styles = StyleSheet.create({
   },
   readTimeText: {
     fontSize: 14,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   safeArea: {
     flex: 1,

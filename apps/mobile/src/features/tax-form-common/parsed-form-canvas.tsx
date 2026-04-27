@@ -12,12 +12,12 @@ import type {
   TaxFormSlotSource,
 } from "./types";
 
-const FORM_INK = "#111827";
-const FORM_MUTED = "#4b5563";
-const FORM_RULE = "#0f172a";
-const FORM_SHEET = "#fffef9";
+const FORM_INK = "#000000";
+const FORM_MUTED = "#555555";
+const FORM_RULE = "#000000";
+const FORM_SHEET = "#FFFFFF";
 const FORM_FONT_FAMILY = "Helvetica";
-const CALCULATED_COLOR = "#2563eb";
+const CALCULATED_COLOR = "#A0E9FF";
 
 interface ParsedFormCanvasProps {
   getLayoutPage: (page: TaxFormPage) => ParsedTaxFormLayoutPage;
@@ -75,7 +75,7 @@ export function ParsedFormCanvas(props: ParsedFormCanvasProps) {
               <SvgTextBlock
                 fill={slot.source === "manual" ? FORM_MUTED : FORM_INK}
                 fontSize={getPreviewFontSize(rect.height, isAmount)}
-                fontWeight="700"
+                fontWeight="800"
                 lines={previewLines}
                 textAnchor={isAmount ? "end" : "start"}
                 x={isAmount ? rect.x + rect.width - 3 : rect.x + 3}
@@ -87,8 +87,8 @@ export function ParsedFormCanvas(props: ParsedFormCanvasProps) {
                 fill="none"
                 height={Math.max(rect.height - 1.5, 1)}
                 rx={isCheckbox ? 1.5 : 2.5}
-                stroke="rgba(24, 34, 47, 0.28)"
-                strokeWidth={0.7}
+                stroke="rgba(0, 0, 0, 0.4)"
+                strokeWidth={0.8}
                 width={Math.max(rect.width - 1.5, 1)}
                 x={rect.x + 0.75}
                 y={rect.y + 0.75}
@@ -271,9 +271,9 @@ function getSlotColor(source: TaxFormSlotSource, palette: SurfaceTokens) {
 function getTextWeight(sourceType: ParsedTaxFormTextElement["source_type"]) {
   switch (sourceType) {
     case "heading":
-      return "700";
+      return "800";
     case "caption":
-      return "600";
+      return "800";
     case "list item":
       return "500";
     default:

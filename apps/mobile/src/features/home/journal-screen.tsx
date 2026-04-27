@@ -223,18 +223,15 @@ function PostingLineRow({
 
 const styles = StyleSheet.create({
   appBar: {
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: 2,
     paddingBottom: 10,
     paddingHorizontal: 18,
   },
   card: {
-    borderRadius: 16,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     gap: 14,
     padding: 16,
-    shadowOffset: { height: 4, width: 0 },
-    shadowOpacity: 0.04,
-    shadowRadius: 12,
   },
   cardAmount: {
     fontSize: 17,
@@ -265,7 +262,7 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     fontSize: 15,
-    fontWeight: "700",
+    fontWeight: "800",
     lineHeight: 20,
   },
   emptyState: {
@@ -281,7 +278,7 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: 18,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   kindIcon: {
     alignItems: "center",
@@ -301,7 +298,7 @@ const styles = StyleSheet.create({
   },
   postingAmount: {
     fontSize: 15,
-    fontWeight: "700",
+    fontWeight: "800",
     flexShrink: 0,
   },
   postingDetail: {
@@ -309,7 +306,7 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   postingDivider: {
-    height: StyleSheet.hairlineWidth,
+    height: 2,
   },
   postingLine: {
     gap: 4,
@@ -325,12 +322,12 @@ const styles = StyleSheet.create({
   postingSide: {
     flex: 1,
     fontSize: 14,
-    fontWeight: "700",
+    fontWeight: "800",
     minWidth: 0,
   },
   postingsCard: {
     borderRadius: 12,
-    borderWidth: 1,
+    borderWidth: 2,
     overflow: "hidden",
   },
   safeArea: {
@@ -338,7 +335,7 @@ const styles = StyleSheet.create({
   },
   sectionCount: {
     fontSize: 13,
-    fontWeight: "600",
+    fontWeight: "800",
   },
   sectionHeader: {
     alignItems: "center",
@@ -363,12 +360,12 @@ const styles = StyleSheet.create({
   },
   summaryLabel: {
     fontSize: 11,
-    fontWeight: "700",
+    fontWeight: "800",
     letterSpacing: 0.6,
     textTransform: "uppercase",
   },
   summaryRow: {
-    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopWidth: 2,
     flexDirection: "row",
     paddingTop: 12,
   },
