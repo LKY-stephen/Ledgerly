@@ -900,12 +900,12 @@ const styles = StyleSheet.create({
   equationBreakdownAmount: {
     fontSize: 17,
     fontVariant: ["tabular-nums"],
-    fontWeight: "700",
+    fontWeight: "800",
   },
   equationBreakdownLabel: {
     flex: 1,
     fontSize: 14,
-    fontWeight: "600",
+    fontWeight: "800",
     lineHeight: 20,
     paddingRight: 12,
   },
@@ -920,8 +920,8 @@ const styles = StyleSheet.create({
     gap: 0,
   },
   equationCard: {
-    borderRadius: 20,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     gap: 8,
     padding: 18,
   },
@@ -930,8 +930,8 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   equationDetailCard: {
-    borderRadius: 20,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     gap: 8,
     padding: 18,
   },
@@ -941,12 +941,12 @@ const styles = StyleSheet.create({
   },
   equationDetailTitle: {
     fontSize: 18,
-    fontWeight: "700",
+    fontWeight: "800",
     lineHeight: 24,
   },
   equationEyebrow: {
     fontSize: 11,
-    fontWeight: "700",
+    fontWeight: "800",
     letterSpacing: 1.1,
     textTransform: "uppercase",
   },
@@ -960,8 +960,8 @@ const styles = StyleSheet.create({
     fontWeight: "800",
   },
   groupedRecordCard: {
-    borderRadius: 18,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     gap: 10,
     padding: 16,
   },
@@ -981,11 +981,11 @@ const styles = StyleSheet.create({
   },
   groupedRecordTitle: {
     fontSize: 16,
-    fontWeight: "700",
+    fontWeight: "800",
     lineHeight: 22,
   },
   listRowSplit: {
-    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopWidth: 1,
   },
   metricAccentBar: {
     borderBottomRightRadius: 999,
@@ -997,8 +997,8 @@ const styles = StyleSheet.create({
     width: 4,
   },
   metricCard: {
-    borderRadius: 20,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     flex: 1,
     gap: 6,
     minHeight: 114,
@@ -1013,7 +1013,7 @@ const styles = StyleSheet.create({
   },
   metricLabel: {
     fontSize: 12,
-    fontWeight: "600",
+    fontWeight: "800",
     letterSpacing: 0.3,
   },
   metricValue: {
@@ -1030,15 +1030,15 @@ const styles = StyleSheet.create({
   },
   modalCloseButton: {
     alignItems: "center",
-    borderRadius: 16,
-    borderWidth: 1,
+    borderRadius: 999,
+    borderWidth: 2,
     height: 44,
     justifyContent: "center",
     width: 44,
   },
   modalEyebrow: {
     fontSize: 11,
-    fontWeight: "700",
+    fontWeight: "800",
     letterSpacing: 1.1,
     textTransform: "uppercase",
   },
@@ -1069,7 +1069,7 @@ const styles = StyleSheet.create({
   postingLineAmount: {
     fontSize: 17,
     fontVariant: ["tabular-nums"],
-    fontWeight: "700",
+    fontWeight: "800",
   },
   postingLineCopy: {
     flex: 1,
@@ -1105,12 +1105,12 @@ const styles = StyleSheet.create({
   },
   postingLineTitle: {
     fontSize: 16,
-    fontWeight: "700",
+    fontWeight: "800",
     lineHeight: 22,
   },
   recordFieldLabel: {
     fontSize: 12,
-    fontWeight: "700",
+    fontWeight: "800",
     letterSpacing: 0.3,
     textTransform: "uppercase",
     width: 108,
@@ -1130,7 +1130,8 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   recordModalCard: {
-    borderRadius: 28,
+    borderRadius: 14,
+    borderWidth: 2,
     gap: 16,
     maxHeight: "84%",
     padding: 20,
@@ -1146,7 +1147,7 @@ const styles = StyleSheet.create({
   },
   sectionMeta: {
     fontSize: 12,
-    fontWeight: "600",
+    fontWeight: "800",
   },
   sectionStack: {
     gap: 12,
@@ -1154,19 +1155,19 @@ const styles = StyleSheet.create({
   sectionTitle: {
     flex: 1,
     fontSize: 18,
-    fontWeight: "700",
+    fontWeight: "800",
     lineHeight: 24,
   },
   sheetAmount: {
     fontSize: 17,
     fontVariant: ["tabular-nums"],
-    fontWeight: "700",
+    fontWeight: "800",
     minWidth: 108,
     textAlign: "right",
   },
   sheetCard: {
-    borderRadius: 20,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     overflow: "hidden",
   },
   sheetCopy: {
@@ -1175,13 +1176,13 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   sheetHeader: {
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: 2,
     paddingHorizontal: 18,
     paddingVertical: 14,
   },
   sheetLabel: {
     fontSize: 15,
-    fontWeight: "700",
+    fontWeight: "800",
     lineHeight: 21,
   },
   sheetNote: {
@@ -1200,7 +1201,7 @@ const styles = StyleSheet.create({
   },
   sheetTitle: {
     fontSize: 17,
-    fontWeight: "700",
+    fontWeight: "800",
     lineHeight: 22,
   },
   statusBody: {
@@ -1208,14 +1209,14 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   statusCard: {
-    borderRadius: 20,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     gap: 10,
     padding: 18,
   },
   statusTitle: {
     fontSize: 18,
-    fontWeight: "700",
+    fontWeight: "800",
     lineHeight: 24,
   },
   transactionAmount: {
@@ -1226,8 +1227,8 @@ const styles = StyleSheet.create({
   },
   transactionCard: {
     borderLeftWidth: 4,
-    borderRadius: 20,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     overflow: "hidden",
   },
   transactionCopy: {
@@ -1237,7 +1238,7 @@ const styles = StyleSheet.create({
   },
   transactionHeader: {
     alignItems: "center",
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: 1,
     flexDirection: "row",
     gap: 16,
     justifyContent: "space-between",
@@ -1246,7 +1247,7 @@ const styles = StyleSheet.create({
   },
   transactionIconWrap: {
     alignItems: "center",
-    borderRadius: 14,
+    borderRadius: 999,
     height: 34,
     justifyContent: "center",
     width: 34,
@@ -1274,7 +1275,7 @@ const styles = StyleSheet.create({
   },
   transactionTitle: {
     fontSize: 18,
-    fontWeight: "700",
+    fontWeight: "800",
     lineHeight: 24,
   },
 });

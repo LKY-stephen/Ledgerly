@@ -92,18 +92,18 @@ const styles = StyleSheet.create({
     fontWeight: "800",
   },
   container: {
-    borderRightWidth: StyleSheet.hairlineWidth,
+    borderRightWidth: 2,
     paddingBottom: 24,
     width: SIDEBAR_WIDTH,
   },
   divider: {
-    height: StyleSheet.hairlineWidth,
+    height: 2,
     marginHorizontal: 18,
     marginVertical: 12,
   },
   navItem: {
     alignItems: "center",
-    borderRadius: 12,
+    borderRadius: 999,
     flexDirection: "row",
     gap: 12,
     marginHorizontal: 10,
@@ -116,9 +116,9 @@ const styles = StyleSheet.create({
   },
   navLabel: {
     fontSize: 14,
-    fontWeight: "600",
+    fontWeight: "800",
   },
   navLabelActive: {
-    fontWeight: "700",
+    fontWeight: "800",
   },
 });

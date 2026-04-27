@@ -406,8 +406,8 @@ export function ProfileScreen() {
           </Text>
         </View>
 
-        <View style={isExpanded ? styles.wideBody : undefined}>
-        <View style={isExpanded ? styles.wideLeft : undefined}>
+        <View style={isExpanded ? styles.wideBody : styles.compactBody}>
+        <View style={isExpanded ? styles.wideLeft : styles.compactColumn}>
         <SectionCard
           eyebrow={copy.common.theme}
           palette={palette}
@@ -568,7 +568,7 @@ export function ProfileScreen() {
         </SectionCard>
         </View>
 
-        <View style={isExpanded ? styles.wideRight : undefined}>
+        <View style={isExpanded ? styles.wideRight : styles.compactColumn}>
         {shouldRenderAiParseSection() ? (
           <SectionCard
             eyebrow={copy.meScreen.apiSectionEyebrow}
@@ -996,8 +996,8 @@ export function ProfileScreen() {
 const styles = StyleSheet.create({
   actionButton: {
     alignItems: "center",
-    borderRadius: 14,
-    borderWidth: 1,
+    borderRadius: 999,
+    borderWidth: 2,
     flex: 1,
     justifyContent: "center",
     minHeight: 44,
@@ -1005,21 +1005,21 @@ const styles = StyleSheet.create({
   },
   actionButtonLabel: {
     fontSize: 14,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   container: {
-    gap: 14,
-    padding: 18,
+    gap: 22,
+    padding: 20,
     paddingBottom: 168,
   },
   databaseMessage: {
     fontSize: 13,
-    fontWeight: "600",
+    fontWeight: "800",
     lineHeight: 20,
   },
   eyebrow: {
     fontSize: 12,
-    fontWeight: "700",
+    fontWeight: "800",
     letterSpacing: 1.2,
     textTransform: "uppercase",
   },
@@ -1028,24 +1028,24 @@ const styles = StyleSheet.create({
   },
   fieldLabel: {
     fontSize: 13,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   hero: {
-    borderRadius: 18,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     gap: 8,
     padding: 16,
   },
   inputChrome: {
     alignItems: "center",
-    borderRadius: 14,
-    borderWidth: 1,
+    borderRadius: 999,
+    borderWidth: 2,
     flexDirection: "row",
     minHeight: 44,
   },
   input: {
-    borderRadius: 14,
-    borderWidth: 1,
+    borderRadius: 999,
+    borderWidth: 2,
     fontSize: 14,
     minHeight: 44,
     paddingHorizontal: 14,
@@ -1067,8 +1067,8 @@ const styles = StyleSheet.create({
   },
   logoutButton: {
     alignItems: "center",
-    borderWidth: 1,
-    borderRadius: 14,
+    borderWidth: 2,
+    borderRadius: 999,
     justifyContent: "center",
     marginTop: 8,
     minHeight: 44,
@@ -1077,7 +1077,7 @@ const styles = StyleSheet.create({
   googleConnectButton: {
     alignItems: "center",
     borderRadius: 999,
-    borderWidth: 1,
+    borderWidth: 2,
     justifyContent: "center",
     minHeight: 48,
     paddingHorizontal: 16,
@@ -1089,7 +1089,7 @@ const styles = StyleSheet.create({
   },
   googleConnectLabel: {
     fontSize: 14,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   oauthDivider: {
     alignItems: "center",
@@ -1099,11 +1099,11 @@ const styles = StyleSheet.create({
   },
   oauthDividerLine: {
     flex: 1,
-    height: StyleSheet.hairlineWidth,
+    height: 2,
   },
   oauthDividerText: {
     fontSize: 12,
-    fontWeight: "600",
+    fontWeight: "800",
   },
   oauthDot: {
     borderRadius: 999,
@@ -1117,19 +1117,19 @@ const styles = StyleSheet.create({
   },
   oauthStatusText: {
     fontSize: 14,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   logoutLabel: {
     fontSize: 16,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   optionLabel: {
     fontSize: 14,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   optionPill: {
     borderRadius: 999,
-    borderWidth: 1,
+    borderWidth: 2,
     minWidth: 92,
     paddingHorizontal: 14,
     paddingVertical: 10,
@@ -1148,11 +1148,11 @@ const styles = StyleSheet.create({
   },
   secondaryActionLabel: {
     fontSize: 14,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   sessionKind: {
     fontSize: 15,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   summary: {
     fontSize: 14,
@@ -1163,16 +1163,22 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     lineHeight: 30,
   },
+  compactBody: {
+    gap: 22,
+  },
+  compactColumn: {
+    gap: 22,
+  },
   wideBody: {
     flexDirection: "row",
-    gap: 18,
+    gap: 22,
   },
   wideLeft: {
     flex: 1,
-    gap: 14,
+    gap: 22,
   },
   wideRight: {
     flex: 1,
-    gap: 14,
+    gap: 22,
   },
 });

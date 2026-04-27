@@ -465,7 +465,7 @@ function PageButton(props: {
 const styles = StyleSheet.create({
   errorText: {
     fontSize: 14,
-    fontWeight: "600",
+    fontWeight: "800",
     lineHeight: 20,
   },
   footerText: {
@@ -473,22 +473,16 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   formShell: {
-    borderRadius: 20,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     overflow: "hidden",
-    shadowOffset: {
-      height: 10,
-      width: 0,
-    },
-    shadowOpacity: 0.14,
-    shadowRadius: 18,
   },
   formScrollerContent: {
     padding: 12,
   },
   launchButton: {
     alignItems: "center",
-    borderRadius: 16,
+    borderRadius: 999,
     justifyContent: "center",
     minHeight: 50,
     paddingHorizontal: 20,
@@ -499,11 +493,11 @@ const styles = StyleSheet.create({
   },
   legendLabel: {
     fontSize: 12,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   legendPill: {
     borderRadius: 999,
-    borderWidth: 1,
+    borderWidth: 2,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
@@ -525,7 +519,7 @@ const styles = StyleSheet.create({
   },
   modalButton: {
     alignItems: "center",
-    borderRadius: 14,
+    borderRadius: 999,
     justifyContent: "center",
     minHeight: 46,
     minWidth: 132,
@@ -543,8 +537,8 @@ const styles = StyleSheet.create({
   },
   modalButtonSecondary: {
     alignItems: "center",
-    borderRadius: 14,
-    borderWidth: 1,
+    borderRadius: 999,
+    borderWidth: 2,
     justifyContent: "center",
     minHeight: 46,
     minWidth: 132,
@@ -552,20 +546,14 @@ const styles = StyleSheet.create({
   },
   modalButtonSecondaryLabel: {
     fontSize: 15,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   modalCard: {
-    borderRadius: 26,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     gap: 18,
     maxWidth: 560,
     padding: 24,
-    shadowOffset: {
-      height: 16,
-      width: 0,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 32,
     width: "100%",
   },
   modalTitle: {
@@ -573,15 +561,15 @@ const styles = StyleSheet.create({
     fontWeight: "800",
   },
   pageButton: {
-    borderRadius: 14,
-    borderWidth: 1,
+    borderRadius: 999,
+    borderWidth: 2,
     minWidth: 110,
     paddingHorizontal: 14,
     paddingVertical: 10,
   },
   pageButtonLabel: {
     fontSize: 14,
-    fontWeight: "700",
+    fontWeight: "800",
     textAlign: "center",
   },
   pageButtonRow: {
@@ -613,8 +601,8 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   slotCard: {
-    borderRadius: 18,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     gap: 10,
     padding: 16,
   },
@@ -639,7 +627,7 @@ const styles = StyleSheet.create({
   },
   sourceLine: {
     fontSize: 12,
-    fontWeight: "600",
+    fontWeight: "800",
     lineHeight: 18,
   },
   subheading: {
@@ -653,7 +641,7 @@ const styles = StyleSheet.create({
   zoomButton: {
     alignItems: "center",
     borderRadius: 12,
-    borderWidth: 1,
+    borderWidth: 2,
     height: 38,
     justifyContent: "center",
     width: 38,
@@ -663,7 +651,7 @@ const styles = StyleSheet.create({
   },
   zoomButtonLabel: {
     fontSize: 20,
-    fontWeight: "700",
+    fontWeight: "800",
     marginTop: -2,
   },
   zoomButtonRow: {
@@ -674,7 +662,7 @@ const styles = StyleSheet.create({
   zoomLabel: {
     flex: 1,
     fontSize: 14,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   zoomRow: {
     alignItems: "center",
@@ -686,7 +674,7 @@ const styles = StyleSheet.create({
   zoomValueButton: {
     alignItems: "center",
     borderRadius: 12,
-    borderWidth: 1,
+    borderWidth: 2,
     height: 38,
     justifyContent: "center",
     minWidth: 72,

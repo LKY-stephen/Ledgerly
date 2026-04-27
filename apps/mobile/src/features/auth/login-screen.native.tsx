@@ -125,7 +125,7 @@ const styles = StyleSheet.create({
   },
   brandSubtitle: {
     fontSize: 18,
-    fontWeight: "600",
+    fontWeight: "800",
     lineHeight: 26,
   },
   brandTitle: {
@@ -148,25 +148,22 @@ const styles = StyleSheet.create({
   guestButton: {
     alignItems: "center",
     borderRadius: 999,
-    borderWidth: 1,
+    borderWidth: 2,
     height: 52,
     justifyContent: "center",
   },
   guestLabel: {
     fontSize: 16,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   logoCard: {
     alignItems: "center",
-    borderRadius: 28,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     justifyContent: "center",
     minHeight: 248,
     padding: 24,
     width: "100%",
-    shadowOffset: { height: 16, width: 0 },
-    shadowOpacity: 0.12,
-    shadowRadius: 28,
   },
   pillDot: {
     borderRadius: 999,
@@ -185,7 +182,7 @@ const styles = StyleSheet.create({
   signalChip: {
     alignItems: "center",
     borderRadius: 999,
-    borderWidth: 1,
+    borderWidth: 2,
     flexDirection: "row",
     gap: 8,
     paddingHorizontal: 12,
@@ -193,7 +190,7 @@ const styles = StyleSheet.create({
   },
   signalChipLabel: {
     fontSize: 12,
-    fontWeight: "700",
+    fontWeight: "800",
     letterSpacing: 0.5,
   },
   signalRow: {

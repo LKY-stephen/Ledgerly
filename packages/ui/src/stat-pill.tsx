@@ -10,7 +10,7 @@ interface StatPillProps {
 
 export function StatPill({ label, palette = surfaceTokens, value }: StatPillProps) {
   return (
-    <View style={[styles.pill, { backgroundColor: palette.accentSoft }]}>
+    <View style={[styles.pill, { backgroundColor: palette.accentSoft, borderColor: palette.border }]}>
       <Text style={[styles.value, { color: palette.accent }]}>{value}</Text>
       <Text style={[styles.label, { color: palette.inkMuted }]}>{label}</Text>
     </View>
@@ -19,20 +19,18 @@ export function StatPill({ label, palette = surfaceTokens, value }: StatPillProp
 
 const styles = StyleSheet.create({
   label: {
-    color: "#5b6472",
     fontSize: 12,
   },
   pill: {
     minWidth: 132,
     gap: 4,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderRadius: 18,
-    backgroundColor: "#dff8f4",
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 999,
+    borderWidth: 2,
   },
   value: {
-    color: "#0f766e",
     fontSize: 20,
-    fontWeight: "700",
+    fontWeight: "800",
   },
 });

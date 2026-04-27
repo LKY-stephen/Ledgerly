@@ -9,11 +9,11 @@ import {
 } from "./form-1099-nec-layout";
 import type { Form1099NecSlotId, Form1099NecSlotState } from "./form-1099-nec-model";
 
-const FORM_RED = "#cf2b34";
-const FORM_RED_DARK = "#b4232c";
-const FORM_SHEET = "#fffdfa";
-const FORM_INK = "#18222f";
-const FORM_MUTED = "#5b4a4e";
+const FORM_RED = "#FE2F2F";
+const FORM_RED_DARK = "#CC0000";
+const FORM_SHEET = "#FFFFFF";
+const FORM_INK = "#000000";
+const FORM_MUTED = "#555555";
 
 const amountSlotIds = new Set<Form1099NecSlotId>(["box1", "box3", "box4", "box5", "box7"]);
 const checkboxSlotIds = new Set<Form1099NecSlotId>([
@@ -83,7 +83,7 @@ export function Form1099NecCanvas(props: Form1099NecCanvasProps) {
               <SvgTextBlock
                 fill={slot.source === "database" ? FORM_INK : FORM_MUTED}
                 fontSize={getPreviewFontSize(rect.height, isAmount)}
-                fontWeight="700"
+                fontWeight="800"
                 lines={previewLines}
                 textAnchor={isAmount ? "end" : "start"}
                 x={isAmount ? rect.x + rect.width - 3 : rect.x + 3}
@@ -95,8 +95,8 @@ export function Form1099NecCanvas(props: Form1099NecCanvasProps) {
                 fill="none"
                 height={Math.max(rect.height - 1.5, 1)}
                 rx={isCheckbox ? 1.5 : 2.5}
-                stroke="rgba(24, 34, 47, 0.28)"
-                strokeWidth={0.7}
+                stroke="rgba(0, 0, 0, 0.4)"
+                strokeWidth={0.8}
                 width={Math.max(rect.width - 1.5, 1)}
                 x={rect.x + 0.75}
                 y={rect.y + 0.75}
@@ -256,9 +256,9 @@ function getSlotFill(slot: Form1099NecSlotState, palette: SurfaceTokens): string
 function getTextWeight(sourceType: Form1099NecLayoutTextElement["sourceType"]) {
   switch (sourceType) {
     case "heading":
-      return "700";
+      return "800";
     case "caption":
-      return "700";
+      return "800";
     case "list item":
       return "500";
     case "paragraph":

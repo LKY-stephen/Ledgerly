@@ -568,7 +568,7 @@ const styles = StyleSheet.create({
   button: {
     alignItems: "center",
     alignSelf: "flex-start",
-    borderRadius: 18,
+    borderRadius: 999,
     justifyContent: "center",
     minHeight: 48,
     paddingHorizontal: 18,
@@ -581,8 +581,8 @@ const styles = StyleSheet.create({
     opacity: 0.88,
   },
   card: {
-    borderRadius: 26,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     gap: 16,
     marginTop: 24,
     padding: 20,
@@ -603,7 +603,7 @@ const styles = StyleSheet.create({
   exportButton: {
     alignItems: "center",
     alignSelf: "flex-start",
-    borderRadius: 18,
+    borderRadius: 999,
     justifyContent: "center",
     minHeight: 44,
     paddingHorizontal: 18,
@@ -614,13 +614,13 @@ const styles = StyleSheet.create({
   },
   fieldName: {
     fontSize: 14,
-    fontWeight: "700",
+    fontWeight: "800",
     lineHeight: 19,
   },
   fieldRow: {
     alignItems: "center",
-    borderRadius: 16,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     flexDirection: "row",
     gap: 12,
     justifyContent: "space-between",
@@ -654,7 +654,7 @@ const styles = StyleSheet.create({
   modalButton: {
     alignItems: "center",
     alignSelf: "flex-start",
-    borderRadius: 18,
+    borderRadius: 999,
     justifyContent: "center",
     minHeight: 44,
     paddingHorizontal: 18,
@@ -664,8 +664,8 @@ const styles = StyleSheet.create({
     fontWeight: "800",
   },
   modalCard: {
-    borderRadius: 22,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     gap: 16,
     maxHeight: "88%",
     maxWidth: 560,
@@ -736,13 +736,13 @@ const styles = StyleSheet.create({
   },
   yearButton: {
     borderRadius: 999,
-    borderWidth: 1,
+    borderWidth: 2,
     paddingHorizontal: 14,
     paddingVertical: 10,
   },
   yearButtonLabel: {
     fontSize: 13,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   yearRow: {
     flexDirection: "row",

@@ -42,13 +42,13 @@ export function getNavigationTheme(palette: SurfaceTokens) {
   return {
     activeTint: palette.tabActive,
     inactiveTint: palette.tabInactive,
-    pressedBackground: withAlpha(palette.ink, palette.name === "dark" ? 0.08 : 0.03),
+    pressedBackground: withAlpha(palette.ink, 0.08),
     sceneBackground: palette.shell,
-    sidebarDivider: withAlpha(palette.ink, palette.name === "dark" ? 0.12 : 0.08),
+    sidebarDivider: palette.border,
     tabBarBackground: palette.tabBar,
-    tabBarBorder: withAlpha(palette.tabActive, palette.name === "dark" ? 0.2 : 0.12),
-    tabIndicatorBackground: withAlpha(palette.tabActive, palette.name === "dark" ? 0.16 : 0.08),
-    tabIndicatorBorder: withAlpha(palette.tabActive, palette.name === "dark" ? 0.28 : 0.14),
+    tabBarBorder: palette.border,
+    tabIndicatorBackground: palette.paperMuted,
+    tabIndicatorBorder: palette.border,
   };
 }
 
@@ -63,8 +63,8 @@ export function getFeedbackColors(
       : palette.accent;
 
   return {
-    background: withAlpha(baseColor, palette.name === "dark" ? 0.18 : 0.12),
-    border: withAlpha(baseColor, palette.name === "dark" ? 0.34 : 0.22),
+    background: palette.paper,
+    border: baseColor,
     text: baseColor,
   };
 }
@@ -74,14 +74,14 @@ export function getButtonColors(
   tone: ButtonTone = "primary",
 ) {
   const background = tone === "destructive" ? palette.destructive : palette.accent;
-  const text = palette.name === "dark" ? palette.shell : palette.inkOnAccent;
+  const text = palette.inkOnAccent;
 
   return {
     background,
-    border: withAlpha(background, palette.name === "dark" ? 0.3 : 0.18),
-    disabledBackground: withAlpha(background, palette.name === "dark" ? 0.38 : 0.28),
-    disabledText: withAlpha(text, palette.name === "dark" ? 0.74 : 0.72),
-    pressedBackground: withAlpha(background, palette.name === "dark" ? 0.82 : 0.88),
+    border: palette.border,
+    disabledBackground: withAlpha(background, 0.35),
+    disabledText: withAlpha(text, 0.5),
+    pressedBackground: withAlpha(background, 0.75),
     text,
   };
 }
