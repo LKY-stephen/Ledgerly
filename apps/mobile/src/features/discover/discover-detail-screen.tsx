@@ -40,7 +40,7 @@ export function DiscoverDetailScreen() {
             if (router.canGoBack()) {
               router.back();
             } else {
-              router.replace("/(tabs)/discover");
+              router.replace("/(game)");
             }
           }}
           palette={palette}

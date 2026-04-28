@@ -74,7 +74,7 @@ describe("storage entry routing", () => {
         session: true,
         storageGateState: { kind: "ready" },
       }),
-    ).toBe("/(tabs)");
+    ).toBe("/(game)");
     expect(
       resolveProtectedRouteRedirect({
         isHydrated: true,

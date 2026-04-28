@@ -35,7 +35,7 @@ export function StorageSetupScreen() {
   }
 
   if (storageGateState.kind === "ready") {
-    return <Redirect href="/(tabs)" />;
+    return <Redirect href="/(game)" />;
   }
 
   const screenCopy =
@@ -115,7 +115,7 @@ export function StorageSetupScreen() {
                   throw new Error("The imported database could not be activated.");
                 }
 
-                router.replace("/(tabs)");
+                router.replace("/(game)");
               } catch (error) {
                 setErrorMessage(
                   error instanceof Error ? error.message : copy.meScreen.databaseImportFailure,
@@ -147,7 +147,7 @@ export function StorageSetupScreen() {
 
               try {
                 await initializeEmptyStorage();
-                router.replace("/(tabs)");
+                router.replace("/(game)");
               } catch (error) {
                 setErrorMessage(
                   error instanceof Error ? error.message : copy.storageSetup.initializeInProgress,

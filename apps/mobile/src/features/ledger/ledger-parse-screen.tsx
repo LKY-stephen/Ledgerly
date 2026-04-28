@@ -18,6 +18,7 @@ import { useResponsive } from "../../hooks/use-responsive";
 import { useAppShell } from "../app-shell/provider";
 import type { ResolvedLocale } from "../app-shell/types";
 import { getButtonColors, getFeedbackColors, withAlpha } from "../app-shell/theme-utils";
+import type { SurfaceTokens } from "@ledgerly/ui";
 import {
   formatLedgerParseCandidateState,
   formatLedgerParseProposalType,
@@ -131,7 +132,7 @@ export function LedgerParseScreen() {
       return;
     }
 
-    router.replace("/(tabs)");
+    router.replace("/(game)");
   }, [allApproved, router]);
 
   return (
@@ -154,7 +155,7 @@ export function LedgerParseScreen() {
             if (router.canGoBack()) {
               router.back();
             } else {
-              router.replace("/(tabs)/ledger");
+              router.replace("/(game)");
             }
           }}
           palette={palette}
@@ -593,7 +594,7 @@ export function LedgerParseScreen() {
             if (router.canGoBack()) {
               router.back();
             } else {
-              router.replace("/(tabs)/ledger");
+              router.replace("/(game)");
             }
           }}
           style={({ pressed }) => [
@@ -620,7 +621,7 @@ function EditField(props: {
   fieldId: string;
   label: string;
   onChangeText: (value: string) => void;
-  palette: Record<string, string>;
+  palette: SurfaceTokens;
   value: string;
 }) {
   return (
@@ -649,7 +650,7 @@ function CategorySelector(props: {
   label: string;
   onSelect: (value: LedgerCategory) => void;
   options: Array<{ label: string; value: LedgerCategory }>;
-  palette: Record<string, string>;
+  palette: SurfaceTokens;
   selectedValue: LedgerCategory;
 }) {
   return (
@@ -701,7 +702,7 @@ function GenericProposalCard(props: {
   isApproving: boolean;
   onApprove: () => void;
   onReject: () => void;
-  palette: Record<string, string>;
+  palette: SurfaceTokens;
   parseCopy: Record<string, string>;
   proposal: WorkflowWriteProposalItem;
   resolvedLocale: ResolvedLocale;
@@ -741,7 +742,7 @@ function CounterpartyMergeProposalCard(props: {
   isApproving: boolean;
   onApprove: () => void;
   onReject: () => void;
-  palette: Record<string, string>;
+  palette: SurfaceTokens;
   parseCopy: Record<string, string>;
   proposal: WorkflowWriteProposalItem;
   resolvedLocale: ResolvedLocale;
@@ -827,7 +828,7 @@ function DuplicateReceiptProposalCard(props: {
   onApprove: () => void;
   onKeepModeChange: (nextMode: DuplicateMergeKeepMode) => void;
   onReject: () => void;
-  palette: Record<string, string>;
+  palette: SurfaceTokens;
   parseCopy: Record<string, string>;
   proposal: WorkflowWriteProposalItem;
   resolvedLocale: ResolvedLocale;
@@ -975,7 +976,7 @@ function DuplicateReceiptProposalCard(props: {
 }
 
 function ProposalHeader(props: {
-  palette: Record<string, string>;
+  palette: SurfaceTokens;
   proposal: WorkflowWriteProposalItem;
   resolvedLocale: ResolvedLocale;
 }) {
@@ -1006,7 +1007,7 @@ function ProposalActions(props: {
   isApproving: boolean;
   onApprove: () => void;
   onReject: () => void;
-  palette: Record<string, string>;
+  palette: SurfaceTokens;
   proposal: WorkflowWriteProposalItem;
   rejectLabel: string;
 }) {
@@ -1058,7 +1059,7 @@ function RecordSummaryCard(props: {
   amount: string;
   date: string;
   description: string;
-  palette: Record<string, string>;
+  palette: SurfaceTokens;
   parseCopy: Record<string, string>;
   source: string;
   target: string;
@@ -1108,7 +1109,7 @@ function RecordSummaryCard(props: {
 
 function DetailRow(props: {
   label: string;
-  palette: Record<string, string>;
+  palette: SurfaceTokens;
   value: string | null;
 }) {
   return (
@@ -1191,7 +1192,7 @@ function formatAmountCents(amountCents: number): string {
 
 function StatPill(props: {
   label: string;
-  palette: Record<string, string>;
+  palette: SurfaceTokens;
   value: number;
 }) {
   return (

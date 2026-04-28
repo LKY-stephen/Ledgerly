@@ -172,7 +172,7 @@ export function LedgerUploadScreen() {
               if (router.canGoBack()) {
                 router.back();
               } else {
-                router.replace("/(tabs)/ledger");
+                router.replace("/(game)");
               }
             }}
             style={StyleSheet.absoluteFillObject}
@@ -207,7 +207,7 @@ export function LedgerUploadScreen() {
                     if (router.canGoBack()) {
                       router.back();
                     } else {
-                      router.replace("/(tabs)/ledger");
+                      router.replace("/(game)");
                     }
                   }}
                   style={({ pressed }) => [
@@ -261,7 +261,7 @@ export function LedgerUploadScreen() {
                 if (router.canGoBack()) {
                   router.back();
                 } else {
-                  router.replace("/(tabs)/ledger");
+                  router.replace("/(game)");
                 }
               }}
               palette={palette}
