@@ -142,6 +142,7 @@ export function HomeScreen() {
   const incomeLabel = formatCurrencyFromCents(snapshot.metrics.incomeCents);
   const outflowLabel = formatCurrencyFromCents(snapshot.metrics.outflowCents);
   const netLabel = formatCurrencyFromCents(snapshot.metrics.netCents);
+  const balanceLabel = formatCurrencyFromCents(snapshot.metrics.balanceCents);
   const chartPeak = Math.max(
     ...snapshot.trend.map((point) => point.amountCents),
     1,
@@ -226,9 +227,6 @@ export function HomeScreen() {
                   >
                     {screenCopy.monthlyProfit}
                   </Text>
-                  <Text style={[styles.heroAmount, { color: palette.ink }]}>
-                    {netLabel}
-                  </Text>
                 </View>
 
                 <Pressable
@@ -252,14 +250,26 @@ export function HomeScreen() {
                 </Pressable>
               </View>
 
-              <View style={styles.metricStrip}>
-                <View style={[styles.metricItem, { backgroundColor: palette.shell }]}>
-                  <Text style={[styles.metricLabel, { color: palette.inkMuted }]}>{screenCopy.income}</Text>
-                  <Text style={[styles.metricValue, { color: palette.ink }]}>{incomeLabel}</Text>
+              <View style={styles.metricGrid}>
+                <View style={styles.metricGridRow}>
+                  <View style={[styles.metricItem, { backgroundColor: palette.shell }]}>
+                    <Text style={[styles.metricLabel, { color: palette.inkMuted }]}>{screenCopy.profitAndLoss}</Text>
+                    <Text style={[styles.metricValue, { color: palette.ink }]}>{netLabel}</Text>
+                  </View>
+                  <View style={[styles.metricItem, { backgroundColor: palette.shell }]}>
+                    <Text style={[styles.metricLabel, { color: palette.inkMuted }]}>{screenCopy.income}</Text>
+                    <Text style={[styles.metricValue, { color: palette.ink }]}>{incomeLabel}</Text>
+                  </View>
                 </View>
-                <View style={[styles.metricItem, { backgroundColor: palette.shell }]}>
-                  <Text style={[styles.metricLabel, { color: palette.inkMuted }]}>{screenCopy.outflow}</Text>
-                  <Text style={[styles.metricValue, { color: palette.ink }]}>{outflowLabel}</Text>
+                <View style={styles.metricGridRow}>
+                  <View style={[styles.metricItem, { backgroundColor: palette.shell }]}>
+                    <Text style={[styles.metricLabel, { color: palette.inkMuted }]}>{screenCopy.expenses}</Text>
+                    <Text style={[styles.metricValue, { color: palette.ink }]}>{outflowLabel}</Text>
+                  </View>
+                  <View style={[styles.metricItem, { backgroundColor: palette.shell }]}>
+                    <Text style={[styles.metricLabel, { color: palette.inkMuted }]}>{screenCopy.balance}</Text>
+                    <Text style={[styles.metricValue, { color: palette.ink }]}>{balanceLabel}</Text>
+                  </View>
                 </View>
               </View>
             </View>
@@ -889,12 +899,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "800",
   },
-  heroAmount: {
-    fontSize: 38,
-    fontWeight: "800",
-    letterSpacing: -1.2,
-    lineHeight: 42,
-  },
   heroBlock: {
     backgroundColor: "#FFFFFF",
     borderColor: "rgba(0, 32, 69, 0.08)",
@@ -951,7 +955,10 @@ const styles = StyleSheet.create({
     letterSpacing: 0.8,
     textTransform: "uppercase",
   },
-  metricStrip: {
+  metricGrid: {
+    gap: 10,
+  },
+  metricGridRow: {
     flexDirection: "row",
     gap: 10,
   },
