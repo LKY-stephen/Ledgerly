@@ -139,6 +139,7 @@ export interface WorkflowCandidateRecord {
 }
 
 export interface HomeMetricSnapshot {
+  balanceCents: number;
   incomeCents: number;
   netCents: number;
   outflowCents: number;

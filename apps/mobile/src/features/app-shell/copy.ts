@@ -124,8 +124,10 @@ export interface AppCopy {
     title: string;
   };
   homeScreen: {
+    balance: string;
     emptySummary: string;
     emptyTitle: string;
+    expenses: string;
     income: string;
     loadMore: string;
     loadingMore: string;
@@ -134,6 +136,7 @@ export interface AppCopy {
     net: string;
     newRecords: string;
     outflow: string;
+    profitAndLoss: string;
     recentActivitySubtitle: string;
     recentActivityTitle: string;
     seeAll: string;
@@ -676,9 +679,11 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
       title: "Discover",
     },
     homeScreen: {
+      balance: "Balance",
       emptySummary:
         "Upload and confirm a receipt to populate Home with real totals and activity.",
       emptyTitle: "No records yet",
+      expenses: "Expenses",
       income: "Income",
       loadMore: "Load More",
       loadingMore: "Loading...",
@@ -687,6 +692,7 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
       net: "Net",
       newRecords: "New Records",
       outflow: "Outflow",
+      profitAndLoss: "Profit & Loss",
       recentActivitySubtitle: "Newest records synced from the local ledger",
       recentActivityTitle: "Journal",
       seeAll: "See All",
@@ -1287,8 +1293,10 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
       title: "给创作者财务决策一个更冷静的观察层。",
     },
     homeScreen: {
+      balance: "余额",
       emptySummary: "上传并确认一张票据后，首页就会展示真实汇总和最近活动。",
       emptyTitle: "还没有记录",
+      expenses: "支出",
       income: "收入",
       loadMore: "加载更多",
       loadingMore: "加载中...",
@@ -1297,6 +1305,7 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
       net: "净额",
       newRecords: "新增记录",
       outflow: "流出",
+      profitAndLoss: "损益",
       recentActivitySubtitle: "最新记录已从本地账本同步",
       recentActivityTitle: "日记账",
       seeAll: "查看全部",

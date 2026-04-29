@@ -84,12 +84,27 @@ export async function loadHomeSnapshot(
       COALESCE(SUM(r.amount_cents), 0) AS amountCents`,
   });
   const totalsByDate = Object.fromEntries(trendRows.map((row) => [row.occurredOn, row.amountCents]));
+  const balanceRow =
+    (await database.getFirstAsync<{
+      allTimeIncomeCents: number | null;
+      allTimeOutflowCents: number | null;
+    }>(
+      `SELECT
+        COALESCE(SUM(CASE WHEN record_kind IN ('income', 'non_business_income') THEN amount_cents ELSE 0 END), 0) AS allTimeIncomeCents,
+        COALESCE(SUM(CASE WHEN record_kind IN ('expense', 'personal_spending') THEN amount_cents ELSE 0 END), 0) AS allTimeOutflowCents
+      FROM records
+      WHERE entity_id = ?;`,
+      entityId,
+    )) ?? { allTimeIncomeCents: 0, allTimeOutflowCents: 0 };
+
   const incomeCents = metricRow.incomeCents ?? 0;
   const outflowCents = metricRow.outflowCents ?? 0;
+  const balanceCents = (balanceRow.allTimeIncomeCents ?? 0) - (balanceRow.allTimeOutflowCents ?? 0);
 
   return {
     hasMore: recentSnapshot.hasMore,
     metrics: {
+      balanceCents,
       incomeCents,
       netCents: incomeCents - outflowCents,
       outflowCents,
