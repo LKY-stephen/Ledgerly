@@ -17,6 +17,7 @@ import { CenterPanel } from "./center-panel";
 import { DiscardPile } from "./discard-pile";
 import { Stickman } from "./stickman/stickman";
 import { useGame } from "./game-context";
+import { useCardDimensions } from "./card-dock-item";
 
 export function GameShell() {
   const { palette } = useAppShell();
@@ -52,7 +53,8 @@ export function GameShell() {
 
   const goProfile = () => router.push("/profile" as never);
 
-  const dockHeight = 230;
+  const { cardHeight } = useCardDimensions();
+  const dockHeight = cardHeight + 40;
   const groundY = height - dockHeight - insets.bottom - 16;
   const stickmanHeight = Math.min(140, height * 0.18);
   const stickmanY = groundY - stickmanHeight - 8;
@@ -186,6 +188,7 @@ export function GameShell() {
           styles.dockArea,
           {
             bottom: insets.bottom + 16,
+            height: dockHeight,
           },
         ]}
       >
@@ -289,7 +292,6 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 0,
     right: 0,
-    height: 230,
   },
   discardArea: {
     position: "absolute",
