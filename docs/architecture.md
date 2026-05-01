@@ -47,7 +47,7 @@ All packages are private (not published), use TypeScript strict mode, and are co
 ### Tech Stack
 
 - **Framework**: React 19 + React Native 0.83 + Expo 55
-- **Routing**: Expo Router (file-based)
+- **Routing**: Expo Router (file-based, Stack navigator)
 - **Database**: expo-sqlite (native) / sql.js (web)
 - **Preferences**: AsyncStorage
 - **Testing**: Vitest
@@ -56,34 +56,38 @@ All packages are private (not published), use TypeScript strict mode, and are co
 
 ```
 app/
-├── _layout.tsx              # Root layout — AppShellProvider, StatusBar
-├── index.tsx                # Entry point — resolves initial route
-├── login.tsx                # Authentication (Apple, Google, Guest)
+├── _layout.tsx              # Root layout — AppShellProvider, StatusBar, WebLayoutContainer
+├── index.tsx                # Entry point — resolves to login / storage-setup / (game)
+├── login.tsx                # Authentication (Apple Sign-In, Guest)
 ├── storage-setup.tsx        # Database initialization / import
-├── (tabs)/
-│   ├── _layout.tsx          # Tab bar + desktop sidebar (>768px)
-│   ├── index.tsx            # Home tab
-│   ├── ledger.tsx           # Ledger tab
-│   ├── discover.tsx         # News feed tab
-│   └── profile.tsx          # Settings tab
-└── ledger/
-    ├── _layout.tsx          # Modal stack for ledger flows
-    ├── upload.tsx            # Receipt upload
-    └── parse.tsx             # Receipt parsing review
+├── profile.tsx              # Profile & settings
+├── journal.tsx              # Journal see-all page
+├── (game)/
+│   ├── _layout.tsx          # GameProvider wrapper + Stack navigator
+│   └── index.tsx            # Main game screen (card-dock)
+├── ledger/
+│   ├── _layout.tsx          # Modal stack for ledger flows
+│   ├── upload.tsx           # Receipt upload
+│   ├── parse.tsx            # Receipt parsing review
+│   └── journals.tsx         # Journal entries
+└── news/
+    └── [slug].tsx           # Dynamic news article
 ```
+
+App entry flow: `index.tsx` checks hydration, session, and storage gate → redirects to `/login`, `/storage-setup`, or `/(game)` accordingly.
 
 ### Feature Modules (`src/features/`)
 
 | Module | Purpose |
 |---|---|
-| `app-shell/` | Global state: theme, locale, auth session, profile info, storage gate, and middleware hydration |
+| `app-shell/` | Global state: theme, locale, auth session, profile info, storage gate, web layout container |
+| `game/` | Card-dock game: game context, panels, animations, stickman, center panel (native/web) |
 | `home/` | Dashboard: balance overview, trend chart, recent activity, AI chat panel |
 | `ledger/` | Core ledger: receipt upload, AI parsing, planner workflow, GL reporting |
 | `agent/` | AI chat: AgentProvider, AgentChat UI, useAgent hook |
-| `profile/` | Settings: theme, locale, profile info, database import/export, and internal compatibility controls |
+| `profile/` | Settings: theme, locale, profile info, database import/export |
 | `discover/` | News feed with financial content |
 | `auth/` | Apple Sign-In and session flows |
-| `navigation/` | Tab bar config, desktop sidebar |
 | `storage-setup/` | Database onboarding flow |
 | `database-demo/` | Demo data seeding |
 | `form-1040/` | Form 1040 rendering |
@@ -96,8 +100,9 @@ app/
 
 Files use `.native.ts` / `.web.ts` suffixes for platform-specific implementations:
 - Database access: expo-sqlite (native) vs sql.js + IndexedDB (web)
-- Auth flows: native auth integrations vs web redirect/session handling
+- Auth flows: native auth integrations vs web session handling
 - File access: expo-file-system (native) vs Blob/File API (web)
+- Game center panel: native vs web rendering
 
 ### Storage Layer
 
@@ -255,7 +260,7 @@ Helper functions in `api/_lib/`: OpenAI integration, contract validation, reques
 
 - **Package Manager**: pnpm 10.28.0 (workspaces)
 - **Build Orchestration**: Turborepo
-- **TypeScript**: 5.8, strict mode, `moduleResolution: Bundler`
+- **TypeScript**: 5.8+ (strict mode, `moduleResolution: Bundler`)
 - **Linting**: ESLint flat config + `consistent-type-imports`
 - **Formatting**: Prettier (semi, double quotes, trailing commas)
 - **Pre-commit**: trailing-whitespace, JSON/YAML checks, lint, typecheck, test, contract:check
