@@ -44,15 +44,35 @@ export function Stickman({ height, palette }: Props) {
     }
   }, [state.activeCard]);
 
+  // Spike anticipation sequence
   useEffect(() => {
     if (state.animationPhase === "spikeThrow") {
       setMood("spike_prep");
-      const t1 = setTimeout(() => setMood("spike_air"), 200);
-      const t2 = setTimeout(() => setMood("idle"), 600);
+      const t1 = setTimeout(() => {
+        setMood("spike_air");
+        setSpeech("SPIKE!");
+      }, 200);
+      const t2 = setTimeout(() => {
+        setMood("idle");
+        setSpeech(null);
+      }, 600);
       return () => {
         clearTimeout(t1);
         clearTimeout(t2);
       };
+    }
+  }, [state.animationPhase]);
+
+  // Pocket animation sequence
+  useEffect(() => {
+    if (state.animationPhase === "pocketShrink") {
+      setMood("pocket");
+      setSpeech("GOT IT.");
+      const t = setTimeout(() => {
+        setMood("idle");
+        setSpeech(null);
+      }, 500);
+      return () => clearTimeout(t);
     }
   }, [state.animationPhase]);
 

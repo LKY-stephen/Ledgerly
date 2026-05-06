@@ -1,13 +1,4 @@
-import { useEffect, useRef } from "react";
-import {
-  Animated,
-  Easing,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-  useWindowDimensions,
-} from "react-native";
+import { Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 
@@ -16,6 +7,7 @@ import { CardDock } from "./card-dock";
 import { CenterPanel } from "./center-panel";
 import { DiscardPile } from "./discard-pile";
 import { Stickman } from "./stickman/stickman";
+import { CatSvg } from "./cat-svg";
 import { useGame } from "./game-context";
 import { useCardDimensions } from "./card-dock-item";
 
@@ -27,30 +19,6 @@ export function GameShell() {
   const { state } = useGame();
   const isDark = palette.name === "dark";
 
-  const sunPulse = useRef(new Animated.Value(1)).current;
-
-  useEffect(() => {
-    if (!isDark) return;
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(sunPulse, {
-          toValue: 1.3,
-          duration: 1200,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
-        Animated.timing(sunPulse, {
-          toValue: 1,
-          duration: 1200,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
-      ]),
-    );
-    loop.start();
-    return () => loop.stop();
-  }, [isDark, sunPulse]);
-
   const goProfile = () => router.push("/profile" as never);
 
   const { cardHeight } = useCardDimensions();
@@ -60,74 +28,32 @@ export function GameShell() {
   const stickmanY = groundY - stickmanHeight - 8;
 
   return (
-    <View style={[styles.root, { backgroundColor: palette.gameSkyStart }]}>
-      {/* Sky gradient (simplified with two-tone) */}
+    <View style={[styles.root, { backgroundColor: palette.paper }]}>
+      {/* Paper background */}
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: palette.paper }]} />
+
+      {/* Halftone dot texture overlay */}
       <View
         style={[
           StyleSheet.absoluteFill,
+          { backgroundColor: isDark ? "rgba(244,239,230,0.02)" : "rgba(10,10,10,0.02)" },
+        ]}
+      />
+
+      {/* Title badge top-left */}
+      <View
+        style={[
+          styles.titleBadge,
           {
-            backgroundColor: palette.gameSkyStart,
+            top: insets.top + 12,
+            backgroundColor: palette.paper,
+            borderColor: palette.border,
+            shadowColor: palette.shadow,
           },
         ]}
-      />
-      <View
-        style={[
-          StyleSheet.absoluteFill,
-          {
-            top: "50%",
-            backgroundColor: palette.gameSkyEnd,
-            opacity: isDark ? 1 : 0.5,
-          } as any,
-        ]}
-      />
-
-      {/* Grid overlay (dark only) */}
-      {isDark && (
-        <View
-          style={[
-            StyleSheet.absoluteFill,
-            {
-              backgroundColor: palette.gameGridOverlay,
-            },
-          ]}
-        />
-      )}
-
-      {/* Sun / Hacker Eye */}
-      <View style={[styles.sunArea, { top: insets.top + 24 }]}>
-        {isDark ? (
-          <Animated.View
-            style={[
-              styles.hackerEye,
-              {
-                borderColor: palette.border,
-                transform: [{ scale: sunPulse }],
-              },
-            ]}
-          >
-            <View
-              style={[
-                styles.hackerEyeInner,
-                { backgroundColor: palette.gameHackerEye },
-              ]}
-            />
-          </Animated.View>
-        ) : (
-          <View style={styles.sunContainer}>
-            <View
-              style={[
-                styles.sunGlow,
-                { backgroundColor: palette.gameSunGlow },
-              ]}
-            />
-            <View
-              style={[
-                styles.sun,
-                { backgroundColor: palette.gameSunColor },
-              ]}
-            />
-          </View>
-        )}
+      >
+        <Text style={[styles.titleText, { color: palette.ink }]}>LEDGERLY</Text>
+        <Text style={[styles.titleSub, { color: palette.inkMuted }]}>// bookkeeping, weaponized</Text>
       </View>
 
       {/* Profile button */}
@@ -138,34 +64,26 @@ export function GameShell() {
           {
             top: insets.top + 12,
             borderColor: palette.border,
-            backgroundColor: isDark ? "#000" : "#fff",
+            backgroundColor: palette.paper,
+            shadowColor: palette.shadow,
           },
         ]}
       >
-        <Text
-          style={[
-            styles.profileBtnText,
-            { color: palette.ink },
-          ]}
-        >
-          P
-        </Text>
+        <Text style={[styles.profileBtnText, { color: palette.ink }]}>P</Text>
       </Pressable>
 
-      {/* White cat (light only) */}
+      {/* Cat (light only) — SVG line-art */}
       {!isDark && palette.showCat && (
-        <View style={[styles.catArea, { top: stickmanY - 20 }]}>
-          <Text style={styles.catEmoji}>🐱</Text>
+        <View style={[styles.catArea, { top: stickmanY + stickmanHeight - 40 }]}>
+          <CatSvg palette={palette} />
         </View>
       )}
 
-      {/* Stickman (orchestrated with mood + speech) */}
+      {/* Stickman */}
       <View
         style={[
           styles.stickmanArea,
-          {
-            top: stickmanY - (state.speechBubble ? 56 : 0),
-          },
+          { top: stickmanY - (state.speechBubble ? 56 : 0) },
         ]}
       >
         <Stickman height={stickmanHeight} palette={palette} />
@@ -175,10 +93,7 @@ export function GameShell() {
       <View
         style={[
           styles.groundLine,
-          {
-            top: groundY,
-            backgroundColor: palette.gameGround,
-          },
+          { top: groundY, backgroundColor: palette.gameGround },
         ]}
       />
 
@@ -186,27 +101,17 @@ export function GameShell() {
       <View
         style={[
           styles.dockArea,
-          {
-            bottom: insets.bottom + 16,
-            height: dockHeight,
-          },
+          { bottom: insets.bottom + 16, height: dockHeight },
         ]}
       >
         <CardDock />
       </View>
 
       {/* Discard pile */}
-      <View
-        style={[
-          styles.discardArea,
-          {
-            top: groundY + 8,
-            right: 16,
-          },
-        ]}
-      >
+      <View style={[styles.discardArea, { top: groundY + 8, right: 16 }]}>
         <DiscardPile palette={palette} />
       </View>
+
       {/* Center panel (active card content) */}
       {state.activeCard && <CenterPanel />}
     </View>
@@ -218,42 +123,30 @@ const styles = StyleSheet.create({
     flex: 1,
     overflow: "hidden",
   },
-  sunArea: {
+  titleBadge: {
     position: "absolute",
-    left: 0,
-    right: 0,
-    alignItems: "center",
+    left: 16,
+    borderWidth: 3,
+    borderRadius: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 4,
   },
-  sunContainer: {
-    width: 64,
-    height: 64,
-    alignItems: "center",
-    justifyContent: "center",
+  titleText: {
+    fontSize: 18,
+    fontWeight: "900",
+    letterSpacing: -0.5,
+    textTransform: "uppercase",
   },
-  sun: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-  },
-  sunGlow: {
-    position: "absolute",
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    opacity: 0.35,
-  },
-  hackerEye: {
-    width: 40,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 2,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  hackerEyeInner: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+  titleSub: {
+    fontSize: 9,
+    fontWeight: "400",
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
+    marginTop: 2,
   },
   profileBtn: {
     position: "absolute",
@@ -261,20 +154,21 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    borderWidth: 2,
+    borderWidth: 3,
     alignItems: "center",
     justifyContent: "center",
+    shadowOffset: { width: 3, height: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 3,
   },
   profileBtnText: {
     fontSize: 14,
-    fontWeight: "800",
+    fontWeight: "900",
   },
   catArea: {
     position: "absolute",
     left: 24,
-  },
-  catEmoji: {
-    fontSize: 28,
   },
   stickmanArea: {
     position: "absolute",

@@ -39,7 +39,7 @@ export function StickmanSvg({ mood, height, stroke }: Props) {
   const pose: StickmanPose = poses[mood] ?? poses.idle;
   const aspect = 100 / 140;
   const w = height * aspect;
-  const sw = 3.5;
+  const sw = 5.5;
 
   return (
     <Svg width={w} height={height} viewBox="0 0 100 140">

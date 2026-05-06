@@ -16,6 +16,7 @@ export type AnimationPhase =
   | "flipOut"
   | "spikeThrow"
   | "pocketShrink"
+  | "pocketDone"
   | "dragging";
 
 export interface DiscardEntry {
@@ -35,6 +36,7 @@ type GameAction =
   | { type: "ACTIVATE_CARD"; card: CardId }
   | { type: "DEACTIVATE_CARD" }
   | { type: "DISCARD_CARD"; card: CardId }
+  | { type: "POCKET_CARD"; card: CardId }
   | { type: "SET_MOOD"; mood: StickmanMood }
   | { type: "SET_SPEECH"; text: string | null }
   | { type: "SET_ANIMATION"; phase: AnimationPhase }
@@ -64,6 +66,12 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         ],
         animationPhase: "spikeThrow",
       };
+    case "POCKET_CARD":
+      return {
+        ...state,
+        activeCard: null,
+        animationPhase: "pocketShrink",
+      };
     case "SET_MOOD":
       return { ...state, stickmanMood: action.mood };
     case "SET_SPEECH":
@@ -82,6 +90,7 @@ interface GameContextValue {
   activateCard: (card: CardId) => void;
   deactivateCard: () => void;
   discardCard: (card: CardId) => void;
+  pocketCard: (card: CardId) => void;
   setMood: (mood: StickmanMood) => void;
   setSpeech: (text: string | null) => void;
   setAnimation: (phase: AnimationPhase) => void;
@@ -98,6 +107,7 @@ export function GameProvider({ children }: PropsWithChildren) {
     activateCard: (card) => dispatch({ type: "ACTIVATE_CARD", card }),
     deactivateCard: () => dispatch({ type: "DEACTIVATE_CARD" }),
     discardCard: (card) => dispatch({ type: "DISCARD_CARD", card }),
+    pocketCard: (card) => dispatch({ type: "POCKET_CARD", card }),
     setMood: (mood) => dispatch({ type: "SET_MOOD", mood }),
     setSpeech: (text) => dispatch({ type: "SET_SPEECH", text }),
     setAnimation: (phase) => dispatch({ type: "SET_ANIMATION", phase }),
