@@ -8,6 +8,91 @@ describe("AgentSession", () => {
     vi.restoreAllMocks();
   });
 
+  it("defaults Infer assistant requests to gemini-2.5-flash", async () => {
+    const sdk = {} as LedgerlySDK;
+    let capturedUrl = "";
+    let capturedModel = "";
+
+    const session = new AgentSession(sdk, {
+      apiKey: "infer-test-key",
+      locale: "en",
+      provider: "infer",
+    });
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string, init?: RequestInit) => {
+        capturedUrl = url;
+        capturedModel = JSON.parse(String(init?.body)).model;
+
+        return new Response(
+          JSON.stringify({
+            choices: [
+              {
+                finish_reason: "stop",
+                message: {
+                  content: "Using Infer default model.",
+                  role: "assistant",
+                },
+              },
+            ],
+          }),
+          {
+            headers: { "content-type": "application/json" },
+            status: 200,
+          },
+        );
+      }),
+    );
+
+    const finalMessage = await session.sendMessage("Hello.");
+
+    expect(capturedUrl).toBe("https://api.infer.ai/v1/chat/completions");
+    expect(capturedModel).toBe("gemini-2.5-flash");
+    expect(finalMessage.content).toBe("Using Infer default model.");
+  });
+
+  it("preserves explicit Infer assistant model overrides", async () => {
+    const sdk = {} as LedgerlySDK;
+    let capturedModel = "";
+
+    const session = new AgentSession(sdk, {
+      apiKey: "infer-test-key",
+      locale: "en",
+      model: "gpt-4o",
+      provider: "infer",
+    });
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (_url: string, init?: RequestInit) => {
+        capturedModel = JSON.parse(String(init?.body)).model;
+
+        return new Response(
+          JSON.stringify({
+            choices: [
+              {
+                finish_reason: "stop",
+                message: {
+                  content: "Using explicit Infer model.",
+                  role: "assistant",
+                },
+              },
+            ],
+          }),
+          {
+            headers: { "content-type": "application/json" },
+            status: 200,
+          },
+        );
+      }),
+    );
+
+    await session.sendMessage("Hello.");
+
+    expect(capturedModel).toBe("gpt-4o");
+  });
+
   it("streams message updates through the quick-add record flow and fills default parties", async () => {
     const createdRecord = {
       amountCents: 1800,

@@ -185,7 +185,7 @@ Default endpoints/models:
 - OpenAI base URL defaults to `https://api.openai.com/v1`
 - OpenAI model defaults to `gpt-4o`
 - Infer base URL defaults to `https://api.infer.ai/v1`
-- Infer model defaults to `gpt-4o`
+- Infer model defaults to `gemini-2.5-flash`
 - Gemini base URL defaults to `https://generativelanguage.googleapis.com/v1beta`
 - Gemini model defaults to `gemini-2.5-flash`
 

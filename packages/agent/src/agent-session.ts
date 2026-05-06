@@ -350,7 +350,7 @@ export class AgentSession {
         Authorization: `Bearer ${apiKey}`,
       };
       body = {
-        model: model ?? "gpt-4o",
+        model: model ?? "gemini-2.5-flash",
         messages,
         tools: buildOpenAiTools(),
       };
