@@ -22,7 +22,7 @@ describe("theme utils", () => {
     expect(lightTheme.tabBarBackground).toBe(surfaceThemes.light.tabBar);
     expect(darkTheme.sceneBackground).toBe(surfaceThemes.dark.shell);
     expect(darkTheme.activeTint).toBe(surfaceThemes.dark.tabActive);
-    expect(darkTheme.tabIndicatorBackground).toContain("rgba(110, 231, 210");
+    expect(darkTheme.tabIndicatorBackground).toBe(surfaceThemes.dark.paperMuted);
   });
 
   it("derives feedback banners from each palette tone", () => {
@@ -30,9 +30,9 @@ describe("theme utils", () => {
     const darkSuccess = getFeedbackColors(surfaceThemes.dark, "success");
 
     expect(lightError.text).toBe(surfaceThemes.light.destructive);
-    expect(lightError.background).toContain("rgba(185, 56, 8");
+    expect(lightError.background).toBe(surfaceThemes.light.paper);
     expect(darkSuccess.text).toBe(surfaceThemes.dark.success);
-    expect(darkSuccess.border).toContain("rgba(110, 231, 210");
+    expect(darkSuccess.border).toBe(surfaceThemes.dark.success);
   });
 
   it("keeps primary actions on accent surfaces in both themes", () => {

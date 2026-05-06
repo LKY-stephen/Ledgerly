@@ -6,7 +6,7 @@ export function resolveEntryHref(input: {
   isHydrated: boolean;
   session: boolean;
   storageGateState: AppStorageGateState;
-}): "/(tabs)" | "/login" | "/storage-setup" | null {
+}): "/(game)" | "/login" | "/storage-setup" | null {
   const { isHydrated, session, storageGateState } = input;
 
   if (!isHydrated) {
@@ -18,7 +18,7 @@ export function resolveEntryHref(input: {
   }
 
   if (storageGateState.kind === "ready") {
-    return "/(tabs)";
+    return "/(game)";
   }
 
   return storageGateState.kind === "checking" ? null : "/storage-setup";

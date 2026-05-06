@@ -8,6 +8,7 @@ import type { HomeSnapshot } from "./home-data";
 const emptySnapshot: HomeSnapshot = {
   hasMore: false,
   metrics: {
+    balanceCents: 0,
     incomeCents: 0,
     netCents: 0,
     outflowCents: 0,
