@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { Animated, Easing, StyleSheet, Text, View } from "react-native";
+import { Animated, StyleSheet, Text, View } from "react-native";
 import type { SurfaceTokens } from "@ledgerly/ui";
 
 interface Props {
@@ -9,7 +9,6 @@ interface Props {
 
 export function SpeechBubble({ text, palette }: Props) {
   const scale = useRef(new Animated.Value(0)).current;
-  const isDark = palette.name === "dark";
 
   useEffect(() => {
     Animated.spring(scale, {
@@ -25,8 +24,9 @@ export function SpeechBubble({ text, palette }: Props) {
       style={[
         styles.bubble,
         {
-          backgroundColor: isDark ? "#27272A" : "#fff",
+          backgroundColor: palette.paper,
           borderColor: palette.border,
+          shadowColor: palette.shadow,
           transform: [{ scale }],
         },
       ]}
@@ -35,9 +35,7 @@ export function SpeechBubble({ text, palette }: Props) {
       <View
         style={[
           styles.tail,
-          {
-            borderTopColor: palette.border,
-          },
+          { borderTopColor: palette.border },
         ]}
       />
     </Animated.View>
@@ -46,16 +44,22 @@ export function SpeechBubble({ text, palette }: Props) {
 
 const styles = StyleSheet.create({
   bubble: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 14,
-    borderWidth: 2,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 6,
+    borderWidth: 3,
     maxWidth: 200,
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 4,
   },
   text: {
-    fontSize: 13,
-    fontWeight: "600",
+    fontSize: 16,
+    fontWeight: "900",
     textAlign: "center",
+    letterSpacing: 1,
+    textTransform: "uppercase",
   },
   tail: {
     position: "absolute",

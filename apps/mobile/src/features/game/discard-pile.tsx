@@ -16,8 +16,10 @@ interface Props {
 
 export function DiscardPile({ palette }: Props) {
   const { state, clearDiscard } = useGame();
-  const { discardPile } = state;
+  const { discardPile, animationPhase } = state;
   const slideIn = useRef(new Animated.Value(0)).current;
+  const spikeOpacity = useRef(new Animated.Value(0)).current;
+  const spikeScale = useRef(new Animated.Value(0.5)).current;
 
   useEffect(() => {
     if (discardPile.length === 0) {
@@ -33,12 +35,51 @@ export function DiscardPile({ palette }: Props) {
     }).start();
   }, [discardPile.length, slideIn]);
 
+  useEffect(() => {
+    if (animationPhase === "spikeThrow") {
+      spikeOpacity.setValue(1);
+      spikeScale.setValue(0.5);
+      Animated.parallel([
+        Animated.spring(spikeScale, {
+          toValue: 1,
+          friction: 5,
+          tension: 100,
+          useNativeDriver: true,
+        }),
+        Animated.sequence([
+          Animated.delay(400),
+          Animated.timing(spikeOpacity, {
+            toValue: 0,
+            duration: 200,
+            useNativeDriver: true,
+          }),
+        ]),
+      ]).start();
+    }
+  }, [animationPhase, spikeOpacity, spikeScale]);
+
   if (discardPile.length === 0) return null;
 
   const topCards = discardPile.slice(-3);
 
   return (
     <View style={styles.root}>
+      {/* SPIKE! burst */}
+      <Animated.View
+        style={[
+          styles.spikeBurst,
+          {
+            opacity: spikeOpacity,
+            transform: [{ scale: spikeScale }, { rotate: "-6deg" }],
+          },
+        ]}
+        pointerEvents="none"
+      >
+        <Text style={[styles.spikeText, { color: palette.accent }]}>
+          SPIKE!
+        </Text>
+      </Animated.View>
+
       <View style={styles.stack}>
         {topCards.map((entry, i) => {
           const offset = (topCards.length - 1 - i) * 4;
@@ -48,11 +89,12 @@ export function DiscardPile({ palette }: Props) {
               style={[
                 styles.card,
                 {
-                  backgroundColor: palette.discardSurface,
+                  backgroundColor: palette.paper,
                   borderColor: palette.cardBorder,
                   borderRadius: palette.cardRadius / 2,
                   top: offset,
                   left: offset,
+                  shadowColor: palette.shadow,
                   opacity: i === topCards.length - 1 ? slideIn : 0.6,
                   transform:
                     i === topCards.length - 1
@@ -90,6 +132,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 4,
   },
+  spikeBurst: {
+    position: "absolute",
+    top: -36,
+    left: -20,
+    zIndex: 10,
+  },
+  spikeText: {
+    fontSize: 24,
+    fontWeight: "900",
+    letterSpacing: -0.5,
+    textTransform: "uppercase",
+  },
   stack: {
     width: 44,
     height: 56,
@@ -98,15 +152,22 @@ const styles = StyleSheet.create({
     position: "absolute",
     width: 40,
     height: 52,
-    borderWidth: 2,
+    borderWidth: 3,
     alignItems: "center",
     justifyContent: "center",
+    shadowOffset: { width: 3, height: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 3,
   },
   suit: {
     fontSize: 16,
+    fontWeight: "900",
   },
   count: {
     fontSize: 11,
     fontWeight: "700",
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
   },
 });

@@ -3,17 +3,11 @@ import type { SurfaceTokens } from "@ledgerly/ui";
 
 import { useGame, type CardId } from "./game-context";
 
-const suitColorKey: Record<string, keyof SurfaceTokens> = {
-  "♦": "cardDiamond",
-  "♣": "cardClub",
-  "♠": "cardSpade",
-};
-
 const CARD_COUNT = 3;
 const DOCK_PAD_H = 16;
 const DOCK_GAP = 24;
 const MAX_CARD_W = 150;
-const ASPECT = 190 / 150;
+const ASPECT = 4.2 / 3;
 
 export function useCardDimensions() {
   const { width } = useWindowDimensions();
@@ -23,6 +17,14 @@ export function useCardDimensions() {
   return { cardWidth, cardHeight };
 }
 
+type CardVariant = "black" | "white" | "flash";
+
+const cardConfig: Record<CardId, { suit: string; label: string; sublabel: string; variant: CardVariant; footer: string }> = {
+  new: { suit: "♦", label: "NEW", sublabel: "RECORD", variant: "black", footer: "INCOME / EXPENSE" },
+  report: { suit: "♣", label: "ASK", sublabel: "REPORT", variant: "white", footer: "NATURAL Q&A" },
+  show: { suit: "♠", label: "SHOW", sublabel: "LEDGER", variant: "flash", footer: "TABLE · EXPORT" },
+};
+
 interface Props {
   cardId: CardId;
   suit: string;
@@ -30,13 +32,14 @@ interface Props {
   palette: SurfaceTokens;
 }
 
-export function CardDockItem({ cardId, suit, label, palette }: Props) {
+export function CardDockItem({ cardId, palette }: Props) {
   const { activateCard, state } = useGame();
   const isActive = state.activeCard === cardId;
-  const suitColor = String(palette[suitColorKey[suit] ?? "ink"]);
   const { cardWidth, cardHeight } = useCardDimensions();
+  const config = cardConfig[cardId];
+  const isDark = palette.name === "dark";
 
-  const scale = cardWidth / MAX_CARD_W;
+  const variantStyles = getVariantColors(config.variant, palette, isDark);
 
   return (
     <Pressable
@@ -46,61 +49,111 @@ export function CardDockItem({ cardId, suit, label, palette }: Props) {
         {
           width: cardWidth,
           height: cardHeight,
-          backgroundColor: palette.cardSurface,
-          borderColor: isActive ? suitColor : palette.cardBorder,
+          backgroundColor: variantStyles.bg,
+          borderColor: isActive ? palette.accent : palette.cardBorder,
           borderRadius: palette.cardRadius,
-          borderWidth: Math.max(4, Math.round(6 * scale)),
-          opacity: pressed ? 0.85 : 1,
-          ...(palette.name === "light"
-            ? {
-                shadowColor: palette.cardShadow,
-                shadowOffset: { width: 0, height: Math.round(12 * scale) },
-                shadowOpacity: 0.95,
-                shadowRadius: 0,
-                elevation: 12,
-              }
-            : {}),
+          opacity: pressed ? 0.88 : 1,
+          shadowColor: palette.shadow,
+          shadowOffset: { width: 5, height: 5 },
+          shadowOpacity: 1,
+          shadowRadius: 0,
+          elevation: 6,
         },
       ]}
     >
-      <Text style={[styles.cornerSuit, styles.cornerTop, { color: suitColor, fontSize: Math.round(24 * scale) }]}>
-        {suit}
-      </Text>
-      <Text style={[styles.title, { color: palette.ink, fontSize: Math.round(26 * scale) }]}>{label}</Text>
-      <Text style={[styles.watermarkSuit, { color: suitColor, fontSize: Math.round(36 * scale), top: Math.round(112 * scale) }]}>{suit}</Text>
-      <Text style={[styles.cornerSuit, styles.cornerBottom, { color: suitColor, fontSize: Math.round(24 * scale) }]}>
-        {suit}
-      </Text>
+      {/* Top row: suit + date */}
+      <View style={styles.topRow}>
+        <Text style={[styles.topLabel, { color: variantStyles.text }]}>
+          {config.suit} {config.label}
+        </Text>
+        <View style={[styles.pip, { backgroundColor: variantStyles.text }]}>
+          <Text style={[styles.pipText, { color: variantStyles.bg }]}>
+            {config.suit}
+          </Text>
+        </View>
+      </View>
+
+      {/* Center label */}
+      <View style={styles.centerArea}>
+        <Text style={[styles.mainLabel, { color: variantStyles.text }]}>
+          {config.sublabel}
+        </Text>
+      </View>
+
+      {/* Footer */}
+      <View style={styles.footerRow}>
+        <Text style={[styles.footerText, { color: variantStyles.text }]}>
+          {config.footer}
+        </Text>
+        <Text style={[styles.footerText, { color: variantStyles.text }]}>
+          LDGR
+        </Text>
+      </View>
     </Pressable>
   );
 }
 
+function getVariantColors(variant: CardVariant, palette: SurfaceTokens, isDark: boolean) {
+  switch (variant) {
+    case "black":
+      return { bg: palette.ink, text: palette.paper };
+    case "white":
+      return { bg: palette.paper, text: palette.ink };
+    case "flash":
+      return { bg: palette.accent, text: palette.ink };
+  }
+}
+
 const styles = StyleSheet.create({
   card: {
-    alignItems: "center",
-    justifyContent: "center",
+    borderWidth: 3,
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+    justifyContent: "space-between",
     overflow: "hidden",
   },
-  cornerSuit: {
-    position: "absolute",
-    fontWeight: "900",
+  topRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
   },
-  cornerTop: {
-    top: 12,
-    left: 12,
-  },
-  cornerBottom: {
-    bottom: 12,
-    right: 12,
-    transform: [{ rotate: "180deg" }],
-  },
-  title: {
-    fontWeight: "900",
+  topLabel: {
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 0.5,
     textTransform: "uppercase",
-    letterSpacing: 1.2,
   },
-  watermarkSuit: {
-    position: "absolute",
-    opacity: 0.15,
+  pip: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  pipText: {
+    fontSize: 12,
+    fontWeight: "900",
+  },
+  centerArea: {
+    alignItems: "flex-start",
+  },
+  mainLabel: {
+    fontSize: 22,
+    fontWeight: "900",
+    letterSpacing: -0.5,
+    textTransform: "uppercase",
+    lineHeight: 24,
+  },
+  footerRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-end",
+  },
+  footerText: {
+    fontSize: 8,
+    fontWeight: "700",
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
+    opacity: 0.7,
   },
 });
