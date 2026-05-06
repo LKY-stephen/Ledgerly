@@ -9,6 +9,7 @@ const cards: { id: CardId; suit: string; label: string }[] = [
   { id: "new", suit: "♦", label: "New" },
   { id: "report", suit: "♣", label: "Report" },
   { id: "show", suit: "♠", label: "Show" },
+  { id: "settings", suit: "♥", label: "Settings" },
 ];
 
 export function CardDock() {

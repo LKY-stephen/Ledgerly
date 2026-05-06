@@ -1,6 +1,6 @@
 import { createContext, useContext, useReducer, type PropsWithChildren } from "react";
 
-export type CardId = "new" | "report" | "show";
+export type CardId = "new" | "report" | "show" | "settings";
 
 export type StickmanMood =
   | "idle"

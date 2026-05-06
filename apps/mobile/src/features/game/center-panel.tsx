@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Animated, Pressable, StyleSheet, Text, View } from "react-native";
-
 import { useAppShell } from "../app-shell/provider";
 import { useGame, type CardId } from "./game-context";
+import { gameHomeButtonLabel, gameSettingsCardLabel } from "./game-ui";
 import { useCardFlip } from "./animations/use-card-flip";
 import { useDragPhysics } from "./animations/use-drag-physics";
 import { usePocketAnimation } from "./animations/use-pocket";
@@ -12,12 +12,14 @@ const suitMap: Record<CardId, string> = {
   new: "♦",
   report: "♣",
   show: "♠",
+  settings: "♥",
 };
 
 const labelMap: Record<CardId, string> = {
   new: "New",
   report: "Report",
   show: "Show",
+  settings: gameSettingsCardLabel,
 };
 
 export function CenterPanel() {
@@ -57,9 +59,17 @@ export function CenterPanel() {
     discardCard(state.activeCard);
   };
 
+  const handleReturnHome = () => {
+    setSpeech(null);
+    setMood("idle");
+    setAnimation("idle");
+    deactivateCard();
+  };
+
   if (!state.activeCard) return null;
 
   const card = state.activeCard;
+  const isSettingsCard = card === "settings";
 
   return (
     <View style={StyleSheet.absoluteFill}>
@@ -102,23 +112,42 @@ export function CenterPanel() {
               {labelMap[card]}
             </Text>
 
-            {/* Pocket button */}
             <Pressable
-              onPress={handlePocket}
+              accessibilityLabel="Return to home"
+              onPress={handleReturnHome}
               hitSlop={8}
-              style={[styles.actionBtn, { backgroundColor: palette.success, borderColor: palette.border }]}
+              style={[
+                styles.actionBtn,
+                {
+                  backgroundColor: palette.paper,
+                  borderColor: palette.border,
+                },
+              ]}
             >
-              <Text style={[styles.actionBtnText, { color: palette.inkOnAccent }]}>POCKET</Text>
+              <Text style={[styles.actionBtnText, { color: palette.ink }]}>
+                {gameHomeButtonLabel}
+              </Text>
             </Pressable>
 
-            {/* Spike button */}
-            <Pressable
-              onPress={handleSpike}
-              hitSlop={8}
-              style={[styles.actionBtn, { backgroundColor: palette.accent, borderColor: palette.border }]}
-            >
-              <Text style={[styles.actionBtnText, { color: palette.inkOnAccent }]}>SPIKE</Text>
-            </Pressable>
+            {isSettingsCard ? null : (
+              <>
+                <Pressable
+                  onPress={handlePocket}
+                  hitSlop={8}
+                  style={[styles.actionBtn, { backgroundColor: palette.success, borderColor: palette.border }]}
+                >
+                  <Text style={[styles.actionBtnText, { color: palette.inkOnAccent }]}>POCKET</Text>
+                </Pressable>
+
+                <Pressable
+                  onPress={handleSpike}
+                  hitSlop={8}
+                  style={[styles.actionBtn, { backgroundColor: palette.accent, borderColor: palette.border }]}
+                >
+                  <Text style={[styles.actionBtnText, { color: palette.inkOnAccent }]}>SPIKE</Text>
+                </Pressable>
+              </>
+            )}
 
             {/* Close */}
             <Pressable onPress={deactivateCard} hitSlop={12}>

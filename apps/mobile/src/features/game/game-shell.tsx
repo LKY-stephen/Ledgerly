@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { Feather } from "@expo/vector-icons";
 
 import { useAppShell } from "../app-shell/provider";
 import { CardDock } from "./card-dock";
@@ -10,16 +10,19 @@ import { Stickman } from "./stickman/stickman";
 import { CatSvg } from "./cat-svg";
 import { useGame } from "./game-context";
 import { useCardDimensions } from "./card-dock-item";
+import { getNextQuickTheme } from "./game-ui";
 
 export function GameShell() {
-  const { palette } = useAppShell();
+  const { palette, setThemePreference } = useAppShell();
   const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
-  const router = useRouter();
   const { state } = useGame();
   const isDark = palette.name === "dark";
+  const quickTheme = getNextQuickTheme(isDark ? "dark" : "light");
 
-  const goProfile = () => router.push("/profile" as never);
+  const handleQuickThemeToggle = () => {
+    void setThemePreference(quickTheme);
+  };
 
   const { cardHeight } = useCardDimensions();
   const dockHeight = cardHeight + 40;
@@ -56,9 +59,10 @@ export function GameShell() {
         <Text style={[styles.titleSub, { color: palette.inkMuted }]}>// bookkeeping, weaponized</Text>
       </View>
 
-      {/* Profile button */}
+      {/* Theme quick switch */}
       <Pressable
-        onPress={goProfile}
+        accessibilityLabel={`Switch to ${quickTheme} mode`}
+        onPress={handleQuickThemeToggle}
         style={[
           styles.profileBtn,
           {
@@ -69,7 +73,11 @@ export function GameShell() {
           },
         ]}
       >
-        <Text style={[styles.profileBtnText, { color: palette.ink }]}>P</Text>
+        <Feather
+          color={palette.ink}
+          name={isDark ? "sun" : "moon"}
+          size={16}
+        />
       </Pressable>
 
       {/* Cat (light only) — SVG line-art */}
@@ -161,10 +169,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 1,
     shadowRadius: 0,
     elevation: 3,
-  },
-  profileBtnText: {
-    fontSize: 14,
-    fontWeight: "900",
   },
   catArea: {
     position: "absolute",

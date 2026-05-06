@@ -2,8 +2,9 @@ import { Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-na
 import type { SurfaceTokens } from "@ledgerly/ui";
 
 import { useGame, type CardId } from "./game-context";
+import { getDockCardScale, getGameCardColors } from "./game-ui";
 
-const CARD_COUNT = 3;
+const CARD_COUNT = 4;
 const DOCK_PAD_H = 16;
 const DOCK_GAP = 24;
 const MAX_CARD_W = 150;
@@ -23,6 +24,7 @@ const cardConfig: Record<CardId, { suit: string; label: string; sublabel: string
   new: { suit: "♦", label: "NEW", sublabel: "RECORD", variant: "black", footer: "INCOME / EXPENSE" },
   report: { suit: "♣", label: "ASK", sublabel: "REPORT", variant: "white", footer: "NATURAL Q&A" },
   show: { suit: "♠", label: "SHOW", sublabel: "LEDGER", variant: "flash", footer: "TABLE · EXPORT" },
+  settings: { suit: "♥", label: "OPEN", sublabel: "SETTINGS", variant: "white", footer: "THEME · PROFILE" },
 };
 
 interface Props {
@@ -37,9 +39,8 @@ export function CardDockItem({ cardId, palette }: Props) {
   const isActive = state.activeCard === cardId;
   const { cardWidth, cardHeight } = useCardDimensions();
   const config = cardConfig[cardId];
-  const isDark = palette.name === "dark";
 
-  const variantStyles = getVariantColors(config.variant, palette, isDark);
+  const variantStyles = getGameCardColors(config.variant, palette);
 
   return (
     <Pressable
@@ -57,6 +58,7 @@ export function CardDockItem({ cardId, palette }: Props) {
           shadowOffset: { width: 5, height: 5 },
           shadowOpacity: 1,
           shadowRadius: 0,
+          transform: [{ scale: getDockCardScale({ isActive, pressed }) }],
           elevation: 6,
         },
       ]}
@@ -91,17 +93,6 @@ export function CardDockItem({ cardId, palette }: Props) {
       </View>
     </Pressable>
   );
-}
-
-function getVariantColors(variant: CardVariant, palette: SurfaceTokens, isDark: boolean) {
-  switch (variant) {
-    case "black":
-      return { bg: palette.ink, text: palette.paper };
-    case "white":
-      return { bg: palette.paper, text: palette.ink };
-    case "flash":
-      return { bg: palette.accent, text: palette.ink };
-  }
 }
 
 const styles = StyleSheet.create({

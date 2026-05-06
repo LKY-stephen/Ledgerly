@@ -144,7 +144,7 @@ function ApiKeyField(props: {
   );
 }
 
-export function ProfileScreen() {
+export function ProfileScreen({ embedded = false }: { embedded?: boolean } = {}) {
   const router = useRouter();
   const { isExpanded } = useResponsive();
   const {
@@ -300,10 +300,7 @@ export function ProfileScreen() {
         : session?.kind === "guest"
           ? copy.meScreen.sessionGuest
           : copy.meScreen.sessionNone;
-  const destructiveLabelColor =
-    palette.name === "dark" ? palette.shell : palette.inkOnAccent;
   const primaryButton = getButtonColors(palette, "primary");
-  const destructiveButton = getButtonColors(palette, "destructive");
   const successFeedback = getFeedbackColors(palette, "success");
   const errorFeedback = getFeedbackColors(palette, "error");
 
@@ -383,12 +380,8 @@ export function ProfileScreen() {
     await setGeminiApiKey("");
   };
 
-  return (
-    <SafeAreaView
-      edges={["top", "left", "right"]}
-      style={[styles.safeArea, { backgroundColor: palette.shell }]}
-    >
-      <ScrollView contentContainerStyle={styles.container}>
+  const content = (
+      <ScrollView contentContainerStyle={[styles.container, embedded ? styles.embeddedContainer : null]}>
         <View
           style={[
             styles.hero,
@@ -424,29 +417,6 @@ export function ProfileScreen() {
                 label={themeLabels[option]}
                 onPress={() => {
                   void setThemePreference(option);
-                }}
-                palette={palette}
-              />
-            ))}
-          </View>
-        </SectionCard>
-
-        <SectionCard
-          eyebrow={copy.common.language}
-          palette={palette}
-          title={copy.common.language}
-        >
-          <Text style={[styles.sectionHint, { color: palette.inkMuted }]}>
-            {copy.meScreen.localeDescription}
-          </Text>
-          <View style={styles.optionRow}>
-            {localePreferenceOptions.map((option) => (
-              <PreferencePill
-                key={option}
-                active={localePreference === option}
-                label={localeLabels[option]}
-                onPress={() => {
-                  void setLocalePreference(option);
                 }}
                 palette={palette}
               />
@@ -569,6 +539,29 @@ export function ProfileScreen() {
         </View>
 
         <View style={isExpanded ? styles.wideRight : styles.compactColumn}>
+        <SectionCard
+          eyebrow={copy.common.language}
+          palette={palette}
+          title={copy.common.language}
+        >
+          <Text style={[styles.sectionHint, { color: palette.inkMuted }]}>
+            {copy.meScreen.localeDescription}
+          </Text>
+          <View style={styles.optionRow}>
+            {localePreferenceOptions.map((option) => (
+              <PreferencePill
+                key={option}
+                active={localePreference === option}
+                label={localeLabels[option]}
+                onPress={() => {
+                  void setLocalePreference(option);
+                }}
+                palette={palette}
+              />
+            ))}
+          </View>
+        </SectionCard>
+
         {shouldRenderAiParseSection() ? (
           <SectionCard
             eyebrow={copy.meScreen.apiSectionEyebrow}
@@ -972,15 +965,15 @@ export function ProfileScreen() {
               router.replace("/login");
             }}
             style={[
-              styles.logoutButton,
+              styles.actionButton,
               {
-                backgroundColor: destructiveButton.background,
-                borderColor: destructiveButton.border,
+                backgroundColor: primaryButton.background,
+                borderColor: primaryButton.border,
               },
             ]}
           >
             <Text
-              style={[styles.logoutLabel, { color: destructiveLabelColor }]}
+              style={[styles.actionButtonLabel, { color: primaryButton.text }]}
             >
               {copy.common.signOut}
             </Text>
@@ -989,6 +982,18 @@ export function ProfileScreen() {
         </View>
         </View>
       </ScrollView>
+  );
+
+  if (embedded) {
+    return <View style={[styles.embeddedRoot, { backgroundColor: palette.shell }]}>{content}</View>;
+  }
+
+  return (
+    <SafeAreaView
+      edges={["top", "left", "right"]}
+      style={[styles.safeArea, { backgroundColor: palette.shell }]}
+    >
+      {content}
     </SafeAreaView>
   );
 }
@@ -1016,6 +1021,13 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "800",
     lineHeight: 20,
+  },
+  embeddedContainer: {
+    paddingBottom: 56,
+    paddingTop: 12,
+  },
+  embeddedRoot: {
+    flex: 1,
   },
   eyebrow: {
     fontSize: 12,
@@ -1065,15 +1077,6 @@ const styles = StyleSheet.create({
     paddingRight: 8,
     paddingVertical: 10,
   },
-  logoutButton: {
-    alignItems: "center",
-    borderWidth: 2,
-    borderRadius: 999,
-    justifyContent: "center",
-    marginTop: 8,
-    minHeight: 44,
-    paddingHorizontal: 20,
-  },
   googleConnectButton: {
     alignItems: "center",
     borderRadius: 999,
@@ -1117,10 +1120,6 @@ const styles = StyleSheet.create({
   },
   oauthStatusText: {
     fontSize: 14,
-    fontWeight: "800",
-  },
-  logoutLabel: {
-    fontSize: 16,
     fontWeight: "800",
   },
   optionLabel: {
