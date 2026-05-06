@@ -24,7 +24,7 @@ export function CenterPanel() {
   const { palette } = useAppShell();
   const { state, deactivateCard, discardCard, pocketCard, setMood, setSpeech, setAnimation } = useGame();
   const isVisible = state.activeCard !== null;
-  const { panelStyle, slashOpacity } = useCardFlip(isVisible);
+  const { panelStyle, slashOpacity, slashTranslateX } = useCardFlip(isVisible);
   const [isPocketing, setIsPocketing] = useState(false);
   const pocketStyle = usePocketAnimation(isPocketing);
 
@@ -68,8 +68,8 @@ export function CenterPanel() {
         style={[styles.slashOverlay, { opacity: slashOpacity }]}
         pointerEvents="none"
       >
-        <View style={[styles.slashStripe, styles.slashHot, { backgroundColor: palette.accent }]} />
-        <View style={[styles.slashStripe, styles.slashAcid, { backgroundColor: palette.success }]} />
+        <Animated.View style={[styles.slashStripe, styles.slashHot, { backgroundColor: palette.accent, transform: [{ rotate: "115deg" }, { translateX: slashTranslateX }, { translateY: -40 }] }]} />
+        <Animated.View style={[styles.slashStripe, styles.slashAcid, { backgroundColor: palette.success, transform: [{ rotate: "115deg" }, { translateX: slashTranslateX }, { translateY: 40 }] }]} />
       </Animated.View>
 
       {/* Panel with pocket animation wrapper */}
@@ -139,7 +139,6 @@ export function CenterPanel() {
 const styles = StyleSheet.create({
   slashOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(10, 10, 10, 0.85)",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -149,10 +148,8 @@ const styles = StyleSheet.create({
     height: 24,
   },
   slashHot: {
-    transform: [{ rotate: "115deg" }, { translateY: -40 }],
   },
   slashAcid: {
-    transform: [{ rotate: "115deg" }, { translateY: 40 }],
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
