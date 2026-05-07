@@ -49,7 +49,18 @@ function ActivityIcon({ color, icon }: { color: string; icon: string }) {
 
 export function HomeScreen() {
   const router = useRouter();
-  const { copy, palette, resolvedLocale } = useAppShell();
+  const {
+    aiProvider,
+    copy,
+    geminiApiKey,
+    geminiAuthMode,
+    inferApiKey,
+    inferBaseUrl,
+    inferModel,
+    openAiApiKey,
+    palette,
+    resolvedLocale,
+  } = useAppShell();
   const { isExpanded } = useResponsive();
   const {
     error,
@@ -76,6 +87,14 @@ export function HomeScreen() {
         fileName: file.originalFileName,
         blob,
         mimeType: file.mimeType,
+      }, {
+        aiProvider,
+        geminiApiKey,
+        geminiAuthMode,
+        inferApiKey,
+        inferBaseUrl,
+        inferModel,
+        openAiApiKey,
       });
 
       if (result.error || !result.rawJson) {

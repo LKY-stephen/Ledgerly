@@ -14,7 +14,17 @@ import { getReceiptParseRecords } from "@ledgerly/schemas";
 
 export function NewRecordPanel() {
   const router = useRouter();
-  const { palette, resolvedLocale } = useAppShell();
+  const {
+    aiProvider,
+    geminiApiKey,
+    geminiAuthMode,
+    inferApiKey,
+    inferBaseUrl,
+    inferModel,
+    openAiApiKey,
+    palette,
+    resolvedLocale,
+  } = useAppShell();
   const agent = useAgentContext();
   const primaryButton = getButtonColors(palette, "primary");
   const locale = resolvedLocale === "zh-CN" ? "zh-CN" : "en";
@@ -31,6 +41,14 @@ export function NewRecordPanel() {
         fileName: file.originalFileName,
         blob,
         mimeType: file.mimeType,
+      }, {
+        aiProvider,
+        geminiApiKey,
+        geminiAuthMode,
+        inferApiKey,
+        inferBaseUrl,
+        inferModel,
+        openAiApiKey,
       });
 
       if (result.error || !result.rawJson) {
