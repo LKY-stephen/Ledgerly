@@ -9,9 +9,14 @@ const cards: { id: CardId; suit: string; label: string }[] = [
   { id: "new", suit: "♦", label: "New" },
   { id: "report", suit: "♣", label: "Report" },
   { id: "show", suit: "♠", label: "Show" },
+  { id: "settings", suit: "♥", label: "Settings" },
 ];
 
-export function CardDock() {
+interface Props {
+  stickmanNearbyCardId?: CardId | null;
+}
+
+export function CardDock({ stickmanNearbyCardId = null }: Props) {
   const { palette } = useAppShell();
   const dealStyles = useDealIn(cards.length);
 
@@ -21,6 +26,7 @@ export function CardDock() {
         <Animated.View key={card.id} style={dealStyles[i]}>
           <CardDockItem
             cardId={card.id}
+            isStickmanNearby={stickmanNearbyCardId === card.id}
             suit={card.suit}
             label={card.label}
             palette={palette}

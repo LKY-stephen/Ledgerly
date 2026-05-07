@@ -5,6 +5,7 @@ import type { CardId } from "./game-context";
 import { ShowLedgerPanel } from "./panels/show-ledger-panel";
 import { NewRecordPanel } from "./panels/new-record-panel";
 import { ReportPanel } from "./panels/report-panel";
+import { ProfileScreen } from "../profile/profile-screen";
 
 function WithAgent({ children }: { children: React.ReactNode }) {
   const db = useWritableDatabase();
@@ -39,6 +40,8 @@ export function CenterPanelContent({ card }: Props) {
           </WithAgent>
         </LocalStorageProvider>
       );
+    case "settings":
+      return <ProfileScreen embedded />;
     default:
       return null;
   }

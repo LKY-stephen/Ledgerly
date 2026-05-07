@@ -1,4 +1,4 @@
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 
 import { useAppShell } from "../../app-shell/provider";
 import { useHomeScreenData } from "../../home/use-home-screen-data";

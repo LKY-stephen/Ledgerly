@@ -44,4 +44,16 @@ describe("theme utils", () => {
     expect(darkPrimary.background).toBe(surfaceThemes.dark.accent);
     expect(darkPrimary.text).toBe(surfaceThemes.dark.shell);
   });
+
+  it("adapts destructive button text to the current theme palette", () => {
+    const lightDestructive = getButtonColors(surfaceThemes.light, "destructive");
+    const darkDestructive = getButtonColors(surfaceThemes.dark, "destructive");
+
+    expect(lightDestructive.background).toBe(surfaceThemes.light.destructive);
+    expect(lightDestructive.border).toBe(surfaceThemes.light.destructive);
+    expect(lightDestructive.text).toBe(surfaceThemes.light.paper);
+    expect(darkDestructive.background).toBe("rgba(255, 46, 99, 0.18)");
+    expect(darkDestructive.border).toBe(surfaceThemes.dark.destructive);
+    expect(darkDestructive.text).toBe(surfaceThemes.dark.destructive);
+  });
 });
