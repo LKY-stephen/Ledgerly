@@ -244,11 +244,13 @@ describe("infer provider routing", () => {
     vi.mocked(storageMock.loadPersistedInferBaseUrl).mockResolvedValue("https://infer.example.com/v1");
 
     let capturedUrl = "";
+    let capturedModel = "";
 
     vi.stubGlobal(
       "fetch",
-      vi.fn(async (url: string) => {
+      vi.fn(async (url: string, init?: RequestInit) => {
         capturedUrl = url;
+        capturedModel = JSON.parse(String(init?.body)).model;
         return new Response(
           JSON.stringify({ output_text: buildPlannerResponse() }),
           { headers: { "content-type": "application/json" }, status: 200 },
@@ -264,6 +266,7 @@ describe("infer provider routing", () => {
     });
 
     expect(capturedUrl).toContain("https://infer.example.com/v1");
+    expect(capturedModel).toBe("gemini-2.5-flash");
     expect(result.summary).toBe("One expense record.");
   });
 

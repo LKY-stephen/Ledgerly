@@ -1,31 +1,121 @@
-import { Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { useEffect, useMemo, useState } from "react";
+import {
+  Animated,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { Feather } from "@expo/vector-icons";
 
 import { useAppShell } from "../app-shell/provider";
 import { CardDock } from "./card-dock";
 import { CenterPanel } from "./center-panel";
 import { DiscardPile } from "./discard-pile";
+import { useCharacterMotion } from "./animations/use-character-motion";
+import { useStickmanRoam } from "./animations/use-stickman-roam";
 import { Stickman } from "./stickman/stickman";
 import { CatSvg } from "./cat-svg";
 import { useGame } from "./game-context";
 import { useCardDimensions } from "./card-dock-item";
+import {
+  getNextQuickTheme,
+  getStickmanEnergy,
+  getStickmanNearbyCardId,
+} from "./game-ui";
 
 export function GameShell() {
-  const { palette } = useAppShell();
+  const { palette, setThemePreference } = useAppShell();
   const insets = useSafeAreaInsets();
-  const { height } = useWindowDimensions();
-  const router = useRouter();
+  const { height, width } = useWindowDimensions();
   const { state } = useGame();
   const isDark = palette.name === "dark";
+  const quickTheme = getNextQuickTheme(isDark ? "dark" : "light");
+  const [stickmanTouchCount, setStickmanTouchCount] = useState(0);
+  const [catTouchCount, setCatTouchCount] = useState(0);
 
-  const goProfile = () => router.push("/profile" as never);
+  const handleQuickThemeToggle = () => {
+    void setThemePreference(quickTheme);
+  };
 
-  const { cardHeight } = useCardDimensions();
+  const { cardHeight, cardWidth } = useCardDimensions();
+  const stickmanWidth = Math.min(180, Math.max(124, width * 0.28));
   const dockHeight = cardHeight + 40;
   const groundY = height - dockHeight - insets.bottom - 16;
   const stickmanHeight = Math.min(140, height * 0.18);
   const stickmanY = groundY - stickmanHeight - 8;
+  const stickmanBaseTop = stickmanY - (state.speechBubble ? 56 : 0);
+  const stickmanEnergy = getStickmanEnergy(state.cardsPlayedThisSession);
+  const catEnergy = Math.min(0.35 + stickmanEnergy * 0.3, 0.8);
+  const dockStart = (width - cardWidth * 4 - 24 * 3) / 2;
+  const roamAnchors = useMemo(() => {
+    const clampLane = (value: number) =>
+      Math.max(12, Math.min(width - stickmanWidth - 12, value));
+    const leftLane = clampLane(width * 0.18 - stickmanWidth / 2);
+    const rightLane = clampLane(width * 0.82 - stickmanWidth / 2);
+    const catLane = clampLane(34);
+    const discardLane = clampLane(width - 96);
+    const dockIds = ["new", "report", "show", "settings"] as const;
+    const dockAnchors = dockIds.map((cardId, index) => ({
+      id: `dock:${cardId}` as const,
+      pauseMs: 560,
+      weight: 1.25,
+      x: clampLane(
+        dockStart +
+          index * (cardWidth + 24) +
+          cardWidth / 2 -
+          stickmanWidth / 2,
+      ),
+    }));
+
+    if (state.activeCard) {
+      return [
+        { id: "panel:left" as const, pauseMs: 520, weight: 1.35, x: leftLane },
+        { id: "panel:right" as const, pauseMs: 520, weight: 1.35, x: rightLane },
+        { id: "discard" as const, pauseMs: 620, weight: 1.1, x: discardLane },
+        { id: "cat" as const, pauseMs: 620, weight: 1.1, x: catLane },
+      ];
+    }
+
+    return [
+      { id: "lane:left" as const, pauseMs: 280, weight: 0.9, x: leftLane },
+      { id: "cat" as const, pauseMs: 620, weight: 1.1, x: catLane },
+      ...dockAnchors,
+      { id: "discard" as const, pauseMs: 620, weight: 1.1, x: discardLane },
+      { id: "lane:right" as const, pauseMs: 280, weight: 0.9, x: rightLane },
+    ];
+  }, [cardWidth, dockStart, state.activeCard, stickmanWidth, width]);
+  const { activeAnchorId, facing, isWalking, travelStyle } = useStickmanRoam({
+    anchors: roamAnchors,
+    energy: stickmanEnergy,
+    isPanelOpen: state.activeCard !== null,
+  });
+  const stickmanMotion = useCharacterMotion({
+    character: "stickman",
+    energy: stickmanEnergy,
+    isPanelOpen: state.activeCard !== null,
+    reactionKey: stickmanTouchCount,
+    boostKey: state.cardsPlayedThisSession,
+  });
+  const catMotion = useCharacterMotion({
+    character: "cat",
+    energy: catEnergy,
+    isPanelOpen: state.activeCard !== null,
+    reactionKey: catTouchCount,
+    boostKey: catTouchCount,
+  });
+  const stickmanNearbyCardId = getStickmanNearbyCardId(activeAnchorId);
+  const stickmanNearDiscard = activeAnchorId === "discard";
+  const stickmanNearPanel =
+    activeAnchorId === "panel:left" || activeAnchorId === "panel:right";
+
+  useEffect(() => {
+    if (activeAnchorId === "cat") {
+      setCatTouchCount((count) => count + 1);
+    }
+  }, [activeAnchorId]);
 
   return (
     <View style={[styles.root, { backgroundColor: palette.paper }]}>
@@ -56,9 +146,10 @@ export function GameShell() {
         <Text style={[styles.titleSub, { color: palette.inkMuted }]}>// bookkeeping, weaponized</Text>
       </View>
 
-      {/* Profile button */}
+      {/* Theme quick switch */}
       <Pressable
-        onPress={goProfile}
+        accessibilityLabel={`Switch to ${quickTheme} mode`}
+        onPress={handleQuickThemeToggle}
         style={[
           styles.profileBtn,
           {
@@ -69,25 +160,87 @@ export function GameShell() {
           },
         ]}
       >
-        <Text style={[styles.profileBtnText, { color: palette.ink }]}>P</Text>
+        <Feather
+          color={palette.ink}
+          name={isDark ? "sun" : "moon"}
+          size={16}
+        />
       </Pressable>
+
+      {/* Ground shadow follows the stickman across the scene */}
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          styles.stickmanTravel,
+          {
+            top: groundY + 10,
+            width: stickmanWidth,
+          },
+          travelStyle,
+        ]}
+      >
+        <View style={styles.groundShadow} />
+      </Animated.View>
 
       {/* Cat (light only) — SVG line-art */}
       {!isDark && palette.showCat && (
-        <View style={[styles.catArea, { top: stickmanY + stickmanHeight - 40 }]}>
-          <CatSvg palette={palette} />
-        </View>
+        <Pressable
+          accessibilityLabel="Nudge the cat"
+          onPress={() => setCatTouchCount((count) => count + 1)}
+          style={({ pressed }) => [
+            styles.catArea,
+            {
+              top: stickmanY + stickmanHeight - 44,
+              opacity: pressed ? 0.92 : 1,
+            },
+          ]}
+        >
+          <Animated.View style={[styles.characterMotion, catMotion]}>
+            <CatSvg palette={palette} interactionCount={catTouchCount} />
+          </Animated.View>
+        </Pressable>
       )}
 
       {/* Stickman */}
-      <View
+      <Animated.View
         style={[
-          styles.stickmanArea,
-          { top: stickmanY - (state.speechBubble ? 56 : 0) },
+          styles.stickmanTravel,
+          {
+            top: stickmanBaseTop,
+            width: stickmanWidth,
+          },
+          travelStyle,
         ]}
       >
-        <Stickman height={stickmanHeight} palette={palette} />
-      </View>
+        <Pressable
+          accessibilityLabel="Nudge the stickman"
+          onPress={() => setStickmanTouchCount((count) => count + 1)}
+          style={({ pressed }) => [
+            styles.stickmanPressable,
+            { opacity: pressed ? 0.94 : 1 },
+          ]}
+        >
+          <Animated.View
+            style={[
+              styles.characterMotion,
+              {
+                width: stickmanWidth,
+              },
+              stickmanMotion,
+            ]}
+          >
+            <Stickman
+              activeAnchorId={activeAnchorId}
+              facing={facing}
+              height={stickmanHeight}
+              isWalking={isWalking}
+              palette={palette}
+              energy={stickmanEnergy}
+              interactionCount={stickmanTouchCount}
+            />
+          </Animated.View>
+        </Pressable>
+      </Animated.View>
 
       {/* Ground line */}
       <View
@@ -104,16 +257,16 @@ export function GameShell() {
           { bottom: insets.bottom + 16, height: dockHeight },
         ]}
       >
-        <CardDock />
+        <CardDock stickmanNearbyCardId={state.activeCard ? null : stickmanNearbyCardId} />
       </View>
 
       {/* Discard pile */}
       <View style={[styles.discardArea, { top: groundY + 8, right: 16 }]}>
-        <DiscardPile palette={palette} />
+        <DiscardPile isStickmanNearby={stickmanNearDiscard} palette={palette} />
       </View>
 
       {/* Center panel (active card content) */}
-      {state.activeCard && <CenterPanel />}
+      {state.activeCard && <CenterPanel isStickmanNearby={stickmanNearPanel} />}
     </View>
   );
 }
@@ -162,19 +315,32 @@ const styles = StyleSheet.create({
     shadowRadius: 0,
     elevation: 3,
   },
-  profileBtnText: {
-    fontSize: 14,
-    fontWeight: "900",
-  },
   catArea: {
     position: "absolute",
-    left: 24,
+    left: 16,
+    width: 120,
+    height: 84,
+    justifyContent: "center",
+    alignItems: "center",
   },
-  stickmanArea: {
+  stickmanPressable: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  stickmanTravel: {
     position: "absolute",
     left: 0,
-    right: 0,
     alignItems: "center",
+  },
+  characterMotion: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  groundShadow: {
+    width: 108,
+    height: 16,
+    borderRadius: 999,
+    backgroundColor: "rgba(10,10,10,0.06)",
   },
   groundLine: {
     position: "absolute",

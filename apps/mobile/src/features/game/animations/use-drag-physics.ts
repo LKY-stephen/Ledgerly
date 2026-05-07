@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { Animated, PanResponder, type LayoutRectangle } from "react-native";
+import { Animated, PanResponder } from "react-native";
 
 interface DragPhysicsOptions {
   onFling: (direction: "left" | "right" | "up") => void;

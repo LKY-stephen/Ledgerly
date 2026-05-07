@@ -297,14 +297,18 @@ describe("remote parse client", () => {
     vi.mocked(loadPersistedInferBaseUrl).mockResolvedValue("https://infer.example/v1");
     vi.mocked(loadPersistedInferModel).mockResolvedValue("gpt-4o");
 
+    let requestedModel = "";
+
     vi.stubGlobal(
       "fetch",
-      vi.fn(async () =>
-        new Response("<html>bad gateway</html>", {
+      vi.fn(async (_url: string, init?: RequestInit) => {
+        requestedModel = JSON.parse(String(init?.body)).model;
+
+        return new Response("<html>bad gateway</html>", {
           headers: { "content-type": "text/html" },
           status: 502,
-        }),
-      ),
+        });
+      }),
     );
 
     const result = await parseFileWithOpenAiFromBlob({
@@ -313,8 +317,51 @@ describe("remote parse client", () => {
       mimeType: "application/pdf",
     });
 
+    expect(requestedModel).toBe("gpt-4o");
     expect(result.error).toContain("Infer returned a non-JSON response");
     expect(result.rawJson).toBeNull();
+  });
+
+  it("defaults Infer parse requests to gemini-2.5-flash when no explicit Infer model is configured", async () => {
+    vi.mocked(loadPersistedOpenAiApiKey).mockResolvedValue("");
+    vi.mocked(loadPersistedAiProvider).mockResolvedValue("infer");
+    vi.mocked(loadPersistedInferApiKey).mockResolvedValue("infer-test-key");
+    vi.mocked(loadPersistedInferBaseUrl).mockResolvedValue("https://infer.example/v1");
+    vi.mocked(loadPersistedInferModel).mockResolvedValue("");
+
+    let requestedModel = "";
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (_url: string, init?: RequestInit) => {
+        requestedModel = JSON.parse(String(init?.body)).model;
+
+        return new Response(
+          JSON.stringify({
+            output_text: JSON.stringify(
+              createParsePayload({
+                model: null,
+                rawText: "Infer default model raw text",
+              }),
+            ),
+          }),
+          {
+            headers: { "content-type": "application/json" },
+            status: 200,
+          },
+        );
+      }),
+    );
+
+    const result = await parseFileWithOpenAiFromBlob({
+      blob: new Blob(["pdf-bytes"], { type: "application/pdf" }),
+      fileName: "receipt.pdf",
+      mimeType: "application/pdf",
+    });
+
+    expect(requestedModel).toBe("gemini-2.5-flash");
+    expect(result.error).toBeNull();
+    expect(result.model).toBe("gemini-2.5-flash");
   });
 
   it("switches to a fallback OpenAI model when the current model is experiencing high demand", async () => {

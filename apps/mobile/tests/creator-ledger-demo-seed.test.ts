@@ -81,6 +81,7 @@ describe("creator ledger demo seed", () => {
     });
 
     expect(homeSnapshot.metrics).toEqual({
+      balanceCents: 440_900,
       incomeCents: 469_000,
       netCents: 399_500,
       outflowCents: 69_500,

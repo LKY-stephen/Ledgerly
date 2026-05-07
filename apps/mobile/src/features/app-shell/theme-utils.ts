@@ -73,15 +73,30 @@ export function getButtonColors(
   palette: SurfaceTokens,
   tone: ButtonTone = "primary",
 ) {
-  const background = tone === "destructive" ? palette.destructive : palette.accent;
-  const text = palette.inkOnAccent;
+  const isDestructive = tone === "destructive";
+  const background = isDestructive
+    ? palette.name === "dark"
+      ? withAlpha(palette.destructive, 0.18)
+      : palette.destructive
+    : palette.accent;
+  const border = isDestructive ? palette.destructive : palette.border;
+  const text = isDestructive
+    ? palette.name === "dark"
+      ? palette.destructive
+      : palette.paper
+    : palette.inkOnAccent;
+  const pressedBackground = isDestructive
+    ? palette.name === "dark"
+      ? withAlpha(palette.destructive, 0.28)
+      : withAlpha(palette.destructive, 0.75)
+    : withAlpha(background, 0.75);
 
   return {
     background,
-    border: palette.border,
+    border,
     disabledBackground: withAlpha(background, 0.35),
     disabledText: withAlpha(text, 0.5),
-    pressedBackground: withAlpha(background, 0.75),
+    pressedBackground,
     text,
   };
 }

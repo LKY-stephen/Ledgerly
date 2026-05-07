@@ -1,6 +1,12 @@
-import { createContext, useContext, useReducer, type PropsWithChildren } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useReducer,
+  type PropsWithChildren,
+} from "react";
 
-export type CardId = "new" | "report" | "show";
+export type CardId = "new" | "report" | "show" | "settings";
 
 export type StickmanMood =
   | "idle"
@@ -30,6 +36,7 @@ export interface GameState {
   speechBubble: string | null;
   discardPile: DiscardEntry[];
   animationPhase: AnimationPhase;
+  cardsPlayedThisSession: number;
 }
 
 type GameAction =
@@ -42,15 +49,16 @@ type GameAction =
   | { type: "SET_ANIMATION"; phase: AnimationPhase }
   | { type: "CLEAR_DISCARD" };
 
-const initialState: GameState = {
+export const initialGameState: GameState = {
   activeCard: null,
   stickmanMood: "idle",
   speechBubble: null,
   discardPile: [],
   animationPhase: "idle",
+  cardsPlayedThisSession: 0,
 };
 
-function gameReducer(state: GameState, action: GameAction): GameState {
+export function gameReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
     case "ACTIVATE_CARD":
       return { ...state, activeCard: action.card, animationPhase: "flipIn" };
@@ -65,19 +73,27 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           { card: action.card, timestamp: Date.now() },
         ],
         animationPhase: "spikeThrow",
+        cardsPlayedThisSession: state.cardsPlayedThisSession + 1,
       };
     case "POCKET_CARD":
       return {
         ...state,
         activeCard: null,
         animationPhase: "pocketShrink",
+        cardsPlayedThisSession: state.cardsPlayedThisSession + 1,
       };
     case "SET_MOOD":
-      return { ...state, stickmanMood: action.mood };
+      return state.stickmanMood === action.mood
+        ? state
+        : { ...state, stickmanMood: action.mood };
     case "SET_SPEECH":
-      return { ...state, speechBubble: action.text };
+      return state.speechBubble === action.text
+        ? state
+        : { ...state, speechBubble: action.text };
     case "SET_ANIMATION":
-      return { ...state, animationPhase: action.phase };
+      return state.animationPhase === action.phase
+        ? state
+        : { ...state, animationPhase: action.phase };
     case "CLEAR_DISCARD":
       return { ...state, discardPile: [] };
     default:
@@ -100,18 +116,50 @@ interface GameContextValue {
 const GameContext = createContext<GameContextValue | null>(null);
 
 export function GameProvider({ children }: PropsWithChildren) {
-  const [state, dispatch] = useReducer(gameReducer, initialState);
+  const [state, dispatch] = useReducer(gameReducer, initialGameState);
+  const activateCard = useCallback(
+    (card: CardId) => dispatch({ type: "ACTIVATE_CARD", card }),
+    [],
+  );
+  const deactivateCard = useCallback(
+    () => dispatch({ type: "DEACTIVATE_CARD" }),
+    [],
+  );
+  const discardCard = useCallback(
+    (card: CardId) => dispatch({ type: "DISCARD_CARD", card }),
+    [],
+  );
+  const pocketCard = useCallback(
+    (card: CardId) => dispatch({ type: "POCKET_CARD", card }),
+    [],
+  );
+  const setMood = useCallback(
+    (mood: StickmanMood) => dispatch({ type: "SET_MOOD", mood }),
+    [],
+  );
+  const setSpeech = useCallback(
+    (text: string | null) => dispatch({ type: "SET_SPEECH", text }),
+    [],
+  );
+  const setAnimation = useCallback(
+    (phase: AnimationPhase) => dispatch({ type: "SET_ANIMATION", phase }),
+    [],
+  );
+  const clearDiscard = useCallback(
+    () => dispatch({ type: "CLEAR_DISCARD" }),
+    [],
+  );
 
   const value: GameContextValue = {
     state,
-    activateCard: (card) => dispatch({ type: "ACTIVATE_CARD", card }),
-    deactivateCard: () => dispatch({ type: "DEACTIVATE_CARD" }),
-    discardCard: (card) => dispatch({ type: "DISCARD_CARD", card }),
-    pocketCard: (card) => dispatch({ type: "POCKET_CARD", card }),
-    setMood: (mood) => dispatch({ type: "SET_MOOD", mood }),
-    setSpeech: (text) => dispatch({ type: "SET_SPEECH", text }),
-    setAnimation: (phase) => dispatch({ type: "SET_ANIMATION", phase }),
-    clearDiscard: () => dispatch({ type: "CLEAR_DISCARD" }),
+    activateCard,
+    deactivateCard,
+    discardCard,
+    pocketCard,
+    setMood,
+    setSpeech,
+    setAnimation,
+    clearDiscard,
   };
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;

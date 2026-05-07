@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { Animated, Easing, Pressable, StyleSheet, Text, View } from "react-native";
 import type { SurfaceTokens } from "@ledgerly/ui";
 
-import { useGame, type DiscardEntry } from "./game-context";
+import { useGame } from "./game-context";
 
 const suitMap: Record<string, string> = {
   new: "♦",
@@ -11,10 +11,11 @@ const suitMap: Record<string, string> = {
 };
 
 interface Props {
+  isStickmanNearby?: boolean;
   palette: SurfaceTokens;
 }
 
-export function DiscardPile({ palette }: Props) {
+export function DiscardPile({ isStickmanNearby = false, palette }: Props) {
   const { state, clearDiscard } = useGame();
   const { discardPile, animationPhase } = state;
   const slideIn = useRef(new Animated.Value(0)).current;
@@ -99,10 +100,12 @@ export function DiscardPile({ palette }: Props) {
                   transform:
                     i === topCards.length - 1
                       ? [
+                          { translateY: isStickmanNearby ? -5 : 0 },
+                          { rotate: isStickmanNearby ? "-4deg" : "0deg" },
                           {
                             scale: slideIn.interpolate({
                               inputRange: [0, 1],
-                              outputRange: [0.5, 1],
+                              outputRange: [0.5, isStickmanNearby ? 1.06 : 1],
                             }),
                           },
                         ]

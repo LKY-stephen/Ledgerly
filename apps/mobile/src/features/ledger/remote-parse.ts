@@ -344,6 +344,7 @@ const defaultOpenAiBaseUrl = "https://api.openai.com/v1";
 const defaultOpenAiModel = "gpt-4o";
 const defaultGeminiBaseUrl = "https://generativelanguage.googleapis.com/v1beta";
 const defaultGeminiModel = "gemini-2.5-flash";
+const defaultInferModel = "gemini-2.5-flash";
 const defaultLocalCorsProxyUrl = "http://127.0.0.1:19007";
 const runtimeModelOverrides: Partial<Record<AiProvider, string>> = {};
 const parseSystemPrompt = [
@@ -625,7 +626,7 @@ async function loadRequiredInferSettings(): Promise<OpenAiSettings> {
 
   const model =
     runtimeModelOverrides.infer ??
-    (inferModel || ((process.env.EXPO_PUBLIC_INFER_MODEL ?? "").trim() || defaultOpenAiModel));
+    (inferModel || ((process.env.EXPO_PUBLIC_INFER_MODEL ?? "").trim() || defaultInferModel));
 
   return {
     baseUrl: normalizeBaseUrl(inferBaseUrl),
