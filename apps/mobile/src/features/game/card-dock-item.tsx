@@ -29,12 +29,17 @@ const cardConfig: Record<CardId, { suit: string; label: string; sublabel: string
 
 interface Props {
   cardId: CardId;
+  isStickmanNearby?: boolean;
   suit: string;
   label: string;
   palette: SurfaceTokens;
 }
 
-export function CardDockItem({ cardId, palette }: Props) {
+export function CardDockItem({
+  cardId,
+  isStickmanNearby = false,
+  palette,
+}: Props) {
   const { activateCard, state } = useGame();
   const isActive = state.activeCard === cardId;
   const { cardWidth, cardHeight } = useCardDimensions();
@@ -51,14 +56,30 @@ export function CardDockItem({ cardId, palette }: Props) {
           width: cardWidth,
           height: cardHeight,
           backgroundColor: variantStyles.bg,
-          borderColor: isActive ? palette.accent : palette.cardBorder,
+          borderColor:
+            isActive || isStickmanNearby ? palette.accent : palette.cardBorder,
           borderRadius: palette.cardRadius,
-          opacity: pressed ? 0.88 : 1,
+          opacity: pressed ? 0.88 : isStickmanNearby ? 0.96 : 1,
           shadowColor: palette.shadow,
           shadowOffset: { width: 5, height: 5 },
           shadowOpacity: 1,
           shadowRadius: 0,
-          transform: [{ scale: getDockCardScale({ isActive, pressed }) }],
+          transform: [
+            { translateY: isStickmanNearby && !pressed ? -6 : 0 },
+            {
+              rotate:
+                isStickmanNearby && !isActive
+                  ? cardId === "show"
+                    ? "2deg"
+                    : "-2deg"
+                  : "0deg",
+            },
+            {
+              scale:
+                getDockCardScale({ isActive, pressed }) *
+                (isStickmanNearby && !pressed ? 1.04 : 1),
+            },
+          ],
           elevation: 6,
         },
       ]}

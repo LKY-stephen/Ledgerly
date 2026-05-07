@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { Animated, Easing } from "react-native";
+import { Animated } from "react-native";
 
 export function useDealIn(cardCount: number, delayPerCard = 120) {
   const anims = useRef(

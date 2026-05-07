@@ -22,7 +22,11 @@ const labelMap: Record<CardId, string> = {
   settings: gameSettingsCardLabel,
 };
 
-export function CenterPanel() {
+interface Props {
+  isStickmanNearby?: boolean;
+}
+
+export function CenterPanel({ isStickmanNearby = false }: Props) {
   const { palette } = useAppShell();
   const { state, deactivateCard, discardCard, pocketCard, setMood, setSpeech, setAnimation } = useGame();
   const isVisible = state.activeCard !== null;
@@ -97,9 +101,9 @@ export function CenterPanel() {
             styles.panel,
             {
               backgroundColor: palette.panelSurface,
-              borderColor: palette.cardBorder,
+              borderColor: isStickmanNearby ? palette.accent : palette.cardBorder,
               borderRadius: palette.panelRadius,
-              shadowColor: palette.shadow,
+              shadowColor: isStickmanNearby ? palette.accent : palette.shadow,
             },
           ]}
         >

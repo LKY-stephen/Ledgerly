@@ -143,6 +143,7 @@ describe("feat_upload home aggregation", () => {
     });
 
     expect(firstPage.metrics).toEqual({
+      balanceCents: 20_600,
       incomeCents: 24_800,
       netCents: 20_600,
       outflowCents: 4_200,

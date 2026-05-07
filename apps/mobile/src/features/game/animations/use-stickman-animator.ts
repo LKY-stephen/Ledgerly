@@ -1,82 +1,113 @@
-import { useEffect, useRef } from "react";
-import { Animated, Easing } from "react-native";
+import { useEffect, useRef, useState } from "react";
 
-import type { StickmanPose } from "../stickman/stickman-poses";
-import { poses } from "../stickman/stickman-poses";
-import type { StickmanMood } from "../game-context";
+import {
+  poses,
+  type Point,
+  type StickmanPose,
+  type StickmanPoseId,
+} from "../stickman/stickman-poses";
 
-function flattenPose(pose: StickmanPose): number[] {
-  return [
-    pose.head.cx, pose.head.cy, pose.head.r,
-    pose.neck.x, pose.neck.y,
-    pose.hip.x, pose.hip.y,
-    ...pose.armL.flatMap((p) => [p.x, p.y]),
-    ...pose.armR.flatMap((p) => [p.x, p.y]),
-    ...pose.legL.flatMap((p) => [p.x, p.y]),
-    ...pose.legR.flatMap((p) => [p.x, p.y]),
-  ];
+function mix(a: number, b: number, progress: number) {
+  return a + (b - a) * progress;
 }
 
-function unflattenPose(values: number[]): StickmanPose {
-  let i = 0;
-  const next = () => values[i++];
+function mixPoint(from: Point, to: Point, progress: number): Point {
   return {
-    head: { cx: next(), cy: next(), r: next() },
-    neck: { x: next(), y: next() },
-    hip: { x: next(), y: next() },
+    x: mix(from.x, to.x, progress),
+    y: mix(from.y, to.y, progress),
+  };
+}
+
+function interpolatePose(
+  from: StickmanPose,
+  to: StickmanPose,
+  progress: number,
+): StickmanPose {
+  return {
+    head: {
+      cx: mix(from.head.cx, to.head.cx, progress),
+      cy: mix(from.head.cy, to.head.cy, progress),
+      r: mix(from.head.r, to.head.r, progress),
+    },
+    neck: mixPoint(from.neck, to.neck, progress),
+    hip: mixPoint(from.hip, to.hip, progress),
     armL: [
-      { x: next(), y: next() },
-      { x: next(), y: next() },
-      { x: next(), y: next() },
+      mixPoint(from.armL[0], to.armL[0], progress),
+      mixPoint(from.armL[1], to.armL[1], progress),
+      mixPoint(from.armL[2], to.armL[2], progress),
     ],
     armR: [
-      { x: next(), y: next() },
-      { x: next(), y: next() },
-      { x: next(), y: next() },
+      mixPoint(from.armR[0], to.armR[0], progress),
+      mixPoint(from.armR[1], to.armR[1], progress),
+      mixPoint(from.armR[2], to.armR[2], progress),
     ],
     legL: [
-      { x: next(), y: next() },
-      { x: next(), y: next() },
-      { x: next(), y: next() },
+      mixPoint(from.legL[0], to.legL[0], progress),
+      mixPoint(from.legL[1], to.legL[1], progress),
+      mixPoint(from.legL[2], to.legL[2], progress),
     ],
     legR: [
-      { x: next(), y: next() },
-      { x: next(), y: next() },
-      { x: next(), y: next() },
+      mixPoint(from.legR[0], to.legR[0], progress),
+      mixPoint(from.legR[1], to.legR[1], progress),
+      mixPoint(from.legR[2], to.legR[2], progress),
     ],
   };
 }
 
-export function useStickmanAnimator(mood: StickmanMood) {
-  const targetPose = poses[mood] ?? poses.idle;
-  const flatTarget = flattenPose(targetPose);
-  const animValues = useRef(flatTarget.map((v) => new Animated.Value(v))).current;
-  const currentPose = useRef(targetPose);
+function easeInOutCubic(progress: number) {
+  if (progress < 0.5) {
+    return 4 * progress * progress * progress;
+  }
+
+  return 1 - Math.pow(-2 * progress + 2, 3) / 2;
+}
+
+export function useStickmanAnimator(
+  poseId: StickmanPoseId,
+  durationMs = 220,
+) {
+  const [pose, setPose] = useState<StickmanPose>(poses[poseId] ?? poses.idle);
+  const poseRef = useRef(pose);
+  const frameRef = useRef<number | null>(null);
 
   useEffect(() => {
-    const nextFlat = flattenPose(poses[mood] ?? poses.idle);
-    const anims = animValues.map((av, i) =>
-      Animated.timing(av, {
-        toValue: nextFlat[i],
-        duration: 350,
-        easing: Easing.inOut(Easing.ease),
-        useNativeDriver: false,
-      }),
-    );
-    Animated.parallel(anims).start();
+    poseRef.current = pose;
+  }, [pose]);
 
-    const listenerId = animValues.map((av, i) =>
-      av.addListener(({ value }) => {
-        const flat = animValues.map((a) => (a as any)._value ?? 0);
-        flat[i] = value;
-        currentPose.current = unflattenPose(flat);
-      }),
-    );
+  useEffect(() => {
+    const targetPose = poses[poseId] ?? poses.idle;
+    const fromPose = poseRef.current;
+    const start = performance.now();
+
+    if (frameRef.current !== null) {
+      cancelAnimationFrame(frameRef.current);
+    }
+
+    const step = (timestamp: number) => {
+      const elapsed = timestamp - start;
+      const progress = Math.min(elapsed / durationMs, 1);
+      const eased = easeInOutCubic(progress);
+      const nextPose = interpolatePose(fromPose, targetPose, eased);
+
+      poseRef.current = nextPose;
+      setPose(nextPose);
+
+      if (progress < 1) {
+        frameRef.current = requestAnimationFrame(step);
+      } else {
+        frameRef.current = null;
+      }
+    };
+
+    frameRef.current = requestAnimationFrame(step);
 
     return () => {
-      animValues.forEach((av, i) => av.removeListener(listenerId[i]));
+      if (frameRef.current !== null) {
+        cancelAnimationFrame(frameRef.current);
+        frameRef.current = null;
+      }
     };
-  }, [mood, animValues]);
+  }, [durationMs, poseId]);
 
-  return { animValues, currentPose };
+  return pose;
 }

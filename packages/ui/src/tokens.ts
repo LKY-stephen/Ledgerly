@@ -76,7 +76,7 @@ export const surfaceThemes = {
     shellElevated: "#F4EFE6",
     tabBar: "#F4EFE6",
     tabActive: "#0A0A0A",
-    tabInactive: "#767676",
+    tabInactive: "#666666",
     heroStart: "#0A0A0A",
     heroEnd: "#0A0A0A",
     shadow: "#0A0A0A",
