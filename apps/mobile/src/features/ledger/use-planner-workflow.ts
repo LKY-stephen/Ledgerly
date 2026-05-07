@@ -22,7 +22,17 @@ export function usePlannerWorkflow(input: {
   rawJson: unknown;
   rawText: string;
 }) {
-  const { bumpStorageRevision, copy } = useAppShell();
+  const {
+    aiProvider,
+    bumpStorageRevision,
+    copy,
+    geminiApiKey,
+    geminiAuthMode,
+    inferApiKey,
+    inferBaseUrl,
+    inferModel,
+    openAiApiKey,
+  } = useAppShell();
   const parseCopy = copy.ledger.parse;
   const [plannerResult, setPlannerResult] = useState<PlannerResult | null>(
     null,
@@ -45,6 +55,15 @@ export function usePlannerWorkflow(input: {
         mimeType: input.mimeType,
         model: input.model,
         parserKind: input.parserKind,
+        providerConfig: {
+          aiProvider,
+          geminiApiKey,
+          geminiAuthMode,
+          inferApiKey,
+          inferBaseUrl,
+          inferModel,
+          openAiApiKey,
+        },
         profileInfo: input.profileInfo,
         rawJson: input.rawJson,
         rawText: input.rawText,
@@ -59,8 +78,15 @@ export function usePlannerWorkflow(input: {
     }
   }, [
     input.fileName,
+    aiProvider,
+    geminiApiKey,
+    geminiAuthMode,
+    inferApiKey,
+    inferBaseUrl,
+    inferModel,
     input.mimeType,
     input.model,
+    openAiApiKey,
     input.rawJson,
     input.rawText,
     parseCopy.plannerFailed,

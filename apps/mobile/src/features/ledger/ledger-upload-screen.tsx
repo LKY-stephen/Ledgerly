@@ -39,7 +39,18 @@ export function LedgerUploadScreen() {
   const isWeb = Platform.OS === "web";
   const isWide = isExpanded || isMedium;
   const useSplitLayout = isWide && !isWeb;
-  const { copy, palette, resolvedLocale } = useAppShell();
+  const {
+    aiProvider,
+    copy,
+    geminiApiKey,
+    geminiAuthMode,
+    inferApiKey,
+    inferBaseUrl,
+    inferModel,
+    openAiApiKey,
+    palette,
+    resolvedLocale,
+  } = useAppShell();
   const uploadCopy = copy.ledger.upload;
   const errorColors = getFeedbackColors(palette, "error");
   const primaryButton = getButtonColors(palette, "primary");
@@ -102,6 +113,15 @@ export function LedgerUploadScreen() {
         selectedCandidate.uri,
         selectedCandidate.originalFileName,
         selectedCandidate.mimeType,
+        {
+          aiProvider,
+          geminiApiKey,
+          geminiAuthMode,
+          inferApiKey,
+          inferBaseUrl,
+          inferModel,
+          openAiApiKey,
+        },
       );
 
       router.push({

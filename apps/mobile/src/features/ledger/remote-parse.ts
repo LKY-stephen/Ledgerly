@@ -12,23 +12,120 @@ import type { AiProvider, GeminiAuthMode } from "../app-shell/types";
 import { getValidGoogleAccessToken } from "../auth/google-token-runtime";
 import { receiptDbUpdatePlannerSkill, receiptParseSkill } from "./prompt-skills";
 
-async function resolveAvailableProvider(): Promise<AiProvider> {
-  const configuredProvider = await loadPersistedAiProvider().catch(
-    () => "openai" as AiProvider,
-  );
+export interface ProviderRuntimeConfig {
+  aiProvider: AiProvider;
+  geminiApiKey: string;
+  geminiAuthMode: GeminiAuthMode;
+  inferApiKey: string;
+  inferBaseUrl: string;
+  inferModel: string;
+  openAiApiKey: string;
+}
+
+async function resolveAvailableProvider(
+  providerConfig?: Partial<ProviderRuntimeConfig>,
+): Promise<AiProvider> {
+  const configuredProvider =
+    providerConfig?.aiProvider ??
+    (await loadPersistedAiProvider().catch(() => "openai" as AiProvider));
+
+  if (providerConfig) {
+    return resolveAvailableProviderFromRuntimeConfig(
+      configuredProvider,
+      providerConfig,
+    );
+  }
 
   if (configuredProvider === "infer") {
-    await loadRequiredInferSettings();
+    await loadRequiredInferSettings(providerConfig);
     return "infer";
   }
 
   if (configuredProvider === "gemini") {
-    await loadRequiredGeminiSettings();
+    await loadRequiredGeminiSettings(providerConfig);
     return "gemini";
   }
 
-  await loadRequiredOpenAiSettings();
+  await loadRequiredOpenAiSettings(providerConfig);
   return "openai";
+}
+
+async function resolveAvailableProviderFromRuntimeConfig(
+  configuredProvider: AiProvider,
+  providerConfig: Partial<ProviderRuntimeConfig>,
+): Promise<AiProvider> {
+  const candidateOrder: AiProvider[] = [
+    configuredProvider,
+    ...(["openai", "infer", "gemini"] as const).filter(
+      (provider) => provider !== configuredProvider,
+    ),
+  ];
+  let selectedProviderError: ParseEvidenceClientError | null = null;
+
+  for (const provider of candidateOrder) {
+    if (!hasProviderSignal(providerConfig, provider)) {
+      continue;
+    }
+
+    try {
+      if (provider === "infer") {
+        await loadRequiredInferSettings(providerConfig);
+      } else if (provider === "gemini") {
+        await loadRequiredGeminiSettings(providerConfig);
+      } else {
+        await loadRequiredOpenAiSettings(providerConfig);
+      }
+
+      return provider;
+    } catch (error) {
+      if (
+        provider === configuredProvider &&
+        error instanceof ParseEvidenceClientError &&
+        error.code === "missing_config"
+      ) {
+        selectedProviderError = error;
+      }
+    }
+  }
+
+  if (selectedProviderError) {
+    throw selectedProviderError;
+  }
+
+  if (configuredProvider === "infer") {
+    await loadRequiredInferSettings(providerConfig);
+    return "infer";
+  }
+
+  if (configuredProvider === "gemini") {
+    await loadRequiredGeminiSettings(providerConfig);
+    return "gemini";
+  }
+
+  await loadRequiredOpenAiSettings(providerConfig);
+  return "openai";
+}
+
+function hasProviderSignal(
+  providerConfig: Partial<ProviderRuntimeConfig>,
+  provider: AiProvider,
+): boolean {
+  if (provider === "openai") {
+    return Boolean(providerConfig.openAiApiKey?.trim());
+  }
+
+  if (provider === "infer") {
+    return Boolean(
+      providerConfig.inferApiKey?.trim() ||
+        providerConfig.inferBaseUrl?.trim() ||
+        providerConfig.inferModel?.trim(),
+    );
+  }
+
+  return Boolean(
+    providerConfig.geminiApiKey?.trim() ||
+      providerConfig.geminiAuthMode === "google_oauth",
+  );
 }
 
 export interface ParseResult {
@@ -55,8 +152,8 @@ export async function planEvidenceDbUpdates(input: {
   mimeType: string | null;
   profileInfo?: { name: string; email: string; phone: string };
   rawJson: unknown;
-}): Promise<ReceiptPlannerPayload> {
-  const aiProvider = await resolveAvailableProvider();
+}, providerConfig?: Partial<ProviderRuntimeConfig>): Promise<ReceiptPlannerPayload> {
+  const aiProvider = await resolveAvailableProvider(providerConfig);
 
   const exampleOutput = JSON.stringify({
     businessEvents: ["Receipt payment for subscription service"],
@@ -142,7 +239,12 @@ export async function planEvidenceDbUpdates(input: {
     sourceProfileInfo: hasProfileInfo ? input.profileInfo : null,
   });
 
-  const outputText = await callAiText(aiProvider, systemPrompt, userPrompt);
+  const outputText = await callAiText(
+    aiProvider,
+    systemPrompt,
+    userPrompt,
+    providerConfig,
+  );
 
   const parsed = tryParseStructuredOutput(outputText);
 
@@ -392,19 +494,24 @@ export async function parseFileWithOpenAi(input: {
   fileName: string;
   fileUri: string;
   mimeType: string | null;
-}): Promise<ParseResult> {
+}, providerConfig?: Partial<ProviderRuntimeConfig>): Promise<ParseResult> {
   try {
-    const aiProvider = await resolveAvailableProvider();
+    const aiProvider = await resolveAvailableProvider(providerConfig);
     const mimeType = input.mimeType ?? inferMimeType(input.fileName);
     const base64 = await readNativeFileAsBase64(input.fileUri);
 
     if (aiProvider === "gemini") {
-      return await callGeminiParseApi(base64, input.fileName, mimeType);
+      return await callGeminiParseApi(
+        base64,
+        input.fileName,
+        mimeType,
+        providerConfig,
+      );
     }
 
     const settings = aiProvider === "infer"
-      ? await loadRequiredInferSettings()
-      : await loadRequiredOpenAiSettings();
+      ? await loadRequiredInferSettings(providerConfig)
+      : await loadRequiredOpenAiSettings(providerConfig);
     const filePart = createInputFilePart({ base64, fileName: input.fileName, mimeType });
     return await callOpenAiParseApi(settings, filePart, input.fileName, mimeType, aiProvider);
   } catch (error) {
@@ -423,19 +530,24 @@ export async function parseFileWithOpenAiFromBlob(input: {
   fileName: string;
   blob: Blob;
   mimeType: string | null;
-}): Promise<ParseResult> {
+}, providerConfig?: Partial<ProviderRuntimeConfig>): Promise<ParseResult> {
   try {
-    const aiProvider = await resolveAvailableProvider();
+    const aiProvider = await resolveAvailableProvider(providerConfig);
     const mimeType = input.mimeType ?? input.blob.type ?? inferMimeType(input.fileName);
     const base64 = await blobToBase64(input.blob);
 
     if (aiProvider === "gemini") {
-      return await callGeminiParseApi(base64, input.fileName, mimeType);
+      return await callGeminiParseApi(
+        base64,
+        input.fileName,
+        mimeType,
+        providerConfig,
+      );
     }
 
     const settings = aiProvider === "infer"
-      ? await loadRequiredInferSettings()
-      : await loadRequiredOpenAiSettings();
+      ? await loadRequiredInferSettings(providerConfig)
+      : await loadRequiredOpenAiSettings(providerConfig);
     const filePart = createInputFilePart({ base64, fileName: input.fileName, mimeType });
     return await callOpenAiParseApi(settings, filePart, input.fileName, mimeType, aiProvider);
   } catch (error) {
@@ -485,7 +597,7 @@ async function callOpenAiParseApi(
       rawText: "",
       model: activeModel,
       parserKind: "openai_gpt",
-      error: `OpenAI returned no text. Keys: [${Object.keys(payload).join(", ")}]`,
+      error: `${getProviderDisplayName(provider)} returned no text. Keys: [${Object.keys(payload).join(", ")}]`,
     };
   }
 
@@ -497,7 +609,7 @@ async function callOpenAiParseApi(
       rawText: outputText,
       model: activeModel,
       parserKind: "openai_gpt",
-      error: "OpenAI response is not valid JSON",
+      error: `${getProviderDisplayName(provider)} response is not valid JSON`,
     };
   }
 
@@ -512,7 +624,7 @@ async function callOpenAiParseApi(
       rawText: outputText,
       model: activeModel,
       parserKind: "openai_gpt",
-      error: "OpenAI parser output must include parser, model, rawText, rawSummary, warnings, and at least one record with fields and candidates.",
+      error: `${getProviderDisplayName(provider)} parser output must include parser, model, rawText, rawSummary, warnings, and at least one record with fields and candidates.`,
     };
   }
 
@@ -529,8 +641,9 @@ async function callGeminiParseApi(
   base64: string,
   fileName: string,
   mimeType: string,
+  providerConfig?: Partial<ProviderRuntimeConfig>,
 ): Promise<ParseResult> {
-  const settings = await loadRequiredGeminiSettings();
+  const settings = await loadRequiredGeminiSettings(providerConfig);
   const userText = `filename: ${fileName}\nmimeType: ${mimeType}`;
 
   const { model: activeModel, payload } = await callGemini(settings, parseSystemPrompt, [
@@ -586,9 +699,13 @@ async function callGeminiParseApi(
   };
 }
 
-async function loadRequiredOpenAiSettings(): Promise<OpenAiSettings> {
+async function loadRequiredOpenAiSettings(
+  providerConfig?: Partial<ProviderRuntimeConfig>,
+): Promise<OpenAiSettings> {
+  const configApiKey = providerConfig?.openAiApiKey?.trim() ?? "";
   const persistedApiKey = await loadPersistedOpenAiApiKey().catch(() => "");
-  const openAiApiKey = persistedApiKey || (process.env.EXPO_PUBLIC_OPENAI_API_KEY ?? "").trim();
+  const openAiApiKey =
+    configApiKey || persistedApiKey || (process.env.EXPO_PUBLIC_OPENAI_API_KEY ?? "").trim();
 
   if (!openAiApiKey) {
     throw new ParseEvidenceClientError(
@@ -604,10 +721,18 @@ async function loadRequiredOpenAiSettings(): Promise<OpenAiSettings> {
   };
 }
 
-async function loadRequiredInferSettings(): Promise<OpenAiSettings> {
-  const inferApiKey = (await loadPersistedInferApiKey().catch(() => "")).trim();
-  const inferBaseUrl = (await loadPersistedInferBaseUrl().catch(() => "")).trim();
-  const inferModel = (await loadPersistedInferModel().catch(() => "")).trim();
+async function loadRequiredInferSettings(
+  providerConfig?: Partial<ProviderRuntimeConfig>,
+): Promise<OpenAiSettings> {
+  const inferApiKey =
+    providerConfig?.inferApiKey?.trim() ??
+    (await loadPersistedInferApiKey().catch(() => "")).trim();
+  const inferBaseUrl =
+    providerConfig?.inferBaseUrl?.trim().replace(/\/+$/g, "") ??
+    (await loadPersistedInferBaseUrl().catch(() => "")).trim();
+  const inferModel =
+    providerConfig?.inferModel?.trim() ??
+    (await loadPersistedInferModel().catch(() => "")).trim();
 
   if (!inferBaseUrl) {
     throw new ParseEvidenceClientError(
@@ -672,9 +797,10 @@ async function callAiText(
   aiProvider: AiProvider,
   systemPrompt: string,
   userPrompt: string,
+  providerConfig?: Partial<ProviderRuntimeConfig>,
 ): Promise<string> {
   if (aiProvider === "gemini") {
-    const settings = await loadRequiredGeminiSettings();
+    const settings = await loadRequiredGeminiSettings(providerConfig);
     const { payload } = await callGemini(settings, systemPrompt, [{ text: userPrompt }]);
     const text = extractGeminiOutputText(payload);
     if (!text) {
@@ -687,8 +813,8 @@ async function callAiText(
   }
 
   const settings = aiProvider === "infer"
-    ? await loadRequiredInferSettings()
-    : await loadRequiredOpenAiSettings();
+    ? await loadRequiredInferSettings(providerConfig)
+    : await loadRequiredOpenAiSettings(providerConfig);
   const errorCode = aiProvider === "infer" ? "infer_error" as const : "openai_error" as const;
   const apiInput = [
     { content: [{ text: systemPrompt, type: "input_text" }], role: "system" },
@@ -705,8 +831,11 @@ async function callAiText(
   return text;
 }
 
-async function loadRequiredGeminiSettings(): Promise<GeminiSettings> {
-  const authMode = await loadPersistedGeminiAuthMode();
+async function loadRequiredGeminiSettings(
+  providerConfig?: Partial<ProviderRuntimeConfig>,
+): Promise<GeminiSettings> {
+  const authMode =
+    providerConfig?.geminiAuthMode ?? (await loadPersistedGeminiAuthMode());
   const baseUrl = normalizeBaseUrl(
     (process.env.EXPO_PUBLIC_GEMINI_BASE_URL ?? "").trim() || defaultGeminiBaseUrl,
   );
@@ -724,8 +853,10 @@ async function loadRequiredGeminiSettings(): Promise<GeminiSettings> {
     return { authMode, baseUrl, geminiApiKey: "", googleAccessToken, model };
   }
 
+  const configApiKey = providerConfig?.geminiApiKey?.trim() ?? "";
   const persistedApiKey = await loadPersistedGeminiApiKey().catch(() => "");
-  const geminiApiKey = persistedApiKey || (process.env.EXPO_PUBLIC_GEMINI_API_KEY ?? "").trim();
+  const geminiApiKey =
+    configApiKey || persistedApiKey || (process.env.EXPO_PUBLIC_GEMINI_API_KEY ?? "").trim();
 
   if (!geminiApiKey) {
     throw new ParseEvidenceClientError(

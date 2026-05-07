@@ -62,8 +62,6 @@ export function LedgerParseScreen() {
 
   const hasData = rawJson || rawText;
   const formattedJson = formatJson(rawJson);
-  const providerLabel =
-    parserKind === "gemini" ? "Gemini" : parserKind === "infer" ? "Infer API" : "OpenAI";
 
   const parsedRawJson = rawJson ? tryParse(rawJson) : null;
 
@@ -165,21 +163,6 @@ export function LedgerParseScreen() {
       </View>
 
       <ScrollView contentContainerStyle={[styles.container, isWide && styles.containerWide]}>
-        {/* ---- Top strip: hero + file info (always full width) ---- */}
-        <View
-          style={[
-            styles.heroBlock,
-            { backgroundColor: palette.paper, borderColor: palette.border },
-          ]}
-        >
-          <Text style={[styles.eyebrow, { color: palette.inkMuted }]}>
-            {parseCopy.heroEyebrow}
-          </Text>
-          <Text style={[styles.heroTitle, { color: palette.ink }]}>
-            {`${providerLabel} ${parseCopy.heroTitleSuffix}`}
-          </Text>
-        </View>
-
         <View
           style={[
             styles.card,
@@ -223,7 +206,7 @@ export function LedgerParseScreen() {
 
         {/* ---- Main body: two-column on PC, single-column on mobile ---- */}
         <View style={isExpanded ? styles.twoColumn : undefined}>
-          {/* Left column: JSON preview */}
+          {/* Left column: parse output / empty states */}
           <View style={isExpanded ? styles.columnLeft : undefined}>
             {hasData ? (
               <View
@@ -1244,19 +1227,103 @@ function proposalStateColor(state: string): string {
 
 function formatJson(raw: string): string {
   if (!raw) return "";
-  try {
-    return JSON.stringify(JSON.parse(raw), null, 2);
-  } catch {
-    return raw;
+
+  const parsed = tryParse(raw);
+
+  if (parsed !== null) {
+    return JSON.stringify(parsed, null, 2);
   }
+
+  return raw;
 }
 
 function tryParse(raw: string): unknown {
+  if (!raw) {
+    return null;
+  }
+
   try {
     return JSON.parse(raw);
   } catch {
+    return tryParseLooseJson(raw);
+  }
+}
+
+function tryParseLooseJson(raw: string): unknown {
+  const trimmed = raw.trim();
+
+  if (!trimmed) {
     return null;
   }
+
+  const firstBrace = Math.min(
+    ...["{", "["]
+      .map((token) => trimmed.indexOf(token))
+      .filter((index) => index >= 0),
+  );
+
+  if (!Number.isFinite(firstBrace)) {
+    return null;
+  }
+
+  const normalized = trimmed.slice(firstBrace).replace(/^\uFEFF/, "");
+  const repaired = repairTruncatedJson(normalized);
+
+  try {
+    return JSON.parse(repaired);
+  } catch {
+    return null;
+  }
+}
+
+function repairTruncatedJson(raw: string): string {
+  let result = "";
+  let inString = false;
+  let escaping = false;
+  const stack: string[] = [];
+
+  for (const char of raw) {
+    result += char;
+
+    if (escaping) {
+      escaping = false;
+      continue;
+    }
+
+    if (char === "\\") {
+      escaping = true;
+      continue;
+    }
+
+    if (char === "\"") {
+      inString = !inString;
+      continue;
+    }
+
+    if (inString) {
+      continue;
+    }
+
+    if (char === "{") {
+      stack.push("}");
+    } else if (char === "[") {
+      stack.push("]");
+    } else if ((char === "}" || char === "]") && stack[stack.length - 1] === char) {
+      stack.pop();
+    }
+  }
+
+  if (inString && !escaping) {
+    result += "\"";
+  }
+
+  while (stack.length > 0) {
+    result += stack.pop();
+  }
+
+  return result
+    .replace(/,\s*([}\]])/g, "$1")
+    .replace(/([{,]\s*)([A-Za-z0-9_.$-]+)\s*:/g, '$1"$2":');
 }
 
 const styles = StyleSheet.create({
