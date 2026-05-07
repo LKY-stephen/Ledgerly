@@ -284,7 +284,7 @@ describe("infer provider routing", () => {
         mimeType: "application/pdf",
         rawJson: { total: 50 },
       }),
-    ).rejects.toThrow("No AI provider configured");
+    ).rejects.toThrow("Missing Infer Base URL");
   });
 
   it("falls through to error when Infer API Key is empty", async () => {
@@ -301,6 +301,6 @@ describe("infer provider routing", () => {
         mimeType: "application/pdf",
         rawJson: { total: 50 },
       }),
-    ).rejects.toThrow("No AI provider configured");
+    ).rejects.toThrow("Missing Infer API Key");
   });
 });

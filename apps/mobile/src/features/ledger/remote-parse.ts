@@ -13,23 +13,22 @@ import { getValidGoogleAccessToken } from "../auth/google-token-runtime";
 import { receiptDbUpdatePlannerSkill, receiptParseSkill } from "./prompt-skills";
 
 async function resolveAvailableProvider(): Promise<AiProvider> {
-  const openAiKey = await loadPersistedOpenAiApiKey();
-  if (openAiKey) return "openai";
-
-  const inferKey = await loadPersistedInferApiKey();
-  const inferUrl = await loadPersistedInferBaseUrl();
-  if (inferKey && inferUrl) return "infer";
-
-  const geminiKey = await loadPersistedGeminiApiKey();
-  if (geminiKey) return "gemini";
-
-  const authMode = await loadPersistedGeminiAuthMode();
-  if (authMode === "google_oauth") return "gemini";
-
-  throw new ParseEvidenceClientError(
-    "No AI provider configured. Please set an API key in .env or Settings.",
-    "missing_config",
+  const configuredProvider = await loadPersistedAiProvider().catch(
+    () => "openai" as AiProvider,
   );
+
+  if (configuredProvider === "infer") {
+    await loadRequiredInferSettings();
+    return "infer";
+  }
+
+  if (configuredProvider === "gemini") {
+    await loadRequiredGeminiSettings();
+    return "gemini";
+  }
+
+  await loadRequiredOpenAiSettings();
+  return "openai";
 }
 
 export interface ParseResult {

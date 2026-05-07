@@ -12,6 +12,7 @@ vi.mock("../src/features/app-shell/storage", () => ({
 
 import {
   loadPersistedAiProvider,
+  loadPersistedGeminiApiKey,
   loadPersistedInferApiKey,
   loadPersistedInferBaseUrl,
   loadPersistedInferModel,
@@ -75,6 +76,7 @@ afterEach(() => {
   delete process.env.EXPO_PUBLIC_OPENAI_FALLBACK_MODELS;
   delete process.env.EXPO_PUBLIC_GEMINI_FALLBACK_MODELS;
   vi.mocked(loadPersistedAiProvider).mockResolvedValue("openai");
+  vi.mocked(loadPersistedGeminiApiKey).mockResolvedValue("");
   vi.mocked(loadPersistedInferApiKey).mockResolvedValue("");
   vi.mocked(loadPersistedInferBaseUrl).mockResolvedValue("");
   vi.mocked(loadPersistedInferModel).mockResolvedValue("");
@@ -89,6 +91,8 @@ describe("remote parse client", () => {
     process.env.EXPO_PUBLIC_OPENAI_BASE_URL = "https://api.openai.com/v1/";
     process.env.EXPO_PUBLIC_OPENAI_MODEL = "gpt-4o";
     process.env.EXPO_PUBLIC_OPENAI_API_KEY = "sk-test";
+    vi.mocked(loadPersistedInferApiKey).mockResolvedValue("infer-key-123");
+    vi.mocked(loadPersistedInferBaseUrl).mockResolvedValue("https://infer.example/v1");
 
     const parsePayload = createParsePayload();
     const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
@@ -196,6 +200,108 @@ describe("remote parse client", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
+  it("uses the configured Infer provider for image parsing even when an OpenAI key is also available", async () => {
+    process.env.EXPO_PUBLIC_OPENAI_BASE_URL = "https://api.openai.com/v1";
+    process.env.EXPO_PUBLIC_OPENAI_MODEL = "gpt-4o";
+    process.env.EXPO_PUBLIC_OPENAI_API_KEY = "sk-test";
+    vi.mocked(loadPersistedAiProvider).mockResolvedValue("infer");
+    vi.mocked(loadPersistedInferApiKey).mockResolvedValue("infer-test-key");
+    vi.mocked(loadPersistedInferBaseUrl).mockResolvedValue("https://infer.example/v1");
+    vi.mocked(loadPersistedInferModel).mockResolvedValue("gpt-4o");
+
+    let capturedUrl = "";
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string, init?: RequestInit) => {
+        capturedUrl = url;
+        const body = JSON.parse(String(init?.body));
+
+        expect(body.model).toBe("gpt-4o");
+
+        return new Response(
+          JSON.stringify({
+            output_text: JSON.stringify(
+              createParsePayload({
+                model: null,
+                rawText: "Infer-selected image parse",
+              }),
+            ),
+          }),
+          {
+            headers: { "content-type": "application/json" },
+            status: 200,
+          },
+        );
+      }),
+    );
+
+    const result = await parseFileWithOpenAiFromBlob({
+      blob: new Blob(["image-bytes"], { type: "image/jpeg" }),
+      fileName: "receipt.jpg",
+      mimeType: "image/jpeg",
+    });
+
+    expect(capturedUrl).toContain("https://infer.example/v1");
+    expect(result.error).toBeNull();
+    expect(result.model).toBe("gpt-4o");
+  });
+
+  it("uses the configured Gemini provider for image parsing when Gemini is selected", async () => {
+    vi.mocked(loadPersistedAiProvider).mockResolvedValue("gemini");
+    vi.mocked(loadPersistedGeminiApiKey).mockResolvedValue("gemini-test-key");
+
+    let capturedUrl = "";
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string, init?: RequestInit) => {
+        capturedUrl = url;
+        const body = JSON.parse(String(init?.body));
+
+        expect(body.systemInstruction.parts[0].text).toContain("# receipt-parse");
+        expect(body.contents[0].parts[0].text).toContain("filename: receipt.jpg");
+
+        return new Response(
+          JSON.stringify({
+            candidates: [
+              {
+                content: {
+                  parts: [
+                    {
+                      text: JSON.stringify(
+                        createParsePayload({
+                          model: null,
+                          rawSummary: "Gemini receipt photo",
+                          rawText: "Gemini image parse raw text",
+                        }),
+                      ),
+                    },
+                  ],
+                },
+              },
+            ],
+          }),
+          {
+            headers: { "content-type": "application/json" },
+            status: 200,
+          },
+        );
+      }),
+    );
+
+    const result = await parseFileWithOpenAiFromBlob({
+      blob: new Blob(["image-bytes"], { type: "image/jpeg" }),
+      fileName: "receipt.jpg",
+      mimeType: "image/jpeg",
+    });
+
+    expect(capturedUrl).toContain(":generateContent");
+    expect(result.error).toBeNull();
+    expect(result.model).toBe("gemini-2.5-flash");
+    expect(result.parserKind).toBe("gemini");
+  });
+
   it("returns error when OpenAI returns a non-JSON response", async () => {
     process.env.EXPO_PUBLIC_OPENAI_BASE_URL = "https://api.openai.com/v1";
     process.env.EXPO_PUBLIC_OPENAI_MODEL = "gpt-4o";
@@ -291,7 +397,6 @@ describe("remote parse client", () => {
   });
 
   it("returns a readable Infer error when the provider responds with non-JSON content", async () => {
-    vi.mocked(loadPersistedOpenAiApiKey).mockResolvedValue("");
     vi.mocked(loadPersistedAiProvider).mockResolvedValue("infer");
     vi.mocked(loadPersistedInferApiKey).mockResolvedValue("infer-test-key");
     vi.mocked(loadPersistedInferBaseUrl).mockResolvedValue("https://infer.example/v1");
@@ -323,7 +428,6 @@ describe("remote parse client", () => {
   });
 
   it("defaults Infer parse requests to gemini-2.5-flash when no explicit Infer model is configured", async () => {
-    vi.mocked(loadPersistedOpenAiApiKey).mockResolvedValue("");
     vi.mocked(loadPersistedAiProvider).mockResolvedValue("infer");
     vi.mocked(loadPersistedInferApiKey).mockResolvedValue("infer-test-key");
     vi.mocked(loadPersistedInferBaseUrl).mockResolvedValue("https://infer.example/v1");
@@ -441,7 +545,7 @@ describe("remote parse client", () => {
     ]);
   });
 
-  it("returns error when no API keys are configured", async () => {
+  it("returns the selected provider error when no API keys are configured", async () => {
     vi.mocked(loadPersistedOpenAiApiKey).mockResolvedValue("");
     delete process.env.EXPO_PUBLIC_OPENAI_API_KEY;
 
@@ -451,7 +555,7 @@ describe("remote parse client", () => {
       mimeType: "application/pdf",
     });
 
-    expect(result.error).toContain("No AI provider configured");
+    expect(result.error).toContain("Missing OpenAI API key");
     expect(result.rawJson).toBeNull();
   });
 });
