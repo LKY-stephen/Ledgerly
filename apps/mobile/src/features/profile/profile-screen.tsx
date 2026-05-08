@@ -144,7 +144,7 @@ function ApiKeyField(props: {
   );
 }
 
-export function ProfileScreen() {
+export function ProfileScreen({ embedded = false }: { embedded?: boolean } = {}) {
   const router = useRouter();
   const { isExpanded } = useResponsive();
   const {
@@ -300,10 +300,7 @@ export function ProfileScreen() {
         : session?.kind === "guest"
           ? copy.meScreen.sessionGuest
           : copy.meScreen.sessionNone;
-  const destructiveLabelColor =
-    palette.name === "dark" ? palette.shell : palette.inkOnAccent;
   const primaryButton = getButtonColors(palette, "primary");
-  const destructiveButton = getButtonColors(palette, "destructive");
   const successFeedback = getFeedbackColors(palette, "success");
   const errorFeedback = getFeedbackColors(palette, "error");
 
@@ -383,12 +380,8 @@ export function ProfileScreen() {
     await setGeminiApiKey("");
   };
 
-  return (
-    <SafeAreaView
-      edges={["top", "left", "right"]}
-      style={[styles.safeArea, { backgroundColor: palette.shell }]}
-    >
-      <ScrollView contentContainerStyle={styles.container}>
+  const content = (
+      <ScrollView contentContainerStyle={[styles.container, embedded ? styles.embeddedContainer : null]}>
         <View
           style={[
             styles.hero,
@@ -406,8 +399,8 @@ export function ProfileScreen() {
           </Text>
         </View>
 
-        <View style={isExpanded ? styles.wideBody : undefined}>
-        <View style={isExpanded ? styles.wideLeft : undefined}>
+        <View style={isExpanded ? styles.wideBody : styles.compactBody}>
+        <View style={isExpanded ? styles.wideLeft : styles.compactColumn}>
         <SectionCard
           eyebrow={copy.common.theme}
           palette={palette}
@@ -424,29 +417,6 @@ export function ProfileScreen() {
                 label={themeLabels[option]}
                 onPress={() => {
                   void setThemePreference(option);
-                }}
-                palette={palette}
-              />
-            ))}
-          </View>
-        </SectionCard>
-
-        <SectionCard
-          eyebrow={copy.common.language}
-          palette={palette}
-          title={copy.common.language}
-        >
-          <Text style={[styles.sectionHint, { color: palette.inkMuted }]}>
-            {copy.meScreen.localeDescription}
-          </Text>
-          <View style={styles.optionRow}>
-            {localePreferenceOptions.map((option) => (
-              <PreferencePill
-                key={option}
-                active={localePreference === option}
-                label={localeLabels[option]}
-                onPress={() => {
-                  void setLocalePreference(option);
                 }}
                 palette={palette}
               />
@@ -568,8 +538,30 @@ export function ProfileScreen() {
         </SectionCard>
         </View>
 
-        <View style={isExpanded ? styles.wideRight : undefined}>
-        {/* Temporarily hidden. Keep the implementation intact for future re-enable. */}
+        <View style={isExpanded ? styles.wideRight : styles.compactColumn}>
+        <SectionCard
+          eyebrow={copy.common.language}
+          palette={palette}
+          title={copy.common.language}
+        >
+          <Text style={[styles.sectionHint, { color: palette.inkMuted }]}>
+            {copy.meScreen.localeDescription}
+          </Text>
+          <View style={styles.optionRow}>
+            {localePreferenceOptions.map((option) => (
+              <PreferencePill
+                key={option}
+                active={localePreference === option}
+                label={localeLabels[option]}
+                onPress={() => {
+                  void setLocalePreference(option);
+                }}
+                palette={palette}
+              />
+            ))}
+          </View>
+        </SectionCard>
+
         {shouldRenderAiParseSection() ? (
           <SectionCard
             eyebrow={copy.meScreen.apiSectionEyebrow}
@@ -973,15 +965,15 @@ export function ProfileScreen() {
               router.replace("/login");
             }}
             style={[
-              styles.logoutButton,
+              styles.actionButton,
               {
-                backgroundColor: destructiveButton.background,
-                borderColor: destructiveButton.border,
+                backgroundColor: primaryButton.background,
+                borderColor: primaryButton.border,
               },
             ]}
           >
             <Text
-              style={[styles.logoutLabel, { color: destructiveLabelColor }]}
+              style={[styles.actionButtonLabel, { color: primaryButton.text }]}
             >
               {copy.common.signOut}
             </Text>
@@ -990,6 +982,18 @@ export function ProfileScreen() {
         </View>
         </View>
       </ScrollView>
+  );
+
+  if (embedded) {
+    return <View style={[styles.embeddedRoot, { backgroundColor: palette.shell }]}>{content}</View>;
+  }
+
+  return (
+    <SafeAreaView
+      edges={["top", "left", "right"]}
+      style={[styles.safeArea, { backgroundColor: palette.shell }]}
+    >
+      {content}
     </SafeAreaView>
   );
 }
@@ -997,8 +1001,8 @@ export function ProfileScreen() {
 const styles = StyleSheet.create({
   actionButton: {
     alignItems: "center",
-    borderRadius: 14,
-    borderWidth: 1,
+    borderRadius: 999,
+    borderWidth: 2,
     flex: 1,
     justifyContent: "center",
     minHeight: 44,
@@ -1006,21 +1010,28 @@ const styles = StyleSheet.create({
   },
   actionButtonLabel: {
     fontSize: 14,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   container: {
-    gap: 14,
-    padding: 18,
+    gap: 22,
+    padding: 20,
     paddingBottom: 168,
   },
   databaseMessage: {
     fontSize: 13,
-    fontWeight: "600",
+    fontWeight: "800",
     lineHeight: 20,
+  },
+  embeddedContainer: {
+    paddingBottom: 56,
+    paddingTop: 12,
+  },
+  embeddedRoot: {
+    flex: 1,
   },
   eyebrow: {
     fontSize: 12,
-    fontWeight: "700",
+    fontWeight: "800",
     letterSpacing: 1.2,
     textTransform: "uppercase",
   },
@@ -1029,24 +1040,24 @@ const styles = StyleSheet.create({
   },
   fieldLabel: {
     fontSize: 13,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   hero: {
-    borderRadius: 18,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     gap: 8,
     padding: 16,
   },
   inputChrome: {
     alignItems: "center",
-    borderRadius: 14,
-    borderWidth: 1,
+    borderRadius: 999,
+    borderWidth: 2,
     flexDirection: "row",
     minHeight: 44,
   },
   input: {
-    borderRadius: 14,
-    borderWidth: 1,
+    borderRadius: 999,
+    borderWidth: 2,
     fontSize: 14,
     minHeight: 44,
     paddingHorizontal: 14,
@@ -1066,19 +1077,10 @@ const styles = StyleSheet.create({
     paddingRight: 8,
     paddingVertical: 10,
   },
-  logoutButton: {
-    alignItems: "center",
-    borderWidth: 1,
-    borderRadius: 14,
-    justifyContent: "center",
-    marginTop: 8,
-    minHeight: 44,
-    paddingHorizontal: 20,
-  },
   googleConnectButton: {
     alignItems: "center",
     borderRadius: 999,
-    borderWidth: 1,
+    borderWidth: 2,
     justifyContent: "center",
     minHeight: 48,
     paddingHorizontal: 16,
@@ -1090,7 +1092,7 @@ const styles = StyleSheet.create({
   },
   googleConnectLabel: {
     fontSize: 14,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   oauthDivider: {
     alignItems: "center",
@@ -1100,11 +1102,11 @@ const styles = StyleSheet.create({
   },
   oauthDividerLine: {
     flex: 1,
-    height: StyleSheet.hairlineWidth,
+    height: 2,
   },
   oauthDividerText: {
     fontSize: 12,
-    fontWeight: "600",
+    fontWeight: "800",
   },
   oauthDot: {
     borderRadius: 999,
@@ -1118,19 +1120,15 @@ const styles = StyleSheet.create({
   },
   oauthStatusText: {
     fontSize: 14,
-    fontWeight: "700",
-  },
-  logoutLabel: {
-    fontSize: 16,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   optionLabel: {
     fontSize: 14,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   optionPill: {
     borderRadius: 999,
-    borderWidth: 1,
+    borderWidth: 2,
     minWidth: 92,
     paddingHorizontal: 14,
     paddingVertical: 10,
@@ -1149,11 +1147,11 @@ const styles = StyleSheet.create({
   },
   secondaryActionLabel: {
     fontSize: 14,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   sessionKind: {
     fontSize: 15,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   summary: {
     fontSize: 14,
@@ -1164,16 +1162,22 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     lineHeight: 30,
   },
+  compactBody: {
+    gap: 22,
+  },
+  compactColumn: {
+    gap: 22,
+  },
   wideBody: {
     flexDirection: "row",
-    gap: 18,
+    gap: 22,
   },
   wideLeft: {
     flex: 1,
-    gap: 14,
+    gap: 22,
   },
   wideRight: {
     flex: 1,
-    gap: 14,
+    gap: 22,
   },
 });

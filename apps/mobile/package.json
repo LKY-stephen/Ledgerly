@@ -16,7 +16,9 @@
     "web": "CORS_PROXY_HOST=127.0.0.1 EXPO_PUBLIC_CORS_PROXY_URL=http://127.0.0.1:19007 node scripts/cors-proxy.js & CORS_PROXY_HOST=127.0.0.1 EXPO_PUBLIC_CORS_PROXY_URL=http://127.0.0.1:19007 expo start --web --port 8088"
   },
   "dependencies": {
+    "@ledgerly/agent": "workspace:*",
     "@ledgerly/schemas": "workspace:*",
+    "@ledgerly/sdk": "workspace:*",
     "@ledgerly/storage": "workspace:*",
     "@ledgerly/ui": "workspace:*",
     "@react-native-async-storage/async-storage": "2.2.0",
@@ -40,6 +42,8 @@
     "react-dom": "19.2.0",
     "react-native": "0.83.2",
     "react-native-chart-kit": "^6.12.0",
+    "react-native-gesture-handler": "^2.31.1",
+    "react-native-reanimated": "^4.3.0",
     "react-native-safe-area-context": "~5.6.2",
     "react-native-screens": "~4.23.0",
     "react-native-svg": "15.15.3",

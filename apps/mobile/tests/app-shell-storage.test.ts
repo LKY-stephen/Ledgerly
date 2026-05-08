@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const asyncStorageState = vi.hoisted(() => {
   const values = new Map<string, string>();
@@ -64,6 +64,29 @@ vi.mock("@react-native-async-storage/async-storage", () => ({
   default: asyncStorageState.methods,
 }));
 
+const originalOpenAiApiKey = process.env.EXPO_PUBLIC_OPENAI_API_KEY;
+const originalGeminiApiKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
+const originalInferApiKey = process.env.EXPO_PUBLIC_INFER_API_KEY;
+const originalInferBaseUrl = process.env.EXPO_PUBLIC_INFER_BASE_URL;
+const originalInferModel = process.env.EXPO_PUBLIC_INFER_MODEL;
+
+function restoreEnvValue(key: string, value: string | undefined) {
+  if (value === undefined) {
+    delete process.env[key];
+    return;
+  }
+
+  process.env[key] = value;
+}
+
+beforeEach(() => {
+  restoreEnvValue("EXPO_PUBLIC_OPENAI_API_KEY", originalOpenAiApiKey);
+  restoreEnvValue("EXPO_PUBLIC_GEMINI_API_KEY", originalGeminiApiKey);
+  restoreEnvValue("EXPO_PUBLIC_INFER_API_KEY", originalInferApiKey);
+  restoreEnvValue("EXPO_PUBLIC_INFER_BASE_URL", originalInferBaseUrl);
+  restoreEnvValue("EXPO_PUBLIC_INFER_MODEL", originalInferModel);
+});
+
 afterEach(() => {
   asyncStorageState.clear();
   vi.clearAllMocks();
@@ -71,10 +94,10 @@ afterEach(() => {
 });
 
 describe("app-shell storage runtime overrides", () => {
-  it("defaults the AI provider to infer when nothing is persisted", async () => {
+  it("defaults the AI provider to openai when nothing is persisted", async () => {
     const storage = await import("../src/features/app-shell/storage");
 
-    await expect(storage.loadPersistedAiProvider()).resolves.toBe("infer");
+    await expect(storage.loadPersistedAiProvider()).resolves.toBe("openai");
   });
 
   it("returns the latest OpenAI API key before the async storage write finishes", async () => {
@@ -114,5 +137,45 @@ describe("app-shell storage runtime overrides", () => {
 
     asyncStorageState.flushWrites();
     await persistPromise;
+  });
+
+  it("keeps env-backed AI keys when hydrating app state with no stored values", async () => {
+    process.env.EXPO_PUBLIC_OPENAI_API_KEY = "sk-openai-env";
+    process.env.EXPO_PUBLIC_GEMINI_API_KEY = "AIza-env";
+    process.env.EXPO_PUBLIC_INFER_API_KEY = "sk-infer-env";
+    process.env.EXPO_PUBLIC_INFER_BASE_URL = "https://infer.example/v1/";
+    process.env.EXPO_PUBLIC_INFER_MODEL = "gpt-env";
+
+    const storage = await import("../src/features/app-shell/storage");
+    const state = await storage.loadPersistedAppState();
+
+    expect(state.openAiApiKey).toBe("sk-openai-env");
+    expect(state.geminiApiKey).toBe("AIza-env");
+    expect(state.inferApiKey).toBe("sk-infer-env");
+    expect(state.inferBaseUrl).toBe("https://infer.example/v1");
+    expect(state.inferModel).toBe("gpt-env");
+  });
+
+  it("prefers stored AI keys over env fallbacks when hydrating app state", async () => {
+    process.env.EXPO_PUBLIC_OPENAI_API_KEY = "sk-openai-env";
+    process.env.EXPO_PUBLIC_GEMINI_API_KEY = "AIza-env";
+    process.env.EXPO_PUBLIC_INFER_API_KEY = "sk-infer-env";
+    process.env.EXPO_PUBLIC_INFER_BASE_URL = "https://infer.example/v1";
+    process.env.EXPO_PUBLIC_INFER_MODEL = "gpt-env";
+
+    asyncStorageState.methods.setItem("@ledgerly/mobile/openai_api_key", "sk-openai-stored");
+    asyncStorageState.methods.setItem("@ledgerly/mobile/gemini_api_key", "AIza-stored");
+    asyncStorageState.methods.setItem("@ledgerly/mobile/infer_api_key", "sk-infer-stored");
+    asyncStorageState.methods.setItem("@ledgerly/mobile/infer_base_url", "https://stored.example/v1/");
+    asyncStorageState.methods.setItem("@ledgerly/mobile/infer_model", "gpt-stored");
+
+    const storage = await import("../src/features/app-shell/storage");
+    const state = await storage.loadPersistedAppState();
+
+    expect(state.openAiApiKey).toBe("sk-openai-stored");
+    expect(state.geminiApiKey).toBe("AIza-stored");
+    expect(state.inferApiKey).toBe("sk-infer-stored");
+    expect(state.inferBaseUrl).toBe("https://stored.example/v1");
+    expect(state.inferModel).toBe("gpt-stored");
   });
 });

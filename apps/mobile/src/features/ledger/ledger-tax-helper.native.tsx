@@ -620,8 +620,8 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: "#F4F9FF",
     borderColor: "rgba(0, 32, 69, 0.12)",
-    borderRadius: 26,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     gap: 16,
     marginTop: 24,
     padding: 20,
@@ -660,7 +660,7 @@ const styles = StyleSheet.create({
   exportButton: {
     alignItems: "center",
     backgroundColor: "#002045",
-    borderRadius: 18,
+    borderRadius: 999,
     justifyContent: "center",
     minHeight: 48,
     paddingHorizontal: 18,
@@ -672,14 +672,14 @@ const styles = StyleSheet.create({
   fieldName: {
     color: "#002045",
     fontSize: 14,
-    fontWeight: "700",
+    fontWeight: "800",
     lineHeight: 19,
   },
   fieldRow: {
     alignItems: "center",
     borderColor: "rgba(0, 32, 69, 0.08)",
-    borderRadius: 16,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     flexDirection: "row",
     gap: 12,
     justifyContent: "space-between",
@@ -722,7 +722,7 @@ const styles = StyleSheet.create({
   },
   modalHeaderBar: {
     borderBottomColor: "rgba(0, 32, 69, 0.12)",
-    borderBottomWidth: 1,
+    borderBottomWidth: 2,
     paddingHorizontal: 18,
     paddingVertical: 10,
   },
@@ -750,7 +750,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     alignSelf: "flex-start",
     backgroundColor: "#002045",
-    borderRadius: 18,
+    borderRadius: 999,
     justifyContent: "center",
     minHeight: 48,
     paddingHorizontal: 18,
@@ -769,8 +769,8 @@ const styles = StyleSheet.create({
   sectionCard: {
     backgroundColor: "#FFFFFF",
     borderColor: "rgba(0, 32, 69, 0.08)",
-    borderRadius: 22,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     gap: 12,
     padding: 18,
   },
@@ -798,14 +798,14 @@ const styles = StyleSheet.create({
   yearButton: {
     borderColor: "rgba(0, 32, 69, 0.12)",
     borderRadius: 999,
-    borderWidth: 1,
+    borderWidth: 2,
     paddingHorizontal: 14,
     paddingVertical: 10,
   },
   yearButtonLabel: {
     color: "#002045",
     fontSize: 13,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   yearButtonLabelSelected: {
     color: "#FFFFFF",

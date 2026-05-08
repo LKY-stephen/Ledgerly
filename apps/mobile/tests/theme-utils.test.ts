@@ -22,7 +22,7 @@ describe("theme utils", () => {
     expect(lightTheme.tabBarBackground).toBe(surfaceThemes.light.tabBar);
     expect(darkTheme.sceneBackground).toBe(surfaceThemes.dark.shell);
     expect(darkTheme.activeTint).toBe(surfaceThemes.dark.tabActive);
-    expect(darkTheme.tabIndicatorBackground).toContain("rgba(110, 231, 210");
+    expect(darkTheme.tabIndicatorBackground).toBe(surfaceThemes.dark.paperMuted);
   });
 
   it("derives feedback banners from each palette tone", () => {
@@ -30,9 +30,9 @@ describe("theme utils", () => {
     const darkSuccess = getFeedbackColors(surfaceThemes.dark, "success");
 
     expect(lightError.text).toBe(surfaceThemes.light.destructive);
-    expect(lightError.background).toContain("rgba(185, 56, 8");
+    expect(lightError.background).toBe(surfaceThemes.light.paper);
     expect(darkSuccess.text).toBe(surfaceThemes.dark.success);
-    expect(darkSuccess.border).toContain("rgba(110, 231, 210");
+    expect(darkSuccess.border).toBe(surfaceThemes.dark.success);
   });
 
   it("keeps primary actions on accent surfaces in both themes", () => {
@@ -43,5 +43,17 @@ describe("theme utils", () => {
     expect(lightPrimary.text).toBe(surfaceThemes.light.inkOnAccent);
     expect(darkPrimary.background).toBe(surfaceThemes.dark.accent);
     expect(darkPrimary.text).toBe(surfaceThemes.dark.shell);
+  });
+
+  it("adapts destructive button text to the current theme palette", () => {
+    const lightDestructive = getButtonColors(surfaceThemes.light, "destructive");
+    const darkDestructive = getButtonColors(surfaceThemes.dark, "destructive");
+
+    expect(lightDestructive.background).toBe(surfaceThemes.light.destructive);
+    expect(lightDestructive.border).toBe(surfaceThemes.light.destructive);
+    expect(lightDestructive.text).toBe(surfaceThemes.light.paper);
+    expect(darkDestructive.background).toBe("rgba(255, 46, 99, 0.18)");
+    expect(darkDestructive.border).toBe(surfaceThemes.dark.destructive);
+    expect(darkDestructive.text).toBe(surfaceThemes.dark.destructive);
   });
 });

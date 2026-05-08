@@ -32,7 +32,11 @@ import {
   loadEvidenceQueue,
   updateEvidenceExtraction,
 } from "./ledger-store";
-import { parseFileWithOpenAi, type ParseResult } from "./remote-parse";
+import {
+  parseFileWithOpenAi,
+  type ParseResult,
+  type ProviderRuntimeConfig,
+} from "./remote-parse";
 import type { PlannerSummary } from "@ledgerly/schemas";
 import {
   loadHomeSnapshot,
@@ -327,8 +331,9 @@ export async function parseFile(
   fileUri: string,
   fileName: string,
   mimeType: string | null,
+  providerConfig?: Partial<ProviderRuntimeConfig>,
 ): Promise<ParseResult> {
-  return parseFileWithOpenAi({ fileName, fileUri, mimeType });
+  return parseFileWithOpenAi({ fileName, fileUri, mimeType }, providerConfig);
 }
 
 export async function loadHomeScreenSnapshot(
@@ -370,6 +375,7 @@ export async function runPlanner(input: {
   mimeType: string | null;
   model: string;
   parserKind?: string;
+  providerConfig?: Partial<ProviderRuntimeConfig>;
   profileInfo?: { name: string; email: string; phone: string };
   rawJson: unknown;
   rawText: string;
@@ -492,7 +498,7 @@ export async function runPlanner(input: {
       mimeType: input.mimeType,
       profileInfo: input.profileInfo,
       rawJson: input.rawJson,
-    });
+    }, input.providerConfig);
 
     // 10. Create planner run
     await createPlannerRun(writableDatabase, {

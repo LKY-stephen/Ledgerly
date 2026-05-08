@@ -114,6 +114,126 @@ const requiredExpoModulesCorePodsProjectEntries = [
   },
 ];
 const iosPodsDir = resolve(appRoot, "ios/Pods");
+const xcodeEnvLocalPath = resolve(appRoot, "ios/.xcode.env.local");
+const homebrewCellarNodeSegment = "/Cellar/node/";
+
+function quoteForXcodeEnv(value) {
+  return `"${value.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
+}
+
+function upsertNodeBinaryOverride(contents, nodeBinary) {
+  const nextLine = `export NODE_BINARY=${quoteForXcodeEnv(nodeBinary)}`;
+
+  if (!contents.trim()) {
+    return `${nextLine}\n`;
+  }
+
+  if (/^\s*export\s+NODE_BINARY=.*$/m.test(contents)) {
+    return contents.replace(/^\s*export\s+NODE_BINARY=.*$/m, nextLine);
+  }
+
+  const separator = contents.endsWith("\n") ? "" : "\n";
+  return `${contents}${separator}${nextLine}\n`;
+}
+
+function parseNodeBinaryOverride(contents) {
+  const match = contents.match(/^\s*export\s+NODE_BINARY=(.+)\s*$/m);
+  if (!match) {
+    return null;
+  }
+
+  const rawValue = match[1].trim();
+  if (
+    (rawValue.startsWith('"') && rawValue.endsWith('"')) ||
+    (rawValue.startsWith("'") && rawValue.endsWith("'"))
+  ) {
+    return rawValue.slice(1, -1);
+  }
+
+  return rawValue;
+}
+
+function canExecuteNodeBinary(nodeBinary) {
+  if (!nodeBinary) {
+    return false;
+  }
+
+  const result = spawnSync(nodeBinary, ["-v"], { encoding: "utf8" });
+  return result.status === 0;
+}
+
+function resolvePreferredNodeBinary() {
+  const shellNode = spawnSync("/bin/bash", ["-lc", "command -v node"], {
+    encoding: "utf8",
+  });
+  const shellResolvedNode = shellNode.status === 0 ? shellNode.stdout.trim() : "";
+
+  if (shellResolvedNode && canExecuteNodeBinary(shellResolvedNode)) {
+    return shellResolvedNode;
+  }
+
+  if (canExecuteNodeBinary(process.execPath)) {
+    return process.execPath;
+  }
+
+  return null;
+}
+
+function shouldRepairLocalNodeBinary(currentNodeBinary, preferredNodeBinary) {
+  if (!preferredNodeBinary) {
+    return false;
+  }
+
+  if (!currentNodeBinary) {
+    return true;
+  }
+
+  if (!canExecuteNodeBinary(currentNodeBinary)) {
+    return true;
+  }
+
+  if (currentNodeBinary === preferredNodeBinary) {
+    return false;
+  }
+
+  return currentNodeBinary.includes(homebrewCellarNodeSegment);
+}
+
+function ensureWorkingLocalXcodeNodeBinary() {
+  const preferredNodeBinary = resolvePreferredNodeBinary();
+
+  if (!preferredNodeBinary) {
+    console.error(
+      "Unable to resolve a working Node binary for iOS builds. Fix your local Node installation or set ios/.xcode.env.local manually.",
+    );
+    process.exit(1);
+  }
+
+  const original = existsSync(xcodeEnvLocalPath)
+    ? readFileSync(xcodeEnvLocalPath, "utf8")
+    : "";
+  const currentNodeBinary = parseNodeBinaryOverride(original);
+
+  if (!shouldRepairLocalNodeBinary(currentNodeBinary, preferredNodeBinary)) {
+    return;
+  }
+
+  writeFileSync(
+    xcodeEnvLocalPath,
+    upsertNodeBinaryOverride(original, preferredNodeBinary),
+  );
+
+  if (!currentNodeBinary) {
+    console.log(
+      `Created ios/.xcode.env.local with NODE_BINARY=${preferredNodeBinary}.`,
+    );
+    return;
+  }
+
+  console.log(
+    `Updated ios/.xcode.env.local NODE_BINARY from ${currentNodeBinary} to ${preferredNodeBinary}.`,
+  );
+}
 
 function parsePort(value) {
   if (!value) {
@@ -389,6 +509,8 @@ function findAvailableMetroPort(startPort) {
 
 async function main() {
   const extraArgs = process.argv.slice(2);
+  ensureWorkingLocalXcodeNodeBinary();
+
   if (extraArgs.includes("--help") || extraArgs.includes("-h")) {
     const help = spawnSync("expo", ["run:ios", ...extraArgs], { stdio: "inherit" });
     process.exit(help.status ?? 1);

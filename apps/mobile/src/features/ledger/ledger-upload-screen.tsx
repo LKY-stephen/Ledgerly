@@ -39,7 +39,18 @@ export function LedgerUploadScreen() {
   const isWeb = Platform.OS === "web";
   const isWide = isExpanded || isMedium;
   const useSplitLayout = isWide && !isWeb;
-  const { copy, palette, resolvedLocale } = useAppShell();
+  const {
+    aiProvider,
+    copy,
+    geminiApiKey,
+    geminiAuthMode,
+    inferApiKey,
+    inferBaseUrl,
+    inferModel,
+    openAiApiKey,
+    palette,
+    resolvedLocale,
+  } = useAppShell();
   const uploadCopy = copy.ledger.upload;
   const errorColors = getFeedbackColors(palette, "error");
   const primaryButton = getButtonColors(palette, "primary");
@@ -102,6 +113,15 @@ export function LedgerUploadScreen() {
         selectedCandidate.uri,
         selectedCandidate.originalFileName,
         selectedCandidate.mimeType,
+        {
+          aiProvider,
+          geminiApiKey,
+          geminiAuthMode,
+          inferApiKey,
+          inferBaseUrl,
+          inferModel,
+          openAiApiKey,
+        },
       );
 
       router.push({
@@ -172,7 +192,7 @@ export function LedgerUploadScreen() {
               if (router.canGoBack()) {
                 router.back();
               } else {
-                router.replace("/(tabs)/ledger");
+                router.replace("/(game)");
               }
             }}
             style={StyleSheet.absoluteFillObject}
@@ -207,7 +227,7 @@ export function LedgerUploadScreen() {
                     if (router.canGoBack()) {
                       router.back();
                     } else {
-                      router.replace("/(tabs)/ledger");
+                      router.replace("/(game)");
                     }
                   }}
                   style={({ pressed }) => [
@@ -261,7 +281,7 @@ export function LedgerUploadScreen() {
                 if (router.canGoBack()) {
                   router.back();
                 } else {
-                  router.replace("/(tabs)/ledger");
+                  router.replace("/(game)");
                 }
               }}
               palette={palette}
@@ -628,7 +648,7 @@ function UploadWorkspaceCard({
 
 const styles = StyleSheet.create({
   appBar: {
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: 2,
     paddingBottom: 10,
     paddingHorizontal: 18,
   },
@@ -652,14 +672,11 @@ const styles = StyleSheet.create({
   },
   dropCard: {
     alignItems: "center",
-    borderRadius: 18,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     gap: 12,
     paddingHorizontal: 16,
     paddingVertical: 20,
-    shadowOffset: { height: 8, width: 0 },
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
   },
   dropCardWide: {
     flex: 1,
@@ -680,13 +697,13 @@ const styles = StyleSheet.create({
   },
   eyebrow: {
     fontSize: 11,
-    fontWeight: "700",
+    fontWeight: "800",
     letterSpacing: 1.1,
     textTransform: "uppercase",
   },
   heroBlock: {
-    borderRadius: 18,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     gap: 8,
     padding: 16,
   },
@@ -722,27 +739,27 @@ const styles = StyleSheet.create({
   },
   previewCard: {
     alignItems: "center",
-    borderRadius: 16,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     gap: 10,
     padding: 14,
     width: "100%",
   },
   previewEyebrow: {
     fontSize: 11,
-    fontWeight: "700",
+    fontWeight: "800",
     letterSpacing: 0.8,
     textTransform: "uppercase",
   },
   previewFileName: {
     fontSize: 16,
-    fontWeight: "700",
+    fontWeight: "800",
     lineHeight: 22,
     textAlign: "center",
   },
   previewIconWrap: {
     alignItems: "center",
-    borderRadius: 18,
+    borderRadius: 999,
     height: 72,
     justifyContent: "center",
     width: 72,
@@ -759,12 +776,9 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     alignItems: "center",
-    borderRadius: 14,
+    borderRadius: 999,
     height: 48,
     justifyContent: "center",
-    shadowOffset: { height: 6, width: 0 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
     width: "100%",
   },
   primaryButtonContent: {
@@ -774,22 +788,22 @@ const styles = StyleSheet.create({
   },
   primaryButtonLabel: {
     fontSize: 15,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   safeArea: {
     flex: 1,
   },
   secondaryButton: {
     alignItems: "center",
-    borderRadius: 14,
-    borderWidth: 1,
+    borderRadius: 999,
+    borderWidth: 2,
     height: 48,
     justifyContent: "center",
     width: "100%",
   },
   secondaryButtonLabel: {
     fontSize: 15,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   wideRow: {
     flex: 1,
@@ -818,19 +832,16 @@ const styles = StyleSheet.create({
   },
   webModalCloseButton: {
     alignItems: "center",
-    borderRadius: 14,
-    borderWidth: 1,
+    borderRadius: 999,
+    borderWidth: 2,
     height: 40,
     justifyContent: "center",
     width: 40,
   },
   webModalFrame: {
-    borderRadius: 28,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     maxWidth: 880,
-    shadowOffset: { width: 0, height: 20 },
-    shadowOpacity: 0.16,
-    shadowRadius: 40,
     width: "100%",
   },
   webModalFrameWrap: {
@@ -852,7 +863,7 @@ const styles = StyleSheet.create({
   },
   uploadGlyph: {
     alignItems: "center",
-    borderRadius: 16,
+    borderRadius: 999,
     height: 56,
     justifyContent: "center",
     width: 56,

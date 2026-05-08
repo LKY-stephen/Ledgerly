@@ -13,6 +13,7 @@ import type { ResolvedLocale } from "../app-shell/types";
 import {
   parseFileWithOpenAiFromBlob,
   planEvidenceDbUpdates,
+  type ProviderRuntimeConfig,
   type ParseResult,
 } from "./remote-parse";
 import {
@@ -145,6 +146,7 @@ export async function parseFile(
   fileUri: string,
   fileName: string,
   mimeType: string | null,
+  providerConfig?: Partial<ProviderRuntimeConfig>,
 ): Promise<ParseResult> {
   const response = await fetch(fileUri);
 
@@ -169,7 +171,7 @@ export async function parseFile(
     // Non-critical: parsing can proceed even if vault write fails
   }
 
-  return parseFileWithOpenAiFromBlob({ fileName, blob, mimeType });
+  return parseFileWithOpenAiFromBlob({ fileName, blob, mimeType }, providerConfig);
 }
 
 export async function loadHomeScreenSnapshot(
@@ -224,6 +226,7 @@ export async function runPlanner(input: {
   mimeType: string | null;
   model: string;
   parserKind?: string;
+  providerConfig?: Partial<ProviderRuntimeConfig>;
   profileInfo?: { name: string; email: string; phone: string };
   rawJson: unknown;
   rawText: string;
@@ -240,7 +243,7 @@ export async function runPlanner(input: {
     mimeType: input.mimeType,
     profileInfo: input.profileInfo,
     rawJson: input.rawJson,
-  });
+  }, input.providerConfig);
 
   // Build extracted data for planner summary
   const extractedData = buildRemoteExtractedData({

@@ -14,6 +14,7 @@
     },
     "ios": {
       "bundleIdentifier": "com.ledgerly.mobile",
+      "buildNumber": "1",
       "supportsTablet": true,
       "appleTeamId": "7LSK46Z392"
     },

@@ -185,6 +185,7 @@ describe("creator dashboard workflow", () => {
     });
 
     expect(snapshot.metrics).toEqual({
+      balanceCents: 785_501,
       incomeCents: 115_000,
       netCents: 93_800,
       outflowCents: 21_200,

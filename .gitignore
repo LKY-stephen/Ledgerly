@@ -42,7 +42,6 @@ __pycache__
 *.egg
 
 # Environment (keep committed examples like .env.example)
-.env
 .env.local
 .env.*.local
 

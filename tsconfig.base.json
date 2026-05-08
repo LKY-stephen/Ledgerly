@@ -16,6 +16,8 @@
     "paths": {
       "@ledgerly/schemas": ["packages/schemas/src/index.ts"],
       "@ledgerly/storage": ["packages/storage/src/index.ts"],
+      "@ledgerly/sdk": ["packages/sdk/src/index.ts"],
+      "@ledgerly/agent": ["packages/agent/src/index.ts"],
       "@ledgerly/ui": ["packages/ui/src/index.ts"]
     }
   }

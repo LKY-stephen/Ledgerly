@@ -18,6 +18,7 @@ import { useResponsive } from "../../hooks/use-responsive";
 import { useAppShell } from "../app-shell/provider";
 import type { ResolvedLocale } from "../app-shell/types";
 import { getButtonColors, getFeedbackColors, withAlpha } from "../app-shell/theme-utils";
+import type { SurfaceTokens } from "@ledgerly/ui";
 import {
   formatLedgerParseCandidateState,
   formatLedgerParseProposalType,
@@ -61,8 +62,6 @@ export function LedgerParseScreen() {
 
   const hasData = rawJson || rawText;
   const formattedJson = formatJson(rawJson);
-  const providerLabel =
-    parserKind === "gemini" ? "Gemini" : parserKind === "infer" ? "Infer API" : "OpenAI";
 
   const parsedRawJson = rawJson ? tryParse(rawJson) : null;
 
@@ -131,7 +130,7 @@ export function LedgerParseScreen() {
       return;
     }
 
-    router.replace("/(tabs)");
+    router.replace("/(game)");
   }, [allApproved, router]);
 
   return (
@@ -154,7 +153,7 @@ export function LedgerParseScreen() {
             if (router.canGoBack()) {
               router.back();
             } else {
-              router.replace("/(tabs)/ledger");
+              router.replace("/(game)");
             }
           }}
           palette={palette}
@@ -164,21 +163,6 @@ export function LedgerParseScreen() {
       </View>
 
       <ScrollView contentContainerStyle={[styles.container, isWide && styles.containerWide]}>
-        {/* ---- Top strip: hero + file info (always full width) ---- */}
-        <View
-          style={[
-            styles.heroBlock,
-            { backgroundColor: palette.paper, borderColor: palette.border },
-          ]}
-        >
-          <Text style={[styles.eyebrow, { color: palette.inkMuted }]}>
-            {parseCopy.heroEyebrow}
-          </Text>
-          <Text style={[styles.heroTitle, { color: palette.ink }]}>
-            {`${providerLabel} ${parseCopy.heroTitleSuffix}`}
-          </Text>
-        </View>
-
         <View
           style={[
             styles.card,
@@ -222,7 +206,7 @@ export function LedgerParseScreen() {
 
         {/* ---- Main body: two-column on PC, single-column on mobile ---- */}
         <View style={isExpanded ? styles.twoColumn : undefined}>
-          {/* Left column: JSON preview */}
+          {/* Left column: parse output / empty states */}
           <View style={isExpanded ? styles.columnLeft : undefined}>
             {hasData ? (
               <View
@@ -593,7 +577,7 @@ export function LedgerParseScreen() {
             if (router.canGoBack()) {
               router.back();
             } else {
-              router.replace("/(tabs)/ledger");
+              router.replace("/(game)");
             }
           }}
           style={({ pressed }) => [
@@ -620,7 +604,7 @@ function EditField(props: {
   fieldId: string;
   label: string;
   onChangeText: (value: string) => void;
-  palette: Record<string, string>;
+  palette: SurfaceTokens;
   value: string;
 }) {
   return (
@@ -649,7 +633,7 @@ function CategorySelector(props: {
   label: string;
   onSelect: (value: LedgerCategory) => void;
   options: Array<{ label: string; value: LedgerCategory }>;
-  palette: Record<string, string>;
+  palette: SurfaceTokens;
   selectedValue: LedgerCategory;
 }) {
   return (
@@ -701,7 +685,7 @@ function GenericProposalCard(props: {
   isApproving: boolean;
   onApprove: () => void;
   onReject: () => void;
-  palette: Record<string, string>;
+  palette: SurfaceTokens;
   parseCopy: Record<string, string>;
   proposal: WorkflowWriteProposalItem;
   resolvedLocale: ResolvedLocale;
@@ -741,7 +725,7 @@ function CounterpartyMergeProposalCard(props: {
   isApproving: boolean;
   onApprove: () => void;
   onReject: () => void;
-  palette: Record<string, string>;
+  palette: SurfaceTokens;
   parseCopy: Record<string, string>;
   proposal: WorkflowWriteProposalItem;
   resolvedLocale: ResolvedLocale;
@@ -827,7 +811,7 @@ function DuplicateReceiptProposalCard(props: {
   onApprove: () => void;
   onKeepModeChange: (nextMode: DuplicateMergeKeepMode) => void;
   onReject: () => void;
-  palette: Record<string, string>;
+  palette: SurfaceTokens;
   parseCopy: Record<string, string>;
   proposal: WorkflowWriteProposalItem;
   resolvedLocale: ResolvedLocale;
@@ -975,7 +959,7 @@ function DuplicateReceiptProposalCard(props: {
 }
 
 function ProposalHeader(props: {
-  palette: Record<string, string>;
+  palette: SurfaceTokens;
   proposal: WorkflowWriteProposalItem;
   resolvedLocale: ResolvedLocale;
 }) {
@@ -1006,7 +990,7 @@ function ProposalActions(props: {
   isApproving: boolean;
   onApprove: () => void;
   onReject: () => void;
-  palette: Record<string, string>;
+  palette: SurfaceTokens;
   proposal: WorkflowWriteProposalItem;
   rejectLabel: string;
 }) {
@@ -1058,7 +1042,7 @@ function RecordSummaryCard(props: {
   amount: string;
   date: string;
   description: string;
-  palette: Record<string, string>;
+  palette: SurfaceTokens;
   parseCopy: Record<string, string>;
   source: string;
   target: string;
@@ -1108,7 +1092,7 @@ function RecordSummaryCard(props: {
 
 function DetailRow(props: {
   label: string;
-  palette: Record<string, string>;
+  palette: SurfaceTokens;
   value: string | null;
 }) {
   return (
@@ -1191,7 +1175,7 @@ function formatAmountCents(amountCents: number): string {
 
 function StatPill(props: {
   label: string;
-  palette: Record<string, string>;
+  palette: SurfaceTokens;
   value: number;
 }) {
   return (
@@ -1243,53 +1227,137 @@ function proposalStateColor(state: string): string {
 
 function formatJson(raw: string): string {
   if (!raw) return "";
-  try {
-    return JSON.stringify(JSON.parse(raw), null, 2);
-  } catch {
-    return raw;
+
+  const parsed = tryParse(raw);
+
+  if (parsed !== null) {
+    return JSON.stringify(parsed, null, 2);
   }
+
+  return raw;
 }
 
 function tryParse(raw: string): unknown {
+  if (!raw) {
+    return null;
+  }
+
   try {
     return JSON.parse(raw);
   } catch {
+    return tryParseLooseJson(raw);
+  }
+}
+
+function tryParseLooseJson(raw: string): unknown {
+  const trimmed = raw.trim();
+
+  if (!trimmed) {
     return null;
   }
+
+  const firstBrace = Math.min(
+    ...["{", "["]
+      .map((token) => trimmed.indexOf(token))
+      .filter((index) => index >= 0),
+  );
+
+  if (!Number.isFinite(firstBrace)) {
+    return null;
+  }
+
+  const normalized = trimmed.slice(firstBrace).replace(/^\uFEFF/, "");
+  const repaired = repairTruncatedJson(normalized);
+
+  try {
+    return JSON.parse(repaired);
+  } catch {
+    return null;
+  }
+}
+
+function repairTruncatedJson(raw: string): string {
+  let result = "";
+  let inString = false;
+  let escaping = false;
+  const stack: string[] = [];
+
+  for (const char of raw) {
+    result += char;
+
+    if (escaping) {
+      escaping = false;
+      continue;
+    }
+
+    if (char === "\\") {
+      escaping = true;
+      continue;
+    }
+
+    if (char === "\"") {
+      inString = !inString;
+      continue;
+    }
+
+    if (inString) {
+      continue;
+    }
+
+    if (char === "{") {
+      stack.push("}");
+    } else if (char === "[") {
+      stack.push("]");
+    } else if ((char === "}" || char === "]") && stack[stack.length - 1] === char) {
+      stack.pop();
+    }
+  }
+
+  if (inString && !escaping) {
+    result += "\"";
+  }
+
+  while (stack.length > 0) {
+    result += stack.pop();
+  }
+
+  return result
+    .replace(/,\s*([}\]])/g, "$1")
+    .replace(/([{,]\s*)([A-Za-z0-9_.$-]+)\s*:/g, '$1"$2":');
 }
 
 const styles = StyleSheet.create({
   actionButtonLabel: {
     color: "#FFFFFF",
     fontSize: 14,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   appBar: {
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: 2,
     paddingBottom: 10,
     paddingHorizontal: 18,
   },
   approveButton: {
     alignItems: "center",
-    borderRadius: 14,
+    borderRadius: 999,
     flex: 1,
     height: 40,
     justifyContent: "center",
   },
   backButton: {
     alignItems: "center",
-    borderRadius: 14,
+    borderRadius: 999,
     height: 44,
     justifyContent: "center",
     marginTop: 8,
   },
   backButtonLabel: {
     fontSize: 15,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   candidateChip: {
-    borderRadius: 14,
-    borderWidth: 1,
+    borderRadius: 999,
+    borderWidth: 2,
     minHeight: 38,
     justifyContent: "center",
     paddingHorizontal: 12,
@@ -1297,7 +1365,7 @@ const styles = StyleSheet.create({
   },
   candidateChipLabel: {
     fontSize: 13,
-    fontWeight: "700",
+    fontWeight: "800",
     textAlign: "center",
   },
   candidateChipRow: {
@@ -1306,8 +1374,8 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   card: {
-    borderRadius: 18,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     gap: 8,
     padding: 16,
   },
@@ -1336,8 +1404,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   categoryChip: {
-    borderRadius: 14,
-    borderWidth: 1,
+    borderRadius: 999,
+    borderWidth: 2,
     minHeight: 40,
     justifyContent: "center",
     paddingHorizontal: 12,
@@ -1345,7 +1413,7 @@ const styles = StyleSheet.create({
   },
   categoryChipLabel: {
     fontSize: 13,
-    fontWeight: "700",
+    fontWeight: "800",
     textAlign: "center",
   },
   categoryList: {
@@ -1357,20 +1425,20 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   editFieldInput: {
-    borderRadius: 14,
-    borderWidth: 1,
+    borderRadius: 999,
+    borderWidth: 2,
     fontSize: 14,
     height: 44,
     paddingHorizontal: 14,
   },
   editFieldLabel: {
     fontSize: 12,
-    fontWeight: "600",
+    fontWeight: "800",
     textTransform: "uppercase",
   },
   detailLabel: {
     fontSize: 11,
-    fontWeight: "700",
+    fontWeight: "800",
     letterSpacing: 0.3,
     textTransform: "uppercase",
   },
@@ -1383,8 +1451,8 @@ const styles = StyleSheet.create({
   },
   emptyState: {
     alignItems: "flex-start",
-    borderRadius: 18,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     gap: 8,
     padding: 18,
   },
@@ -1402,22 +1470,22 @@ const styles = StyleSheet.create({
   },
   errorTitle: {
     fontSize: 16,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   eyebrow: {
     fontSize: 11,
-    fontWeight: "700",
+    fontWeight: "800",
     letterSpacing: 1.1,
     textTransform: "uppercase",
   },
   fileName: {
     flex: 1,
     fontSize: 16,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   heroBlock: {
-    borderRadius: 18,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     gap: 8,
     padding: 16,
   },
@@ -1428,8 +1496,8 @@ const styles = StyleSheet.create({
     lineHeight: 30,
   },
   jsonBox: {
-    borderRadius: 14,
-    borderWidth: 1,
+    borderRadius: 10,
+    borderWidth: 2,
     minHeight: 200,
     paddingHorizontal: 14,
     paddingVertical: 14,
@@ -1444,7 +1512,7 @@ const styles = StyleSheet.create({
   },
   loadingCaption: {
     fontSize: 12,
-    fontWeight: "600",
+    fontWeight: "800",
   },
   loadingHeader: {
     alignItems: "center",
@@ -1459,8 +1527,8 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   mergeInfoCard: {
-    borderRadius: 14,
-    borderWidth: 1,
+    borderRadius: 10,
+    borderWidth: 2,
     gap: 8,
     padding: 12,
   },
@@ -1471,17 +1539,17 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     alignItems: "center",
-    borderRadius: 14,
+    borderRadius: 999,
     height: 44,
     justifyContent: "center",
   },
   primaryButtonLabel: {
     fontSize: 15,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   keepChoiceChip: {
-    borderRadius: 14,
-    borderWidth: 1,
+    borderRadius: 999,
+    borderWidth: 2,
     flex: 1,
     minHeight: 42,
     justifyContent: "center",
@@ -1497,7 +1565,7 @@ const styles = StyleSheet.create({
   },
   keepChoiceText: {
     fontSize: 13,
-    fontWeight: "700",
+    fontWeight: "800",
     textAlign: "center",
   },
   proposalActions: {
@@ -1506,8 +1574,8 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   proposalCard: {
-    borderRadius: 18,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     gap: 8,
     marginBottom: 10,
     padding: 14,
@@ -1530,19 +1598,19 @@ const styles = StyleSheet.create({
   },
   proposalSummary: {
     fontSize: 14,
-    fontWeight: "600",
+    fontWeight: "800",
     lineHeight: 19,
   },
   proposalType: {
     fontSize: 15,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   proposalsSection: {
     gap: 0,
   },
   rejectButton: {
     alignItems: "center",
-    borderRadius: 14,
+    borderRadius: 999,
     flex: 1,
     height: 40,
     justifyContent: "center",
@@ -1550,7 +1618,7 @@ const styles = StyleSheet.create({
   retryButton: {
     alignItems: "center",
     alignSelf: "flex-start",
-    borderRadius: 12,
+    borderRadius: 999,
     height: 38,
     justifyContent: "center",
     marginTop: 4,
@@ -1574,7 +1642,7 @@ const styles = StyleSheet.create({
   },
   statePillText: {
     fontSize: 12,
-    fontWeight: "600",
+    fontWeight: "800",
   },
   statPillContainer: {
     alignItems: "center",
@@ -1585,7 +1653,7 @@ const styles = StyleSheet.create({
   },
   statPillLabel: {
     fontSize: 11,
-    fontWeight: "600",
+    fontWeight: "800",
   },
   statPillValue: {
     fontSize: 20,

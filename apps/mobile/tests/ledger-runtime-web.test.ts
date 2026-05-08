@@ -12,7 +12,11 @@ vi.mock("expo-image-picker", () => ({
 vi.mock("../src/features/app-shell/storage", () => ({
   loadPersistedAiProvider: vi.fn(async () => "openai"),
   loadPersistedGeminiApiKey: vi.fn(async () => ""),
-  loadPersistedOpenAiApiKey: vi.fn(async () => ""),
+  loadPersistedGeminiAuthMode: vi.fn(async () => "api_key"),
+  loadPersistedInferApiKey: vi.fn(async () => ""),
+  loadPersistedInferBaseUrl: vi.fn(async () => ""),
+  loadPersistedInferModel: vi.fn(async () => ""),
+  loadPersistedOpenAiApiKey: vi.fn(async () => "test-openai-key"),
 }));
 
 import * as ImagePicker from "expo-image-picker";
@@ -185,6 +189,121 @@ describe("ledger web upload runtime", () => {
     expect(plannerResult.reviewValues.date).toBe("2026-04-19");
     expect(plannerResult.candidateRecords[0]?.reviewValues.date).toBe("2026-04-19");
     expect(plannerResult.candidateRecords[0]?.payload.date).toBe("2026-02-27");
+  });
+
+  it("forwards the current app-shell provider config into the planner path", async () => {
+    const providerConfigs: Array<Record<string, unknown> | undefined> = [];
+
+    vi.spyOn(remoteParse, "planEvidenceDbUpdates").mockImplementationOnce(
+      async (_input, providerConfig) => {
+        providerConfigs.push(providerConfig as Record<string, unknown> | undefined);
+
+        return {
+          businessEvents: ["Receipt payment"],
+          candidateRecords: [
+            {
+              amountCents: 5299,
+              currency: "USD",
+              date: "2026-02-27",
+              description: "Apple Store accessories",
+              evidenceId: "web-evidence-provider-config",
+              recordKind: "expense",
+              sourceLabel: "Business Card",
+              targetLabel: "Apple Store",
+            },
+          ],
+          classifiedFacts: [],
+          counterpartyResolutions: [],
+          duplicateHints: [],
+          readTasks: [
+            { readTaskId: "read-1", taskType: "counterparty_lookup", rationale: "Lookup counterparties", status: "pending" },
+            { readTaskId: "read-2", taskType: "duplicate_lookup", rationale: "Check duplicate receipts", status: "pending" },
+          ],
+          summary: "One expense record.",
+          warnings: [],
+          writeProposals: [
+            {
+              proposalType: "persist_candidate_record",
+              reviewFields: ["amount", "date", "source", "target"],
+              values: { candidateIndex: 0 },
+            },
+          ],
+        };
+      },
+    );
+
+    const plannerResult = await runPlanner({
+      fileName: "receipt-provider-config.pdf",
+      mimeType: "application/pdf",
+      model: "gpt-5",
+      providerConfig: {
+        aiProvider: "gemini",
+        geminiApiKey: "ui-gemini-key",
+        geminiAuthMode: "api_key",
+        inferApiKey: "",
+        inferBaseUrl: "",
+        inferModel: "",
+        openAiApiKey: "",
+      },
+      rawJson: {
+        candidates: {
+          amountCents: 5299,
+          category: "expense",
+          date: "2026-02-27",
+          description: "Apple Store accessories",
+          notes: null,
+          source: "Business Card",
+          target: "Apple Store",
+          taxCategory: "office",
+        },
+        fields: {
+          amountCents: 5299,
+          category: "expense",
+          date: "2026-02-27",
+          description: "Apple Store accessories",
+          notes: null,
+          source: "Business Card",
+          target: "Apple Store",
+          taxCategory: "office",
+        },
+        model: "gpt-5",
+        parser: "openai_gpt",
+        rawSummary: "Apple Store receipt",
+        rawText: "Apple Store 02/27/2026 $52.99",
+        records: [
+          {
+            candidates: {
+              amountCents: 5299,
+              category: "expense",
+              date: "2026-02-27",
+              description: "Apple Store accessories",
+              notes: null,
+              source: "Business Card",
+              target: "Apple Store",
+              taxCategory: "office",
+            },
+            fields: {
+              amountCents: 5299,
+              category: "expense",
+              date: "2026-02-27",
+              description: "Apple Store accessories",
+              notes: null,
+              source: "Business Card",
+              target: "Apple Store",
+              taxCategory: "office",
+            },
+          },
+        ],
+        warnings: [],
+      },
+      rawText: "Apple Store 02/27/2026 $52.99",
+    });
+
+    expect(providerConfigs[0]).toMatchObject({
+      aiProvider: "gemini",
+      geminiApiKey: "ui-gemini-key",
+    });
+    expect(plannerResult.plannerSummary?.summary).toBe("One expense record.");
   });
 
   it("picks photo candidates from the image library", async () => {

@@ -55,10 +55,11 @@ pnpm smoke
    - 登录页不再出现「Open database demo」之类的 CTA
    - 首页不再出现数据库 CRUD、字段选择 chip、记录选中态或报告卡片等 demo 区块
    - 主壳层三个 Tab 内不存在通往 database demo / database hooks demo 的入口
-10. 在启动移动端前设置环境变量，再打开 Ledger 上传与解析子流程，确认前端直连 OpenAI 主路径可用：
-   - 运行前提供 `EXPO_PUBLIC_OPENAI_BASE_URL`（可省略，默认 `https://api.openai.com/v1`）
-   - 如需覆盖模型，提供 `EXPO_PUBLIC_OPENAI_MODEL`
-   - 在应用 Settings 中填写 OpenAI API key
+10. 在启动移动端前通过环境变量配置当前支持的 AI provider 中间层，再打开 Ledger 上传与解析子流程：
+   - OpenAI 路径：提供 `EXPO_PUBLIC_OPENAI_API_KEY`；`EXPO_PUBLIC_OPENAI_BASE_URL` 可省略（默认 `https://api.openai.com/v1`）；如需覆盖模型可提供 `EXPO_PUBLIC_OPENAI_MODEL`
+   - Infer 路径：提供 `EXPO_PUBLIC_INFER_API_KEY`；如需验证 parse/planner 走 Infer，再提供 `EXPO_PUBLIC_INFER_BASE_URL`；如需覆盖模型可提供 `EXPO_PUBLIC_INFER_MODEL`
+   - Gemini 路径：提供 `EXPO_PUBLIC_GEMINI_API_KEY`；如需覆盖 base URL / model，可提供 `EXPO_PUBLIC_GEMINI_BASE_URL`、`EXPO_PUBLIC_GEMINI_MODEL`
+   - 当前公开 smoke 契约只验证 env 配置；不要依赖隐藏中的 auth 路径或本地 provider 切换作为当前标准路径
    - Upload workspace 支持 `Select Photos`、`Take Photo` 与 `Select Files`
    - 点击 `Take Photo` 首次会弹出相机权限请求：
      - 授权后打开系统相机，拍照完成后自动进入 Parse Review
@@ -70,9 +71,9 @@ pnpm smoke
    - 若存在 `create_counterparty` proposal，先审批该 proposal，再审批 `persist_candidate_record`
    - 最终审批通过后会写入本地 `records`，Home 指标会刷新
 11. 在对象存储联调场景下，确认 `fileUrl` 入口可用：
-   - 客户端可先拉取 `fileUrl` 内容，再直连 OpenAI 解析
-   - 缺少 OpenAI API key 会有明确错误提示
-   - OpenAI `429`、`5xx`、响应 JSON 异常均会有明确错误提示
+   - 客户端可先拉取 `fileUrl` 内容，再按当前 env 配置走远端解析
+   - 缺少当前路径所需 env key 时会有明确错误提示
+   - OpenAI / Infer / Gemini 远端错误与响应 JSON 异常均会有明确错误提示
 12. 在任一客户端完成保存后，确认本地数据展示仍正确：
    - 可手动补全必填字段并成功保存
    - 保存后 Home 的月度指标、趋势图与 Recent Activity 会刷新到最新本地数据
@@ -85,17 +86,19 @@ pnpm smoke
 16. 若在支持的 iOS 设备上，验证 Apple 登录可进入主壳层；若当前环境不支持，确认会优雅提示并允许游客继续。
 17. 运行 `pnpm contract:check`，确认本地存储与设备状态契约测试通过。
 18. 在「设置」页确认 Profile 模块可见（Name / Email / Phone 三个字段），输入后点击 Save Profile，退出重进后回显正确。设置页不再出现 "Parse API Base URL" 或等价配置项。上传文件 → Map to Records → 确认 planner 不报错且 source / target 映射合理（若已填写 Profile，source 应优先归属到 Profile 主体）。
-19. 在「设置」页 AI Provider 区块确认可切换 OpenAI / Gemini / Infer API：
-    - 默认选中 OpenAI，显示 OpenAI API Key 输入框
-    - 切换到 Gemini 后，显示 Gemini API Key 输入框
-    - 填入对应 API key 并点击 Save，退出重进后 provider 和 key 均回显正确
-    - 切换 provider 不会清除另一方 key
-    - 选中 Gemini 并填入有效 Gemini key 后，上传文件 → Parse → 确认使用 Gemini 解析（model 字段应显示 gemini 相关模型）
-    - 切回 OpenAI 并填入有效 OpenAI key 后，上传文件 → Parse → 确认使用 OpenAI 解析
-20. 在「设置」页 AI Provider 区块确认 Infer API 渠道：
-    - 切换到 Infer API 后，显示 Infer Base URL 和 Infer API Key 输入框，隐藏 Parse API Base URL 输入框
-    - 不填 Infer Base URL 点保存 → 提示 "Enter an Infer Base URL first."（中文环境显示 "请填入 Infer Base URL"）
-    - 不填 Infer API Key 点保存 → 提示 "Enter an Infer API Key first."（中文环境显示 "请填入 Infer API Key"）
-    - 填入有效 Infer Base URL 与 Infer API Key 并保存，退出重进后 provider、Base URL 和 key 均回显正确
-    - 切换到 Infer API 后上传文件 → Parse → 确认请求走 Infer 配置的 Base URL
-    - 回归 OpenAI / Gemini，确认原有 provider 未被破坏
+19. 按当前文档契约验证 env 驱动的 provider 行为，而不是依赖设置页本地切换：
+    - 仅提供 OpenAI env 时，上传文件 → Parse → 确认走 OpenAI
+    - 仅提供 Gemini env 时，上传文件 → Parse → 确认走 Gemini
+    - 仅提供 Infer API key 而未提供 `EXPO_PUBLIC_INFER_BASE_URL` 时，parse/planner 不应被视为完整 Infer 路径
+    - 提供完整 Infer env 后，上传文件 → Parse → 确认请求走 Infer 配置的 Base URL
+20. 返回首页验证 AI 助手闭环（当前公开路径同样以 env 为准）：
+    - 首页底部始终可见 AI 助手入口；未配置当前支持的 env key 时，展开后会提示缺少 AI 配置
+    - 提供 OpenAI / Gemini / Infer 所需 env 后，首页展开助手，确认可见聊天输入框
+    - 仅提供 `EXPO_PUBLIC_INFER_API_KEY` 时，助手应仍可落到 Infer 路径；这与 parse/planner 需要额外的 `EXPO_PUBLIC_INFER_BASE_URL` 不同
+    - 输入“本月收入多少”或类似问题，确认助手返回基于本地账本的回答
+    - 输入“记一笔今天的午餐支出 18 美元”或类似自然语言，确认助手返回新增成功提示
+    - 回到首页指标与 Recent Activity，确认新增记录已反映到本地数据
+21. 对照更新后的架构文档做一次人工交叉检查：
+    - `docs/architecture.md` 将 assistant 与 parse/planner 视为 `ai_provider` 中间层的不同 consumer
+    - 当前公开路径只描述 env 配置，不把隐藏中的 auth 路径当作当前支持流程
+    - Infer 在 assistant 与 parse/planner 中的使用前提差异清晰且可操作：assistant 走 key 路径，parse/planner 走 key + base URL 完整路径

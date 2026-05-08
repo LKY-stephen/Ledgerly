@@ -6,6 +6,14 @@
 - React Native screens stay thin; persistence and domain rules belong in shared packages or storage services.
 - Shared storage contracts are updated before feature integration work.
 - Native storage calls should be isolated behind app-level services so contracts stay testable.
+- Platform-specific code uses `.native.ts` / `.web.ts` suffixes; shared logic uses plain `.ts`.
+
+## Project Conventions
+
+- The main app route group is `(game)/`, accessed after login + storage initialization.
+- Feature modules live in `apps/mobile/src/features/` and are organized by domain.
+- Shared packages (`packages/*`) must not depend on app-specific code.
+- App-to-app imports are forbidden; shared logic belongs in `packages/`.
 
 ## Review Rules
 
@@ -23,3 +31,16 @@
 - `pnpm --filter @ledgerly/mobile ios` now starts at Metro port `8088` and automatically advances until it finds an available port, instead of stopping on Expo's interactive port prompt. Set `RCT_METRO_PORT` when you need a specific port. If it still fails before launch, check `xcrun simctl list devices`: Expo cannot continue until CoreSimulatorService and Simulator.app are healthy on the host machine.
 - Expo is the mobile framework baseline for this phase.
 - `pre-commit` and GitHub Actions mirror the same quality gates.
+
+## Required CI Checks
+
+All of the following must pass before merge:
+
+```bash
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm contract:check
+pnpm build
+pnpm smoke
+```

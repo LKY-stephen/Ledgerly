@@ -35,7 +35,7 @@ export function StorageSetupScreen() {
   }
 
   if (storageGateState.kind === "ready") {
-    return <Redirect href="/(tabs)" />;
+    return <Redirect href="/(game)" />;
   }
 
   const screenCopy =
@@ -115,7 +115,7 @@ export function StorageSetupScreen() {
                   throw new Error("The imported database could not be activated.");
                 }
 
-                router.replace("/(tabs)");
+                router.replace("/(game)");
               } catch (error) {
                 setErrorMessage(
                   error instanceof Error ? error.message : copy.meScreen.databaseImportFailure,
@@ -147,7 +147,7 @@ export function StorageSetupScreen() {
 
               try {
                 await initializeEmptyStorage();
-                router.replace("/(tabs)");
+                router.replace("/(game)");
               } catch (error) {
                 setErrorMessage(
                   error instanceof Error ? error.message : copy.storageSetup.initializeInProgress,
@@ -192,37 +192,34 @@ const styles = StyleSheet.create({
   },
   eyebrow: {
     fontSize: 12,
-    fontWeight: "700",
+    fontWeight: "800",
     letterSpacing: 1.2,
     textTransform: "uppercase",
   },
   errorMessage: {
     fontSize: 14,
-    fontWeight: "600",
+    fontWeight: "800",
     lineHeight: 20,
   },
   hero: {
     gap: 12,
   },
   panel: {
-    borderRadius: 28,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     gap: 14,
     padding: 20,
-    shadowOffset: { height: 12, width: 0 },
-    shadowOpacity: 1,
-    shadowRadius: 28,
   },
   primaryAction: {
     alignItems: "center",
-    borderRadius: 18,
+    borderRadius: 999,
     justifyContent: "center",
     minHeight: 52,
     paddingHorizontal: 18,
   },
   primaryActionLabel: {
     fontSize: 15,
-    fontWeight: "700",
+    fontWeight: "800",
     textAlign: "center",
   },
   safeArea: {
@@ -230,15 +227,15 @@ const styles = StyleSheet.create({
   },
   secondaryAction: {
     alignItems: "center",
-    borderRadius: 18,
-    borderWidth: 1,
+    borderRadius: 999,
+    borderWidth: 2,
     justifyContent: "center",
     minHeight: 52,
     paddingHorizontal: 18,
   },
   secondaryActionLabel: {
     fontSize: 15,
-    fontWeight: "700",
+    fontWeight: "800",
     textAlign: "center",
   },
   summary: {
@@ -251,8 +248,8 @@ const styles = StyleSheet.create({
     lineHeight: 36,
   },
   warningPanel: {
-    borderRadius: 20,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 2,
     gap: 8,
     padding: 16,
   },
@@ -262,6 +259,6 @@ const styles = StyleSheet.create({
   },
   warningTitle: {
     fontSize: 15,
-    fontWeight: "700",
+    fontWeight: "800",
   },
 });
