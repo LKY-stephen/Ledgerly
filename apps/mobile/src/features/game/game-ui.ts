@@ -1,4 +1,5 @@
 import type { SurfaceTokens } from "@ledgerly/ui";
+import { withAlpha } from "../app-shell/theme-utils";
 import type { CardId, StickmanMood } from "./game-context";
 
 export const gameHomeButtonLabel = "HOME";
@@ -33,11 +34,11 @@ export function getGameCardColors(variant: GameCardVariant, palette: SurfaceToke
   switch (variant) {
     case "black":
       return {
-        bg: palette.ink,
+        bg: palette.name === "dark" ? palette.paper : palette.ink,
         border: palette.paper,
         pipBg: palette.paper,
         pipText: palette.ink,
-        text: palette.paper,
+        text: palette.name === "dark" ? palette.ink : palette.paper,
       };
     case "white":
       return {
@@ -49,7 +50,7 @@ export function getGameCardColors(variant: GameCardVariant, palette: SurfaceToke
       };
     case "flash":
       return {
-        bg: palette.accent,
+        bg: withAlpha(palette.accent, 0.82),
         border: palette.ink,
         pipBg: palette.ink,
         pipText: palette.paper,
@@ -57,7 +58,7 @@ export function getGameCardColors(variant: GameCardVariant, palette: SurfaceToke
       };
     case "system":
       return {
-        bg: palette.system,
+        bg: withAlpha(palette.system, 0.82),
         border: palette.paper,
         pipBg: palette.paper,
         pipText: palette.system,

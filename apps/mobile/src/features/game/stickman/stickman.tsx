@@ -12,9 +12,9 @@ import type { StickmanPoseId } from "./stickman-poses";
 import { SpeechBubble } from "./speech-bubble";
 
 const cardSpeech: Record<CardId, string> = {
-  new: "New entry!",
+  new: "Upload file!",
   report: "Let's see...",
-  show: "Here you go!",
+  show: "Make a request!",
   settings: "Tune it.",
 };
 

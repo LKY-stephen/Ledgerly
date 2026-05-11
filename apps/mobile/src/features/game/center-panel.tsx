@@ -1,5 +1,14 @@
 import { useState } from "react";
-import { Animated, Pressable, StyleSheet, Text, View } from "react-native";
+import {
+  Animated,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAppShell } from "../app-shell/provider";
 import { useGame, type CardId } from "./game-context";
 import { gameHomeButtonLabel, gameSettingsCardLabel } from "./game-ui";
@@ -8,6 +17,8 @@ import { useDragPhysics } from "./animations/use-drag-physics";
 import { usePocketAnimation } from "./animations/use-pocket";
 import { CenterPanelContent } from "./center-panel-content";
 import { getGameCardColors } from "./game-ui";
+import { withAlpha } from "../app-shell/theme-utils";
+import { useCardDimensions } from "./card-dock-item";
 
 const suitMap: Record<CardId, string> = {
   new: "♠",
@@ -17,9 +28,9 @@ const suitMap: Record<CardId, string> = {
 };
 
 const labelMap: Record<CardId, string> = {
-  new: "New",
+  new: "Upload",
   report: "Report",
-  show: "Show",
+  show: "Request",
   settings: gameSettingsCardLabel,
 };
 
@@ -29,6 +40,9 @@ interface Props {
 
 export function CenterPanel({ isStickmanNearby = false }: Props) {
   const { palette } = useAppShell();
+  const insets = useSafeAreaInsets();
+  const { height: viewportHeight, width: viewportWidth } = useWindowDimensions();
+  const { cardHeight } = useCardDimensions();
   const { state, deactivateCard, discardCard, pocketCard, setMood, setSpeech, setAnimation } = useGame();
   const isVisible = state.activeCard !== null;
   const { panelStyle, slashOpacity, slashTranslateX } = useCardFlip(isVisible);
@@ -78,9 +92,16 @@ export function CenterPanel({ isStickmanNearby = false }: Props) {
   const panelVariant =
     card === "new" ? "black" : card === "report" ? "flash" : card === "show" ? "white" : "system";
   const panelColors = getGameCardColors(panelVariant, palette);
+  const dockHeight = cardHeight + 40;
+  const groundY = viewportHeight - dockHeight - insets.bottom - 16;
+  const panelWidth = Math.max(Math.min(Math.round(viewportWidth * 0.664), viewportWidth - 28), 320);
+  const desiredPanelHeight = Math.round(viewportHeight * 0.593);
+  const maxHeightAboveHorizon = Math.max(groundY - 10 - 48, 240);
+  const panelHeight = Math.max(Math.min(desiredPanelHeight, maxHeightAboveHorizon), 240);
+  const horizonAlignedTop = Math.max(groundY - panelHeight - 10, 48);
 
   return (
-    <View style={StyleSheet.absoluteFill}>
+    <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
       {/* Cut-in slash overlay */}
       <Animated.View
         style={[styles.slashOverlay, { opacity: slashOpacity }]}
@@ -92,22 +113,31 @@ export function CenterPanel({ isStickmanNearby = false }: Props) {
 
       {/* Panel with pocket animation wrapper */}
       <Animated.View
+        pointerEvents="box-none"
         style={[
           styles.overlay,
+          {
+            alignItems: "flex-end",
+            justifyContent: "flex-start",
+            paddingTop: horizonAlignedTop,
+            paddingRight: 16,
+          },
           panelStyle,
           dragStyle,
           isPocketing ? { transform: pocketStyle.transform, opacity: pocketStyle.opacity } : {},
         ]}
-        {...(isPocketing ? {} : panHandlers)}
       >
         <View
+          {...(isPocketing ? {} : panHandlers)}
           style={[
             styles.panel,
             {
-              backgroundColor: panelColors.bg,
+              backgroundColor: withAlpha(panelColors.bg, 0.5),
               borderColor: isStickmanNearby ? palette.accent : panelColors.border,
               borderRadius: palette.panelRadius,
+              height: panelHeight,
               shadowColor: isStickmanNearby ? palette.accent : panelColors.border,
+              width: panelWidth,
             },
           ]}
         >
@@ -196,12 +226,11 @@ const styles = StyleSheet.create({
     paddingVertical: 60,
   },
   panel: {
-    flex: 1,
     width: "100%",
     borderWidth: 3,
     overflow: "hidden",
     shadowOffset: { width: 6, height: 6 },
-    shadowOpacity: 1,
+    shadowOpacity: Platform.OS === "web" ? 0.55 : 0.75,
     shadowRadius: 0,
     elevation: 8,
   },

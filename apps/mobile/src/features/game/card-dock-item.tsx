@@ -21,9 +21,9 @@ export function useCardDimensions() {
 type CardVariant = "black" | "white" | "flash" | "system";
 
 const cardConfig: Record<CardId, { suit: string; label: string; sublabel: string; variant: CardVariant; footer: string }> = {
-  new: { suit: "♠", label: "NEW", sublabel: "RECORD", variant: "black", footer: "INCOME / EXPENSE" },
+  new: { suit: "♠", label: "UPLOAD", sublabel: "UPLOAD", variant: "black", footer: "BUSINESS FILE INTAKE" },
   report: { suit: "♥", label: "ASK", sublabel: "REPORT", variant: "flash", footer: "NATURAL Q&A" },
-  show: { suit: "♣", label: "SHOW", sublabel: "LEDGER", variant: "white", footer: "TABLE · EXPORT" },
+  show: { suit: "♣", label: "REQUEST", sublabel: "REQUEST", variant: "white", footer: "PERSONAL LEDGER CHAT" },
   settings: { suit: "♦", label: "OPEN", sublabel: "SETTINGS", variant: "system", footer: "THEME · PROFILE" },
 };
 

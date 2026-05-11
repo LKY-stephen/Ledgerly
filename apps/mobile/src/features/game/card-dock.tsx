@@ -6,9 +6,9 @@ import { useDealIn } from "./animations/use-deal-in";
 import type { CardId } from "./game-context";
 
 const cards: { id: CardId; suit: string; label: string }[] = [
-  { id: "new", suit: "♠", label: "New" },
+  { id: "new", suit: "♠", label: "Upload" },
   { id: "report", suit: "♥", label: "Report" },
-  { id: "show", suit: "♣", label: "Show" },
+  { id: "show", suit: "♣", label: "Request" },
   { id: "settings", suit: "♦", label: "Settings" },
 ];
 

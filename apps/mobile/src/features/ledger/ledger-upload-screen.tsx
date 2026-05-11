@@ -33,7 +33,7 @@ interface SelectedUploadCandidate {
   uri: string;
 }
 
-export function LedgerUploadScreen() {
+export function LedgerUploadScreen({ embedded = false }: { embedded?: boolean } = {}) {
   const router = useRouter();
   const { isExpanded, isMedium } = useResponsive();
   const isWeb = Platform.OS === "web";
@@ -169,18 +169,17 @@ export function LedgerUploadScreen() {
       selectedCandidate.kind === "live_photo") &&
     Boolean(selectedCandidate.mimeType?.startsWith("image/"));
 
-  return (
-    <SafeAreaView
-      edges={["top", "left", "right"]}
+  const content = (
+    <View
       style={[
-        styles.safeArea,
+        embedded ? styles.embeddedRoot : styles.safeArea,
         {
           backgroundColor: isWeb ? "transparent" : palette.shell,
         },
       ]}
       testID="ledger-upload-screen"
     >
-      {isWeb ? (
+      {isWeb && !embedded ? (
         <View
           style={[
             styles.webModalBackdrop,
@@ -267,67 +266,72 @@ export function LedgerUploadScreen() {
         </View>
       ) : (
         <>
-          <View
-            style={[
-              styles.appBar,
-              {
-                backgroundColor: palette.shell,
-                borderBottomColor: palette.divider,
-              },
-            ]}
-          >
-            <BackHeaderBar
-              onBack={() => {
-                if (router.canGoBack()) {
-                  router.back();
-                } else {
-                  router.replace("/(game)");
-                }
-              }}
-              palette={palette}
-              rightAccessory={<CfoAvatar />}
-              title={copy.common.appName}
-            />
-          </View>
+          {!embedded ? (
+            <View
+              style={[
+                styles.appBar,
+                {
+                  backgroundColor: palette.shell,
+                  borderBottomColor: palette.divider,
+                },
+              ]}
+            >
+              <BackHeaderBar
+                onBack={() => {
+                  if (router.canGoBack()) {
+                    router.back();
+                  } else {
+                    router.replace("/(game)");
+                  }
+                }}
+                palette={palette}
+                rightAccessory={<CfoAvatar />}
+                title={copy.common.appName}
+              />
+            </View>
+          ) : null}
           <ScrollView
             contentContainerStyle={[
               styles.container,
-              isWide && styles.containerWide,
+              isWide && !embedded ? styles.containerWide : null,
+              embedded ? styles.embeddedContainer : null,
             ]}
           >
-            <View style={useSplitLayout ? styles.wideRow : null}>
-              <View
-                style={[
-                  styles.heroBlock,
-                  isWide && styles.heroBlockWide,
-                  {
-                    backgroundColor: palette.paper,
-                    borderColor: palette.border,
-                  },
-                ]}
-              >
-                <Text style={[styles.eyebrow, { color: palette.inkMuted }]}>
-                  {uploadCopy.eyebrow}
-                </Text>
-                <Text
+            <View style={useSplitLayout && !embedded ? styles.wideRow : null}>
+              {!embedded ? (
+                <View
                   style={[
-                    styles.heroTitle,
-                    isWide && styles.heroTitleWide,
-                    { color: palette.ink },
+                    styles.heroBlock,
+                    isWide && styles.heroBlockWide,
+                    {
+                      backgroundColor: palette.paper,
+                      borderColor: palette.border,
+                    },
                   ]}
                 >
-                  {uploadCopy.title}
-                </Text>
-                <Text
-                  style={[
-                    styles.heroSummary,
-                    isWide && styles.heroSummaryWide,
-                    { color: palette.inkMuted },
-                  ]}
-                >
-                  {uploadCopy.summary}
-                </Text>
-              </View>
+                  <Text style={[styles.eyebrow, { color: palette.inkMuted }]}>
+                    {uploadCopy.eyebrow}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.heroTitle,
+                      isWide && styles.heroTitleWide,
+                      { color: palette.ink },
+                    ]}
+                  >
+                    {uploadCopy.title}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.heroSummary,
+                      isWide && styles.heroSummaryWide,
+                      { color: palette.inkMuted },
+                    ]}
+                  >
+                    {uploadCopy.summary}
+                  </Text>
+                </View>
+              ) : null}
               <UploadWorkspaceCard
                 error={error}
                 errorColors={errorColors}
@@ -350,6 +354,16 @@ export function LedgerUploadScreen() {
           </ScrollView>
         </>
       )}
+    </View>
+  );
+
+  if (embedded) {
+    return content;
+  }
+
+  return (
+    <SafeAreaView edges={["top", "left", "right"]} style={styles.safeArea}>
+      {content}
     </SafeAreaView>
   );
 }
@@ -671,6 +685,14 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 40,
     paddingVertical: 40,
+  },
+  embeddedContainer: {
+    flexGrow: 1,
+    padding: 12,
+    paddingBottom: 16,
+  },
+  embeddedRoot: {
+    flex: 1,
   },
   dropCard: {
     alignItems: "center",
