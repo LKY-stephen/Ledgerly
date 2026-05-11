@@ -6,10 +6,10 @@ import { useDealIn } from "./animations/use-deal-in";
 import type { CardId } from "./game-context";
 
 const cards: { id: CardId; suit: string; label: string }[] = [
-  { id: "new", suit: "♦", label: "New" },
-  { id: "report", suit: "♣", label: "Report" },
-  { id: "show", suit: "♠", label: "Show" },
-  { id: "settings", suit: "♥", label: "Settings" },
+  { id: "new", suit: "♠", label: "New" },
+  { id: "report", suit: "♥", label: "Report" },
+  { id: "show", suit: "♣", label: "Show" },
+  { id: "settings", suit: "♦", label: "Settings" },
 ];
 
 interface Props {

@@ -5,7 +5,7 @@ export const gameHomeButtonLabel = "HOME";
 export const gameSettingsCardLabel = "SETTINGS";
 export const maxStickmanEnergyPlays = 7;
 
-export type GameCardVariant = "black" | "white" | "flash";
+export type GameCardVariant = "black" | "white" | "flash" | "system";
 export type CharacterType = "stickman" | "cat";
 export type StickmanSceneAnchorId =
   | "cat"
@@ -32,13 +32,36 @@ export function getNextQuickTheme(currentTheme: "light" | "dark"): "light" | "da
 export function getGameCardColors(variant: GameCardVariant, palette: SurfaceTokens) {
   switch (variant) {
     case "black":
-      return { bg: palette.ink, text: palette.paper };
+      return {
+        bg: palette.ink,
+        border: palette.paper,
+        pipBg: palette.paper,
+        pipText: palette.ink,
+        text: palette.paper,
+      };
     case "white":
-      return { bg: palette.paper, text: palette.ink };
+      return {
+        bg: palette.paper,
+        border: palette.ink,
+        pipBg: palette.ink,
+        pipText: palette.paper,
+        text: palette.ink,
+      };
     case "flash":
       return {
         bg: palette.accent,
-        text: palette.name === "dark" ? "#000000" : palette.ink,
+        border: palette.ink,
+        pipBg: palette.ink,
+        pipText: palette.paper,
+        text: palette.inkOnAccent,
+      };
+    case "system":
+      return {
+        bg: palette.system,
+        border: palette.paper,
+        pipBg: palette.paper,
+        pipText: palette.system,
+        text: palette.paper,
       };
   }
 }

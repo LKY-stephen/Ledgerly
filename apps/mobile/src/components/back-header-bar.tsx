@@ -23,7 +23,8 @@ export function BackHeaderBar({ onBack, palette, rightAccessory, title }: BackHe
           style={({ pressed }) => [
             styles.backButton,
             {
-              backgroundColor: pressed ? palette.paperMuted : "transparent",
+              backgroundColor: pressed ? palette.paperMuted : palette.paper,
+              borderColor: palette.border,
             },
           ]}
         >
@@ -44,9 +45,10 @@ const styles = StyleSheet.create({
   backButton: {
     alignItems: "center",
     borderRadius: 999,
-    height: 20,
+    borderWidth: 2,
+    height: 36,
     justifyContent: "center",
-    width: 20,
+    width: 36,
   },
   container: {
     alignItems: "center",
@@ -67,6 +69,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 22,
     fontWeight: "800",
+    letterSpacing: -0.4,
     textAlign: "center",
   },
 });

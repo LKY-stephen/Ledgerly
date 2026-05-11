@@ -1057,6 +1057,7 @@ const styles = StyleSheet.create({
   brand: {
     fontSize: 20,
     fontWeight: "800",
+    letterSpacing: -0.4,
   },
   brandRow: {
     alignItems: "center",
@@ -1087,6 +1088,7 @@ const styles = StyleSheet.create({
   headerUploadButtonLabel: {
     fontSize: 14,
     fontWeight: "800",
+    letterSpacing: 0.2,
   },
   endCapBar: {
     backgroundColor: "rgba(26, 54, 93, 0.1)",
@@ -1098,7 +1100,7 @@ const styles = StyleSheet.create({
     color: "rgba(0, 32, 69, 0.45)",
     fontSize: 11,
     fontWeight: "500",
-    letterSpacing: 1,
+    letterSpacing: 1.2,
     lineHeight: 16,
     textAlign: "center",
     textTransform: "uppercase",
@@ -1115,7 +1117,7 @@ const styles = StyleSheet.create({
     color: "rgba(0, 32, 69, 0.5)",
     fontSize: 11,
     fontWeight: "800",
-    letterSpacing: 1.1,
+    letterSpacing: 1.4,
     textTransform: "uppercase",
   },
   equationSummary: {
@@ -1125,8 +1127,9 @@ const styles = StyleSheet.create({
   },
   equationTitle: {
     color: "#002045",
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: "800",
+    letterSpacing: -0.4,
     lineHeight: 28,
   },
   metricAccentBar: {
@@ -1168,14 +1171,16 @@ const styles = StyleSheet.create({
     color: "rgba(0, 32, 69, 0.55)",
     fontSize: 12,
     fontWeight: "800",
-    letterSpacing: 0.3,
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
   },
   metricValue: {
     color: "#002045",
     flexShrink: 1,
     fontVariant: ["tabular-nums"],
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: "800",
+    letterSpacing: -0.5,
     lineHeight: 30,
   },
   netIncomeValue: {
@@ -1265,7 +1270,7 @@ const styles = StyleSheet.create({
     color: "rgba(0, 32, 69, 0.5)",
     fontSize: 11,
     fontWeight: "800",
-    letterSpacing: 1.1,
+    letterSpacing: 1.4,
     textTransform: "uppercase",
   },
   modalGrid: {
@@ -1300,12 +1305,14 @@ const styles = StyleSheet.create({
     color: "#002045",
     fontSize: 18,
     fontWeight: "800",
+    letterSpacing: -0.3,
   },
   modalStepLabel: {
     color: "rgba(0, 32, 69, 0.55)",
     fontSize: 12,
     fontWeight: "800",
-    letterSpacing: 0.4,
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
   },
   modalStepLabelActive: {
     color: "#FFFFFF",
@@ -1337,6 +1344,7 @@ const styles = StyleSheet.create({
     color: "#002045",
     fontSize: 12,
     fontWeight: "800",
+    letterSpacing: 0.2,
   },
   modalSubActionPressed: {
     opacity: 0.75,
@@ -1350,6 +1358,7 @@ const styles = StyleSheet.create({
     color: "#002045",
     fontSize: 24,
     fontWeight: "800",
+    letterSpacing: -0.5,
     lineHeight: 30,
   },
   periodChip: {
@@ -1371,6 +1380,7 @@ const styles = StyleSheet.create({
     color: "#002045",
     fontSize: 14,
     fontWeight: "800",
+    letterSpacing: 0.2,
   },
   periodChipLabelActive: {
     color: "#FFFFFF",
@@ -1391,7 +1401,7 @@ const styles = StyleSheet.create({
     color: "rgba(0, 32, 69, 0.5)",
     fontSize: 11,
     fontWeight: "800",
-    letterSpacing: 1.2,
+    letterSpacing: 1.5,
     textTransform: "uppercase",
   },
   periodHeader: {
@@ -1407,7 +1417,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 10,
     justifyContent: "space-between",
-    minHeight: 92,
+    minHeight: 96,
     padding: 14,
   },
   periodCardDisabled: {
@@ -1433,6 +1443,7 @@ const styles = StyleSheet.create({
     color: "#002045",
     fontSize: 15,
     fontWeight: "800",
+    letterSpacing: 0.2,
     textAlign: "center",
   },
   periodSummary: {
@@ -1442,9 +1453,10 @@ const styles = StyleSheet.create({
   },
   periodTitle: {
     color: "#002045",
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: "800",
-    lineHeight: 30,
+    letterSpacing: -0.7,
+    lineHeight: 32,
   },
   signalChip: {
     alignSelf: "flex-start",
@@ -1456,7 +1468,7 @@ const styles = StyleSheet.create({
     color: "#002045",
     fontSize: 11,
     fontWeight: "800",
-    letterSpacing: 0.3,
+    letterSpacing: 0.5,
     textTransform: "uppercase",
   },
   signalChipNegative: {
@@ -1505,6 +1517,7 @@ const styles = StyleSheet.create({
     color: "#002045",
     fontSize: 15,
     fontWeight: "800",
+    letterSpacing: -0.2,
     lineHeight: 20,
   },
   equationDetailBody: {
@@ -1565,7 +1578,7 @@ const styles = StyleSheet.create({
     color: "rgba(0, 32, 69, 0.55)",
     fontSize: 12,
     fontWeight: "800",
-    letterSpacing: 0.3,
+    letterSpacing: 0.5,
     textTransform: "uppercase",
   },
   recordFieldRow: {
@@ -1644,6 +1657,7 @@ const styles = StyleSheet.create({
     color: "#002045",
     fontSize: 14,
     fontWeight: "800",
+    letterSpacing: -0.2,
   },
   safeArea: {
     flex: 1,
@@ -1657,14 +1671,17 @@ const styles = StyleSheet.create({
     color: "rgba(0, 32, 69, 0.5)",
     fontSize: 12,
     fontWeight: "800",
+    letterSpacing: 0.4,
+    textTransform: "uppercase",
   },
   sectionStack: {
     gap: 12,
   },
   sectionTitle: {
     color: "#002045",
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: "800",
+    letterSpacing: -0.3,
   },
   segmentedControl: {
     backgroundColor: "#FFFFFF",
@@ -1689,7 +1706,9 @@ const styles = StyleSheet.create({
     color: "rgba(0, 32, 69, 0.5)",
     fontSize: 12,
     fontWeight: "800",
+    letterSpacing: 0.5,
     textAlign: "center",
+    textTransform: "uppercase",
   },
   segmentedLabelActive: {
     color: "#FFFFFF",
@@ -1725,6 +1744,7 @@ const styles = StyleSheet.create({
     color: "#002045",
     fontSize: 14,
     fontWeight: "800",
+    lineHeight: 20,
   },
   sheetNote: {
     color: "rgba(0, 32, 69, 0.56)",
@@ -1746,6 +1766,7 @@ const styles = StyleSheet.create({
     color: "#002045",
     fontSize: 17,
     fontWeight: "800",
+    letterSpacing: -0.2,
   },
   statusBody: {
     color: "rgba(0, 32, 69, 0.62)",
@@ -1755,6 +1776,7 @@ const styles = StyleSheet.create({
   statusButton: {
     alignSelf: "flex-start",
     backgroundColor: "#002045",
+    borderWidth: 2,
     borderRadius: 999,
     paddingHorizontal: 16,
     paddingVertical: 10,
@@ -1766,6 +1788,7 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 13,
     fontWeight: "800",
+    letterSpacing: 0.2,
   },
   statusButtonPressed: {
     opacity: 0.85,
@@ -1782,6 +1805,7 @@ const styles = StyleSheet.create({
     color: "#002045",
     fontSize: 18,
     fontWeight: "800",
+    letterSpacing: -0.3,
   },
   topRow: {
     alignItems: "center",
@@ -1875,12 +1899,13 @@ const styles = StyleSheet.create({
     color: "rgba(0, 32, 69, 0.45)",
     fontSize: 11,
     fontWeight: "800",
+    letterSpacing: 0.4,
   },
   transactionTitle: {
     color: "#002045",
     fontSize: 14,
     fontWeight: "800",
-    lineHeight: 19,
+    lineHeight: 20,
   },
   topControls: {
     alignItems: "stretch",
@@ -1910,6 +1935,7 @@ const styles = StyleSheet.create({
     color: "rgba(0, 32, 69, 0.6)",
     fontSize: 12,
     fontWeight: "800",
+    letterSpacing: 0.3,
   },
   scopePillLabelActive: {
     color: "#FFFFFF",

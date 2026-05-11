@@ -7,12 +7,13 @@ import { useCardFlip } from "./animations/use-card-flip";
 import { useDragPhysics } from "./animations/use-drag-physics";
 import { usePocketAnimation } from "./animations/use-pocket";
 import { CenterPanelContent } from "./center-panel-content";
+import { getGameCardColors } from "./game-ui";
 
 const suitMap: Record<CardId, string> = {
-  new: "♦",
-  report: "♣",
-  show: "♠",
-  settings: "♥",
+  new: "♠",
+  report: "♥",
+  show: "♣",
+  settings: "♦",
 };
 
 const labelMap: Record<CardId, string> = {
@@ -74,6 +75,9 @@ export function CenterPanel({ isStickmanNearby = false }: Props) {
 
   const card = state.activeCard;
   const isSettingsCard = card === "settings";
+  const panelVariant =
+    card === "new" ? "black" : card === "report" ? "flash" : card === "show" ? "white" : "system";
+  const panelColors = getGameCardColors(panelVariant, palette);
 
   return (
     <View style={StyleSheet.absoluteFill}>
@@ -100,19 +104,19 @@ export function CenterPanel({ isStickmanNearby = false }: Props) {
           style={[
             styles.panel,
             {
-              backgroundColor: palette.panelSurface,
-              borderColor: isStickmanNearby ? palette.accent : palette.cardBorder,
+              backgroundColor: panelColors.bg,
+              borderColor: isStickmanNearby ? palette.accent : panelColors.border,
               borderRadius: palette.panelRadius,
-              shadowColor: isStickmanNearby ? palette.accent : palette.shadow,
+              shadowColor: isStickmanNearby ? palette.accent : panelColors.border,
             },
           ]}
         >
           {/* Panel header */}
           <View style={[styles.header, { borderBottomColor: palette.divider }]}>
-            <Text style={[styles.headerSuit, { color: palette.accent }]}>
+            <Text style={[styles.headerSuit, { color: panelColors.text }]}>
               {suitMap[card]}
             </Text>
-            <Text style={[styles.headerLabel, { color: palette.ink }]}>
+            <Text style={[styles.headerLabel, { color: panelColors.text }]}>
               {labelMap[card]}
             </Text>
 
@@ -155,7 +159,7 @@ export function CenterPanel({ isStickmanNearby = false }: Props) {
 
             {/* Close */}
             <Pressable onPress={deactivateCard} hitSlop={12}>
-              <Text style={[styles.closeBtn, { color: palette.inkMuted }]}>✕</Text>
+              <Text style={[styles.closeBtn, { color: panelColors.text }]}>✕</Text>
             </Pressable>
           </View>
 

@@ -477,6 +477,7 @@ function UploadWorkspaceCard({
                     : pressed
                       ? primaryButton.pressedBackground
                       : primaryButton.background,
+                  borderColor: primaryButton.border,
                   opacity: isBusy ? 0.7 : 1,
                   shadowColor: palette.shadow,
                 },
@@ -551,6 +552,7 @@ function UploadWorkspaceCard({
                   : pressed
                     ? primaryButton.pressedBackground
                     : primaryButton.background,
+                borderColor: primaryButton.border,
                 opacity: isBusy ? 0.7 : 1,
                 shadowColor: palette.shadow,
               },
@@ -672,7 +674,7 @@ const styles = StyleSheet.create({
   },
   dropCard: {
     alignItems: "center",
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 2,
     gap: 12,
     paddingHorizontal: 16,
@@ -690,19 +692,20 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   dropTitle: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: "800",
+    letterSpacing: -0.5,
     lineHeight: 28,
     textAlign: "center",
   },
   eyebrow: {
     fontSize: 11,
     fontWeight: "800",
-    letterSpacing: 1.1,
+    letterSpacing: 1.4,
     textTransform: "uppercase",
   },
   heroBlock: {
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 2,
     gap: 8,
     padding: 16,
@@ -722,10 +725,10 @@ const styles = StyleSheet.create({
     lineHeight: 26,
   },
   heroTitle: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: "800",
-    letterSpacing: -0.6,
-    lineHeight: 30,
+    letterSpacing: -0.8,
+    lineHeight: 32,
   },
   heroTitleWide: {
     fontSize: 30,
@@ -739,7 +742,7 @@ const styles = StyleSheet.create({
   },
   previewCard: {
     alignItems: "center",
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 2,
     gap: 10,
     padding: 14,
@@ -748,12 +751,13 @@ const styles = StyleSheet.create({
   previewEyebrow: {
     fontSize: 11,
     fontWeight: "800",
-    letterSpacing: 0.8,
+    letterSpacing: 1.2,
     textTransform: "uppercase",
   },
   previewFileName: {
     fontSize: 16,
     fontWeight: "800",
+    letterSpacing: -0.2,
     lineHeight: 22,
     textAlign: "center",
   },
@@ -777,6 +781,7 @@ const styles = StyleSheet.create({
   primaryButton: {
     alignItems: "center",
     borderRadius: 999,
+    borderWidth: 2,
     height: 48,
     justifyContent: "center",
     width: "100%",
@@ -789,6 +794,7 @@ const styles = StyleSheet.create({
   primaryButtonLabel: {
     fontSize: 15,
     fontWeight: "800",
+    letterSpacing: 0.2,
   },
   safeArea: {
     flex: 1,
@@ -804,6 +810,7 @@ const styles = StyleSheet.create({
   secondaryButtonLabel: {
     fontSize: 15,
     fontWeight: "800",
+    letterSpacing: 0.2,
   },
   wideRow: {
     flex: 1,

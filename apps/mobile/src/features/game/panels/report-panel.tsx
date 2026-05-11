@@ -39,7 +39,7 @@ export function ReportPanel() {
             <MetricCell
               label={locale === "zh-CN" ? "净额" : "Net"}
               value={netLabel}
-              color={palette.accent}
+              color={palette.info}
               ink={palette.ink}
             />
           </>
