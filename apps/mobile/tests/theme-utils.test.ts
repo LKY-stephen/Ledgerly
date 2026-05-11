@@ -42,7 +42,7 @@ describe("theme utils", () => {
     expect(lightPrimary.background).toBe(surfaceThemes.light.accent);
     expect(lightPrimary.text).toBe(surfaceThemes.light.inkOnAccent);
     expect(darkPrimary.background).toBe(surfaceThemes.dark.accent);
-    expect(darkPrimary.text).toBe(surfaceThemes.dark.shell);
+    expect(darkPrimary.text).toBe(surfaceThemes.dark.inkOnAccent);
   });
 
   it("adapts destructive button text to the current theme palette", () => {

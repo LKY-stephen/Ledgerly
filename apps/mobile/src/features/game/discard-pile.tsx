@@ -5,9 +5,17 @@ import type { SurfaceTokens } from "@ledgerly/ui";
 import { useGame } from "./game-context";
 
 const suitMap: Record<string, string> = {
-  new: "♦",
-  report: "♣",
-  show: "♠",
+  new: "♠",
+  report: "♥",
+  show: "♣",
+  settings: "♦",
+};
+
+const faceMap: Record<string, { bg: string; text: string }> = {
+  new: { bg: "#0A0A0A", text: "#F4EFE6" },
+  report: { bg: "#FF2E63", text: "#0A0A0A" },
+  show: { bg: "#F4EFE6", text: "#0A0A0A" },
+  settings: { bg: "#5B2CFF", text: "#F4EFE6" },
 };
 
 interface Props {
@@ -90,7 +98,7 @@ export function DiscardPile({ isStickmanNearby = false, palette }: Props) {
               style={[
                 styles.card,
                 {
-                  backgroundColor: palette.paper,
+                  backgroundColor: faceMap[entry.card]?.bg ?? palette.paper,
                   borderColor: palette.cardBorder,
                   borderRadius: palette.cardRadius / 2,
                   top: offset,
@@ -113,7 +121,7 @@ export function DiscardPile({ isStickmanNearby = false, palette }: Props) {
                 },
               ]}
             >
-              <Text style={[styles.suit, { color: palette.inkMuted }]}>
+              <Text style={[styles.suit, { color: faceMap[entry.card]?.text ?? palette.ink }]}>
                 {suitMap[entry.card] ?? "?"}
               </Text>
             </Animated.View>

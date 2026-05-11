@@ -2,9 +2,9 @@ import { LocalStorageProvider } from "../../storage/provider.web";
 import { AgentProvider } from "../agent/agent-provider";
 import { useWritableDatabase } from "../agent/use-writable-database.web";
 import type { CardId } from "./game-context";
-import { ShowLedgerPanel } from "./panels/show-ledger-panel";
 import { NewRecordPanel } from "./panels/new-record-panel";
 import { ReportPanel } from "./panels/report-panel";
+import { ShowLedgerPanel } from "./panels/show-ledger-panel";
 import { ProfileScreen } from "../profile/profile-screen";
 
 function WithAgent({ children }: { children: React.ReactNode }) {
@@ -21,23 +21,21 @@ export function CenterPanelContent({ card }: Props) {
     case "show":
       return (
         <LocalStorageProvider>
-          <ShowLedgerPanel />
+          <WithAgent>
+            <ReportPanel variant="request" />
+          </WithAgent>
         </LocalStorageProvider>
       );
     case "new":
       return (
         <LocalStorageProvider>
-          <WithAgent>
-            <NewRecordPanel />
-          </WithAgent>
+          <NewRecordPanel />
         </LocalStorageProvider>
       );
     case "report":
       return (
         <LocalStorageProvider>
-          <WithAgent>
-            <ReportPanel />
-          </WithAgent>
+          <ShowLedgerPanel />
         </LocalStorageProvider>
       );
     case "settings":

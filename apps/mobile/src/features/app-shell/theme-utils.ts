@@ -60,7 +60,7 @@ export function getFeedbackColors(
     ? palette.destructive
     : tone === "success"
       ? palette.success
-      : palette.accent;
+      : palette.info;
 
   return {
     background: palette.paper,
@@ -89,12 +89,14 @@ export function getButtonColors(
     ? palette.name === "dark"
       ? withAlpha(palette.destructive, 0.28)
       : withAlpha(palette.destructive, 0.75)
-    : withAlpha(background, 0.75);
+    : palette.name === "dark"
+      ? withAlpha(palette.accent, 0.76)
+      : withAlpha(palette.accent, 0.78);
 
   return {
     background,
     border,
-    disabledBackground: withAlpha(background, 0.35),
+    disabledBackground: withAlpha(background, palette.name === "dark" ? 0.42 : 0.45),
     disabledText: withAlpha(text, 0.5),
     pressedBackground,
     text,

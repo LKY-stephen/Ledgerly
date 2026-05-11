@@ -26,6 +26,7 @@ describe("game theme and settings helpers", () => {
       getGameCardColors("flash", {
         accent: "#ffcc00",
         ink: "#f4efe6",
+        inkOnAccent: "#000000",
         name: "dark",
         paper: "#111111",
       } as never).text,

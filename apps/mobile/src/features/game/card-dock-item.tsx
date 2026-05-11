@@ -18,13 +18,13 @@ export function useCardDimensions() {
   return { cardWidth, cardHeight };
 }
 
-type CardVariant = "black" | "white" | "flash";
+type CardVariant = "black" | "white" | "flash" | "system";
 
 const cardConfig: Record<CardId, { suit: string; label: string; sublabel: string; variant: CardVariant; footer: string }> = {
-  new: { suit: "♦", label: "NEW", sublabel: "RECORD", variant: "black", footer: "INCOME / EXPENSE" },
-  report: { suit: "♣", label: "ASK", sublabel: "REPORT", variant: "white", footer: "NATURAL Q&A" },
-  show: { suit: "♠", label: "SHOW", sublabel: "LEDGER", variant: "flash", footer: "TABLE · EXPORT" },
-  settings: { suit: "♥", label: "OPEN", sublabel: "SETTINGS", variant: "white", footer: "THEME · PROFILE" },
+  new: { suit: "♠", label: "UPLOAD", sublabel: "UPLOAD", variant: "black", footer: "BUSINESS FILE INTAKE" },
+  report: { suit: "♥", label: "ASK", sublabel: "REPORT", variant: "flash", footer: "NATURAL Q&A" },
+  show: { suit: "♣", label: "REQUEST", sublabel: "REQUEST", variant: "white", footer: "PERSONAL LEDGER CHAT" },
+  settings: { suit: "♦", label: "OPEN", sublabel: "SETTINGS", variant: "system", footer: "THEME · PROFILE" },
 };
 
 interface Props {
@@ -57,7 +57,7 @@ export function CardDockItem({
           height: cardHeight,
           backgroundColor: variantStyles.bg,
           borderColor:
-            isActive || isStickmanNearby ? palette.accent : palette.cardBorder,
+            isActive || isStickmanNearby ? palette.accent : variantStyles.border,
           borderRadius: palette.cardRadius,
           opacity: pressed ? 0.88 : isStickmanNearby ? 0.96 : 1,
           shadowColor: palette.shadow,
@@ -89,8 +89,8 @@ export function CardDockItem({
         <Text style={[styles.topLabel, { color: variantStyles.text }]}>
           {config.suit} {config.label}
         </Text>
-        <View style={[styles.pip, { backgroundColor: variantStyles.text }]}>
-          <Text style={[styles.pipText, { color: variantStyles.bg }]}>
+        <View style={[styles.pip, { backgroundColor: variantStyles.pipBg }]}>
+          <Text style={[styles.pipText, { color: variantStyles.pipText }]}>
             {config.suit}
           </Text>
         </View>

@@ -18,7 +18,16 @@ export function SectionCard({
   title,
 }: SectionCardProps) {
   return (
-    <View style={[styles.card, { backgroundColor: palette.paper, borderColor: palette.border }]}>
+    <View
+      style={[
+        styles.card,
+        {
+          backgroundColor: palette.cardSurface,
+          borderColor: palette.cardBorder,
+          shadowColor: palette.cardShadow,
+        },
+      ]}
+    >
       {eyebrow ? (
         <Text style={[styles.eyebrow, { color: palette.accent }]}>{eyebrow}</Text>
       ) : null}
@@ -33,8 +42,11 @@ const styles = StyleSheet.create({
   card: {
     gap: 14,
     padding: 20,
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 2,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.18,
+    shadowRadius: 0,
   },
   content: {
     gap: 14,
@@ -42,14 +54,16 @@ const styles = StyleSheet.create({
   eyebrow: {
     fontSize: 11,
     fontWeight: "800",
-    letterSpacing: 1.2,
+    letterSpacing: 1.6,
     textTransform: "uppercase",
   },
   footer: {
-    paddingTop: 8,
+    paddingTop: 10,
   },
   title: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: "800",
+    letterSpacing: -0.4,
+    lineHeight: 28,
   },
 });

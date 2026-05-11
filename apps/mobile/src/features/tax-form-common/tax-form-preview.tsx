@@ -422,7 +422,7 @@ function LegendPill(props: { color: string; label: string }) {
   const { color, label } = props;
 
   return (
-    <View style={[styles.legendPill, { backgroundColor: `${color}1a`, borderColor: color }]}>
+    <View style={[styles.legendPill, { backgroundColor: `${color}24`, borderColor: color }]}>
       <Text style={[styles.legendLabel, { color }]}>{label}</Text>
     </View>
   );
@@ -494,6 +494,8 @@ const styles = StyleSheet.create({
   legendLabel: {
     fontSize: 12,
     fontWeight: "800",
+    letterSpacing: 0.4,
+    textTransform: "uppercase",
   },
   legendPill: {
     borderRadius: 999,
@@ -508,7 +510,7 @@ const styles = StyleSheet.create({
   },
   modalBackdrop: {
     alignItems: "center",
-    backgroundColor: "rgba(7, 24, 22, 0.74)",
+    backgroundColor: "rgba(10, 10, 10, 0.72)",
     flex: 1,
     justifyContent: "center",
     padding: 24,
@@ -559,6 +561,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 24,
     fontWeight: "800",
+    letterSpacing: -0.5,
   },
   pageButton: {
     borderRadius: 999,
@@ -570,6 +573,7 @@ const styles = StyleSheet.create({
   pageButtonLabel: {
     fontSize: 14,
     fontWeight: "800",
+    letterSpacing: 0.3,
     textAlign: "center",
   },
   pageButtonRow: {
@@ -591,6 +595,7 @@ const styles = StyleSheet.create({
   previewValue: {
     fontSize: 17,
     fontWeight: "800",
+    letterSpacing: -0.3,
   },
   selectionHint: {
     fontSize: 14,
@@ -615,7 +620,9 @@ const styles = StyleSheet.create({
   slotPill: {
     fontSize: 12,
     fontWeight: "800",
+    letterSpacing: 0.4,
     textAlign: "right",
+    textTransform: "uppercase",
   },
   slotStack: {
     gap: 12,
@@ -624,15 +631,18 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 15,
     fontWeight: "800",
+    lineHeight: 21,
   },
   sourceLine: {
     fontSize: 12,
     fontWeight: "800",
+    letterSpacing: 0.3,
     lineHeight: 18,
   },
   subheading: {
     fontSize: 15,
     fontWeight: "800",
+    letterSpacing: 0.2,
   },
   summary: {
     fontSize: 15,
@@ -663,6 +673,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     fontWeight: "800",
+    letterSpacing: 0.2,
   },
   zoomRow: {
     alignItems: "center",
@@ -683,5 +694,6 @@ const styles = StyleSheet.create({
   zoomValueLabel: {
     fontSize: 14,
     fontWeight: "800",
+    letterSpacing: 0.2,
   },
 });
