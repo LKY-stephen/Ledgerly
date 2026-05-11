@@ -148,7 +148,19 @@ export async function parseFile(
   mimeType: string | null,
   providerConfig?: Partial<ProviderRuntimeConfig>,
 ): Promise<ParseResult> {
-  const response = await fetch(fileUri);
+  let response: Response;
+
+  try {
+    response = await fetch(fileUri);
+  } catch {
+    return {
+      rawJson: null,
+      rawText: "",
+      model: "",
+      error: `Unable to read selected file: network error`,
+      parserKind: "openai_gpt",
+    };
+  }
 
   if (!response.ok) {
     return {
