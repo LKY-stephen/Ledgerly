@@ -56,8 +56,8 @@ function ChatBubble({
         style={[
           styles.bubble,
           isUser
-            ? [styles.bubbleUser, { backgroundColor: palette.accent }]
-            : [styles.bubbleAssistant, { backgroundColor: palette.paper }],
+            ? [styles.bubbleUser, { backgroundColor: palette.chatUser, borderColor: palette.border }]
+            : [styles.bubbleAssistant, { backgroundColor: palette.chatAi, borderColor: palette.border }],
         ]}
       >
         {toolSummary ? (
@@ -67,7 +67,7 @@ function ChatBubble({
           <Text
             style={[
               styles.bubbleText,
-              { color: isUser ? "#FFFFFF" : palette.ink },
+              { color: palette.ink },
             ]}
             selectable
           >
@@ -156,9 +156,9 @@ export function AgentChat({
 
         {isProcessing ? (
           <View style={[styles.bubbleRow, styles.bubbleRowAssistant]}>
-            <View style={[styles.bubble, styles.bubbleAssistant, { backgroundColor: palette.paper }]}>
-              <ActivityIndicator size="small" color={palette.inkMuted} />
-            </View>
+          <View style={[styles.bubble, styles.bubbleAssistant, { backgroundColor: palette.paper }]}>
+            <ActivityIndicator size="small" color={palette.inkMuted} />
+          </View>
           </View>
         ) : null}
 
@@ -217,15 +217,15 @@ export function AgentChat({
                 !input.trim() || isProcessing
                   ? palette.paperMuted
                   : pressed
-                    ? withAlpha(palette.accent, 0.8)
-                    : palette.accent,
+                    ? withAlpha(palette.success, 0.8)
+                    : palette.success,
             },
           ]}
         >
           <Ionicons
             name="send"
             size={18}
-            color={!input.trim() || isProcessing ? palette.inkMuted : "#FFFFFF"}
+            color={!input.trim() || isProcessing ? palette.inkMuted : palette.ink}
           />
         </Pressable>
       </View>
@@ -296,6 +296,7 @@ const styles = StyleSheet.create({
   },
   bubble: {
     maxWidth: "80%",
+    borderWidth: 2,
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 12,

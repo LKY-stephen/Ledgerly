@@ -50,8 +50,7 @@ function PreferencePill(props: {
   palette: ReturnType<typeof useAppShell>["palette"];
 }) {
   const { active, label, onPress, palette } = props;
-  const activeLabelColor =
-    palette.name === "dark" ? palette.shell : palette.inkOnAccent;
+  const activeLabelColor = palette.paper;
 
   return (
     <Pressable
@@ -60,8 +59,8 @@ function PreferencePill(props: {
       style={[
         styles.optionPill,
         {
-          backgroundColor: active ? palette.accent : palette.paperMuted,
-          borderColor: active ? palette.accent : palette.border,
+          backgroundColor: active ? palette.system : palette.paperMuted,
+          borderColor: active ? palette.paper : palette.border,
         },
       ]}
     >
@@ -619,8 +618,8 @@ export function ProfileScreen({ embedded = false }: { embedded?: boolean } = {})
             {aiProviderDraft === "gemini" && isGeminiOAuth && (
               <View style={styles.fieldBlock}>
                 <View style={styles.oauthStatusRow}>
-                  <View style={[styles.oauthDot, { backgroundColor: palette.accent }]} />
-                  <Text style={[styles.oauthStatusText, { color: palette.accent }]}>
+                  <View style={[styles.oauthDot, { backgroundColor: palette.system }]} />
+                  <Text style={[styles.oauthStatusText, { color: palette.system }]}>
                     {copy.meScreen.geminiOAuthConnected}
                   </Text>
                 </View>
@@ -952,7 +951,7 @@ export function ProfileScreen({ embedded = false }: { embedded?: boolean } = {})
           palette={palette}
           title={sessionTitle}
         >
-          <Text style={[styles.sessionKind, { color: palette.accent }]}>
+          <Text style={[styles.sessionKind, { color: palette.system }]}>
             {sessionKindLabel}
           </Text>
           <Text style={[styles.sectionHint, { color: palette.inkMuted }]}>

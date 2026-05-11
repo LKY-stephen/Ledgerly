@@ -1,11 +1,12 @@
 import type { SurfaceTokens } from "@ledgerly/ui";
+import { withAlpha } from "../app-shell/theme-utils";
 import type { CardId, StickmanMood } from "./game-context";
 
 export const gameHomeButtonLabel = "HOME";
 export const gameSettingsCardLabel = "SETTINGS";
 export const maxStickmanEnergyPlays = 7;
 
-export type GameCardVariant = "black" | "white" | "flash";
+export type GameCardVariant = "black" | "white" | "flash" | "system";
 export type CharacterType = "stickman" | "cat";
 export type StickmanSceneAnchorId =
   | "cat"
@@ -32,13 +33,36 @@ export function getNextQuickTheme(currentTheme: "light" | "dark"): "light" | "da
 export function getGameCardColors(variant: GameCardVariant, palette: SurfaceTokens) {
   switch (variant) {
     case "black":
-      return { bg: palette.ink, text: palette.paper };
+      return {
+        bg: palette.name === "dark" ? palette.paper : palette.ink,
+        border: palette.paper,
+        pipBg: palette.paper,
+        pipText: palette.ink,
+        text: palette.name === "dark" ? palette.ink : palette.paper,
+      };
     case "white":
-      return { bg: palette.paper, text: palette.ink };
+      return {
+        bg: palette.paper,
+        border: palette.ink,
+        pipBg: palette.ink,
+        pipText: palette.paper,
+        text: palette.ink,
+      };
     case "flash":
       return {
-        bg: palette.accent,
-        text: palette.name === "dark" ? "#000000" : palette.ink,
+        bg: withAlpha(palette.accent, 0.82),
+        border: palette.ink,
+        pipBg: palette.ink,
+        pipText: palette.paper,
+        text: palette.inkOnAccent,
+      };
+    case "system":
+      return {
+        bg: withAlpha(palette.system, 0.82),
+        border: palette.paper,
+        pipBg: palette.paper,
+        pipText: palette.system,
+        text: palette.paper,
       };
   }
 }

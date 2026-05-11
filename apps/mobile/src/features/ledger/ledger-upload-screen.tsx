@@ -33,7 +33,7 @@ interface SelectedUploadCandidate {
   uri: string;
 }
 
-export function LedgerUploadScreen() {
+export function LedgerUploadScreen({ embedded = false }: { embedded?: boolean } = {}) {
   const router = useRouter();
   const { isExpanded, isMedium } = useResponsive();
   const isWeb = Platform.OS === "web";
@@ -169,18 +169,17 @@ export function LedgerUploadScreen() {
       selectedCandidate.kind === "live_photo") &&
     Boolean(selectedCandidate.mimeType?.startsWith("image/"));
 
-  return (
-    <SafeAreaView
-      edges={["top", "left", "right"]}
+  const content = (
+    <View
       style={[
-        styles.safeArea,
+        embedded ? styles.embeddedRoot : styles.safeArea,
         {
           backgroundColor: isWeb ? "transparent" : palette.shell,
         },
       ]}
       testID="ledger-upload-screen"
     >
-      {isWeb ? (
+      {isWeb && !embedded ? (
         <View
           style={[
             styles.webModalBackdrop,
@@ -267,67 +266,72 @@ export function LedgerUploadScreen() {
         </View>
       ) : (
         <>
-          <View
-            style={[
-              styles.appBar,
-              {
-                backgroundColor: palette.shell,
-                borderBottomColor: palette.divider,
-              },
-            ]}
-          >
-            <BackHeaderBar
-              onBack={() => {
-                if (router.canGoBack()) {
-                  router.back();
-                } else {
-                  router.replace("/(game)");
-                }
-              }}
-              palette={palette}
-              rightAccessory={<CfoAvatar />}
-              title={copy.common.appName}
-            />
-          </View>
+          {!embedded ? (
+            <View
+              style={[
+                styles.appBar,
+                {
+                  backgroundColor: palette.shell,
+                  borderBottomColor: palette.divider,
+                },
+              ]}
+            >
+              <BackHeaderBar
+                onBack={() => {
+                  if (router.canGoBack()) {
+                    router.back();
+                  } else {
+                    router.replace("/(game)");
+                  }
+                }}
+                palette={palette}
+                rightAccessory={<CfoAvatar />}
+                title={copy.common.appName}
+              />
+            </View>
+          ) : null}
           <ScrollView
             contentContainerStyle={[
               styles.container,
-              isWide && styles.containerWide,
+              isWide && !embedded ? styles.containerWide : null,
+              embedded ? styles.embeddedContainer : null,
             ]}
           >
-            <View style={useSplitLayout ? styles.wideRow : null}>
-              <View
-                style={[
-                  styles.heroBlock,
-                  isWide && styles.heroBlockWide,
-                  {
-                    backgroundColor: palette.paper,
-                    borderColor: palette.border,
-                  },
-                ]}
-              >
-                <Text style={[styles.eyebrow, { color: palette.inkMuted }]}>
-                  {uploadCopy.eyebrow}
-                </Text>
-                <Text
+            <View style={useSplitLayout && !embedded ? styles.wideRow : null}>
+              {!embedded ? (
+                <View
                   style={[
-                    styles.heroTitle,
-                    isWide && styles.heroTitleWide,
-                    { color: palette.ink },
+                    styles.heroBlock,
+                    isWide && styles.heroBlockWide,
+                    {
+                      backgroundColor: palette.paper,
+                      borderColor: palette.border,
+                    },
                   ]}
                 >
-                  {uploadCopy.title}
-                </Text>
-                <Text
-                  style={[
-                    styles.heroSummary,
-                    isWide && styles.heroSummaryWide,
-                    { color: palette.inkMuted },
-                  ]}
-                >
-                  {uploadCopy.summary}
-                </Text>
-              </View>
+                  <Text style={[styles.eyebrow, { color: palette.inkMuted }]}>
+                    {uploadCopy.eyebrow}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.heroTitle,
+                      isWide && styles.heroTitleWide,
+                      { color: palette.ink },
+                    ]}
+                  >
+                    {uploadCopy.title}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.heroSummary,
+                      isWide && styles.heroSummaryWide,
+                      { color: palette.inkMuted },
+                    ]}
+                  >
+                    {uploadCopy.summary}
+                  </Text>
+                </View>
+              ) : null}
               <UploadWorkspaceCard
                 error={error}
                 errorColors={errorColors}
@@ -350,6 +354,16 @@ export function LedgerUploadScreen() {
           </ScrollView>
         </>
       )}
+    </View>
+  );
+
+  if (embedded) {
+    return content;
+  }
+
+  return (
+    <SafeAreaView edges={["top", "left", "right"]} style={styles.safeArea}>
+      {content}
     </SafeAreaView>
   );
 }
@@ -477,6 +491,7 @@ function UploadWorkspaceCard({
                     : pressed
                       ? primaryButton.pressedBackground
                       : primaryButton.background,
+                  borderColor: primaryButton.border,
                   opacity: isBusy ? 0.7 : 1,
                   shadowColor: palette.shadow,
                 },
@@ -551,6 +566,7 @@ function UploadWorkspaceCard({
                   : pressed
                     ? primaryButton.pressedBackground
                     : primaryButton.background,
+                borderColor: primaryButton.border,
                 opacity: isBusy ? 0.7 : 1,
                 shadowColor: palette.shadow,
               },
@@ -670,9 +686,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 40,
     paddingVertical: 40,
   },
+  embeddedContainer: {
+    flexGrow: 1,
+    padding: 12,
+    paddingBottom: 16,
+  },
+  embeddedRoot: {
+    flex: 1,
+  },
   dropCard: {
     alignItems: "center",
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 2,
     gap: 12,
     paddingHorizontal: 16,
@@ -690,19 +714,20 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   dropTitle: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: "800",
+    letterSpacing: -0.5,
     lineHeight: 28,
     textAlign: "center",
   },
   eyebrow: {
     fontSize: 11,
     fontWeight: "800",
-    letterSpacing: 1.1,
+    letterSpacing: 1.4,
     textTransform: "uppercase",
   },
   heroBlock: {
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 2,
     gap: 8,
     padding: 16,
@@ -722,10 +747,10 @@ const styles = StyleSheet.create({
     lineHeight: 26,
   },
   heroTitle: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: "800",
-    letterSpacing: -0.6,
-    lineHeight: 30,
+    letterSpacing: -0.8,
+    lineHeight: 32,
   },
   heroTitleWide: {
     fontSize: 30,
@@ -739,7 +764,7 @@ const styles = StyleSheet.create({
   },
   previewCard: {
     alignItems: "center",
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 2,
     gap: 10,
     padding: 14,
@@ -748,12 +773,13 @@ const styles = StyleSheet.create({
   previewEyebrow: {
     fontSize: 11,
     fontWeight: "800",
-    letterSpacing: 0.8,
+    letterSpacing: 1.2,
     textTransform: "uppercase",
   },
   previewFileName: {
     fontSize: 16,
     fontWeight: "800",
+    letterSpacing: -0.2,
     lineHeight: 22,
     textAlign: "center",
   },
@@ -777,6 +803,7 @@ const styles = StyleSheet.create({
   primaryButton: {
     alignItems: "center",
     borderRadius: 999,
+    borderWidth: 2,
     height: 48,
     justifyContent: "center",
     width: "100%",
@@ -789,6 +816,7 @@ const styles = StyleSheet.create({
   primaryButtonLabel: {
     fontSize: 15,
     fontWeight: "800",
+    letterSpacing: 0.2,
   },
   safeArea: {
     flex: 1,
@@ -804,6 +832,7 @@ const styles = StyleSheet.create({
   secondaryButtonLabel: {
     fontSize: 15,
     fontWeight: "800",
+    letterSpacing: 0.2,
   },
   wideRow: {
     flex: 1,
