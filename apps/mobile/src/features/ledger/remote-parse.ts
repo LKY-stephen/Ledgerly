@@ -920,7 +920,7 @@ async function performGeminiRequest(
     const response = await fetch(url, {
       body: JSON.stringify({
         contents: [{ parts: userParts, role: "user" }],
-        generationConfig: { maxOutputTokens: 4000 },
+        generationConfig: { maxOutputTokens: 8000 },
         systemInstruction: { parts: [{ text: systemText }] },
       }),
       cache: "no-store",
@@ -1001,7 +1001,7 @@ async function performOpenAiRequest(
     const targetUrl = `${settings.baseUrl}/responses`;
     const requestBody = JSON.stringify({
       input,
-      max_output_tokens: 4_000,
+      max_output_tokens: 8_000,
       model,
       ...(isReasoningModel(model) ? { reasoning: { effort: "minimal" } } : {}),
       store: false,
@@ -1150,23 +1150,85 @@ function extractOpenAiOutputText(payload: Record<string, unknown>): string {
 
 function tryParseStructuredOutput(outputText: string): unknown | null {
   const trimmed = outputText.trim();
-  const fencedMatch = /^```(?:json)?\s*([\s\S]*?)\s*```$/i.exec(trimmed);
+  const fencedMatch = /```(?:json)?\s*([\s\S]*?)\s*```/i.exec(trimmed);
   const jsonText = fencedMatch?.[1]?.trim() ?? trimmed;
 
   try {
     return JSON.parse(jsonText);
   } catch {
-    const firstBrace = jsonText.indexOf("{");
-    const lastBrace = jsonText.lastIndexOf("}");
-    if (firstBrace >= 0 && lastBrace > firstBrace) {
+    const firstBrace = Math.min(
+      ...["{", "["]
+        .map((token) => jsonText.indexOf(token))
+        .filter((index) => index >= 0),
+    );
+
+    if (!Number.isFinite(firstBrace)) {
+      return null;
+    }
+
+    const candidate = jsonText.slice(firstBrace);
+
+    try {
+      return JSON.parse(candidate);
+    } catch {
+      const repaired = repairTruncatedJson(candidate);
       try {
-        return JSON.parse(jsonText.slice(firstBrace, lastBrace + 1));
+        return JSON.parse(repaired);
       } catch {
         return null;
       }
     }
-    return null;
   }
+}
+
+function repairTruncatedJson(raw: string): string {
+  let result = "";
+  let inString = false;
+  let escaping = false;
+  const stack: string[] = [];
+
+  for (const char of raw) {
+    result += char;
+
+    if (escaping) {
+      escaping = false;
+      continue;
+    }
+
+    if (char === "\\") {
+      escaping = true;
+      continue;
+    }
+
+    if (char === "\"") {
+      inString = !inString;
+      continue;
+    }
+
+    if (inString) {
+      continue;
+    }
+
+    if (char === "{") {
+      stack.push("}");
+    } else if (char === "[") {
+      stack.push("]");
+    } else if ((char === "}" || char === "]") && stack[stack.length - 1] === char) {
+      stack.pop();
+    }
+  }
+
+  if (inString && !escaping) {
+    result += "\"";
+  }
+
+  while (stack.length > 0) {
+    result += stack.pop();
+  }
+
+  return result
+    .replace(/,\s*([}\]])/g, "$1")
+    .replace(/([{,]\s*)([A-Za-z0-9_.$-]+)\s*:/g, '$1"$2":');
 }
 
 async function blobToBase64(blob: Blob): Promise<string> {
@@ -1254,7 +1316,7 @@ function isReasoningModel(model: string): boolean {
   return name.startsWith("o1") || name.startsWith("o3") || name.startsWith("o4");
 }
 
-const firstPartyApiHosts = ["api.openai.com", "generativelanguage.googleapis.com"];
+const firstPartyApiHosts = ["api.openai.com", "generativelanguage.googleapis.com", "api-infer.agentsey.ai"];
 
 function isFirstPartyApiHost(baseUrl: string): boolean {
   try {
