@@ -407,7 +407,7 @@ function normalizeEvidenceFieldCandidates(value: JsonValue | undefined): Evidenc
   }
 
   return {
-    amountCents: coerceToInteger(record.amountCents ?? record.amount_cents),
+    amountCents: coerceToInteger(record.amountCents ?? record.amount_cents) ?? coerceDollarsToInteger(record.amount ?? record.total ?? record.totalAmount ?? record.total_amount),
     category: coerceToString(record.category),
     date: coerceToString(record.date),
     description: coerceToString(record.description),
@@ -800,14 +800,39 @@ function coerceToInteger(value: JsonValue | undefined): number | null {
   }
 
   if (typeof value === "number") {
-    return Math.round(value);
+    if (Number.isInteger(value)) return value;
+    return Math.round(value * 100);
   }
 
   if (typeof value === "string") {
-    const cleaned = value.replace(/[$,\s]/g, "");
+    const hasCurrencySymbol = /[$€£¥]/.test(value);
+    const hasDecimalPoint = value.includes(".");
+    const cleaned = value.replace(/[$€£¥,\s]/g, "");
     const parsed = Number(cleaned);
+    if (!Number.isFinite(parsed)) return null;
+    if (hasCurrencySymbol || hasDecimalPoint) {
+      return Math.round(parsed * 100);
+    }
+    return parsed;
+  }
 
-    return Number.isFinite(parsed) ? Math.round(parsed) : null;
+  return null;
+}
+
+function coerceDollarsToInteger(value: JsonValue | undefined): number | null {
+  if (value === null || value === undefined) {
+    return null;
+  }
+
+  if (typeof value === "number") {
+    return Math.round(value * 100);
+  }
+
+  if (typeof value === "string") {
+    const cleaned = value.replace(/[$€£¥,\s]/g, "");
+    const parsed = Number(cleaned);
+    if (!Number.isFinite(parsed)) return null;
+    return Math.round(parsed * 100);
   }
 
   return null;
