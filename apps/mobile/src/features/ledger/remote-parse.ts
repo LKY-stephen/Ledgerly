@@ -285,7 +285,7 @@ function buildFallbackPlannerPayload(
     rawFields.amountCents;
   let amountCents: number | null = null;
   if (typeof rawAmount === "number") {
-    amountCents = rawAmount > 500 ? rawAmount : Math.round(rawAmount * 100);
+    amountCents = Number.isInteger(rawAmount) ? rawAmount : Math.round(rawAmount * 100);
   } else if (typeof rawAmount === "string") {
     const cleaned = rawAmount.replace(/[^0-9.]/g, "");
     const parsed = Number.parseFloat(cleaned);
@@ -440,7 +440,7 @@ interface OpenAiFilePart {
   type: "input_file" | "input_image";
 }
 
-const openAiRequestTimeoutMs = 60_000;
+const openAiRequestTimeoutMs = 180_000;
 const defaultOpenAiBaseUrl = "https://api.openai.com/v1";
 const defaultOpenAiModel = "gpt-4o";
 const defaultGeminiBaseUrl = "https://generativelanguage.googleapis.com/v1beta";
@@ -512,8 +512,15 @@ export async function parseFileWithOpenAi(input: {
     const settings = aiProvider === "infer"
       ? await loadRequiredInferSettings(providerConfig)
       : await loadRequiredOpenAiSettings(providerConfig);
-    const filePart = createInputFilePart({ base64, fileName: input.fileName, mimeType });
-    return await callOpenAiParseApi(settings, filePart, input.fileName, mimeType, aiProvider);
+    const filePart = createInputFilePart({ base64, fileName: input.fileName, mimeType, provider: aiProvider });
+    const result = await callOpenAiParseApi(settings, filePart, input.fileName, mimeType, aiProvider);
+
+    if (!result.rawJson && mimeType === "application/pdf") {
+      const fallback = await retryPdfWithFallbackProvider(base64, input.fileName, mimeType, aiProvider, providerConfig);
+      if (fallback) return fallback;
+    }
+
+    return result;
   } catch (error) {
     const aiProvider = await loadPersistedAiProvider().catch(() => "openai" as AiProvider);
     return {
@@ -524,6 +531,36 @@ export async function parseFileWithOpenAi(input: {
       error: error instanceof Error ? error.message : "Unknown parse error",
     };
   }
+}
+
+async function retryPdfWithFallbackProvider(
+  base64: string,
+  fileName: string,
+  mimeType: string,
+  failedProvider: AiProvider,
+  providerConfig?: Partial<ProviderRuntimeConfig>,
+): Promise<ParseResult | null> {
+  if (failedProvider !== "gemini") {
+    try {
+      const result = await callGeminiParseApi(base64, fileName, mimeType, providerConfig);
+      if (result.rawJson) return result;
+    } catch {
+      // Gemini not available
+    }
+  }
+
+  if (failedProvider !== "openai") {
+    try {
+      const settings = await loadRequiredOpenAiSettings(providerConfig);
+      const filePart = createInputFilePart({ base64, fileName, mimeType, provider: "openai" });
+      const result = await callOpenAiParseApi(settings, filePart, fileName, mimeType, "openai");
+      if (result.rawJson) return result;
+    } catch {
+      // OpenAI not available
+    }
+  }
+
+  return null;
 }
 
 export async function parseFileWithOpenAiFromBlob(input: {
@@ -548,8 +585,15 @@ export async function parseFileWithOpenAiFromBlob(input: {
     const settings = aiProvider === "infer"
       ? await loadRequiredInferSettings(providerConfig)
       : await loadRequiredOpenAiSettings(providerConfig);
-    const filePart = createInputFilePart({ base64, fileName: input.fileName, mimeType });
-    return await callOpenAiParseApi(settings, filePart, input.fileName, mimeType, aiProvider);
+    const filePart = createInputFilePart({ base64, fileName: input.fileName, mimeType, provider: aiProvider });
+    const result = await callOpenAiParseApi(settings, filePart, input.fileName, mimeType, aiProvider);
+
+    if (!result.rawJson && mimeType === "application/pdf") {
+      const fallback = await retryPdfWithFallbackProvider(base64, input.fileName, mimeType, aiProvider, providerConfig);
+      if (fallback) return fallback;
+    }
+
+    return result;
   } catch (error) {
     const aiProvider = await loadPersistedAiProvider().catch(() => "openai" as AiProvider);
     return {
@@ -904,7 +948,7 @@ async function performGeminiRequest(
   model: string,
 ): Promise<Record<string, unknown>> {
   const controller = typeof AbortController === "function" ? new AbortController() : null;
-  const timeoutId = setTimeout(() => controller?.abort(), openAiRequestTimeoutMs);
+  const timeoutId = setTimeout(() => controller?.abort(new Error(`Request timed out after ${openAiRequestTimeoutMs / 1000}s`)), openAiRequestTimeoutMs);
 
   try {
     const url =
@@ -995,7 +1039,7 @@ async function performOpenAiRequest(
   provider: AiProvider,
 ): Promise<Record<string, unknown>> {
   const controller = typeof AbortController === "function" ? new AbortController() : null;
-  const timeoutId = setTimeout(() => controller?.abort(), openAiRequestTimeoutMs);
+  const timeoutId = setTimeout(() => controller?.abort(new Error(`Request timed out after ${openAiRequestTimeoutMs / 1000}s`)), openAiRequestTimeoutMs);
 
   try {
     const targetUrl = `${settings.baseUrl}/responses`;
@@ -1106,8 +1150,15 @@ function createInputFilePart(input: {
   base64: string;
   fileName: string;
   mimeType: string;
+  provider?: AiProvider;
 }): OpenAiFilePart {
   if (input.mimeType === "application/pdf") {
+    if (input.provider === "infer") {
+      return {
+        image_url: `data:${input.mimeType};base64,${input.base64}`,
+        type: "input_image",
+      };
+    }
     return {
       file_data: `data:${input.mimeType};base64,${input.base64}`,
       filename: input.fileName,
@@ -1171,6 +1222,15 @@ function tryParseStructuredOutput(outputText: string): unknown | null {
     try {
       return JSON.parse(candidate);
     } catch {
+      // Try trimming trailing content after the last closing brace/bracket
+      const lastClose = Math.max(candidate.lastIndexOf("}"), candidate.lastIndexOf("]"));
+      if (lastClose > 0) {
+        try {
+          return JSON.parse(candidate.slice(0, lastClose + 1));
+        } catch {
+          // fall through to repair
+        }
+      }
       const repaired = repairTruncatedJson(candidate);
       try {
         return JSON.parse(repaired);
