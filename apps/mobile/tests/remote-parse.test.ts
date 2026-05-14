@@ -663,6 +663,93 @@ describe("remote parse client", () => {
     expect(result.model).toBe("gemini-2.5-flash");
   });
 
+  it("normalizes legacy receipt-parse Infer output into the expected parser DTO", async () => {
+    vi.mocked(loadPersistedAiProvider).mockResolvedValue("infer");
+    vi.mocked(loadPersistedInferApiKey).mockResolvedValue("infer-test-key");
+    vi.mocked(loadPersistedInferBaseUrl).mockResolvedValue("https://infer.example/v1");
+    vi.mocked(loadPersistedInferModel).mockResolvedValue("");
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        new Response(
+          JSON.stringify({
+            output_text: JSON.stringify({
+              parser: "receipt-parse",
+              model: "default",
+              rawSummary: "Intercom receipt",
+              rawText: "Receipt text",
+              warnings: [],
+              records: [
+                {
+                  fields: {
+                    amountCents: 9900,
+                    category: "expense",
+                    date: "2026-02-27",
+                    description: "Intercom subscription",
+                    notes: null,
+                    source: "Visa - 3405",
+                    target: "Intercom",
+                    taxCategory: "software",
+                  },
+                  candidates: {
+                    amountCents: 9900,
+                    category: "expense",
+                    date: "2026-02-27",
+                    description: "Intercom subscription",
+                    notes: null,
+                    source: "Visa - 3405",
+                    target: "Intercom",
+                    taxCategory: "software",
+                  },
+                },
+              ],
+              fields: {
+                amountCents: 9900,
+                category: "expense",
+                date: "2026-02-27",
+                description: "Intercom subscription",
+                notes: null,
+                source: "Visa - 3405",
+                target: "Intercom",
+                taxCategory: "software",
+              },
+              candidates: {
+                amountCents: 9900,
+                category: "expense",
+                date: "2026-02-27",
+                description: "Intercom subscription",
+                notes: null,
+                source: "Visa - 3405",
+                target: "Intercom",
+                taxCategory: "software",
+              },
+            }),
+          }),
+          {
+            headers: { "content-type": "application/json" },
+            status: 200,
+          },
+        ),
+      ),
+    );
+
+    const result = await parseFileWithOpenAiFromBlob({
+      blob: new Blob(["png-bytes"], { type: "image/png" }),
+      fileName: "receipt.png",
+      mimeType: "image/png",
+    });
+
+    expect(result.error).toBeNull();
+    expect(result.model).toBe("gemini-2.5-flash");
+    expect(result.parserKind).toBe("openai_gpt");
+    expect(result.rawJson).toMatchObject({
+      parser: "openai_gpt",
+      model: "gemini-2.5-flash",
+      rawSummary: "Intercom receipt",
+    });
+  });
+
   it("switches to a fallback OpenAI model when the current model is experiencing high demand", async () => {
     process.env.EXPO_PUBLIC_OPENAI_BASE_URL = "https://api.openai.com/v1";
     process.env.EXPO_PUBLIC_OPENAI_MODEL = "gpt-4o";
