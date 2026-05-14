@@ -301,6 +301,6 @@ describe("infer provider routing", () => {
         mimeType: "application/pdf",
         rawJson: { total: 50 },
       }),
-    ).rejects.toThrow("Missing Infer API Key");
+    ).rejects.toThrow("Missing Infer API key");
   });
 });

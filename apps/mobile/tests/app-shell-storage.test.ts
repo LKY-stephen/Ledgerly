@@ -156,7 +156,7 @@ describe("app-shell storage runtime overrides", () => {
     expect(state.inferModel).toBe("gpt-env");
   });
 
-  it("prefers stored AI keys over env fallbacks when hydrating app state", async () => {
+  it("prefers env AI keys over stored values when hydrating app state", async () => {
     process.env.EXPO_PUBLIC_OPENAI_API_KEY = "sk-openai-env";
     process.env.EXPO_PUBLIC_GEMINI_API_KEY = "AIza-env";
     process.env.EXPO_PUBLIC_INFER_API_KEY = "sk-infer-env";
@@ -172,10 +172,30 @@ describe("app-shell storage runtime overrides", () => {
     const storage = await import("../src/features/app-shell/storage");
     const state = await storage.loadPersistedAppState();
 
-    expect(state.openAiApiKey).toBe("sk-openai-stored");
-    expect(state.geminiApiKey).toBe("AIza-stored");
-    expect(state.inferApiKey).toBe("sk-infer-stored");
-    expect(state.inferBaseUrl).toBe("https://stored.example/v1");
-    expect(state.inferModel).toBe("gpt-stored");
+    expect(state.openAiApiKey).toBe("sk-openai-env");
+    expect(state.geminiApiKey).toBe("AIza-env");
+    expect(state.inferApiKey).toBe("sk-infer-env");
+    expect(state.inferBaseUrl).toBe("https://infer.example/v1");
+    expect(state.inferModel).toBe("gpt-env");
+  });
+
+  it("prefers an env-backed provider over a persisted ai_provider selection", async () => {
+    process.env.EXPO_PUBLIC_GEMINI_API_KEY = "AIza-env";
+    asyncStorageState.methods.setItem("@ledgerly/mobile/ai_provider", "openai");
+
+    const storage = await import("../src/features/app-shell/storage");
+
+    await expect(storage.loadPersistedAiProvider()).resolves.toBe("gemini");
+  });
+
+  it("forces Gemini auth mode to api_key when an env Gemini key is present", async () => {
+    process.env.EXPO_PUBLIC_GEMINI_API_KEY = "AIza-env";
+    asyncStorageState.methods.setItem("@ledgerly/mobile/gemini_auth_mode", "google_oauth");
+
+    const storage = await import("../src/features/app-shell/storage");
+    const state = await storage.loadPersistedAppState();
+
+    await expect(storage.loadPersistedGeminiAuthMode()).resolves.toBe("api_key");
+    expect(state.geminiAuthMode).toBe("api_key");
   });
 });
