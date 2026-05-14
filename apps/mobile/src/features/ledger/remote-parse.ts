@@ -1202,7 +1202,8 @@ function extractOpenAiOutputText(payload: Record<string, unknown>): string {
 function tryParseStructuredOutput(outputText: string): unknown | null {
   const trimmed = outputText.trim();
   const fencedMatch = /```(?:json)?\s*([\s\S]*?)\s*```/i.exec(trimmed);
-  const jsonText = fencedMatch?.[1]?.trim() ?? trimmed;
+  const openFenceMatch = !fencedMatch ? /```(?:json)?\s*([\s\S]+)/i.exec(trimmed) : null;
+  const jsonText = fencedMatch?.[1]?.trim() ?? openFenceMatch?.[1]?.trim() ?? trimmed;
 
   try {
     return JSON.parse(jsonText);
