@@ -79,6 +79,58 @@ const defaultProfileInfo: ProfileInfo = {
 
 const runtimeOverrides: Partial<PersistedAppState> = {};
 
+function readEnvOpenAiApiKey(): string {
+  return (process.env.EXPO_PUBLIC_OPENAI_API_KEY ?? "").trim();
+}
+
+function readEnvGeminiApiKey(): string {
+  return (process.env.EXPO_PUBLIC_GEMINI_API_KEY ?? "").trim();
+}
+
+function readEnvInferApiKey(): string {
+  return (process.env.EXPO_PUBLIC_INFER_API_KEY ?? "").trim();
+}
+
+function readEnvInferBaseUrl(): string {
+  return (process.env.EXPO_PUBLIC_INFER_BASE_URL ?? "").trim().replace(/\/+$/g, "");
+}
+
+function readEnvInferModel(): string {
+  return (process.env.EXPO_PUBLIC_INFER_MODEL ?? "").trim();
+}
+
+function resolveEnvBackedAiProvider(): AiProvider | null {
+  if (readEnvOpenAiApiKey()) {
+    return "openai";
+  }
+
+  if (readEnvInferApiKey()) {
+    return "infer";
+  }
+
+  if (readEnvGeminiApiKey()) {
+    return "gemini";
+  }
+
+  return null;
+}
+
+function resolveStoredAiProviderValue(rawValue: string): AiProvider {
+  if (rawValue === "gemini") {
+    return "gemini";
+  }
+
+  if (rawValue === "infer") {
+    return "infer";
+  }
+
+  if (rawValue === "openai") {
+    return "openai";
+  }
+
+  return defaultAiProvider;
+}
+
 function hasRuntimeOverride<Key extends keyof PersistedAppState>(key: Key): boolean {
   return Object.prototype.hasOwnProperty.call(runtimeOverrides, key);
 }
@@ -102,13 +154,16 @@ function resolveStoredValue(
   return null;
 }
 
-function resolveStoredOrEnvValue(
+function resolveEnvOrStoredValue(
   values: Record<string, string | null | undefined>,
   keyName: StorageKeyName,
   envValue: string,
 ): string {
-  const stored = String(resolveStoredValue(values, keyName) ?? "").trim();
-  return stored || envValue;
+  if (envValue) {
+    return envValue;
+  }
+
+  return String(resolveStoredValue(values, keyName) ?? "").trim();
 }
 
 async function readStoredValue(keyName: StorageKeyName): Promise<string | null> {
@@ -169,46 +224,46 @@ export async function loadPersistedAppState(): Promise<PersistedAppState> {
   const entries = await AsyncStorage.multiGet(ALL_STORAGE_KEYS);
   const values = Object.fromEntries(entries);
 
+  const envBackedAiProvider = resolveEnvBackedAiProvider();
+  const envBackedGeminiApiKey = readEnvGeminiApiKey();
   const rawAiProvider = String(resolveStoredValue(values, "aiProvider") ?? "").trim();
   const rawGeminiAuthMode = String(resolveStoredValue(values, "geminiAuthMode") ?? "").trim();
   const persistedState: PersistedAppState = {
-    aiProvider:
-      rawAiProvider === "gemini"
-        ? "gemini"
-        : rawAiProvider === "infer"
-          ? "infer"
-          : rawAiProvider === "openai"
-          ? "openai"
-            : defaultAiProvider,
-    geminiApiKey: resolveStoredOrEnvValue(
+    aiProvider: envBackedAiProvider ?? resolveStoredAiProviderValue(rawAiProvider),
+    geminiApiKey: resolveEnvOrStoredValue(
       values,
       "geminiApiKey",
-      (process.env.EXPO_PUBLIC_GEMINI_API_KEY ?? "").trim(),
+      envBackedGeminiApiKey,
     ),
-    geminiAuthMode: rawGeminiAuthMode === "google_oauth" ? "google_oauth" : "api_key",
+    geminiAuthMode:
+      envBackedGeminiApiKey
+        ? "api_key"
+        : rawGeminiAuthMode === "google_oauth"
+          ? "google_oauth"
+          : "api_key",
     googleAccessToken: String(resolveStoredValue(values, "googleAccessToken") ?? "").trim(),
     googleRefreshToken: String(resolveStoredValue(values, "googleRefreshToken") ?? "").trim(),
     googleTokenExpiresAt: String(resolveStoredValue(values, "googleTokenExpiresAt") ?? "").trim(),
-    inferApiKey: resolveStoredOrEnvValue(
+    inferApiKey: resolveEnvOrStoredValue(
       values,
       "inferApiKey",
-      (process.env.EXPO_PUBLIC_INFER_API_KEY ?? "").trim(),
+      readEnvInferApiKey(),
     ),
-    inferBaseUrl: resolveStoredOrEnvValue(
+    inferBaseUrl: resolveEnvOrStoredValue(
       values,
       "inferBaseUrl",
-      (process.env.EXPO_PUBLIC_INFER_BASE_URL ?? "").trim(),
+      readEnvInferBaseUrl(),
     ).replace(/\/+$/g, ""),
-    inferModel: resolveStoredOrEnvValue(
+    inferModel: resolveEnvOrStoredValue(
       values,
       "inferModel",
-      (process.env.EXPO_PUBLIC_INFER_MODEL ?? "").trim(),
+      readEnvInferModel(),
     ),
     localePreference: coerceLocalePreference(resolveStoredValue(values, "localePreference")),
-    openAiApiKey: resolveStoredOrEnvValue(
+    openAiApiKey: resolveEnvOrStoredValue(
       values,
       "openAiApiKey",
-      (process.env.EXPO_PUBLIC_OPENAI_API_KEY ?? "").trim(),
+      readEnvOpenAiApiKey(),
     ),
     parseApiBaseUrl: String(resolveStoredValue(values, "parseApiBaseUrl") ?? "")
       .trim()
@@ -315,18 +370,25 @@ export async function loadPersistedProfileInfo(): Promise<ProfileInfo> {
 }
 
 export async function loadPersistedAiProvider(): Promise<AiProvider> {
+  const envBackedProvider = resolveEnvBackedAiProvider();
+  if (envBackedProvider) {
+    return envBackedProvider;
+  }
+
   if (hasRuntimeOverride("aiProvider")) {
     return runtimeOverrides.aiProvider ?? defaultAiProvider;
   }
 
   const raw = String((await readStoredValue("aiProvider")) ?? "").trim();
-  if (raw === "gemini") return "gemini";
-  if (raw === "infer") return "infer";
-  if (raw === "openai") return "openai";
-  return defaultAiProvider;
+  return resolveStoredAiProviderValue(raw);
 }
 
 export async function loadPersistedGeminiApiKey(): Promise<string> {
+  const envValue = readEnvGeminiApiKey();
+  if (envValue) {
+    return envValue;
+  }
+
   if (hasRuntimeOverride("geminiApiKey")) {
     return runtimeOverrides.geminiApiKey ?? "";
   }
@@ -335,10 +397,15 @@ export async function loadPersistedGeminiApiKey(): Promise<string> {
 
   if (stored) return stored;
 
-  return (process.env.EXPO_PUBLIC_GEMINI_API_KEY ?? "").trim();
+  return envValue;
 }
 
 export async function loadPersistedOpenAiApiKey(): Promise<string> {
+  const envValue = readEnvOpenAiApiKey();
+  if (envValue) {
+    return envValue;
+  }
+
   if (hasRuntimeOverride("openAiApiKey")) {
     return runtimeOverrides.openAiApiKey ?? "";
   }
@@ -349,7 +416,7 @@ export async function loadPersistedOpenAiApiKey(): Promise<string> {
 
   if (stored) return stored;
 
-  return (process.env.EXPO_PUBLIC_OPENAI_API_KEY ?? "").trim();
+  return envValue;
 }
 
 export async function persistInferApiKey(value: string) {
@@ -359,6 +426,11 @@ export async function persistInferApiKey(value: string) {
 }
 
 export async function loadPersistedInferApiKey(): Promise<string> {
+  const envValue = readEnvInferApiKey();
+  if (envValue) {
+    return envValue;
+  }
+
   if (hasRuntimeOverride("inferApiKey")) {
     return runtimeOverrides.inferApiKey ?? "";
   }
@@ -367,7 +439,7 @@ export async function loadPersistedInferApiKey(): Promise<string> {
 
   if (stored) return stored;
 
-  return (process.env.EXPO_PUBLIC_INFER_API_KEY ?? "").trim();
+  return envValue;
 }
 
 export async function persistInferBaseUrl(value: string) {
@@ -377,6 +449,11 @@ export async function persistInferBaseUrl(value: string) {
 }
 
 export async function loadPersistedInferBaseUrl(): Promise<string> {
+  const envValue = readEnvInferBaseUrl();
+  if (envValue) {
+    return envValue;
+  }
+
   if (hasRuntimeOverride("inferBaseUrl")) {
     return runtimeOverrides.inferBaseUrl ?? "";
   }
@@ -387,7 +464,7 @@ export async function loadPersistedInferBaseUrl(): Promise<string> {
 
   if (stored) return stored;
 
-  return (process.env.EXPO_PUBLIC_INFER_BASE_URL ?? "").trim().replace(/\/+$/g, "");
+  return envValue;
 }
 
 export async function persistInferModel(value: string) {
@@ -397,6 +474,11 @@ export async function persistInferModel(value: string) {
 }
 
 export async function loadPersistedInferModel(): Promise<string> {
+  const envValue = readEnvInferModel();
+  if (envValue) {
+    return envValue;
+  }
+
   if (hasRuntimeOverride("inferModel")) {
     return runtimeOverrides.inferModel ?? "";
   }
@@ -405,7 +487,7 @@ export async function loadPersistedInferModel(): Promise<string> {
 
   if (stored) return stored;
 
-  return (process.env.EXPO_PUBLIC_INFER_MODEL ?? "").trim();
+  return envValue;
 }
 
 export async function persistGeminiAuthMode(value: GeminiAuthMode) {
@@ -414,6 +496,10 @@ export async function persistGeminiAuthMode(value: GeminiAuthMode) {
 }
 
 export async function loadPersistedGeminiAuthMode(): Promise<GeminiAuthMode> {
+  if (readEnvGeminiApiKey()) {
+    return "api_key";
+  }
+
   if (hasRuntimeOverride("geminiAuthMode")) {
     return runtimeOverrides.geminiAuthMode ?? "api_key";
   }

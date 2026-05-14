@@ -780,14 +780,14 @@ async function loadRequiredInferSettings(
 
   if (!inferBaseUrl) {
     throw new ParseEvidenceClientError(
-      "Missing Infer Base URL. Add it from Settings.",
+      "Missing Infer Base URL. Add it from Settings or EXPO_PUBLIC_INFER_BASE_URL.",
       "missing_config",
     );
   }
 
   if (!inferApiKey) {
     throw new ParseEvidenceClientError(
-      "Missing Infer API Key. Add it from Settings.",
+      "Missing Infer API key. Add it from Settings or EXPO_PUBLIC_INFER_API_KEY.",
       "missing_config",
     );
   }

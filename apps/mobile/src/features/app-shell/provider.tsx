@@ -25,6 +25,7 @@ import {
 import {
   clearGoogleTokens,
   loadPersistedAppState,
+  loadPersistedAiProvider,
   persistAiProvider,
   persistGeminiApiKey,
   persistGeminiAuthMode,
@@ -109,7 +110,14 @@ const AppShellContext = createContext<AppShellContextValue | null>(null);
 const defaultAiProvider: AiProvider = "openai";
 
 const initialState: PersistedAppState = {
-  aiProvider: defaultAiProvider,
+  aiProvider:
+    (process.env.EXPO_PUBLIC_OPENAI_API_KEY ?? "").trim()
+      ? "openai"
+      : (process.env.EXPO_PUBLIC_INFER_API_KEY ?? "").trim()
+        ? "infer"
+        : (process.env.EXPO_PUBLIC_GEMINI_API_KEY ?? "").trim()
+          ? "gemini"
+          : defaultAiProvider,
   geminiApiKey: (process.env.EXPO_PUBLIC_GEMINI_API_KEY ?? "").trim(),
   geminiAuthMode: "api_key",
   googleAccessToken: "",
@@ -154,6 +162,24 @@ export function AppShellProvider({ children }: PropsWithChildren) {
         if (isMounted) {
           setIsHydrated(true);
         }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    loadPersistedAiProvider()
+      .then((aiProvider) => {
+        if (isMounted) {
+          setState((current) => ({ ...current, aiProvider }));
+        }
+      })
+      .catch(() => {
+        // Keep the env-backed initial provider if the helper fails.
       });
 
     return () => {

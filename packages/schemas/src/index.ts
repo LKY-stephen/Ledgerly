@@ -270,7 +270,7 @@ export function normalizeReceiptParsePayload(
   return {
     candidates,
     fields,
-    model: asOptionalString(record.model) ?? input.defaultModel ?? null,
+    model: normalizeReceiptParseModel(record.model, input.defaultModel ?? null),
     parser: normalizeEvidenceParserKind(record.parser, input.defaultParser ?? "openai_gpt"),
     rawSummary,
     rawText,
@@ -651,7 +651,23 @@ function normalizeDuplicateKinds(value: JsonValue | undefined): DuplicateKind[] 
 }
 
 function normalizeEvidenceParserKind(value: JsonValue | undefined, fallback: EvidenceParserKind): EvidenceParserKind {
+  if (value === "receipt-parse") {
+    return fallback;
+  }
+
   return value === "openai_gpt" || value === "gemini" || value === "rule_fallback" ? value : fallback;
+}
+
+function normalizeReceiptParseModel(value: JsonValue | undefined, fallback: string | null): string | null {
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+
+    if (trimmed && trimmed.toLowerCase() !== "default") {
+      return trimmed;
+    }
+  }
+
+  return fallback;
 }
 
 function normalizeConfidence(value: JsonValue | undefined): ClassifiedParseField["confidence"] | null {
