@@ -39,6 +39,7 @@ export function LedgerUploadScreen({ embedded = false }: { embedded?: boolean } 
   const isWeb = Platform.OS === "web";
   const isWide = isExpanded || isMedium;
   const useSplitLayout = isWide && !isWeb;
+  const isMobileStack = !isWide && !embedded;
   const {
     aiProvider,
     copy,
@@ -245,13 +246,14 @@ export function LedgerUploadScreen({ embedded = false }: { embedded?: boolean } 
                 <UploadWorkspaceCard
                   error={error}
                   errorColors={errorColors}
-                  handleImport={handleImport}
-                  handleParseSelected={handleParseSelected}
-                  isBusy={isBusy}
-                  isWide={true}
-                  palette={palette}
-                  previewMeta={previewMeta}
-                  primaryButton={primaryButton}
+                handleImport={handleImport}
+                handleParseSelected={handleParseSelected}
+                isBusy={isBusy}
+                isWide={true}
+                isMobileStack={false}
+                palette={palette}
+                previewMeta={previewMeta}
+                primaryButton={primaryButton}
                   selectedCandidate={selectedCandidate}
                   setError={setError}
                   setSelectedCandidate={setSelectedCandidate}
@@ -339,6 +341,7 @@ export function LedgerUploadScreen({ embedded = false }: { embedded?: boolean } 
                 handleParseSelected={handleParseSelected}
                 isBusy={isBusy}
                 isWide={isWide}
+                isMobileStack={isMobileStack}
                 palette={palette}
                 previewMeta={previewMeta}
                 primaryButton={primaryButton}
@@ -375,6 +378,7 @@ function UploadWorkspaceCard({
   handleParseSelected,
   isBusy,
   isWide,
+  isMobileStack,
   palette,
   previewMeta,
   primaryButton,
@@ -392,6 +396,7 @@ function UploadWorkspaceCard({
   handleParseSelected: () => Promise<void>;
   isBusy: boolean;
   isWide: boolean;
+  isMobileStack: boolean;
   palette: ReturnType<typeof useAppShell>["palette"];
   previewMeta: string;
   primaryButton: ReturnType<typeof getButtonColors>;
@@ -408,6 +413,7 @@ function UploadWorkspaceCard({
       style={[
         styles.dropCard,
         isWide && styles.dropCardWide,
+        isMobileStack ? styles.dropCardCompact : null,
         {
           backgroundColor: palette.shellElevated,
           borderColor: palette.border,
@@ -430,10 +436,19 @@ function UploadWorkspaceCard({
         {uploadCopy.uploadCardSummary}
       </Text>
 
+      {!selectedCandidate && isMobileStack ? (
+        <View style={styles.flowHintRow}>
+          <Text style={[styles.flowHint, { color: palette.inkMuted }]}>1. {uploadCopy.selectPhotos}</Text>
+          <Text style={[styles.flowHint, { color: palette.inkMuted }]}>2. {uploadCopy.previewTitle}</Text>
+          <Text style={[styles.flowHint, { color: palette.inkMuted }]}>3. {uploadCopy.parseAction}</Text>
+        </View>
+      ) : null}
+
       {selectedCandidate ? (
         <View
           style={[
             styles.previewCard,
+            isMobileStack ? styles.previewCardCompact : null,
             {
               backgroundColor: palette.paper,
               borderColor: palette.border,
@@ -702,11 +717,27 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 20,
   },
+  dropCardCompact: {
+    alignItems: "stretch",
+    gap: 14,
+    paddingHorizontal: 18,
+    paddingVertical: 18,
+  },
   dropCardWide: {
     flex: 1,
     justifyContent: "center",
     paddingHorizontal: 32,
     paddingVertical: 32,
+  },
+  flowHint: {
+    fontSize: 12,
+    fontWeight: "800",
+    lineHeight: 16,
+    textAlign: "center",
+  },
+  flowHintRow: {
+    gap: 6,
+    width: "100%",
   },
   dropSummary: {
     fontSize: 14,
@@ -769,6 +800,10 @@ const styles = StyleSheet.create({
     gap: 10,
     padding: 14,
     width: "100%",
+  },
+  previewCardCompact: {
+    gap: 12,
+    padding: 16,
   },
   previewEyebrow: {
     fontSize: 11,

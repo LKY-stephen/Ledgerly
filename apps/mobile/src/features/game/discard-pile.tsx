@@ -3,19 +3,13 @@ import { Animated, Easing, Pressable, StyleSheet, Text, View } from "react-nativ
 import type { SurfaceTokens } from "@ledgerly/ui";
 
 import { useGame } from "./game-context";
+import { getDiscardFace, getGameCardPresentation, getSuitColor } from "./game-ui";
 
 const suitMap: Record<string, string> = {
   new: "♠",
   report: "♥",
   show: "♣",
   settings: "♦",
-};
-
-const faceMap: Record<string, { bg: string; text: string }> = {
-  new: { bg: "#0A0A0A", text: "#F4EFE6" },
-  report: { bg: "#FF2E63", text: "#0A0A0A" },
-  show: { bg: "#F4EFE6", text: "#0A0A0A" },
-  settings: { bg: "#5B2CFF", text: "#F4EFE6" },
 };
 
 interface Props {
@@ -67,10 +61,6 @@ export function DiscardPile({ isStickmanNearby = false, palette }: Props) {
     }
   }, [animationPhase, spikeOpacity, spikeScale]);
 
-  if (discardPile.length === 0) return null;
-
-  const topCards = discardPile.slice(-3);
-
   return (
     <View style={styles.root}>
       {/* SPIKE! burst */}
@@ -90,46 +80,65 @@ export function DiscardPile({ isStickmanNearby = false, palette }: Props) {
       </Animated.View>
 
       <View style={styles.stack}>
-        {topCards.map((entry, i) => {
-          const offset = (topCards.length - 1 - i) * 4;
-          return (
-            <Animated.View
-              key={entry.timestamp}
-              style={[
-                styles.card,
-                {
-                  backgroundColor: faceMap[entry.card]?.bg ?? palette.paper,
-                  borderColor: palette.cardBorder,
-                  borderRadius: palette.cardRadius / 2,
-                  top: offset,
-                  left: offset,
-                  shadowColor: palette.shadow,
-                  opacity: i === topCards.length - 1 ? slideIn : 0.6,
-                  transform:
-                    i === topCards.length - 1
-                      ? [
-                          { translateY: isStickmanNearby ? -5 : 0 },
-                          { rotate: isStickmanNearby ? "-4deg" : "0deg" },
-                          {
-                            scale: slideIn.interpolate({
-                              inputRange: [0, 1],
-                              outputRange: [0.5, isStickmanNearby ? 1.06 : 1],
-                            }),
-                          },
-                        ]
-                      : [],
-                },
-              ]}
-            >
-              <Text style={[styles.suit, { color: faceMap[entry.card]?.text ?? palette.ink }]}>
-                {suitMap[entry.card] ?? "?"}
-              </Text>
-            </Animated.View>
-          );
-        })}
+        {discardPile.length === 0 ? (
+          <View
+            style={[
+              styles.emptyAnchor,
+              {
+                backgroundColor: palette.scene.emptyDiscardFill,
+                borderColor: palette.scene.emptyDiscardOutline,
+              },
+            ]}
+          >
+            <Text style={[styles.emptyGlyph, { color: palette.scene.emptyDiscardOutline }]}>
+              ⌦
+            </Text>
+          </View>
+        ) : (
+          discardPile.slice(-3).map((entry, i, topCards) => {
+            const offset = (topCards.length - 1 - i) * 4;
+            const face = getDiscardFace(entry.card, palette);
+            const presentation = getGameCardPresentation(entry.card);
+            const suitColor = getSuitColor({ suit: presentation.suit, palette });
+            return (
+              <Animated.View
+                key={entry.timestamp}
+                style={[
+                  styles.card,
+                  {
+                    backgroundColor: face.bg,
+                    borderColor: palette.cardBorder,
+                    borderRadius: palette.radius.cardMini,
+                    top: offset,
+                    left: offset,
+                    shadowColor: palette.shadow,
+                    opacity: i === topCards.length - 1 ? slideIn : 0.6,
+                    transform:
+                      i === topCards.length - 1
+                        ? [
+                            { translateY: isStickmanNearby ? -5 : 0 },
+                            { rotate: isStickmanNearby ? "-4deg" : "0deg" },
+                            {
+                              scale: slideIn.interpolate({
+                                inputRange: [0, 1],
+                                outputRange: [0.5, isStickmanNearby ? 1.06 : 1],
+                              }),
+                            },
+                          ]
+                        : [],
+                  },
+                ]}
+              >
+                <Text style={[styles.suit, { color: suitColor }]}>
+                  {suitMap[entry.card] ?? "?"}
+                </Text>
+              </Animated.View>
+            );
+          })
+        )}
       </View>
 
-      <Pressable onPress={clearDiscard} hitSlop={8}>
+      <Pressable disabled={discardPile.length === 0} onPress={clearDiscard} hitSlop={8}>
         <Text style={[styles.count, { color: palette.inkMuted }]}>
           {discardPile.length}
         </Text>
@@ -156,14 +165,27 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
   },
   stack: {
-    width: 44,
-    height: 56,
+    width: 60,
+    height: 76,
+  },
+  emptyAnchor: {
+    width: 56,
+    height: 72,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderStyle: "dashed",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  emptyGlyph: {
+    fontSize: 20,
+    fontWeight: "800",
   },
   card: {
     position: "absolute",
-    width: 40,
-    height: 52,
-    borderWidth: 3,
+    width: 56,
+    height: 72,
+    borderWidth: 2,
     alignItems: "center",
     justifyContent: "center",
     shadowOffset: { width: 3, height: 3 },
@@ -172,7 +194,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   suit: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: "900",
   },
   count: {

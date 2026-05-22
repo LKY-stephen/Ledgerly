@@ -2,10 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import {
   getGameCardColors,
+  getGameCardPresentation,
   gameSettingsCardLabel,
   getDockCardScale,
   getNextQuickTheme,
 } from "../src/features/game/game-ui";
+import { surfaceThemes } from "../../../packages/ui/src/tokens";
 
 describe("game theme and settings helpers", () => {
   it("keeps the settings card label stable", () => {
@@ -21,15 +23,14 @@ describe("game theme and settings helpers", () => {
     expect(getDockCardScale({ isActive: true, pressed: false })).toBe(0.9);
   });
 
-  it("uses black text for the ledger flash card in dark mode", () => {
+  it("uses dark ink on the hot report card", () => {
     expect(
-      getGameCardColors("flash", {
-        accent: "#ffcc00",
-        ink: "#f4efe6",
-        inkOnAccent: "#000000",
-        name: "dark",
-        paper: "#111111",
-      } as never).text,
-    ).toBe("#000000");
+      getGameCardColors("hot", surfaceThemes.dark).text,
+    ).toBe(surfaceThemes.dark.inkOnHot);
+  });
+
+  it("uses semantic variants instead of legacy color names", () => {
+    expect(getGameCardPresentation("new").variant).toBe("acid");
+    expect(getGameCardPresentation("report").variant).toBe("hot");
   });
 });

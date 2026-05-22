@@ -70,14 +70,14 @@ export function CatSvg({ palette, interactionCount }: Props) {
   }, [interactionCount]);
 
   const stroke = palette.stickmanStroke;
-  const fill = palette.paper;
-  const bodyFill = palette.paperMuted;
+  const fill = palette.name === "dark" ? palette.paperMuted : palette.paper;
+  const bodyFill = palette.name === "dark" ? palette.shellElevated : palette.paperMuted;
   const sw = 3.5;
 
   return (
     <View style={styles.root}>
       <Svg width={94} height={74} viewBox="0 0 100 78">
-        <Ellipse cx={42} cy={56} rx={30} ry={13} fill="rgba(10,10,10,0.06)" />
+        <Ellipse cx={42} cy={56} rx={30} ry={13} fill={palette.scene.groundShadow} />
         <G transform={alertFrame ? "translate(0 -2)" : "translate(0 0)"}>
           <Ellipse cx={41} cy={48} rx={29} ry={14} fill={bodyFill} stroke={stroke} strokeWidth={sw} />
           <Circle cx={72} cy={31} r={16} fill={fill} stroke={stroke} strokeWidth={sw} />

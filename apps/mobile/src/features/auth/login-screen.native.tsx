@@ -41,18 +41,9 @@ export function LoginScreen() {
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: palette.paper }]}>
       <ScrollView contentContainerStyle={styles.container}>
-        <View style={styles.topBlock}>
-          <Text style={[styles.brandTitle, { color: palette.ink }]}>
-            {copy.common.appName}
-          </Text>
-          <Text style={[styles.brandSubtitle, { color: palette.inkMuted }]}>
-            {copy.login.brandSubtitle}
-          </Text>
-        </View>
-
         <View
           style={[
-            styles.logoCard,
+            styles.heroCard,
             {
               backgroundColor: palette.paperMuted,
               borderColor: palette.border,
@@ -60,21 +51,63 @@ export function LoginScreen() {
             },
           ]}
         >
-          <LedgerlyIconMark size={164} />
+          <View style={styles.topBlock}>
+            <Text style={[styles.brandTitle, { color: palette.ink }]}>
+              {copy.common.appName}
+            </Text>
+            <Text style={[styles.brandSubtitle, { color: palette.inkMuted }]}>
+              {copy.login.brandSubtitle}
+            </Text>
+          </View>
+
+          <LedgerlyIconMark size={148} />
+
+          <View style={styles.poemStack}>
+            {poemLines.slice(0, 2).map((line) => (
+              <Text
+                key={line}
+                style={[
+                  styles.poemLine,
+                  { color: palette.ink },
+                ]}
+              >
+                {line}
+              </Text>
+            ))}
+          </View>
         </View>
 
-        <View style={styles.poemStack}>
-          {poemLines.map((line) => (
-            <Text
-              key={line}
-              style={[
-                styles.poemLine,
-                { color: palette.ink },
-              ]}
-            >
-              {line}
+        <View
+          style={[
+            styles.actionCard,
+            {
+              backgroundColor: palette.paper,
+              borderColor: palette.border,
+              shadowColor: palette.shadow,
+            },
+          ]}
+        >
+          <Text style={[styles.actionTitle, { color: palette.ink }]}>
+            {copy.login.skip}
+          </Text>
+          <Text style={[styles.actionSummary, { color: palette.inkMuted }]}>
+            {poemLines.slice(2).join(" ")}
+          </Text>
+          <Pressable
+            accessibilityRole="button"
+            onPress={handleGuestMode}
+            style={({ pressed }) => [
+              styles.guestButton,
+              {
+                backgroundColor: pressed ? palette.paperMuted : palette.ink,
+                borderColor: palette.ink,
+              },
+            ]}
+          >
+            <Text style={[styles.guestLabel, { color: palette.inkOnAccent }]}>
+              {copy.login.skip}
             </Text>
-          ))}
+          </Pressable>
         </View>
 
         <View style={styles.signalRow}>
@@ -93,82 +126,70 @@ export function LoginScreen() {
             </View>
           ))}
         </View>
-
-        <View style={styles.actions}>
-          <Pressable
-            accessibilityRole="button"
-            onPress={handleGuestMode}
-            style={({ pressed }) => [
-              styles.guestButton,
-              {
-                backgroundColor: pressed
-                  ? palette.paperMuted
-                  : palette.paper,
-                borderColor: palette.border,
-              },
-            ]}
-          >
-            <Text style={[styles.guestLabel, { color: palette.ink }]}>
-              {copy.login.skip}
-            </Text>
-          </Pressable>
-        </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  actions: {
+  actionCard: {
+    alignItems: "center",
+    borderRadius: 18,
+    borderWidth: 2,
     gap: 12,
+    paddingHorizontal: 18,
+    paddingVertical: 20,
     width: "100%",
   },
-  brandSubtitle: {
+  actionSummary: {
+    fontSize: 14,
+    lineHeight: 20,
+    textAlign: "center",
+  },
+  actionTitle: {
     fontSize: 18,
+    fontWeight: "900",
+    lineHeight: 24,
+    textAlign: "center",
+  },
+  brandSubtitle: {
+    fontSize: 16,
     fontWeight: "800",
-    lineHeight: 26,
+    lineHeight: 22,
   },
   brandTitle: {
-    fontSize: 36,
-    fontWeight: "800",
-    lineHeight: 40,
-  },
-  caption: {
-    fontSize: 16,
-    lineHeight: 22,
-    textAlign: "center",
+    fontSize: 34,
+    fontWeight: "900",
+    lineHeight: 38,
   },
   container: {
     alignItems: "center",
     flexGrow: 1,
-    gap: 20,
-    padding: 24,
-    paddingBottom: 36,
+    gap: 18,
+    justifyContent: "center",
+    padding: 20,
+    paddingBottom: 28,
   },
   guestButton: {
     alignItems: "center",
     borderRadius: 999,
     borderWidth: 2,
-    height: 52,
+    height: 54,
     justifyContent: "center",
+    width: "100%",
   },
   guestLabel: {
     fontSize: 16,
     fontWeight: "800",
   },
-  logoCard: {
+  heroCard: {
     alignItems: "center",
-    borderRadius: 12,
+    borderRadius: 18,
     borderWidth: 2,
-    justifyContent: "center",
-    minHeight: 248,
-    padding: 24,
+    gap: 14,
+    paddingHorizontal: 18,
+    paddingVertical: 20,
     width: "100%",
-  },
-  pillDot: {
-    borderRadius: 999,
-    height: 10,
-    width: 10,
   },
   privacyMetrics: {
     flexDirection: "row",
@@ -196,7 +217,7 @@ const styles = StyleSheet.create({
   signalRow: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 10,
+    gap: 8,
     justifyContent: "center",
   },
   statusDot: {
@@ -206,18 +227,17 @@ const styles = StyleSheet.create({
   },
   topBlock: {
     alignItems: "center",
-    gap: 10,
-    marginTop: 8,
+    gap: 8,
   },
   poemLine: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: "800",
     letterSpacing: -0.3,
-    lineHeight: 31,
+    lineHeight: 28,
     textAlign: "center",
   },
   poemStack: {
     alignItems: "center",
-    gap: 2,
+    gap: 4,
   },
 });

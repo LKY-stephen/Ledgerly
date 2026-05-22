@@ -2,7 +2,13 @@ import { Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-na
 import type { SurfaceTokens } from "@ledgerly/ui";
 
 import { useGame, type CardId } from "./game-context";
-import { getDockCardScale, getGameCardColors } from "./game-ui";
+import {
+  getDockCardNearbyTransform,
+  getDockCardScale,
+  getGameCardColors,
+  getGameCardPresentation,
+  getSuitColor,
+} from "./game-ui";
 
 const CARD_COUNT = 4;
 const DOCK_PAD_H = 16;
@@ -18,20 +24,9 @@ export function useCardDimensions() {
   return { cardWidth, cardHeight };
 }
 
-type CardVariant = "black" | "white" | "flash" | "system";
-
-const cardConfig: Record<CardId, { suit: string; label: string; sublabel: string; variant: CardVariant; footer: string }> = {
-  new: { suit: "♠", label: "UPLOAD", sublabel: "UPLOAD", variant: "black", footer: "BUSINESS FILE INTAKE" },
-  report: { suit: "♥", label: "ASK", sublabel: "REPORT", variant: "flash", footer: "NATURAL Q&A" },
-  show: { suit: "♣", label: "REQUEST", sublabel: "REQUEST", variant: "white", footer: "PERSONAL LEDGER CHAT" },
-  settings: { suit: "♦", label: "OPEN", sublabel: "SETTINGS", variant: "system", footer: "THEME · PROFILE" },
-};
-
 interface Props {
   cardId: CardId;
   isStickmanNearby?: boolean;
-  suit: string;
-  label: string;
   palette: SurfaceTokens;
 }
 
@@ -43,9 +38,15 @@ export function CardDockItem({
   const { activateCard, state } = useGame();
   const isActive = state.activeCard === cardId;
   const { cardWidth, cardHeight } = useCardDimensions();
-  const config = cardConfig[cardId];
+  const config = getGameCardPresentation(cardId);
+  const nearbyTransform = getDockCardNearbyTransform({
+    cardId,
+    isNearby: isStickmanNearby,
+    palette,
+  });
 
   const variantStyles = getGameCardColors(config.variant, palette);
+  const suitColor = getSuitColor({ cardId, palette });
 
   return (
     <Pressable
@@ -65,19 +66,11 @@ export function CardDockItem({
           shadowOpacity: 1,
           shadowRadius: 0,
           transform: [
-            { translateY: isStickmanNearby && !pressed ? -6 : 0 },
-            {
-              rotate:
-                isStickmanNearby && !isActive
-                  ? cardId === "show"
-                    ? "2deg"
-                    : "-2deg"
-                  : "0deg",
-            },
+            { translateY: isStickmanNearby && !pressed ? nearbyTransform.translateY : 0 },
+            { rotate: isStickmanNearby && !isActive ? nearbyTransform.rotate : "0deg" },
             {
               scale:
-                getDockCardScale({ isActive, pressed }) *
-                (isStickmanNearby && !pressed ? 1.04 : 1),
+                getDockCardScale({ isActive, isNearby: isStickmanNearby, palette, pressed }),
             },
           ],
           elevation: 6,
@@ -87,10 +80,10 @@ export function CardDockItem({
       {/* Top row: suit + date */}
       <View style={styles.topRow}>
         <Text style={[styles.topLabel, { color: variantStyles.text }]}>
-          {config.suit} {config.label}
+          <Text style={{ color: suitColor }}>{config.suit}</Text> {config.label}
         </Text>
         <View style={[styles.pip, { backgroundColor: variantStyles.pipBg }]}>
-          <Text style={[styles.pipText, { color: variantStyles.pipText }]}>
+          <Text style={[styles.pipText, { color: suitColor }]}>
             {config.suit}
           </Text>
         </View>
@@ -119,8 +112,8 @@ export function CardDockItem({
 const styles = StyleSheet.create({
   card: {
     borderWidth: 3,
-    paddingHorizontal: 10,
-    paddingVertical: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
     justifyContent: "space-between",
     overflow: "hidden",
   },
@@ -132,7 +125,7 @@ const styles = StyleSheet.create({
   topLabel: {
     fontSize: 10,
     fontWeight: "700",
-    letterSpacing: 0.5,
+    letterSpacing: 0.9,
     textTransform: "uppercase",
   },
   pip: {
@@ -150,9 +143,9 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
   },
   mainLabel: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: "900",
-    letterSpacing: -0.5,
+    letterSpacing: -0.4,
     textTransform: "uppercase",
     lineHeight: 24,
   },
@@ -164,7 +157,7 @@ const styles = StyleSheet.create({
   footerText: {
     fontSize: 8,
     fontWeight: "700",
-    letterSpacing: 0.5,
+    letterSpacing: 0.8,
     textTransform: "uppercase",
     opacity: 0.7,
   },

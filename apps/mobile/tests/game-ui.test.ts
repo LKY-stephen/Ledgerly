@@ -3,11 +3,14 @@ import { describe, expect, it } from "vitest";
 import {
   gameHomeButtonLabel,
   getCharacterMotionProfile,
+  getDockCardNearbyTransform,
   getDockCardScale,
+  getGameCardPresentation,
   getStickmanEnergy,
   getStickmanNearbyCardId,
   getStickmanTouchReaction,
 } from "../src/features/game/game-ui";
+import { surfaceThemes } from "../../../packages/ui/src/tokens";
 
 describe("game UI helpers", () => {
   it("shrinks an active card after it is selected", () => {
@@ -18,6 +21,17 @@ describe("game UI helpers", () => {
   it("shrinks a pressed card even before it becomes active", () => {
     expect(getDockCardScale({ isActive: false, pressed: true })).toBe(0.94);
     expect(getDockCardScale({ isActive: true, pressed: true })).toBe(0.88);
+  });
+
+  it("uses the scene nudge scale for a nearby dock card", () => {
+    expect(
+      getDockCardScale({
+        isActive: false,
+        isNearby: true,
+        palette: surfaceThemes.light,
+        pressed: false,
+      }),
+    ).toBe(surfaceThemes.light.motion.nearbyScale);
   });
 
   it("uses a dedicated home label for the return control", () => {
@@ -59,5 +73,33 @@ describe("game UI helpers", () => {
   it("maps roaming dock anchors back to the matching card id", () => {
     expect(getStickmanNearbyCardId("dock:show")).toBe("show");
     expect(getStickmanNearbyCardId("discard")).toBeNull();
+  });
+
+  it("exposes semantic card presentation for the request card", () => {
+    expect(getGameCardPresentation("show")).toMatchObject({
+      label: "REQUEST",
+      variant: "paper",
+    });
+  });
+
+  it("keeps the report card copy aligned with the ledger report surface", () => {
+    expect(getGameCardPresentation("report")).toMatchObject({
+      label: "VIEW",
+      sublabel: "REPORT",
+      footer: "LOCAL LEDGER REPORT",
+    });
+  });
+
+  it("tilts nearby cards using the shared motion grammar", () => {
+    expect(
+      getDockCardNearbyTransform({
+        cardId: "show",
+        isNearby: true,
+        palette: surfaceThemes.light,
+      }),
+    ).toMatchObject({
+      rotate: `${surfaceThemes.light.motion.nearbyRotateDeg}deg`,
+      translateY: surfaceThemes.light.motion.nearbyLift,
+    });
   });
 });
