@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Animated, Easing, Platform } from "react-native";
+import { surfaceTokens } from "@ledgerly/ui";
 
 export function useCardFlip(isVisible: boolean) {
   const slashOpacity = useRef(new Animated.Value(0)).current;
@@ -16,21 +17,21 @@ export function useCardFlip(isVisible: boolean) {
         // Slash: smooth slide-through with fade
         Animated.timing(slashSlide, {
           toValue: 1,
-          duration: 280,
+          duration: surfaceTokens.motion.base,
           easing: Easing.out(Easing.quad),
           useNativeDriver: true,
         }),
         Animated.sequence([
           Animated.timing(slashOpacity, {
             toValue: 1,
-            duration: 80,
+            duration: surfaceTokens.motion.fast,
             easing: Easing.out(Easing.quad),
             useNativeDriver: true,
           }),
           Animated.delay(60),
           Animated.timing(slashOpacity, {
             toValue: 0,
-            duration: 180,
+            duration: surfaceTokens.motion.fast,
             easing: Easing.inOut(Easing.quad),
             useNativeDriver: true,
           }),
@@ -49,7 +50,7 @@ export function useCardFlip(isVisible: boolean) {
     } else {
       Animated.timing(panelProgress, {
         toValue: 0,
-        duration: 180,
+        duration: surfaceTokens.motion.fast,
         easing: Easing.in(Easing.cubic),
         useNativeDriver: true,
       }).start();

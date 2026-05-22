@@ -404,6 +404,7 @@ export function ProfileScreen({ embedded = false }: { embedded?: boolean } = {})
           eyebrow={copy.common.theme}
           palette={palette}
           title={copy.common.theme}
+          variant={isExpanded ? "default" : "compact"}
         >
           <Text style={[styles.sectionHint, { color: palette.inkMuted }]}>
             {copy.meScreen.themeDescription}
@@ -427,6 +428,7 @@ export function ProfileScreen({ embedded = false }: { embedded?: boolean } = {})
           eyebrow={copy.meScreen.profileEyebrow}
           palette={palette}
           title={copy.meScreen.profileTitle}
+          variant={isExpanded ? "default" : "compact"}
         >
           <Text style={[styles.sectionHint, { color: palette.inkMuted }]}>
             {copy.meScreen.profileDescription}
@@ -542,6 +544,7 @@ export function ProfileScreen({ embedded = false }: { embedded?: boolean } = {})
           eyebrow={copy.common.language}
           palette={palette}
           title={copy.common.language}
+          variant={isExpanded ? "default" : "compact"}
         >
           <Text style={[styles.sectionHint, { color: palette.inkMuted }]}>
             {copy.meScreen.localeDescription}
@@ -566,6 +569,7 @@ export function ProfileScreen({ embedded = false }: { embedded?: boolean } = {})
             eyebrow={copy.meScreen.apiSectionEyebrow}
             palette={palette}
             title={copy.meScreen.apiSectionTitle}
+            variant={isExpanded ? "default" : "compact"}
           >
             <Text style={[styles.sectionHint, { color: palette.inkMuted }]}>
               {copy.meScreen.apiSectionDescription}
@@ -807,6 +811,7 @@ export function ProfileScreen({ embedded = false }: { embedded?: boolean } = {})
           eyebrow={copy.meScreen.storageEyebrow}
           palette={palette}
           title={copy.meScreen.databaseTitle}
+          variant={isExpanded ? "default" : "compact"}
         >
             <Text style={[styles.sectionHint, { color: palette.inkMuted }]}>
               {copy.meScreen.databaseDescription}
@@ -950,6 +955,7 @@ export function ProfileScreen({ embedded = false }: { embedded?: boolean } = {})
           eyebrow={copy.meScreen.sessionTitle}
           palette={palette}
           title={sessionTitle}
+          variant={isExpanded ? "default" : "compact"}
         >
           <Text style={[styles.sessionKind, { color: palette.system }]}>
             {sessionKindLabel}
@@ -1012,9 +1018,9 @@ const styles = StyleSheet.create({
     fontWeight: "800",
   },
   container: {
-    gap: 22,
-    padding: 20,
-    paddingBottom: 168,
+    gap: 18,
+    padding: 18,
+    paddingBottom: 128,
   },
   databaseMessage: {
     fontSize: 13,
@@ -1162,10 +1168,10 @@ const styles = StyleSheet.create({
     lineHeight: 30,
   },
   compactBody: {
-    gap: 22,
+    gap: 18,
   },
   compactColumn: {
-    gap: 22,
+    gap: 18,
   },
   wideBody: {
     flexDirection: "row",

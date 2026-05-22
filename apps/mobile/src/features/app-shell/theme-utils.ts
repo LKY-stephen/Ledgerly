@@ -78,20 +78,20 @@ export function getButtonColors(
     ? palette.name === "dark"
       ? withAlpha(palette.destructive, 0.18)
       : palette.destructive
-    : palette.accent;
+    : palette.acid;
   const border = isDestructive ? palette.destructive : palette.border;
   const text = isDestructive
     ? palette.name === "dark"
-      ? palette.destructive
+      ? palette.hot
       : palette.paper
-    : palette.inkOnAccent;
+    : palette.inkOnAcid;
   const pressedBackground = isDestructive
     ? palette.name === "dark"
       ? withAlpha(palette.destructive, 0.28)
       : withAlpha(palette.destructive, 0.75)
     : palette.name === "dark"
-      ? withAlpha(palette.accent, 0.76)
-      : withAlpha(palette.accent, 0.78);
+      ? withAlpha(palette.acid, 0.76)
+      : withAlpha(palette.acid, 0.78);
 
   return {
     background,

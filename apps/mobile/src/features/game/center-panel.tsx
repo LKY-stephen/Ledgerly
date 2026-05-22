@@ -11,21 +11,18 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAppShell } from "../app-shell/provider";
 import { useGame, type CardId } from "./game-context";
-import { gameHomeButtonLabel, gameSettingsCardLabel } from "./game-ui";
+import {
+  gameHomeButtonLabel,
+  gameSettingsCardLabel,
+  getGameCardColors,
+  getGameCardPresentation,
+  getSuitColor,
+} from "./game-ui";
 import { useCardFlip } from "./animations/use-card-flip";
 import { useDragPhysics } from "./animations/use-drag-physics";
 import { usePocketAnimation } from "./animations/use-pocket";
 import { CenterPanelContent } from "./center-panel-content";
-import { getGameCardColors } from "./game-ui";
-import { withAlpha } from "../app-shell/theme-utils";
 import { useCardDimensions } from "./card-dock-item";
-
-const suitMap: Record<CardId, string> = {
-  new: "♠",
-  report: "♥",
-  show: "♣",
-  settings: "♦",
-};
 
 const labelMap: Record<CardId, string> = {
   new: "Upload",
@@ -89,9 +86,9 @@ export function CenterPanel({ isStickmanNearby = false }: Props) {
 
   const card = state.activeCard;
   const isSettingsCard = card === "settings";
-  const panelVariant =
-    card === "new" ? "black" : card === "report" ? "flash" : card === "show" ? "white" : "system";
-  const panelColors = getGameCardColors(panelVariant, palette);
+  const presentation = getGameCardPresentation(card);
+  const panelColors = getGameCardColors(presentation.variant, palette);
+  const suitColor = getSuitColor({ cardId: card, palette });
   const dockHeight = cardHeight + 40;
   const groundY = viewportHeight - dockHeight - insets.bottom - 16;
   const panelWidth = Math.max(Math.min(Math.round(viewportWidth * 0.664), viewportWidth - 28), 320);
@@ -107,8 +104,32 @@ export function CenterPanel({ isStickmanNearby = false }: Props) {
         style={[styles.slashOverlay, { opacity: slashOpacity }]}
         pointerEvents="none"
       >
-        <Animated.View style={[styles.slashStripe, styles.slashHot, { backgroundColor: palette.accent, transform: [{ rotate: "115deg" }, { translateX: slashTranslateX }, { translateY: -40 }] }]} />
-        <Animated.View style={[styles.slashStripe, styles.slashAcid, { backgroundColor: palette.success, transform: [{ rotate: "115deg" }, { translateX: slashTranslateX }, { translateY: 40 }] }]} />
+        <Animated.View
+          style={[
+            styles.slashStripe,
+            {
+              backgroundColor: palette.hot,
+              transform: [
+                { rotate: `${palette.motion.slashAngleDeg}deg` },
+                { translateX: slashTranslateX },
+                { translateY: -40 },
+              ],
+            },
+          ]}
+        />
+        <Animated.View
+          style={[
+            styles.slashStripe,
+            {
+              backgroundColor: palette.acid,
+              transform: [
+                { rotate: `${palette.motion.slashAngleDeg}deg` },
+                { translateX: slashTranslateX },
+                { translateY: 40 },
+              ],
+            },
+          ]}
+        />
       </Animated.View>
 
       {/* Panel with pocket animation wrapper */}
@@ -132,19 +153,19 @@ export function CenterPanel({ isStickmanNearby = false }: Props) {
           style={[
             styles.panel,
             {
-              backgroundColor: withAlpha(panelColors.bg, 0.5),
-              borderColor: isStickmanNearby ? palette.accent : panelColors.border,
+              backgroundColor: palette.panelSurface,
+              borderColor: isStickmanNearby ? palette.hot : panelColors.border,
               borderRadius: palette.panelRadius,
               height: panelHeight,
-              shadowColor: isStickmanNearby ? palette.accent : panelColors.border,
+              shadowColor: isStickmanNearby ? palette.hot : panelColors.border,
               width: panelWidth,
             },
           ]}
         >
           {/* Panel header */}
           <View style={[styles.header, { borderBottomColor: palette.divider }]}>
-            <Text style={[styles.headerSuit, { color: panelColors.text }]}>
-              {suitMap[card]}
+            <Text style={[styles.headerSuit, { color: suitColor }]}>
+              {presentation.suit}
             </Text>
             <Text style={[styles.headerLabel, { color: panelColors.text }]}>
               {labelMap[card]}
@@ -172,17 +193,17 @@ export function CenterPanel({ isStickmanNearby = false }: Props) {
                 <Pressable
                   onPress={handlePocket}
                   hitSlop={8}
-                  style={[styles.actionBtn, { backgroundColor: palette.success, borderColor: palette.border }]}
+                  style={[styles.actionBtn, { backgroundColor: palette.acid, borderColor: palette.border }]}
                 >
-                  <Text style={[styles.actionBtnText, { color: palette.inkOnAccent }]}>POCKET</Text>
+                  <Text style={[styles.actionBtnText, { color: palette.inkOnAcid }]}>POCKET</Text>
                 </Pressable>
 
                 <Pressable
                   onPress={handleSpike}
                   hitSlop={8}
-                  style={[styles.actionBtn, { backgroundColor: palette.accent, borderColor: palette.border }]}
+                  style={[styles.actionBtn, { backgroundColor: palette.hot, borderColor: palette.border }]}
                 >
-                  <Text style={[styles.actionBtnText, { color: palette.inkOnAccent }]}>SPIKE</Text>
+                  <Text style={[styles.actionBtnText, { color: palette.inkOnHot }]}>SPIKE</Text>
                 </Pressable>
               </>
             )}
@@ -229,7 +250,7 @@ const styles = StyleSheet.create({
     width: "100%",
     borderWidth: 3,
     overflow: "hidden",
-    shadowOffset: { width: 6, height: 6 },
+    shadowOffset: { width: 4, height: 4 },
     shadowOpacity: Platform.OS === "web" ? 0.55 : 0.75,
     shadowRadius: 0,
     elevation: 8,

@@ -1,12 +1,11 @@
 import type { SurfaceTokens } from "@ledgerly/ui";
-import { withAlpha } from "../app-shell/theme-utils";
 import type { CardId, StickmanMood } from "./game-context";
 
 export const gameHomeButtonLabel = "HOME";
 export const gameSettingsCardLabel = "SETTINGS";
 export const maxStickmanEnergyPlays = 7;
 
-export type GameCardVariant = "black" | "white" | "flash" | "system";
+export type GameCardVariant = "acid" | "hot" | "paper" | "system";
 export type CharacterType = "stickman" | "cat";
 export type StickmanSceneAnchorId =
   | "cat"
@@ -26,21 +25,111 @@ export interface CharacterMotionProfile {
   reactionTwist: number;
 }
 
+export interface GameCardColors {
+  bg: string;
+  border: string;
+  pipBg: string;
+  pipText: string;
+  text: string;
+}
+
+export interface GameCardPresentation {
+  suit: string;
+  label: string;
+  sublabel: string;
+  footer: string;
+  variant: GameCardVariant;
+}
+
+const cardPresentation: Record<CardId, GameCardPresentation> = {
+  new: {
+    suit: "♠",
+    label: "UPLOAD",
+    sublabel: "UPLOAD",
+    footer: "BUSINESS FILE INTAKE",
+    variant: "acid",
+  },
+  report: {
+    suit: "♥",
+    label: "VIEW",
+    sublabel: "REPORT",
+    footer: "LOCAL LEDGER REPORT",
+    variant: "hot",
+  },
+  show: {
+    suit: "♣",
+    label: "REQUEST",
+    sublabel: "REQUEST",
+    footer: "PERSONAL LEDGER CHAT",
+    variant: "paper",
+  },
+  settings: {
+    suit: "♦",
+    label: "OPEN",
+    sublabel: "SETTINGS",
+    footer: "THEME · PROFILE",
+    variant: "system",
+  },
+};
+
 export function getNextQuickTheme(currentTheme: "light" | "dark"): "light" | "dark" {
   return currentTheme === "dark" ? "light" : "dark";
 }
 
-export function getGameCardColors(variant: GameCardVariant, palette: SurfaceTokens) {
+export function getGameCardPresentation(cardId: CardId): GameCardPresentation {
+  return cardPresentation[cardId];
+}
+
+export function getSuitColor(input: {
+  cardId?: CardId;
+  suit?: GameCardPresentation["suit"];
+  palette: SurfaceTokens;
+}): string {
+  const suit =
+    input.suit ??
+    (input.cardId ? cardPresentation[input.cardId].suit : "♠");
+
+  switch (suit) {
+    case "♦":
+      return input.palette.suits.diamond;
+    case "♥":
+      return input.palette.suits.heart;
+    case "♣":
+      return input.palette.suits.club;
+    case "♠":
+    default:
+      return input.palette.suits.spade;
+  }
+}
+
+export function getGameCardColors(variant: GameCardVariant, palette: SurfaceTokens): GameCardColors {
   switch (variant) {
-    case "black":
+    case "acid":
       return {
-        bg: palette.name === "dark" ? palette.paper : palette.ink,
-        border: palette.paper,
-        pipBg: palette.paper,
-        pipText: palette.ink,
-        text: palette.name === "dark" ? palette.ink : palette.paper,
+        bg: palette.acid,
+        border: palette.ink,
+        pipBg: palette.ink,
+        pipText: palette.inkOnAcid,
+        text: palette.inkOnAcid,
       };
-    case "white":
+    case "hot":
+      return {
+        bg: palette.hot,
+        border: palette.ink,
+        pipBg: palette.ink,
+        pipText: palette.inkOnHot,
+        text: palette.inkOnHot,
+      };
+    case "system":
+      return {
+        bg: palette.system,
+        border: palette.ink,
+        pipBg: palette.paper,
+        pipText: palette.system,
+        text: palette.inkOnPlum,
+      };
+    case "paper":
+    default:
       return {
         bg: palette.paper,
         border: palette.ink,
@@ -48,30 +137,25 @@ export function getGameCardColors(variant: GameCardVariant, palette: SurfaceToke
         pipText: palette.paper,
         text: palette.ink,
       };
-    case "flash":
-      return {
-        bg: withAlpha(palette.accent, 0.82),
-        border: palette.ink,
-        pipBg: palette.ink,
-        pipText: palette.paper,
-        text: palette.inkOnAccent,
-      };
-    case "system":
-      return {
-        bg: withAlpha(palette.system, 0.82),
-        border: palette.paper,
-        pipBg: palette.paper,
-        pipText: palette.system,
-        text: palette.paper,
-      };
   }
+}
+
+export function getDiscardFace(cardId: CardId, palette: SurfaceTokens): { bg: string; text: string } {
+  const presentation = getGameCardPresentation(cardId);
+  const colors = getGameCardColors(presentation.variant, palette);
+  return {
+    bg: colors.bg,
+    text: colors.text,
+  };
 }
 
 export function getDockCardScale(input: {
   isActive: boolean;
+  isNearby?: boolean;
   pressed: boolean;
+  palette?: SurfaceTokens;
 }): number {
-  const { isActive, pressed } = input;
+  const { isActive, isNearby = false, pressed, palette } = input;
 
   if (pressed && isActive) {
     return 0.88;
@@ -85,7 +169,31 @@ export function getDockCardScale(input: {
     return 0.9;
   }
 
+  if (isNearby) {
+    return palette?.motion.nearbyScale ?? 1.04;
+  }
+
   return 1;
+}
+
+export function getDockCardNearbyTransform(input: {
+  cardId: CardId;
+  isNearby: boolean;
+  palette: SurfaceTokens;
+}): { rotate: string; translateY: number } {
+  if (!input.isNearby) {
+    return { rotate: "0deg", translateY: 0 };
+  }
+
+  const rotate =
+    input.cardId === "show"
+      ? `${input.palette.motion.nearbyRotateDeg}deg`
+      : `${-input.palette.motion.nearbyRotateDeg}deg`;
+
+  return {
+    rotate,
+    translateY: input.palette.motion.nearbyLift,
+  };
 }
 
 export function getStickmanEnergy(cardsPlayedThisSession: number): number {

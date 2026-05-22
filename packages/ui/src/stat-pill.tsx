@@ -28,25 +28,20 @@ export function StatPill({ label, palette = surfaceTokens, value }: StatPillProp
 
 const styles = StyleSheet.create({
   label: {
-    fontSize: 12,
-    fontWeight: "800",
-    letterSpacing: 0.5,
-    textTransform: "uppercase",
+    ...surfaceTokens.type.label,
   },
   pill: {
     minWidth: 132,
-    gap: 4,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 999,
-    borderWidth: 2,
-    shadowOffset: { width: 0, height: 4 },
+    gap: surfaceTokens.spacing.xxs,
+    paddingHorizontal: surfaceTokens.spacing.lg,
+    paddingVertical: surfaceTokens.spacing.xs,
+    borderRadius: surfaceTokens.radius.pill,
+    borderWidth: surfaceTokens.stroke.hair,
+    shadowOffset: { width: 0, height: surfaceTokens.stroke.shadowOffset },
     shadowOpacity: 0.14,
     shadowRadius: 0,
   },
   value: {
-    fontSize: 22,
-    fontWeight: "800",
-    letterSpacing: -0.4,
+    ...surfaceTokens.type.heading,
   },
 });

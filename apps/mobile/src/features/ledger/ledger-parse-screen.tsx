@@ -36,6 +36,7 @@ export function LedgerParseScreen() {
   const router = useRouter();
   const { isExpanded, isMedium } = useResponsive();
   const isWide = isExpanded || isMedium;
+  const showSourceDetailFirst = isExpanded;
   const { copy, palette, profileInfo, resolvedLocale } = useAppShell();
   const parseCopy = copy.ledger.parse;
   const primaryButton = getButtonColors(palette, "primary");
@@ -208,7 +209,7 @@ export function LedgerParseScreen() {
         <View style={isExpanded ? styles.twoColumn : undefined}>
           {/* Left column: parse output / empty states */}
           <View style={isExpanded ? styles.columnLeft : undefined}>
-            {hasData ? (
+            {showSourceDetailFirst && hasData ? (
               <View
                 style={[
                   styles.card,
@@ -471,6 +472,38 @@ export function LedgerParseScreen() {
                   palette={palette}
                   value={review.description}
                 />
+              </View>
+            ) : null}
+
+            {!showSourceDetailFirst && hasData ? (
+              <View
+                style={[
+                  styles.card,
+                  { backgroundColor: palette.paper, borderColor: palette.border },
+                ]}
+              >
+                <Text style={[styles.sectionTitle, { color: palette.ink }]}>
+                  {parseCopy.parsedJsonTitle}
+                </Text>
+                <Text style={[styles.summaryText, { color: palette.inkMuted }]}>
+                  {parseCopy.mapping}
+                </Text>
+                <View
+                  style={[
+                    styles.jsonBox,
+                    {
+                      backgroundColor: palette.shellElevated,
+                      borderColor: palette.border,
+                    },
+                  ]}
+                >
+                  <Text
+                    selectable
+                    style={[styles.jsonText, { color: palette.ink }]}
+                  >
+                    {formattedJson || rawText || parseCopy.noData}
+                  </Text>
+                </View>
               </View>
             ) : null}
 
