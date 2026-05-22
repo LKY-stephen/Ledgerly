@@ -54,7 +54,16 @@ export function StorageSetupScreen() {
   return (
     <SafeAreaView edges={["top", "left", "right"]} style={[styles.safeArea, { backgroundColor: palette.shell }]}>
       <ScrollView contentContainerStyle={[styles.container, isExpanded ? styles.containerWide : null]}>
-        <View style={styles.hero}>
+        <View
+          style={[
+            styles.hero,
+            {
+              backgroundColor: palette.paper,
+              borderColor: palette.border,
+              shadowColor: palette.shadow,
+            },
+          ]}
+        >
           <Text style={[styles.eyebrow, { color: palette.accent }]}>{copy.storageSetup.eyebrow}</Text>
           <Text style={[styles.title, { color: palette.ink }]}>{screenCopy.title}</Text>
           <Text style={[styles.summary, { color: palette.inkMuted }]}>{screenCopy.summary}</Text>
@@ -138,6 +147,10 @@ export function StorageSetupScreen() {
             </Text>
           </Pressable>
 
+          <Text style={[styles.dividerLabel, { color: palette.inkMuted }]}>
+            {copy.common.system}
+          </Text>
+
           <Pressable
             accessibilityRole="button"
             disabled={isBusy}
@@ -180,15 +193,22 @@ export function StorageSetupScreen() {
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    gap: 20,
+    gap: 16,
     justifyContent: "center",
-    padding: 24,
-    paddingBottom: 36,
+    padding: 20,
+    paddingBottom: 28,
   },
   containerWide: {
     alignSelf: "center",
     maxWidth: 560,
     width: "100%",
+  },
+  dividerLabel: {
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 1.1,
+    textAlign: "center",
+    textTransform: "uppercase",
   },
   eyebrow: {
     fontSize: 12,
@@ -202,13 +222,16 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   hero: {
-    gap: 12,
+    borderRadius: 18,
+    borderWidth: 2,
+    gap: 10,
+    padding: 18,
   },
   panel: {
-    borderRadius: 12,
+    borderRadius: 18,
     borderWidth: 2,
-    gap: 14,
-    padding: 20,
+    gap: 16,
+    padding: 18,
   },
   primaryAction: {
     alignItems: "center",
@@ -239,13 +262,13 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   summary: {
-    fontSize: 16,
-    lineHeight: 24,
+    fontSize: 15,
+    lineHeight: 22,
   },
   title: {
-    fontSize: 30,
+    fontSize: 28,
     fontWeight: "800",
-    lineHeight: 36,
+    lineHeight: 34,
   },
   warningPanel: {
     borderRadius: 12,

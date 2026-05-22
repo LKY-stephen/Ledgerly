@@ -85,7 +85,9 @@ describe("theme contrast", () => {
     const light = surfaceThemes.light;
     const effectiveTabBar = blendColors(light.tabBar, light.shell);
 
-    expect(contrastRatio(light.inkOnAccent, light.accent)).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(light.inkOnHot, light.hot)).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(light.inkOnAcid, light.acid)).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(light.inkOnPlum, light.system)).toBeGreaterThanOrEqual(4.5);
     expect(contrastRatio(light.ink, light.paperMuted)).toBeGreaterThanOrEqual(7);
     expect(contrastRatio(light.ink, light.accentSoft)).toBeGreaterThanOrEqual(4.5);
     expect(contrastRatio(light.tabActive, `rgb(${effectiveTabBar.red}, ${effectiveTabBar.green}, ${effectiveTabBar.blue})`)).toBeGreaterThanOrEqual(4.5);
@@ -96,6 +98,9 @@ describe("theme contrast", () => {
     const dark = surfaceThemes.dark;
     const effectiveTabBar = blendColors(dark.tabBar, dark.shell);
 
+    expect(contrastRatio(dark.inkOnHot, dark.hot)).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(dark.inkOnAcid, dark.acid)).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(dark.inkOnPlum, dark.system)).toBeGreaterThanOrEqual(4.5);
     expect(contrastRatio(dark.tabActive, `rgb(${effectiveTabBar.red}, ${effectiveTabBar.green}, ${effectiveTabBar.blue})`)).toBeGreaterThanOrEqual(4.5);
     expect(contrastRatio(dark.tabInactive, `rgb(${effectiveTabBar.red}, ${effectiveTabBar.green}, ${effectiveTabBar.blue})`)).toBeGreaterThanOrEqual(4.5);
   });

@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Animated, Easing } from "react-native";
+import { surfaceTokens } from "@ledgerly/ui";
 
 export function usePocketAnimation(shouldPocket: boolean) {
   const scale = useRef(new Animated.Value(1)).current;
@@ -18,20 +19,20 @@ export function usePocketAnimation(shouldPocket: boolean) {
       Animated.parallel([
         Animated.timing(scale, {
           toValue: 0.3,
-          duration: 250,
+          duration: surfaceTokens.motion.base,
           easing: Easing.in(Easing.back(1.5)),
           useNativeDriver: true,
         }),
         Animated.timing(translateY, {
           toValue: 200,
-          duration: 300,
+          duration: surfaceTokens.motion.dramatic,
           easing: Easing.in(Easing.cubic),
           useNativeDriver: true,
         }),
       ]),
       Animated.timing(opacity, {
         toValue: 0,
-        duration: 100,
+        duration: surfaceTokens.motion.fast,
         useNativeDriver: true,
       }),
     ]).start();

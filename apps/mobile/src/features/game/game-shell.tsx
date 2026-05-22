@@ -126,7 +126,7 @@ export function GameShell() {
       <View
         style={[
           StyleSheet.absoluteFill,
-          { backgroundColor: isDark ? "rgba(244,239,230,0.02)" : "rgba(10,10,10,0.02)" },
+          { backgroundColor: palette.scene.halftone },
         ]}
       />
 
@@ -179,11 +179,11 @@ export function GameShell() {
           travelStyle,
         ]}
       >
-        <View style={styles.groundShadow} />
+        <View style={[styles.groundShadow, { backgroundColor: palette.scene.groundShadow }]} />
       </Animated.View>
 
-      {/* Cat (light only) — SVG line-art */}
-      {!isDark && palette.showCat && (
+      {/* Cat — SVG line-art */}
+      {palette.showCat && (
         <Pressable
           accessibilityLabel="Nudge the cat"
           onPress={() => setCatTouchCount((count) => count + 1)}
@@ -340,7 +340,7 @@ const styles = StyleSheet.create({
     width: 108,
     height: 16,
     borderRadius: 999,
-    backgroundColor: "rgba(10,10,10,0.06)",
+    backgroundColor: "transparent",
   },
   groundLine: {
     position: "absolute",

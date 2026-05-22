@@ -35,7 +35,7 @@ export function ReportPanel({ variant = "report" }: { variant?: "report" | "requ
         >
           <View style={styles.headerCopy}>
             <Text style={[styles.title, { color: palette.ink }]}>
-              {locale === "zh-CN" ? "Report" : "Report"}
+              {locale === "zh-CN" ? "报告" : "Report"}
             </Text>
           </View>
           {!isLoaded ? (
@@ -122,7 +122,7 @@ const styles = StyleSheet.create({
   },
   metricsRow: {
     borderRadius: 16,
-    borderWidth: 2,
+    borderWidth: 3,
     gap: 12,
     marginBottom: 12,
     paddingVertical: 12,

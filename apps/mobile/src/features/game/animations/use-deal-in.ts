@@ -1,7 +1,8 @@
 import { useEffect, useRef } from "react";
 import { Animated } from "react-native";
+import { surfaceTokens } from "@ledgerly/ui";
 
-export function useDealIn(cardCount: number, delayPerCard = 120) {
+export function useDealIn(cardCount: number, delayPerCard = surfaceTokens.motion.fast) {
   const anims = useRef(
     Array.from({ length: cardCount }, () => new Animated.Value(0)),
   ).current;

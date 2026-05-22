@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Animated, Easing } from "react-native";
+import { surfaceTokens } from "@ledgerly/ui";
 
 import type { StickmanSceneAnchorId } from "../game-ui";
 
@@ -147,7 +148,7 @@ export function useStickmanRoam({
       });
     };
 
-    pauseTimer = setTimeout(moveToNext, 280);
+    pauseTimer = setTimeout(moveToNext, surfaceTokens.motion.base);
 
     return () => {
       cancelled = true;

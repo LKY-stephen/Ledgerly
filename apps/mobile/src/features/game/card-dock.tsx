@@ -5,12 +5,7 @@ import { CardDockItem } from "./card-dock-item";
 import { useDealIn } from "./animations/use-deal-in";
 import type { CardId } from "./game-context";
 
-const cards: { id: CardId; suit: string; label: string }[] = [
-  { id: "new", suit: "♠", label: "Upload" },
-  { id: "report", suit: "♥", label: "Report" },
-  { id: "show", suit: "♣", label: "Request" },
-  { id: "settings", suit: "♦", label: "Settings" },
-];
+const cards: readonly CardId[] = ["new", "report", "show", "settings"];
 
 interface Props {
   stickmanNearbyCardId?: CardId | null;
@@ -23,12 +18,10 @@ export function CardDock({ stickmanNearbyCardId = null }: Props) {
   return (
     <View style={styles.dock}>
       {cards.map((card, i) => (
-        <Animated.View key={card.id} style={dealStyles[i]}>
+        <Animated.View key={card} style={dealStyles[i]}>
           <CardDockItem
-            cardId={card.id}
-            isStickmanNearby={stickmanNearbyCardId === card.id}
-            suit={card.suit}
-            label={card.label}
+            cardId={card}
+            isStickmanNearby={stickmanNearbyCardId === card}
             palette={palette}
           />
         </Animated.View>

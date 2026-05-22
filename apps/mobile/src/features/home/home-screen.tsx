@@ -62,6 +62,7 @@ export function HomeScreen() {
     resolvedLocale,
   } = useAppShell();
   const { isExpanded } = useResponsive();
+  const isCompact = !isExpanded;
   const {
     error,
     isLoaded,
@@ -204,39 +205,68 @@ export function HomeScreen() {
 
   return (
     <SafeAreaView edges={["top", "left", "right"]} style={[styles.safeArea, { backgroundColor: palette.shell }]}>
-      <ScrollView
-        contentContainerStyle={[styles.container, { backgroundColor: palette.shell }]}
-        refreshControl={
-          Platform.OS !== "web" ? <RefreshControl onRefresh={refresh} refreshing={isRefreshing} /> : undefined
-        }
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.topRow}>
-          <View style={styles.brandRow}>
-            <CfoAvatar />
-            <Text style={[styles.brand, { color: palette.ink }]}>
-              {copy.common.appName}
-            </Text>
+      <View style={styles.safeArea}>
+        <ScrollView
+          contentContainerStyle={[styles.container, { backgroundColor: palette.shell }]}
+          refreshControl={
+            Platform.OS !== "web" ? <RefreshControl onRefresh={refresh} refreshing={isRefreshing} /> : undefined
+          }
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.topRow}>
+            <View style={styles.brandRow}>
+              <CfoAvatar />
+              <Text style={[styles.brand, { color: palette.ink }]}>
+                {copy.common.appName}
+              </Text>
+            </View>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+              {Platform.OS === "web" ? (
+                <Pressable
+                  accessibilityLabel="Refresh"
+                  accessibilityRole="button"
+                  onPress={refresh}
+                  style={({ pressed }) => [
+                    styles.notificationButton,
+                    { backgroundColor: pressed ? palette.shellMuted : palette.shell, opacity: isRefreshing ? 0.5 : 1 },
+                  ]}
+                >
+                  <Ionicons color={palette.ink} name="refresh-outline" size={18} />
+                </Pressable>
+              ) : null}
+            </View>
           </View>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-            {Platform.OS === "web" ? (
-              <Pressable
-                accessibilityLabel="Refresh"
-                accessibilityRole="button"
-                onPress={refresh}
-                style={({ pressed }) => [
-                  styles.notificationButton,
-                  { backgroundColor: pressed ? palette.shellMuted : palette.shell, opacity: isRefreshing ? 0.5 : 1 },
-                ]}
-              >
-                <Ionicons color={palette.ink} name="refresh-outline" size={18} />
-              </Pressable>
-            ) : null}
-          </View>
-        </View>
 
-        {/* ---------- Two-column body on expanded, single-column on compact ---------- */}
-        <View style={isExpanded ? styles.wideBody : styles.compactBody}>
+          {isCompact ? (
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => setChatExpanded((current) => !current)}
+              style={({ pressed }) => [
+                styles.mobileAssistantStrip,
+                {
+                  backgroundColor: pressed ? palette.paperMuted : palette.paper,
+                  borderColor: palette.divider,
+                },
+              ]}
+            >
+              <View style={styles.mobileAssistantCopy}>
+                <Text style={[styles.mobileAssistantEyebrow, { color: palette.accent }]}>
+                  {resolvedLocale === "zh-CN" ? "AI 助手" : "AI Assistant"}
+                </Text>
+                <Text style={[styles.mobileAssistantTitle, { color: palette.ink }]}>
+                  {assistantCollapsedLabel}
+                </Text>
+              </View>
+              <Ionicons
+                color={palette.inkMuted}
+                name={chatExpanded ? "chevron-down" : "chevron-up"}
+                size={18}
+              />
+            </Pressable>
+          ) : null}
+
+          {/* ---------- Two-column body on expanded, single-column on compact ---------- */}
+          <View style={isExpanded ? styles.wideBody : styles.compactBody}>
           <View style={isExpanded ? styles.wideLeft : styles.compactLeft}>
             <View style={[styles.heroBlock, { backgroundColor: palette.shellElevated, borderColor: palette.divider }]}>
               <View style={styles.heroHeader}>
@@ -293,132 +323,172 @@ export function HomeScreen() {
               </View>
             </View>
 
-            <View style={[styles.profitCard, isExpanded ? styles.wideGapTop : null, { backgroundColor: palette.shellElevated, borderColor: palette.divider }]}>
-              <View style={styles.profitHeader}>
-                <View>
-                  <Text style={[styles.profitTitle, { color: palette.ink }]}>{screenCopy.trendTitle}</Text>
-                  <Text style={[styles.profitSubtitle, { color: palette.inkMuted }]}>
-                    {screenCopy.trendSubtitle}
-                  </Text>
-                </View>
+            {isCompact && chatExpanded ? (
+              <View style={[styles.mobileAssistantCard, { backgroundColor: palette.paper, borderColor: palette.divider }]}>
+                {agent.isReady ? (
+                  <AgentChat
+                    messages={agent.messages}
+                    isProcessing={agent.isProcessing}
+                    error={agent.error}
+                    onSend={async (text) => {
+                      await agent.sendMessage(text);
+                      await agent.refreshContext();
+                      refresh();
+                    }}
+                    onClear={agent.clearChat}
+                    onAttachFile={handleAttachFile}
+                    locale={resolvedLocale === "zh-CN" ? "zh-CN" : "en"}
+                  />
+                ) : (
+                  <View style={styles.chatPrompt}>
+                    {isAssistantInitializing ? (
+                      <ActivityIndicator color={palette.accent} size="small" />
+                    ) : (
+                      <Ionicons
+                        name="settings-outline"
+                        size={28}
+                        color={palette.accent}
+                      />
+                    )}
+                    <Text style={[styles.chatPromptTitle, { color: palette.ink }]}>
+                      {assistantPromptTitle}
+                    </Text>
+                    <Text style={[styles.chatPromptBody, { color: palette.inkMuted }]}>
+                      {assistantPromptBody}
+                    </Text>
+                  </View>
+                )}
               </View>
+            ) : null}
 
-              <View style={styles.trendPanel}>
-                  {selectedTrendPoint ? (
-                    <View style={[styles.trendTooltip, { backgroundColor: palette.shell, borderColor: palette.divider }]}>
-                      <View style={styles.trendTooltipHeader}>
-                        <Text style={[styles.trendTooltipDate, { color: palette.ink }]}>
-                          {formatDisplayDate(
-                            selectedTrendPoint.date,
-                            resolvedLocale,
-                          )}
-                        </Text>
-                        <Text
-                          style={[
-                            styles.trendTooltipNet,
-                            { color: palette.success },
-                          ]}
-                        >
-                          {screenCopy.net}:{" "}
-                          {formatSignedCurrencyFromCents(
-                            selectedTrendPoint.amountCents,
-                          )}
-                        </Text>
-                      </View>
-                      <View style={styles.trendTooltipMetrics}>
-                        <View style={[styles.trendTooltipMetric, { backgroundColor: palette.shellElevated }]}>
-                          <Text style={[styles.trendTooltipMetricLabel, { color: palette.inkMuted }]}>
-                            {screenCopy.income}
+            {isCompact ? null : (
+              <View style={[styles.profitCard, isExpanded ? styles.wideGapTop : null, { backgroundColor: palette.shellElevated, borderColor: palette.divider }]}>
+                <View style={styles.profitHeader}>
+                  <View>
+                    <Text style={[styles.profitTitle, { color: palette.ink }]}>{screenCopy.trendTitle}</Text>
+                    <Text style={[styles.profitSubtitle, { color: palette.inkMuted }]}>
+                      {screenCopy.trendSubtitle}
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.trendPanel}>
+                    {selectedTrendPoint ? (
+                      <View style={[styles.trendTooltip, { backgroundColor: palette.shell, borderColor: palette.divider }]}>
+                        <View style={styles.trendTooltipHeader}>
+                          <Text style={[styles.trendTooltipDate, { color: palette.ink }]}>
+                            {formatDisplayDate(
+                              selectedTrendPoint.date,
+                              resolvedLocale,
+                            )}
                           </Text>
                           <Text
                             style={[
-                              styles.trendTooltipMetricValue,
+                              styles.trendTooltipNet,
                               { color: palette.success },
                             ]}
                           >
-                            {formatCurrencyFromCents(
+                            {screenCopy.net}:{" "}
+                            {formatSignedCurrencyFromCents(
                               selectedTrendPoint.amountCents,
                             )}
                           </Text>
                         </View>
-                        <View style={[styles.trendTooltipMetric, { backgroundColor: palette.shellElevated }]}>
-                          <Text style={[styles.trendTooltipMetricLabel, { color: palette.inkMuted }]}>
-                            {screenCopy.outflow}
-                          </Text>
-                          <Text
-                            style={[
-                              styles.trendTooltipMetricValue,
-                              { color: palette.destructive },
-                            ]}
-                          >
-                            {formatCurrencyFromCents(0)}
-                          </Text>
+                        <View style={styles.trendTooltipMetrics}>
+                          <View style={[styles.trendTooltipMetric, { backgroundColor: palette.shellElevated }]}>
+                            <Text style={[styles.trendTooltipMetricLabel, { color: palette.inkMuted }]}>
+                              {screenCopy.income}
+                            </Text>
+                            <Text
+                              style={[
+                                styles.trendTooltipMetricValue,
+                                { color: palette.success },
+                              ]}
+                            >
+                              {formatCurrencyFromCents(
+                                selectedTrendPoint.amountCents,
+                              )}
+                            </Text>
+                          </View>
+                          <View style={[styles.trendTooltipMetric, { backgroundColor: palette.shellElevated }]}>
+                            <Text style={[styles.trendTooltipMetricLabel, { color: palette.inkMuted }]}>
+                              {screenCopy.outflow}
+                            </Text>
+                            <Text
+                              style={[
+                                styles.trendTooltipMetricValue,
+                                { color: palette.destructive },
+                              ]}
+                            >
+                              {formatCurrencyFromCents(0)}
+                            </Text>
+                          </View>
                         </View>
                       </View>
-                    </View>
-                  ) : null}
+                    ) : null}
 
-                  <View style={styles.chartShell}>
-                    <View style={styles.chartAxis}>
-                      <Text style={[styles.axisLabel, { color: palette.inkMuted }]}>
-                        {formatCompactCurrency(chartPeak)}
-                      </Text>
-                      <Text style={[styles.axisLabel, { color: palette.inkMuted }]}>
-                        {formatCompactCurrency(Math.round(chartPeak / 2))}
-                      </Text>
-                      <Text style={[styles.axisLabel, { color: palette.inkMuted }]}>$0</Text>
-                    </View>
-                    {Platform.OS === "web" ? (
-                      <View
-                        style={[
-                          styles.chartScroll,
-                          // @ts-expect-error: web-only CSS – overflowX lets content scroll horizontally without capturing vertical wheel events
-                          { overflowX: "auto", overflowY: "hidden" },
-                        ]}
-                      >
-                        <View style={[styles.barRow, styles.chartScrollContent]}>
-                          {snapshot.trend.map((bar, index) => (
-                            <TrendBar
-                              key={bar.date}
-                              bar={bar}
-                              isAnchor={
-                                index % 5 === 0 || index === snapshot.trend.length - 1
-                              }
-                              isSelected={bar.date === selectedTrendPoint?.date}
-                              onPress={() => setSelectedTrendDate(bar.date)}
-                              palette={palette}
-                              peak={chartPeak}
-                            />
-                          ))}
-                        </View>
+                    <View style={styles.chartShell}>
+                      <View style={styles.chartAxis}>
+                        <Text style={[styles.axisLabel, { color: palette.inkMuted }]}>
+                          {formatCompactCurrency(chartPeak)}
+                        </Text>
+                        <Text style={[styles.axisLabel, { color: palette.inkMuted }]}>
+                          {formatCompactCurrency(Math.round(chartPeak / 2))}
+                        </Text>
+                        <Text style={[styles.axisLabel, { color: palette.inkMuted }]}>$0</Text>
                       </View>
-                    ) : (
-                      <ScrollView
-                        contentContainerStyle={styles.chartScrollContent}
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        style={styles.chartScroll}
-                      >
-                        <View style={styles.barRow}>
-                          {snapshot.trend.map((bar, index) => (
-                            <TrendBar
-                              key={bar.date}
-                              bar={bar}
-                              isAnchor={
-                                index % 5 === 0 || index === snapshot.trend.length - 1
-                              }
-                              isSelected={bar.date === selectedTrendPoint?.date}
-                              onPress={() => setSelectedTrendDate(bar.date)}
-                              palette={palette}
-                              peak={chartPeak}
-                            />
-                          ))}
+                      {Platform.OS === "web" ? (
+                        <View
+                          style={[
+                            styles.chartScroll,
+                            // @ts-expect-error: web-only CSS – overflowX lets content scroll horizontally without capturing vertical wheel events
+                            { overflowX: "auto", overflowY: "hidden" },
+                          ]}
+                        >
+                          <View style={[styles.barRow, styles.chartScrollContent]}>
+                            {snapshot.trend.map((bar, index) => (
+                              <TrendBar
+                                key={bar.date}
+                                bar={bar}
+                                isAnchor={
+                                  index % 5 === 0 || index === snapshot.trend.length - 1
+                                }
+                                isSelected={bar.date === selectedTrendPoint?.date}
+                                onPress={() => setSelectedTrendDate(bar.date)}
+                                palette={palette}
+                                peak={chartPeak}
+                              />
+                            ))}
+                          </View>
                         </View>
-                      </ScrollView>
-                    )}
+                      ) : (
+                        <ScrollView
+                          contentContainerStyle={styles.chartScrollContent}
+                          horizontal
+                          showsHorizontalScrollIndicator={false}
+                          style={styles.chartScroll}
+                        >
+                          <View style={styles.barRow}>
+                            {snapshot.trend.map((bar, index) => (
+                              <TrendBar
+                                key={bar.date}
+                                bar={bar}
+                                isAnchor={
+                                  index % 5 === 0 || index === snapshot.trend.length - 1
+                                }
+                                isSelected={bar.date === selectedTrendPoint?.date}
+                                onPress={() => setSelectedTrendDate(bar.date)}
+                                palette={palette}
+                                peak={chartPeak}
+                              />
+                            ))}
+                          </View>
+                        </ScrollView>
+                      )}
+                    </View>
                   </View>
-                </View>
-            </View>
+              </View>
+            )}
           </View>
 
           <View style={[styles.activitySection, isExpanded ? styles.wideRight : null]}>
@@ -524,6 +594,66 @@ export function HomeScreen() {
               )}
             </View>
 
+            {isCompact ? (
+              <View style={[styles.profitCard, { backgroundColor: palette.shellElevated, borderColor: palette.divider }]}>
+                <View style={styles.profitHeader}>
+                  <View>
+                    <Text style={[styles.profitTitle, { color: palette.ink }]}>{screenCopy.trendTitle}</Text>
+                    <Text style={[styles.profitSubtitle, { color: palette.inkMuted }]}>
+                      {screenCopy.trendSubtitle}
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.trendPanel}>
+                  {selectedTrendPoint ? (
+                    <View style={[styles.trendTooltip, { backgroundColor: palette.shell, borderColor: palette.divider }]}>
+                      <View style={styles.trendTooltipHeader}>
+                        <Text style={[styles.trendTooltipDate, { color: palette.ink }]}>
+                          {formatDisplayDate(selectedTrendPoint.date, resolvedLocale)}
+                        </Text>
+                        <Text style={[styles.trendTooltipNet, { color: palette.success }]}>
+                          {screenCopy.net}: {formatSignedCurrencyFromCents(selectedTrendPoint.amountCents)}
+                        </Text>
+                      </View>
+                    </View>
+                  ) : null}
+
+                  <View style={styles.chartShell}>
+                    <View style={styles.chartAxis}>
+                      <Text style={[styles.axisLabel, { color: palette.inkMuted }]}>
+                        {formatCompactCurrency(chartPeak)}
+                      </Text>
+                      <Text style={[styles.axisLabel, { color: palette.inkMuted }]}>
+                        {formatCompactCurrency(Math.round(chartPeak / 2))}
+                      </Text>
+                      <Text style={[styles.axisLabel, { color: palette.inkMuted }]}>$0</Text>
+                    </View>
+                    <ScrollView
+                      contentContainerStyle={styles.chartScrollContent}
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                      style={styles.chartScroll}
+                    >
+                      <View style={styles.barRow}>
+                        {snapshot.trend.map((bar, index) => (
+                          <TrendBar
+                            key={bar.date}
+                            bar={bar}
+                            isAnchor={index % 5 === 0 || index === snapshot.trend.length - 1}
+                            isSelected={bar.date === selectedTrendPoint?.date}
+                            onPress={() => setSelectedTrendDate(bar.date)}
+                            palette={palette}
+                            peak={chartPeak}
+                          />
+                        ))}
+                      </View>
+                    </ScrollView>
+                  </View>
+                </View>
+              </View>
+            ) : null}
+
             {error ? <Text style={[styles.inlineError, { color: palette.destructive }]}>{error}</Text> : null}
 
             {snapshot.hasMore ? (
@@ -543,75 +673,76 @@ export function HomeScreen() {
               </Pressable>
             ) : null}
           </View>
-        </View>
-      </ScrollView>
+          </View>
+        </ScrollView>
 
-      {/* ── Agent Chat Panel ── */}
-      <View
-        style={[
-          chatExpanded ? styles.chatExpanded : styles.chatCollapsed,
-          { backgroundColor: palette.paper, borderColor: palette.divider },
-        ]}
-      >
-        {chatExpanded ? (
-          <>
-            <Pressable
-              onPress={() => setChatExpanded(false)}
-              style={[styles.chatToggle, { borderBottomColor: palette.divider }]}
-            >
-              <Ionicons name="chevron-down" size={18} color={palette.inkMuted} />
-              <Text style={[styles.chatToggleLabel, { color: palette.ink }]}>
-                {resolvedLocale === "zh-CN" ? "收起助手" : "Collapse Assistant"}
-              </Text>
-            </Pressable>
-            {agent.isReady ? (
-              <AgentChat
-                messages={agent.messages}
-                isProcessing={agent.isProcessing}
-                error={agent.error}
-                onSend={async (text) => {
-                  await agent.sendMessage(text);
-                  await agent.refreshContext();
-                  refresh();
-                }}
-                onClear={agent.clearChat}
-                onAttachFile={handleAttachFile}
-                locale={resolvedLocale === "zh-CN" ? "zh-CN" : "en"}
-              />
-            ) : (
-              <View style={styles.chatPrompt}>
-                {isAssistantInitializing ? (
-                  <ActivityIndicator color={palette.accent} size="small" />
-                ) : (
-                  <Ionicons
-                    name="settings-outline"
-                    size={28}
-                    color={palette.accent}
-                  />
-                )}
-                <Text style={[styles.chatPromptTitle, { color: palette.ink }]}>
-                  {assistantPromptTitle}
-                </Text>
-                <Text style={[styles.chatPromptBody, { color: palette.inkMuted }]}>
-                  {assistantPromptBody}
-                </Text>
-              </View>
-            )}
-          </>
-        ) : (
-          <Pressable
-            onPress={() => setChatExpanded(true)}
-            style={[styles.chatToggle, { borderTopColor: palette.divider }]}
+        {!isCompact ? (
+          <View
+            style={[
+              chatExpanded ? styles.chatExpanded : styles.chatCollapsed,
+              { backgroundColor: palette.paper, borderColor: palette.divider },
+            ]}
           >
-            <Ionicons name="chatbubbles-outline" size={18} color={palette.accent} />
-            <Text style={[styles.chatToggleLabel, { color: palette.ink }]}>
-              {assistantCollapsedLabel}
-            </Text>
-            <Ionicons name="chevron-up" size={18} color={palette.inkMuted} />
-          </Pressable>
-        )}
+            {chatExpanded ? (
+              <>
+                <Pressable
+                  onPress={() => setChatExpanded(false)}
+                  style={[styles.chatToggle, { borderBottomColor: palette.divider }]}
+                >
+                  <Ionicons name="chevron-down" size={18} color={palette.inkMuted} />
+                  <Text style={[styles.chatToggleLabel, { color: palette.ink }]}>
+                    {resolvedLocale === "zh-CN" ? "收起助手" : "Collapse Assistant"}
+                  </Text>
+                </Pressable>
+                {agent.isReady ? (
+                  <AgentChat
+                    messages={agent.messages}
+                    isProcessing={agent.isProcessing}
+                    error={agent.error}
+                    onSend={async (text) => {
+                      await agent.sendMessage(text);
+                      await agent.refreshContext();
+                      refresh();
+                    }}
+                    onClear={agent.clearChat}
+                    onAttachFile={handleAttachFile}
+                    locale={resolvedLocale === "zh-CN" ? "zh-CN" : "en"}
+                  />
+                ) : (
+                  <View style={styles.chatPrompt}>
+                    {isAssistantInitializing ? (
+                      <ActivityIndicator color={palette.accent} size="small" />
+                    ) : (
+                      <Ionicons
+                        name="settings-outline"
+                        size={28}
+                        color={palette.accent}
+                      />
+                    )}
+                    <Text style={[styles.chatPromptTitle, { color: palette.ink }]}>
+                      {assistantPromptTitle}
+                    </Text>
+                    <Text style={[styles.chatPromptBody, { color: palette.inkMuted }]}>
+                      {assistantPromptBody}
+                    </Text>
+                  </View>
+                )}
+              </>
+            ) : (
+              <Pressable
+                onPress={() => setChatExpanded(true)}
+                style={[styles.chatToggle, { borderTopColor: palette.divider }]}
+              >
+                <Ionicons name="chatbubbles-outline" size={18} color={palette.accent} />
+                <Text style={[styles.chatToggleLabel, { color: palette.ink }]}>
+                  {assistantCollapsedLabel}
+                </Text>
+                <Ionicons name="chevron-up" size={18} color={palette.inkMuted} />
+              </Pressable>
+            )}
+          </View>
+        ) : null}
       </View>
-
     </SafeAreaView>
   );
 }
@@ -882,7 +1013,7 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: "#F5F6F8",
     gap: 24,
-    paddingBottom: 140,
+    paddingBottom: 32,
     paddingHorizontal: 20,
     paddingTop: 16,
   },
@@ -1120,10 +1251,10 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   compactBody: {
-    gap: 24,
+    gap: 18,
   },
   compactLeft: {
-    gap: 20,
+    gap: 18,
   },
   wideBody: {
     flexDirection: "row",
@@ -1175,6 +1306,37 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     textAlign: "center",
+  },
+  mobileAssistantCard: {
+    borderRadius: 16,
+    borderWidth: 2,
+    minHeight: 300,
+    overflow: "hidden",
+  },
+  mobileAssistantCopy: {
+    flex: 1,
+    gap: 4,
+  },
+  mobileAssistantEyebrow: {
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 1,
+    textTransform: "uppercase",
+  },
+  mobileAssistantStrip: {
+    alignItems: "center",
+    borderRadius: 14,
+    borderWidth: 2,
+    flexDirection: "row",
+    gap: 12,
+    justifyContent: "space-between",
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  mobileAssistantTitle: {
+    fontSize: 15,
+    fontWeight: "800",
+    lineHeight: 20,
   },
   chatPromptButton: {
     borderRadius: 999,
