@@ -24,6 +24,8 @@ import {
   type ImportedEvidenceBundle,
   type LedgerReviewValues,
   type ProposalApprovalOptions,
+  type UploadQueueDisplayState,
+  type UploadQueueSectionId,
   type WorkflowCandidateRecord,
   type WorkflowWriteProposalItem,
 } from "./ledger-domain";
@@ -64,6 +66,7 @@ interface PersistedPlannerRun {
 interface QueueBaseRow {
   batchCreatedAt: string | null;
   batchId: string | null;
+  batchErrorMessage: string | null;
   batchState: UploadBatchState | null;
   capturedAmountCents: number;
   capturedDate: string;
@@ -74,19 +77,30 @@ interface QueueBaseRow {
   duplicateKind: DuplicateKind | null;
   evidenceId: string;
   evidenceKind: string;
+  extractionErrorMessage: string | null;
   extractionRunId: string | null;
+  extractionRunState: "complete" | "failed" | "parsing" | null;
   extractedData: string | null;
   filePath: string;
   mimeType: string | null;
   originalFileName: string;
   parseStatus: "failed" | "parsed" | "pending";
+  plannerErrorMessage: string | null;
   plannerRunId: string | null;
+  plannerRunState: "complete" | "failed" | "planning" | null;
   plannerSummaryJson: string | null;
 }
 
 interface CounterpartyLookupResult {
   exactMatches: PlannerLookupMatch[];
   suggestedMatches: PlannerLookupMatch[];
+}
+
+export interface FailedBatchClearPlan {
+  batchId: string;
+  evidenceId: string;
+  filePathsToDelete: string[];
+  keepEvidenceRecord: boolean;
 }
 
 export async function ensureDefaultEntity(
@@ -617,11 +631,16 @@ export async function loadEvidenceQueue(
       evidence_files.original_file_name AS originalFileName,
       evidence_files.mime_type AS mimeType,
       upload_batches.batch_id AS batchId,
+      upload_batches.error_message AS batchErrorMessage,
       upload_batches.state AS batchState,
       upload_batches.duplicate_kind AS duplicateKind,
       upload_batches.created_at AS batchCreatedAt,
+      extraction_runs.error_message AS extractionErrorMessage,
       extraction_runs.extraction_run_id AS extractionRunId,
+      extraction_runs.state AS extractionRunState,
+      planner_runs.error_message AS plannerErrorMessage,
       planner_runs.planner_run_id AS plannerRunId,
+      planner_runs.state AS plannerRunState,
       planner_runs.summary_json AS plannerSummaryJson
     FROM evidences
     LEFT JOIN evidence_files
@@ -646,6 +665,7 @@ export async function loadEvidenceQueue(
         LIMIT 1
       )
     WHERE evidences.entity_id = ?
+      AND upload_batches.batch_id IS NOT NULL
       AND COALESCE(upload_batches.state, '') != 'duplicate_file'
       AND (
         evidences.parse_status IN ('pending', 'failed')
@@ -666,12 +686,96 @@ export async function loadEvidenceById(
   return rows[0] ?? null;
 }
 
+export async function reconcileInactiveReviewBatch(
+  database: WritableStorageDatabase,
+  input: {
+    batchId: string;
+    updatedAt: string;
+  },
+): Promise<boolean> {
+  const candidateRows = await database.getAllAsync<{
+    candidateId: string;
+    state: CandidateRecordState;
+  }>(
+    `SELECT
+      candidate_id AS candidateId,
+      state
+     FROM candidate_records
+     WHERE batch_id = ?
+     ORDER BY created_at ASC;`,
+    input.batchId,
+  );
+
+  if (
+    candidateRows.length === 0 ||
+    !candidateRows.every((row) => row.state === "validated")
+  ) {
+    return false;
+  }
+
+  const pendingProposalCountRow = await database.getFirstAsync<{ count: number }>(
+    `SELECT COUNT(*) AS count
+     FROM workflow_write_proposals
+     WHERE state = 'pending_approval'
+       AND planner_run_id IN (
+         SELECT DISTINCT planner_run_id
+         FROM candidate_records
+         WHERE batch_id = ?
+       );`,
+    input.batchId,
+  );
+
+  if ((pendingProposalCountRow?.count ?? 0) > 0) {
+    return false;
+  }
+
+  await database.runAsync(
+    `UPDATE workflow_write_proposals
+     SET state = ?,
+         updated_at = ?
+     WHERE state = 'blocked'
+       AND planner_run_id IN (
+         SELECT DISTINCT planner_run_id
+         FROM candidate_records
+         WHERE batch_id = ?
+       );`,
+    "rejected",
+    input.updatedAt,
+    input.batchId,
+  );
+
+  await database.runAsync(
+    `UPDATE candidate_records
+     SET state = ?,
+         updated_at = ?
+     WHERE batch_id = ?
+       AND state = 'validated';`,
+    "approved",
+    input.updatedAt,
+    input.batchId,
+  );
+
+  await database.runAsync(
+    `UPDATE evidences
+     SET parse_status = 'parsed'
+     WHERE evidence_id IN (
+       SELECT evidence_id
+       FROM candidate_records
+       WHERE batch_id = ?
+     );`,
+    input.batchId,
+  );
+
+  await syncUploadBatchState(database, input);
+  return true;
+}
+
 export async function updateEvidenceExtraction(
   database: WritableStorageDatabase,
   input: {
     evidenceId: string;
     extractedData: EvidenceExtractedData;
-    parseStatus: "failed" | "pending";
+    parseStatus: "failed" | "parsed" | "pending";
   },
 ): Promise<void> {
   await database.runAsync(
@@ -682,6 +786,139 @@ export async function updateEvidenceExtraction(
     JSON.stringify(input.extractedData),
     input.parseStatus,
     input.evidenceId,
+  );
+}
+
+export async function buildFailedBatchClearPlan(
+  database: ReadableStorageDatabase,
+  batchId: string,
+): Promise<FailedBatchClearPlan> {
+  const batch = await database.getFirstAsync<{
+    evidenceId: string | null;
+  }>(
+    `SELECT evidence_id AS evidenceId
+     FROM upload_batches
+     WHERE batch_id = ?;`,
+    batchId,
+  );
+
+  const evidenceId = normalizeText(batch?.evidenceId);
+
+  if (!evidenceId) {
+    throw new Error("Failed task no longer exists.");
+  }
+
+  const linkedRecordCountRow = await database.getFirstAsync<{ count: number }>(
+    `SELECT COUNT(*) AS count
+     FROM record_evidence_links
+     WHERE evidence_id = ?;`,
+    evidenceId,
+  );
+  const hasSuccessfulLinks = (linkedRecordCountRow?.count ?? 0) > 0;
+
+  const fileRows = await database.getAllAsync<{ relativePath: string }>(
+    `SELECT relative_path AS relativePath
+     FROM evidence_files
+     WHERE evidence_id = ?
+     ORDER BY captured_at ASC;`,
+    evidenceId,
+  );
+
+  return {
+    batchId,
+    evidenceId,
+    filePathsToDelete: hasSuccessfulLinks
+      ? []
+      : fileRows
+          .map((row) => normalizeText(row.relativePath))
+          .filter((value): value is string => Boolean(value)),
+    keepEvidenceRecord: hasSuccessfulLinks,
+  };
+}
+
+export async function clearFailedBatchRecords(
+  database: WritableStorageDatabase,
+  plan: FailedBatchClearPlan,
+): Promise<void> {
+  const plannerRunIds = (
+    await database.getAllAsync<{ plannerRunId: string }>(
+      `SELECT planner_run_id AS plannerRunId
+       FROM planner_runs
+       WHERE batch_id = ?;`,
+      plan.batchId,
+    )
+  )
+    .map((row) => normalizeText(row.plannerRunId))
+    .filter((value): value is string => Boolean(value));
+  const plannerRunPlaceholders = plannerRunIds.map(() => "?").join(", ");
+
+  if (plannerRunIds.length > 0) {
+    await database.runAsync(
+      `DELETE FROM workflow_audit_events
+       WHERE planner_run_id IN (${plannerRunPlaceholders});`,
+      ...plannerRunIds,
+    );
+  }
+
+  await database.runAsync(
+    `DELETE FROM workflow_audit_events
+     WHERE batch_id = ?;`,
+    plan.batchId,
+  );
+
+  if (plannerRunIds.length > 0) {
+    await database.runAsync(
+      `DELETE FROM planner_read_tasks
+       WHERE planner_run_id IN (${plannerRunPlaceholders});`,
+      ...plannerRunIds,
+    );
+    await database.runAsync(
+      `DELETE FROM workflow_write_proposals
+       WHERE planner_run_id IN (${plannerRunPlaceholders});`,
+      ...plannerRunIds,
+    );
+    await database.runAsync(
+      `DELETE FROM candidate_records
+       WHERE planner_run_id IN (${plannerRunPlaceholders});`,
+      ...plannerRunIds,
+    );
+  }
+
+  await database.runAsync(
+    `DELETE FROM planner_runs
+     WHERE batch_id = ?;`,
+    plan.batchId,
+  );
+  await database.runAsync(
+    `DELETE FROM extraction_runs
+     WHERE batch_id = ?;`,
+    plan.batchId,
+  );
+  await database.runAsync(
+    `DELETE FROM upload_batches
+     WHERE batch_id = ?;`,
+    plan.batchId,
+  );
+
+  if (plan.keepEvidenceRecord) {
+    await database.runAsync(
+      `UPDATE evidences
+       SET parse_status = 'parsed'
+       WHERE evidence_id = ?;`,
+      plan.evidenceId,
+    );
+    return;
+  }
+
+  await database.runAsync(
+    `DELETE FROM evidence_files
+     WHERE evidence_id = ?;`,
+    plan.evidenceId,
+  );
+  await database.runAsync(
+    `DELETE FROM evidences
+     WHERE evidence_id = ?;`,
+    plan.evidenceId,
   );
 }
 
@@ -784,15 +1021,35 @@ export async function rejectWorkflowWriteProposal(
   );
 
   if (proposal.candidateId) {
+    const nextCandidateState =
+      proposal.proposalType === "persist_candidate_record"
+        ? "rejected"
+        : proposal.proposalType === "resolve_duplicate_receipt"
+          ? "approved"
+          : "needs_review";
+
     await database.runAsync(
       `UPDATE candidate_records
        SET state = ?,
            updated_at = ?
        WHERE candidate_id = ?;`,
-      proposal.proposalType === "persist_candidate_record" ? "rejected" : "needs_review",
+      nextCandidateState,
       input.updatedAt,
       proposal.candidateId,
     );
+
+    if (proposal.proposalType === "resolve_duplicate_receipt") {
+      const candidate = await loadCandidateById(database, proposal.candidateId);
+
+      if (candidate) {
+        await database.runAsync(
+          `UPDATE evidences
+           SET parse_status = 'parsed'
+           WHERE evidence_id = ?;`,
+          candidate.evidenceId,
+        );
+      }
+    }
   }
 
   if (proposal.proposalType === "create_counterparty") {
@@ -807,11 +1064,20 @@ export async function rejectWorkflowWriteProposal(
     proposal.proposalType === "resolve_duplicate_receipt"
   ) {
     await releaseResolvedDecisionDependencies(database, input.updatedAt);
-    await updateUploadBatchState(database, {
-      batchId: proposal.batchId,
-      state: "review_required",
-      updatedAt: input.updatedAt,
-    });
+    if (proposal.proposalType === "resolve_duplicate_receipt") {
+      await updateUploadBatchState(database, {
+        batchId: proposal.batchId,
+        duplicateKind: "near_duplicate",
+        duplicateOfEvidenceId: normalizeText(
+          asString(
+            proposal.payload.conflictEvidenceId ??
+              proposal.payload.duplicateEvidenceId,
+          ),
+        ),
+        state: "rejected",
+        updatedAt: input.updatedAt,
+      });
+    }
   } else if (proposal.proposalType === "persist_candidate_record") {
     await updateUploadBatchState(database, {
       batchId: proposal.batchId,
@@ -960,11 +1226,16 @@ export async function loadEvidenceQueueByIds(
       evidence_files.original_file_name AS originalFileName,
       evidence_files.mime_type AS mimeType,
       upload_batches.batch_id AS batchId,
+      upload_batches.error_message AS batchErrorMessage,
       upload_batches.state AS batchState,
       upload_batches.duplicate_kind AS duplicateKind,
       upload_batches.created_at AS batchCreatedAt,
+      extraction_runs.error_message AS extractionErrorMessage,
       extraction_runs.extraction_run_id AS extractionRunId,
+      extraction_runs.state AS extractionRunState,
+      planner_runs.error_message AS plannerErrorMessage,
       planner_runs.planner_run_id AS plannerRunId,
+      planner_runs.state AS plannerRunState,
       planner_runs.summary_json AS plannerSummaryJson
     FROM evidences
     LEFT JOIN evidence_files
@@ -1042,8 +1313,20 @@ async function hydrateEvidenceQueueItem(
   const plannerSummary = row.plannerSummaryJson ? (JSON.parse(row.plannerSummaryJson) as PlannerSummary) : null;
   const readTasks = plannerSummary?.readTasks ?? [];
   const resolutions = plannerSummary?.counterpartyResolutions ?? [];
+  const extractedData = row.extractedData ? (JSON.parse(row.extractedData) as EvidenceExtractedData) : null;
+  const displayState = deriveQueueDisplayState(row);
+  const errorMessage =
+    displayState === "failed"
+      ? row.batchErrorMessage ??
+        row.plannerErrorMessage ??
+        row.extractionErrorMessage ??
+        extractedData?.failureReason ??
+        null
+      : null;
+  const attemptCount = await countQueueAttempts(database, row);
 
   return {
+    attemptCount,
     batchCreatedAt: row.batchCreatedAt ?? row.createdAt,
     batchId: row.batchId ?? `batch-missing-${row.evidenceId}`,
     batchState: row.batchState ?? "uploaded",
@@ -1054,11 +1337,14 @@ async function hydrateEvidenceQueueItem(
     capturedTarget: row.capturedTarget,
     candidateRecords,
     createdAt: row.createdAt,
+    displayState,
+    displayStepLabel: deriveQueueStepLabel(row, displayState),
     duplicateKind: row.duplicateKind,
     evidenceId: row.evidenceId,
     evidenceKind: row.evidenceKind,
+    errorMessage,
     extractionRunId: row.extractionRunId,
-    extractedData: row.extractedData ? (JSON.parse(row.extractedData) as EvidenceExtractedData) : null,
+    extractedData,
     filePath: row.filePath,
     mimeType: row.mimeType,
     originalFileName: row.originalFileName,
@@ -1066,9 +1352,118 @@ async function hydrateEvidenceQueueItem(
     plannerRunId: row.plannerRunId,
     plannerSummary,
     readTasks,
+    sectionId: deriveQueueSectionId(displayState),
     resolutions,
     writeProposals,
   };
+}
+
+function deriveQueueDisplayState(row: QueueBaseRow): UploadQueueDisplayState {
+  if (
+    row.batchState === "write_proposal_ready" ||
+    row.batchState === "review_required" ||
+    row.batchState === "partially_approved"
+  ) {
+    return "ready_for_review";
+  }
+
+  if (row.extractionRunState === "parsing" || row.plannerRunState === "planning") {
+    return "processing";
+  }
+
+  if (row.batchState === "parsing" || row.batchState === "planning") {
+    return "recovering";
+  }
+
+  if (
+    row.batchState === "failed" ||
+    row.extractionRunState === "failed" ||
+    row.plannerRunState === "failed" ||
+    row.parseStatus === "failed"
+  ) {
+    return "failed";
+  }
+
+  return "queued";
+}
+
+function deriveQueueStepLabel(
+  row: QueueBaseRow,
+  displayState: UploadQueueDisplayState,
+): string | null {
+  if (displayState === "ready_for_review") {
+    if (row.duplicateKind === "near_duplicate") {
+      return "Review duplicate match";
+    }
+    return "Ready for review";
+  }
+
+  if (displayState === "failed") {
+    if (row.plannerRunState === "failed" || row.batchState === "planning") {
+      return "Preparing review failed";
+    }
+    return "Parsing receipt failed";
+  }
+
+  if (displayState === "processing") {
+    if (row.plannerRunState === "planning") {
+      return "Preparing review";
+    }
+    return "Parsing receipt";
+  }
+
+  if (displayState === "recovering") {
+    return "Recovering task";
+  }
+
+  return "Queued";
+}
+
+function deriveQueueSectionId(
+  displayState: UploadQueueDisplayState,
+): UploadQueueSectionId {
+  if (displayState === "ready_for_review") {
+    return "needs_review";
+  }
+
+  if (displayState === "failed") {
+    return "needs_retry";
+  }
+
+  if (displayState === "queued") {
+    return "queued";
+  }
+
+  return "in_progress";
+}
+
+async function countQueueAttempts(
+  database: ReadableStorageDatabase,
+  row: QueueBaseRow,
+): Promise<number> {
+  if (row.plannerRunId) {
+    const result = await database.getFirstAsync<{ count: number }>(
+      `SELECT COUNT(*) AS count
+       FROM planner_runs
+       WHERE evidence_id = ?;`,
+      row.evidenceId,
+    );
+
+    return Math.max(1, result?.count ?? 1);
+  }
+
+  if (row.extractionRunId) {
+    const result = await database.getFirstAsync<{ count: number }>(
+      `SELECT COUNT(*) AS count
+       FROM extraction_runs
+       WHERE evidence_id = ?;`,
+      row.evidenceId,
+    );
+
+    return Math.max(1, result?.count ?? 1);
+  }
+
+  return 1;
 }
 
 async function lookupCounterparties(
@@ -1810,7 +2205,7 @@ async function executeResolveDuplicateReceiptProposal(
     batchId: input.proposal.batchId,
     duplicateKind: "near_duplicate",
     duplicateOfEvidenceId: asString(input.proposal.payload.conflictEvidenceId ?? input.proposal.payload.duplicateEvidenceId),
-    state: "approved",
+    state: "rejected",
     updatedAt: input.updatedAt,
   });
   await appendWorkflowAuditEvent(database, {
@@ -2015,7 +2410,12 @@ async function deleteMatchedRecords(
 async function loadCandidateById(
   database: ReadableStorageDatabase,
   candidateId: string,
-): Promise<(WorkflowCandidateRecord & { extractedData: EvidenceExtractedData | null }) | null> {
+): Promise<(
+  WorkflowCandidateRecord & {
+    evidenceId: string;
+    extractedData: EvidenceExtractedData | null;
+  }
+) | null> {
   const row = await database.getFirstAsync<{
     candidateId: string;
     evidenceId: string;
@@ -2049,6 +2449,7 @@ async function loadCandidateById(
   return {
     candidateId: row.candidateId,
     createdAt: "",
+    evidenceId: row.evidenceId,
     errorMessage: null,
     extractedData: row.extractedData ? (JSON.parse(row.extractedData) as EvidenceExtractedData) : null,
     payload,
@@ -2334,6 +2735,13 @@ async function syncUploadBatchState(
      ORDER BY created_at ASC;`,
     input.batchId,
   );
+  const plannerRunRows = await database.getAllAsync<{ plannerRunId: string | null }>(
+    `SELECT DISTINCT planner_run_id AS plannerRunId
+     FROM candidate_records
+     WHERE batch_id = ?
+       AND planner_run_id IS NOT NULL;`,
+    input.batchId,
+  );
   const proposalCountRow = await database.getFirstAsync<{ count: number }>(
     `SELECT COUNT(*) AS count
      FROM workflow_write_proposals
@@ -2344,6 +2752,52 @@ async function syncUploadBatchState(
      );`,
     input.batchId,
   );
+  const pendingProposalCountRow = await database.getFirstAsync<{ count: number }>(
+    `SELECT COUNT(*) AS count
+     FROM workflow_write_proposals
+     WHERE state = 'pending_approval'
+       AND planner_run_id IN (
+         SELECT DISTINCT planner_run_id
+         FROM candidate_records
+         WHERE batch_id = ?
+       );`,
+    input.batchId,
+  );
+
+  if (
+    (pendingProposalCountRow?.count ?? 0) === 0 &&
+    candidateRows.length > 0 &&
+    candidateRows.every((row) => row.state === "validated")
+  ) {
+    for (const plannerRunRow of plannerRunRows) {
+      if (!plannerRunRow.plannerRunId) {
+        continue;
+      }
+
+      await database.runAsync(
+        `UPDATE workflow_write_proposals
+         SET state = ?,
+             updated_at = ?
+         WHERE planner_run_id = ?
+           AND state = 'blocked';`,
+        "rejected",
+        input.updatedAt,
+        plannerRunRow.plannerRunId,
+      );
+    }
+
+    await database.runAsync(
+      `UPDATE candidate_records
+       SET state = ?,
+           updated_at = ?
+       WHERE batch_id = ?
+         AND state = 'validated';`,
+      "approved",
+      input.updatedAt,
+      input.batchId,
+    );
+  }
+
   const nextState = deriveBatchStateFromCandidateStates({
     candidateCount: candidateRows.length,
     candidateStates: candidateRows.map((row) => row.state),

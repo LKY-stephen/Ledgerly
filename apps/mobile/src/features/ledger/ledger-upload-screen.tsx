@@ -1,6 +1,6 @@
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Image,
   Platform,
@@ -15,17 +15,27 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { BackHeaderBar } from "../../components/back-header-bar";
 import { CfoAvatar } from "../../components/cfo-avatar";
 import { useResponsive } from "../../hooks/use-responsive";
+import { useAppShell } from "../app-shell/provider";
+import { getButtonColors, getFeedbackColors } from "../app-shell/theme-utils";
 import {
-  parseFile,
+  buildUploadQueueSummary,
+  buildUploadQueueSections,
+  type EvidenceQueueItem,
+  type UploadQueueSummary,
+  type UploadQueueSection,
+} from "./ledger-domain";
+import {
+  enqueueUploadCandidates,
   pickDocumentUploadCandidates,
   pickPhotoUploadCandidates,
   takeCameraPhoto,
 } from "./ledger-runtime";
 import { formatUploadCandidateSize } from "./ledger-ui-copy";
-import { useAppShell } from "../app-shell/provider";
-import { getButtonColors, getFeedbackColors } from "../app-shell/theme-utils";
+import { useLedgerParseQueue } from "./use-ledger-parse-queue";
 
 interface SelectedUploadCandidate {
+  evidenceGroupKey: string;
+  isPrimary: boolean;
   kind: "document" | "image" | "live_photo" | "video";
   mimeType: string | null;
   originalFileName: string;
@@ -33,33 +43,59 @@ interface SelectedUploadCandidate {
   uri: string;
 }
 
-export function LedgerUploadScreen({ embedded = false }: { embedded?: boolean } = {}) {
+export function LedgerUploadScreen({
+  embedded = false,
+}: {
+  embedded?: boolean;
+} = {}) {
   const router = useRouter();
   const { isExpanded, isMedium } = useResponsive();
   const isWeb = Platform.OS === "web";
   const isWide = isExpanded || isMedium;
-  const useSplitLayout = isWide && !isWeb;
+  const useSplitLayout = isWide;
   const isMobileStack = !isWide && !embedded;
   const {
-    aiProvider,
+    bumpStorageRevision,
     copy,
-    geminiApiKey,
-    geminiAuthMode,
-    inferApiKey,
-    inferBaseUrl,
-    inferModel,
-    openAiApiKey,
     palette,
     resolvedLocale,
   } = useAppShell();
   const uploadCopy = copy.ledger.upload;
   const errorColors = getFeedbackColors(palette, "error");
   const primaryButton = getButtonColors(palette, "primary");
+  const queue = useLedgerParseQueue();
   const [error, setError] = useState<string | null>(null);
   const [isBusy, setIsBusy] = useState(false);
   const [status, setStatus] = useState<"empty" | "idle">("idle");
-  const [selectedCandidate, setSelectedCandidate] =
-    useState<SelectedUploadCandidate | null>(null);
+  const [stagedCandidates, setStagedCandidates] = useState<
+    SelectedUploadCandidate[]
+  >([]);
+  const [stagedIndex, setStagedIndex] = useState(0);
+
+  const selectedCandidate = stagedCandidates[stagedIndex] ?? null;
+  const upcomingCandidates = stagedCandidates.slice(stagedIndex + 1);
+  const previewMeta = selectedCandidate
+    ? [
+        selectedCandidate.mimeType?.trim() || "Unknown type",
+        formatUploadCandidateSize(selectedCandidate.sizeBytes),
+      ]
+        .filter((value): value is string => Boolean(value))
+        .join(" · ")
+    : "";
+  const showImagePreview =
+    selectedCandidate != null &&
+    (selectedCandidate.kind === "image" ||
+      selectedCandidate.kind === "live_photo") &&
+    Boolean(selectedCandidate.mimeType?.startsWith("image/"));
+
+  const queueSections = useMemo(
+    () => buildUploadQueueSections(queue.queue),
+    [queue.queue],
+  );
+  const queueSummary = useMemo(
+    () => buildUploadQueueSummary(queue.queue),
+    [queue.queue],
+  );
 
   async function handleImport(
     source: "camera" | "documents" | "photos",
@@ -76,19 +112,26 @@ export function LedgerUploadScreen({ embedded = false }: { embedded?: boolean } 
             : await pickDocumentUploadCandidates();
 
       if (!candidates.length) {
-        setSelectedCandidate(null);
+        setStagedCandidates([]);
+        setStagedIndex(0);
         setStatus("empty");
         return;
       }
 
-      const first = candidates[0]!;
-      setSelectedCandidate({
-        kind: first.kind,
-        mimeType: first.mimeType,
-        originalFileName: first.originalFileName,
-        sizeBytes: first.sizeBytes,
-        uri: first.uri,
-      });
+      setStagedCandidates(
+        candidates
+          .filter((candidate) => candidate.isPrimary)
+          .map((candidate) => ({
+            evidenceGroupKey: candidate.evidenceGroupKey,
+            isPrimary: candidate.isPrimary,
+            kind: candidate.kind,
+            mimeType: candidate.mimeType,
+            originalFileName: candidate.originalFileName,
+            sizeBytes: candidate.sizeBytes,
+            uri: candidate.uri,
+          })),
+      );
+      setStagedIndex(0);
       setStatus("idle");
     } catch (nextError: unknown) {
       setError(
@@ -101,7 +144,7 @@ export function LedgerUploadScreen({ embedded = false }: { embedded?: boolean } 
     }
   }
 
-  async function handleParseSelected(): Promise<void> {
+  async function handleQueueSelected(): Promise<void> {
     if (!selectedCandidate) {
       return;
     }
@@ -110,33 +153,16 @@ export function LedgerUploadScreen({ embedded = false }: { embedded?: boolean } 
     setError(null);
 
     try {
-      const result = await parseFile(
-        selectedCandidate.uri,
-        selectedCandidate.originalFileName,
-        selectedCandidate.mimeType,
-        {
-          aiProvider,
-          geminiApiKey,
-          geminiAuthMode,
-          inferApiKey,
-          inferBaseUrl,
-          inferModel,
-          openAiApiKey,
-        },
-      );
+      await enqueueUploadCandidates([selectedCandidate]);
+      bumpStorageRevision();
+      await queue.refresh();
 
-      router.push({
-        params: {
-          fileName: selectedCandidate.originalFileName,
-          mimeType: selectedCandidate.mimeType ?? "",
-          model: result.model,
-          parseError: result.error ?? "",
-          parserKind: result.parserKind,
-          rawJson: result.rawJson != null ? JSON.stringify(result.rawJson) : "",
-          rawText: result.rawText,
-        },
-        pathname: "/ledger/parse",
-      });
+      setStagedCandidates((current) =>
+        current.filter((_, index) => index !== stagedIndex),
+      );
+      setStagedIndex((current) =>
+        stagedCandidates.length <= 1 ? 0 : Math.max(0, current - 1),
+      );
     } catch (nextError: unknown) {
       setError(
         nextError instanceof Error
@@ -153,22 +179,53 @@ export function LedgerUploadScreen({ embedded = false }: { embedded?: boolean } 
       ? uploadCopy.emptySelection
       : isBusy && selectedCandidate
         ? `${uploadCopy.parsingStatusPrefix} ${selectedCandidate.originalFileName}...`
-      : selectedCandidate
-        ? uploadCopy.previewSummary
-        : uploadCopy.hint;
-  const previewMeta = selectedCandidate
-    ? [
-        selectedCandidate.mimeType?.trim() || "Unknown type",
-        formatUploadCandidateSize(selectedCandidate.sizeBytes),
-      ]
-        .filter((value): value is string => Boolean(value))
-        .join(" · ")
-    : "";
-  const showImagePreview =
-    selectedCandidate != null &&
-    (selectedCandidate.kind === "image" ||
-      selectedCandidate.kind === "live_photo") &&
-    Boolean(selectedCandidate.mimeType?.startsWith("image/"));
+        : selectedCandidate
+          ? uploadCopy.previewSummary
+          : uploadCopy.hint;
+
+  function clearStagedSelection() {
+    setError(null);
+    setStagedCandidates([]);
+    setStagedIndex(0);
+    setStatus("idle");
+  }
+
+  function openQueueTask(item: EvidenceQueueItem) {
+    router.push({
+      pathname: "/ledger/parse",
+      params: { batchId: item.batchId },
+    });
+  }
+
+  const workspaceCard = (
+    <UploadWorkspaceCard
+      embedded={embedded}
+      error={error}
+      errorColors={errorColors}
+      handleImport={handleImport}
+      handleQueueSelected={handleQueueSelected}
+      isBusy={isBusy}
+      isMobileStack={isMobileStack}
+      isWide={isWide}
+      onOpenFullQueue={() => router.push("/ledger/upload")}
+      onOpenTask={openQueueTask}
+      palette={palette}
+      previewMeta={previewMeta}
+      primaryButton={primaryButton}
+      queue={queue}
+      queueError={queue.error}
+      queueSections={queueSections}
+      queueSummary={queueSummary}
+      selectedCandidate={selectedCandidate}
+      showImagePreview={showImagePreview}
+      stagedIndex={stagedIndex}
+      stagedTotal={stagedCandidates.length}
+      statusText={statusText}
+      upcomingCandidates={upcomingCandidates}
+      uploadCopy={uploadCopy}
+      onClearSelection={clearStagedSelection}
+    />
+  );
 
   const content = (
     <View
@@ -181,11 +238,7 @@ export function LedgerUploadScreen({ embedded = false }: { embedded?: boolean } 
       testID="ledger-upload-screen"
     >
       {isWeb && !embedded ? (
-        <View
-          style={[
-            styles.webModalBackdrop,
-          ]}
-        >
+        <View style={styles.webModalBackdrop}>
           <Pressable
             accessibilityRole="button"
             onPress={() => {
@@ -198,73 +251,71 @@ export function LedgerUploadScreen({ embedded = false }: { embedded?: boolean } 
             style={StyleSheet.absoluteFillObject}
             testID="ledger-upload-backdrop-close"
           />
-          <View style={styles.webModalFrameWrap}>
-            <View
-              style={[
-                styles.webModalFrame,
-                {
-                  backgroundColor: palette.shell,
-                  borderColor: palette.border,
-                  shadowColor: palette.shadow,
-                },
-              ]}
-            >
-              <View style={styles.webModalHeader}>
-                <View style={styles.webModalHeaderCopy}>
-                  <Text style={[styles.eyebrow, { color: palette.inkMuted }]}>
-                    {uploadCopy.eyebrow}
-                  </Text>
-                  <Text style={[styles.heroTitle, styles.webHeroTitle, { color: palette.ink }]}>
-                    {uploadCopy.title}
-                  </Text>
-                  <Text style={[styles.heroSummary, styles.webHeroSummary, { color: palette.inkMuted }]}>
-                    {uploadCopy.summary}
-                  </Text>
+          <ScrollView
+            contentContainerStyle={styles.webModalScrollContent}
+            showsVerticalScrollIndicator
+            style={styles.webModalScroll}
+          >
+            <View style={styles.webModalFrameWrap}>
+              <View
+                style={[
+                  styles.webModalFrame,
+                  {
+                    backgroundColor: palette.shell,
+                    borderColor: palette.border,
+                    shadowColor: palette.shadow,
+                  },
+                ]}
+              >
+                <View style={styles.webModalHeader}>
+                  <View style={styles.webModalHeaderCopy}>
+                    <Text style={[styles.eyebrow, { color: palette.inkMuted }]}>
+                      {uploadCopy.eyebrow}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.heroTitle,
+                        styles.webHeroTitle,
+                        { color: palette.ink },
+                      ]}
+                    >
+                      {uploadCopy.title}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.heroSummary,
+                        styles.webHeroSummary,
+                        { color: palette.inkMuted },
+                      ]}
+                    >
+                      {uploadCopy.summary}
+                    </Text>
+                  </View>
+                  <Pressable
+                    accessibilityRole="button"
+                    onPress={() => {
+                      if (router.canGoBack()) {
+                        router.back();
+                      } else {
+                        router.replace("/(game)");
+                      }
+                    }}
+                    style={({ pressed }) => [
+                      styles.webModalCloseButton,
+                      {
+                        backgroundColor: pressed ? palette.paperMuted : palette.paper,
+                        borderColor: palette.border,
+                      },
+                    ]}
+                    testID="ledger-upload-close-button"
+                  >
+                    <Feather color={palette.ink} name="x" size={18} />
+                  </Pressable>
                 </View>
-                <Pressable
-                  accessibilityRole="button"
-                  onPress={() => {
-                    if (router.canGoBack()) {
-                      router.back();
-                    } else {
-                      router.replace("/(game)");
-                    }
-                  }}
-                  style={({ pressed }) => [
-                    styles.webModalCloseButton,
-                    {
-                      backgroundColor: pressed ? palette.paperMuted : palette.paper,
-                      borderColor: palette.border,
-                    },
-                  ]}
-                  testID="ledger-upload-close-button"
-                >
-                  <Feather color={palette.ink} name="x" size={18} />
-                </Pressable>
-              </View>
-              <View style={styles.webModalBody}>
-                <UploadWorkspaceCard
-                  error={error}
-                  errorColors={errorColors}
-                handleImport={handleImport}
-                handleParseSelected={handleParseSelected}
-                isBusy={isBusy}
-                isWide={true}
-                isMobileStack={false}
-                palette={palette}
-                previewMeta={previewMeta}
-                primaryButton={primaryButton}
-                  selectedCandidate={selectedCandidate}
-                  setError={setError}
-                  setSelectedCandidate={setSelectedCandidate}
-                  setStatus={setStatus}
-                  showImagePreview={showImagePreview}
-                  statusText={statusText}
-                  uploadCopy={uploadCopy}
-                />
+                <View style={styles.webModalBody}>{workspaceCard}</View>
               </View>
             </View>
-          </View>
+          </ScrollView>
         </View>
       ) : (
         <>
@@ -334,25 +385,7 @@ export function LedgerUploadScreen({ embedded = false }: { embedded?: boolean } 
                   </Text>
                 </View>
               ) : null}
-              <UploadWorkspaceCard
-                error={error}
-                errorColors={errorColors}
-                handleImport={handleImport}
-                handleParseSelected={handleParseSelected}
-                isBusy={isBusy}
-                isWide={isWide}
-                isMobileStack={isMobileStack}
-                palette={palette}
-                previewMeta={previewMeta}
-                primaryButton={primaryButton}
-                selectedCandidate={selectedCandidate}
-                setError={setError}
-                setSelectedCandidate={setSelectedCandidate}
-                setStatus={setStatus}
-                showImagePreview={showImagePreview}
-                statusText={statusText}
-                uploadCopy={uploadCopy}
-              />
+              {workspaceCard}
             </View>
           </ScrollView>
         </>
@@ -372,60 +405,83 @@ export function LedgerUploadScreen({ embedded = false }: { embedded?: boolean } 
 }
 
 function UploadWorkspaceCard({
+  embedded,
   error,
   errorColors,
   handleImport,
-  handleParseSelected,
+  handleQueueSelected,
   isBusy,
-  isWide,
   isMobileStack,
+  isWide,
+  onOpenFullQueue,
+  onOpenTask,
   palette,
   previewMeta,
   primaryButton,
+  queue,
+  queueError,
+  queueSections,
+  queueSummary,
   selectedCandidate,
-  setError,
-  setSelectedCandidate,
-  setStatus,
   showImagePreview,
+  stagedIndex,
+  stagedTotal,
   statusText,
+  upcomingCandidates,
   uploadCopy,
+  onClearSelection,
 }: {
+  embedded: boolean;
   error: string | null;
   errorColors: ReturnType<typeof getFeedbackColors>;
   handleImport: (source: "camera" | "documents" | "photos") => Promise<void>;
-  handleParseSelected: () => Promise<void>;
+  handleQueueSelected: () => Promise<void>;
   isBusy: boolean;
-  isWide: boolean;
   isMobileStack: boolean;
+  isWide: boolean;
+  onOpenFullQueue: () => void;
+  onOpenTask: (item: EvidenceQueueItem) => void;
   palette: ReturnType<typeof useAppShell>["palette"];
   previewMeta: string;
   primaryButton: ReturnType<typeof getButtonColors>;
+  queue: ReturnType<typeof useLedgerParseQueue>;
+  queueError: string | null;
+  queueSections: UploadQueueSection[];
+  queueSummary: UploadQueueSummary;
   selectedCandidate: SelectedUploadCandidate | null;
-  setError: (value: string | null) => void;
-  setSelectedCandidate: (value: SelectedUploadCandidate | null) => void;
-  setStatus: (value: "empty" | "idle") => void;
   showImagePreview: boolean;
+  stagedIndex: number;
+  stagedTotal: number;
   statusText: string;
+  upcomingCandidates: SelectedUploadCandidate[];
   uploadCopy: ReturnType<typeof useAppShell>["copy"]["ledger"]["upload"];
+  onClearSelection: () => void;
 }) {
-  return (
-    <View
-      style={[
-        styles.dropCard,
-        isWide && styles.dropCardWide,
-        isMobileStack ? styles.dropCardCompact : null,
-        {
-          backgroundColor: palette.shellElevated,
-          borderColor: palette.border,
-          shadowColor: palette.shadow,
-        },
-      ]}
-    >
+  const useQueueColumns = Platform.OS === "web" && isWide && !embedded;
+  const queueRail = embedded ? (
+    <EmbeddedQueueSummary
+      onOpenFullQueue={onOpenFullQueue}
+      palette={palette}
+      queueSummary={queueSummary}
+    />
+  ) : (
+    <UploadQueueRail
+      onOpenFullQueue={onOpenFullQueue}
+      onOpenTask={onOpenTask}
+      showOpenButton={embedded}
+      palette={palette}
+      queue={queue}
+      queueError={queueError}
+      queueSections={queueSections}
+      queueSummary={queueSummary}
+      isColumnLayout={useQueueColumns}
+    />
+  );
+
+  const intakeContent = (
+    <>
       <View
-        style={[
-          styles.uploadGlyph,
-          { backgroundColor: palette.accentSoft },
-        ]}
+        style={[styles.uploadGlyph, { backgroundColor: palette.accentSoft }]}
       >
         <Feather color={palette.accent} name="upload-cloud" size={26} />
       </View>
@@ -435,14 +491,6 @@ function UploadWorkspaceCard({
       <Text style={[styles.dropSummary, { color: palette.inkMuted }]}>
         {uploadCopy.uploadCardSummary}
       </Text>
-
-      {!selectedCandidate && isMobileStack ? (
-        <View style={styles.flowHintRow}>
-          <Text style={[styles.flowHint, { color: palette.inkMuted }]}>1. {uploadCopy.selectPhotos}</Text>
-          <Text style={[styles.flowHint, { color: palette.inkMuted }]}>2. {uploadCopy.previewTitle}</Text>
-          <Text style={[styles.flowHint, { color: palette.inkMuted }]}>3. {uploadCopy.parseAction}</Text>
-        </View>
-      ) : null}
 
       {selectedCandidate ? (
         <View
@@ -459,11 +507,13 @@ function UploadWorkspaceCard({
           <Text style={[styles.previewEyebrow, { color: palette.inkMuted }]}>
             {uploadCopy.previewTitle}
           </Text>
+          {stagedTotal > 1 ? (
+            <Text style={[styles.previewSequence, { color: palette.inkMuted }]}>
+              {`${stagedIndex + 1} / ${stagedTotal}`}
+            </Text>
+          ) : null}
           {showImagePreview ? (
-            <Image
-              source={{ uri: selectedCandidate.uri }}
-              style={styles.previewImage}
-            />
+            <Image source={{ uri: selectedCandidate.uri }} style={styles.previewImage} />
           ) : (
             <View
               style={[
@@ -493,11 +543,28 @@ function UploadWorkspaceCard({
             </Text>
           ) : null}
 
+          {upcomingCandidates.length > 0 ? (
+            <View style={styles.upcomingStack}>
+              <Text style={[styles.upcomingTitle, { color: palette.inkMuted }]}>
+                {`Up next (${upcomingCandidates.length})`}
+              </Text>
+              {upcomingCandidates.slice(0, 3).map((candidate, index) => (
+                <Text
+                  key={`${candidate.originalFileName}-${index}`}
+                  numberOfLines={1}
+                  style={[styles.upcomingItem, { color: palette.ink }]}
+                >
+                  {candidate.originalFileName}
+                </Text>
+              ))}
+            </View>
+          ) : null}
+
           <View style={[styles.buttonStack, isWide && styles.buttonStackWide]}>
             <Pressable
               accessibilityRole="button"
               disabled={isBusy}
-              onPress={handleParseSelected}
+              onPress={handleQueueSelected}
               style={({ pressed }) => [
                 styles.primaryButton,
                 {
@@ -511,12 +578,12 @@ function UploadWorkspaceCard({
                   shadowColor: palette.shadow,
                 },
               ]}
-              testID="ledger-upload-parse-button"
+              testID="ledger-upload-queue-button"
             >
               <View style={styles.primaryButtonContent}>
                 <MaterialCommunityIcons
                   color={isBusy ? primaryButton.disabledText : primaryButton.text}
-                  name="file-search-outline"
+                  name="file-send-outline"
                   size={18}
                 />
                 <Text
@@ -529,7 +596,7 @@ function UploadWorkspaceCard({
                     },
                   ]}
                 >
-                  {isBusy ? uploadCopy.parsing : uploadCopy.parseAction}
+                  {isBusy ? uploadCopy.parsing : "Add to queue"}
                 </Text>
               </View>
             </Pressable>
@@ -537,11 +604,7 @@ function UploadWorkspaceCard({
             <Pressable
               accessibilityRole="button"
               disabled={isBusy}
-              onPress={() => {
-                setError(null);
-                setSelectedCandidate(null);
-                setStatus("idle");
-              }}
+              onPress={onClearSelection}
               style={({ pressed }) => [
                 styles.secondaryButton,
                 {
@@ -558,9 +621,7 @@ function UploadWorkspaceCard({
                   name="arrow-left"
                   size={18}
                 />
-                <Text
-                  style={[styles.secondaryButtonLabel, { color: palette.ink }]}
-                >
+                <Text style={[styles.secondaryButtonLabel, { color: palette.ink }]}>
                   {uploadCopy.backAction}
                 </Text>
               </View>
@@ -605,7 +666,7 @@ function UploadWorkspaceCard({
             </View>
           </Pressable>
 
-          {Platform.OS !== "web" && (
+          {Platform.OS !== "web" ? (
             <Pressable
               accessibilityRole="button"
               disabled={isBusy}
@@ -626,14 +687,12 @@ function UploadWorkspaceCard({
                   name="camera-outline"
                   size={18}
                 />
-                <Text
-                  style={[styles.secondaryButtonLabel, { color: palette.ink }]}
-                >
+                <Text style={[styles.secondaryButtonLabel, { color: palette.ink }]}>
                   {uploadCopy.takePhoto}
                 </Text>
               </View>
             </Pressable>
-          )}
+          ) : null}
 
           <Pressable
             accessibilityRole="button"
@@ -655,9 +714,7 @@ function UploadWorkspaceCard({
                 name="file-upload-outline"
                 size={18}
               />
-              <Text
-                style={[styles.secondaryButtonLabel, { color: palette.ink }]}
-              >
+              <Text style={[styles.secondaryButtonLabel, { color: palette.ink }]}>
                 {uploadCopy.selectFiles}
               </Text>
             </View>
@@ -673,8 +730,427 @@ function UploadWorkspaceCard({
       >
         {error ?? statusText}
       </Text>
+    </>
+  );
+
+  return (
+    <View
+      style={[
+        styles.dropCard,
+        isWide && styles.dropCardWide,
+        isMobileStack ? styles.dropCardCompact : null,
+        useQueueColumns ? styles.dropCardColumns : null,
+        {
+          backgroundColor: palette.shellElevated,
+          borderColor: palette.border,
+          shadowColor: palette.shadow,
+        },
+      ]}
+    >
+      {useQueueColumns ? (
+        <View style={styles.workspaceColumns}>
+          <View style={styles.workspaceMainColumn}>{intakeContent}</View>
+          <View style={styles.workspaceQueueColumn}>{queueRail}</View>
+        </View>
+      ) : (
+        <>
+          {intakeContent}
+          {queueRail}
+        </>
+      )}
     </View>
   );
+}
+
+function EmbeddedQueueSummary({
+  onOpenFullQueue,
+  palette,
+  queueSummary,
+}: {
+  onOpenFullQueue: () => void;
+  palette: ReturnType<typeof useAppShell>["palette"];
+  queueSummary: UploadQueueSummary;
+}) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      onPress={onOpenFullQueue}
+      style={({ pressed }) => [
+        styles.embeddedQueueSummary,
+        {
+          backgroundColor: pressed ? palette.paperMuted : palette.paper,
+          borderColor: palette.border,
+        },
+      ]}
+    >
+      <Text style={[styles.embeddedQueueLabel, { color: palette.ink }]}>
+        Queue summary
+      </Text>
+      <View style={styles.embeddedQueueMetrics}>
+        <Text style={[styles.embeddedQueueMetric, { color: palette.inkMuted }]}>
+          {`In progress ${queueSummary.inProgress}`}
+        </Text>
+        <Text style={[styles.embeddedQueueMetric, { color: palette.inkMuted }]}>
+          {`Needs review ${queueSummary.needsReview}`}
+        </Text>
+        <Text style={[styles.embeddedQueueMetric, { color: palette.inkMuted }]}>
+          {`Needs retry ${queueSummary.needsRetry}`}
+        </Text>
+        <Text style={[styles.embeddedQueueMetric, { color: palette.inkMuted }]}>
+          {`Queued ${queueSummary.queued}`}
+        </Text>
+      </View>
+    </Pressable>
+  );
+}
+
+function UploadQueueRail({
+  onOpenFullQueue,
+  onOpenTask,
+  palette,
+  queue,
+  queueError,
+  queueSections,
+  queueSummary,
+  showOpenButton,
+  isColumnLayout = false,
+}: {
+  onOpenFullQueue: () => void;
+  onOpenTask: (item: EvidenceQueueItem) => void;
+  palette: ReturnType<typeof useAppShell>["palette"];
+  queue: ReturnType<typeof useLedgerParseQueue>;
+  queueError: string | null;
+  queueSections: UploadQueueSection[];
+  queueSummary: UploadQueueSummary;
+  showOpenButton: boolean;
+  isColumnLayout?: boolean;
+}) {
+  return (
+    <View
+      style={[
+        styles.queueRail,
+        isColumnLayout ? styles.queueRailColumn : null,
+        { backgroundColor: palette.paper, borderColor: palette.border },
+      ]}
+    >
+      <View style={styles.queueRailHeader}>
+        <View style={styles.queueRailCopy}>
+          <Text style={[styles.queueRailEyebrow, { color: palette.inkMuted }]}>
+            Queue
+          </Text>
+          <Text style={[styles.queueRailTitle, { color: palette.ink }]}>
+            Upload workflow
+          </Text>
+        </View>
+        {showOpenButton ? (
+          <Pressable
+            accessibilityRole="button"
+            onPress={onOpenFullQueue}
+            style={({ pressed }) => [
+              styles.queueOpenButton,
+              {
+                backgroundColor: pressed ? palette.paperMuted : palette.shellElevated,
+                borderColor: palette.border,
+              },
+            ]}
+          >
+            <Text style={[styles.queueOpenButtonLabel, { color: palette.ink }]}>
+              Open
+            </Text>
+          </Pressable>
+        ) : null}
+      </View>
+
+      <View style={styles.queueSummaryRow}>
+        <QueueSummaryPill
+          label="In progress"
+          palette={palette}
+          value={queueSummary.inProgress}
+        />
+        <QueueSummaryPill
+          label="Needs review"
+          palette={palette}
+          value={queueSummary.needsReview}
+        />
+        <QueueSummaryPill
+          label="Needs retry"
+          palette={palette}
+          value={queueSummary.needsRetry}
+        />
+        <QueueSummaryPill
+          label="Queued"
+          palette={palette}
+          value={queueSummary.queued}
+        />
+      </View>
+
+      {queueError ? (
+        <Text style={[styles.queueError, { color: palette.destructive }]}>
+          {queueError}
+        </Text>
+      ) : null}
+
+      {queueSections.length === 0 ? (
+        <View
+          style={[
+            styles.queueEmptyState,
+            {
+              backgroundColor: palette.shellElevated,
+              borderColor: palette.border,
+            },
+          ]}
+        >
+          <Text style={[styles.queueEmptyTitle, { color: palette.ink }]}>
+            No tasks yet
+          </Text>
+          <Text style={[styles.queueEmptySummary, { color: palette.inkMuted }]}>
+            Confirm an upload above and it will appear here for processing and review.
+          </Text>
+        </View>
+      ) : (
+        queueSections.map((section) => (
+          <View key={section.id} style={styles.queueSection}>
+            <Text style={[styles.queueSectionTitle, { color: palette.ink }]}>
+              {formatQueueSectionTitle(section.id)}
+            </Text>
+            <View style={styles.queueSectionRows}>
+              {section.items.map((item) => {
+                const isFailed = item.displayState === "failed";
+                const isClearing = queue.clearingBatchId === item.batchId;
+                const isRetrying = queue.retryingEvidenceId === item.evidenceId;
+                const isDisabled = isClearing || isRetrying;
+                const rowActionLabel = isFailed
+                  ? isRetrying
+                    ? "Retrying..."
+                    : "Retry"
+                  : item.displayState === "ready_for_review"
+                    ? "Review"
+                    : "View";
+
+                if (isFailed) {
+                  return (
+                    <View
+                      key={item.batchId}
+                      style={[
+                        styles.queueRow,
+                        {
+                          backgroundColor: palette.shellElevated,
+                          borderColor: palette.border,
+                        },
+                      ]}
+                    >
+                      <View style={styles.queueRowMain}>
+                        <Text
+                          numberOfLines={1}
+                          style={[styles.queueRowTitle, { color: palette.ink }]}
+                        >
+                          {item.originalFileName}
+                        </Text>
+                        <Text
+                          style={[styles.queueRowMeta, { color: palette.inkMuted }]}
+                        >
+                          {item.displayStepLabel ?? item.displayState}
+                        </Text>
+                        {item.errorMessage ? (
+                          <Text
+                            numberOfLines={1}
+                            style={[
+                              styles.queueRowError,
+                              { color: palette.destructive },
+                            ]}
+                          >
+                            {item.errorMessage}
+                          </Text>
+                        ) : null}
+                      </View>
+                      <View style={styles.queueRowSide}>
+                        {item.attemptCount > 0 ? (
+                          <Text
+                            style={[
+                              styles.queueAttempt,
+                              { color: palette.inkMuted },
+                            ]}
+                          >
+                            {`Try ${item.attemptCount}`}
+                          </Text>
+                        ) : null}
+                        <View style={styles.queueRowActions}>
+                          <Pressable
+                            accessibilityRole="button"
+                            disabled={isDisabled}
+                            onPress={() => {
+                              void queue.retry(item);
+                            }}
+                            style={({ pressed }) => [
+                              styles.queueActionButton,
+                              {
+                                backgroundColor:
+                                  isDisabled || isRetrying
+                                    ? palette.paperMuted
+                                    : pressed
+                                      ? palette.accentSoft
+                                      : palette.paper,
+                                borderColor: palette.border,
+                                opacity: isDisabled && !isRetrying ? 0.75 : 1,
+                              },
+                            ]}
+                            testID={`ledger-queue-retry-${item.batchId}`}
+                          >
+                            <Text
+                              style={[
+                                styles.queueActionButtonLabel,
+                                { color: palette.accent },
+                              ]}
+                            >
+                              {rowActionLabel}
+                            </Text>
+                          </Pressable>
+                          <Pressable
+                            accessibilityRole="button"
+                            disabled={isDisabled}
+                            onPress={() => {
+                              void queue.clear(item);
+                            }}
+                            style={({ pressed }) => [
+                              styles.queueActionButton,
+                              {
+                                backgroundColor:
+                                  isClearing
+                                    ? palette.paperMuted
+                                    : pressed
+                                      ? palette.paperMuted
+                                      : palette.paper,
+                                borderColor: palette.border,
+                                opacity: isDisabled && !isClearing ? 0.75 : 1,
+                              },
+                            ]}
+                            testID={`ledger-queue-clear-${item.batchId}`}
+                          >
+                            <Text
+                              style={[
+                                styles.queueActionButtonLabel,
+                                {
+                                  color: isClearing
+                                    ? palette.inkMuted
+                                    : palette.ink,
+                                },
+                              ]}
+                            >
+                              {isClearing ? "Clearing..." : "Clear"}
+                            </Text>
+                          </Pressable>
+                        </View>
+                      </View>
+                    </View>
+                  );
+                }
+
+                return (
+                  <Pressable
+                    key={item.batchId}
+                    accessibilityRole="button"
+                    onPress={() => onOpenTask(item)}
+                    style={({ pressed }) => [
+                      styles.queueRow,
+                      {
+                        backgroundColor: pressed
+                          ? palette.paperMuted
+                          : palette.shellElevated,
+                        borderColor: palette.border,
+                      },
+                    ]}
+                  >
+                    <View style={styles.queueRowMain}>
+                      <Text
+                        numberOfLines={1}
+                        style={[styles.queueRowTitle, { color: palette.ink }]}
+                      >
+                        {item.originalFileName}
+                      </Text>
+                      <Text
+                        style={[styles.queueRowMeta, { color: palette.inkMuted }]}
+                      >
+                        {item.displayStepLabel ?? item.displayState}
+                      </Text>
+                      {item.errorMessage ? (
+                        <Text
+                          numberOfLines={1}
+                          style={[
+                            styles.queueRowError,
+                            { color: palette.destructive },
+                          ]}
+                        >
+                          {item.errorMessage}
+                        </Text>
+                      ) : null}
+                    </View>
+                    <View style={styles.queueRowSide}>
+                      {(item.displayState === "recovering" ||
+                        item.displayState === "failed") &&
+                      item.attemptCount > 0 ? (
+                        <Text
+                          style={[
+                            styles.queueAttempt,
+                            { color: palette.inkMuted },
+                          ]}
+                        >
+                          {`Try ${item.attemptCount}`}
+                        </Text>
+                      ) : null}
+                      <Text
+                        style={[styles.queueRowAction, { color: palette.accent }]}
+                      >
+                        {rowActionLabel}
+                      </Text>
+                    </View>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+        ))
+      )}
+    </View>
+  );
+}
+
+function QueueSummaryPill({
+  label,
+  palette,
+  value,
+}: {
+  label: string;
+  palette: ReturnType<typeof useAppShell>["palette"];
+  value: number;
+}) {
+  return (
+    <View
+      style={[
+        styles.queueSummaryPill,
+        { backgroundColor: palette.shellElevated, borderColor: palette.border },
+      ]}
+    >
+      <Text style={[styles.queueSummaryValue, { color: palette.ink }]}>
+        {value}
+      </Text>
+      <Text style={[styles.queueSummaryLabel, { color: palette.inkMuted }]}>
+        {label}
+      </Text>
+    </View>
+  );
+}
+
+function formatQueueSectionTitle(sectionId: UploadQueueSection["id"]): string {
+  switch (sectionId) {
+    case "needs_review":
+      return "Needs review";
+    case "needs_retry":
+      return "Needs retry";
+    case "in_progress":
+      return "In progress";
+    case "queued":
+      return "Queued";
+  }
 }
 
 const styles = StyleSheet.create({
@@ -701,14 +1177,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 40,
     paddingVertical: 40,
   },
-  embeddedContainer: {
-    flexGrow: 1,
-    padding: 12,
-    paddingBottom: 16,
-  },
-  embeddedRoot: {
-    flex: 1,
-  },
   dropCard: {
     alignItems: "center",
     borderRadius: 16,
@@ -725,9 +1193,42 @@ const styles = StyleSheet.create({
   },
   dropCardWide: {
     flex: 1,
-    justifyContent: "center",
+    justifyContent: "flex-start",
     paddingHorizontal: 32,
     paddingVertical: 32,
+  },
+  dropCardColumns: {
+    alignItems: "stretch",
+  },
+  embeddedContainer: {
+    flexGrow: 1,
+    padding: 12,
+    paddingBottom: 16,
+  },
+  embeddedQueueLabel: {
+    fontSize: 13,
+    fontWeight: "800",
+    letterSpacing: -0.1,
+  },
+  embeddedQueueMetric: {
+    fontSize: 12,
+    fontWeight: "700",
+    lineHeight: 16,
+  },
+  embeddedQueueMetrics: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  embeddedQueueSummary: {
+    borderRadius: 14,
+    borderWidth: 2,
+    gap: 8,
+    padding: 12,
+    width: "100%",
+  },
+  embeddedRoot: {
+    flex: 1,
   },
   flowHint: {
     fontSize: 12,
@@ -835,6 +1336,11 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     textAlign: "center",
   },
+  previewSequence: {
+    fontSize: 12,
+    fontWeight: "700",
+    lineHeight: 16,
+  },
   primaryButton: {
     alignItems: "center",
     borderRadius: 999,
@@ -853,6 +1359,161 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     letterSpacing: 0.2,
   },
+  queueAttempt: {
+    fontSize: 11,
+    fontWeight: "700",
+    lineHeight: 14,
+  },
+  queueActionButton: {
+    alignItems: "center",
+    borderRadius: 999,
+    borderWidth: 2,
+    justifyContent: "center",
+    minHeight: 32,
+    minWidth: 78,
+    paddingHorizontal: 12,
+  },
+  queueActionButtonLabel: {
+    fontSize: 12,
+    fontWeight: "800",
+  },
+  queueEmptyState: {
+    borderRadius: 14,
+    borderWidth: 2,
+    gap: 6,
+    padding: 14,
+  },
+  queueEmptySummary: {
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  queueEmptyTitle: {
+    fontSize: 14,
+    fontWeight: "800",
+    lineHeight: 18,
+  },
+  queueError: {
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  queueOpenButton: {
+    alignItems: "center",
+    borderRadius: 999,
+    borderWidth: 2,
+    height: 38,
+    justifyContent: "center",
+    minWidth: 84,
+    paddingHorizontal: 14,
+  },
+  queueOpenButtonLabel: {
+    fontSize: 13,
+    fontWeight: "800",
+  },
+  queueRail: {
+    borderRadius: 18,
+    borderWidth: 2,
+    gap: 14,
+    marginTop: 6,
+    padding: 16,
+    width: "100%",
+  },
+  queueRailColumn: {
+    marginTop: 0,
+  },
+  queueRailCopy: {
+    gap: 2,
+  },
+  queueRailEyebrow: {
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+  },
+  queueRailHeader: {
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  queueRailTitle: {
+    fontSize: 18,
+    fontWeight: "800",
+    letterSpacing: -0.2,
+  },
+  queueRow: {
+    alignItems: "center",
+    borderRadius: 14,
+    borderWidth: 2,
+    flexDirection: "row",
+    gap: 12,
+    justifyContent: "space-between",
+    padding: 12,
+  },
+  queueRowAction: {
+    fontSize: 12,
+    fontWeight: "800",
+  },
+  queueRowError: {
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  queueRowMain: {
+    flex: 1,
+    gap: 3,
+  },
+  queueRowMeta: {
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  queueRowSide: {
+    alignItems: "flex-end",
+    gap: 4,
+  },
+  queueRowActions: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    justifyContent: "flex-end",
+  },
+  queueRowTitle: {
+    fontSize: 14,
+    fontWeight: "800",
+    lineHeight: 18,
+  },
+  queueSection: {
+    gap: 8,
+  },
+  queueSectionRows: {
+    gap: 8,
+  },
+  queueSectionTitle: {
+    fontSize: 14,
+    fontWeight: "800",
+    letterSpacing: -0.1,
+  },
+  queueSummaryLabel: {
+    fontSize: 11,
+    fontWeight: "700",
+    lineHeight: 14,
+  },
+  queueSummaryPill: {
+    alignItems: "center",
+    borderRadius: 999,
+    borderWidth: 2,
+    gap: 2,
+    minWidth: 88,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  queueSummaryRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+  },
+  queueSummaryValue: {
+    fontSize: 15,
+    fontWeight: "800",
+    lineHeight: 18,
+  },
   safeArea: {
     flex: 1,
   },
@@ -869,10 +1530,28 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     letterSpacing: 0.2,
   },
-  wideRow: {
-    flex: 1,
-    flexDirection: "row",
-    gap: 32,
+  upcomingItem: {
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  upcomingStack: {
+    alignSelf: "stretch",
+    borderTopWidth: StyleSheet.hairlineWidth,
+    gap: 4,
+    paddingTop: 10,
+  },
+  upcomingTitle: {
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 1,
+    textTransform: "uppercase",
+  },
+  uploadGlyph: {
+    alignItems: "center",
+    borderRadius: 999,
+    height: 56,
+    justifyContent: "center",
+    width: 56,
   },
   webHeroSummary: {
     fontSize: 15,
@@ -891,8 +1570,8 @@ const styles = StyleSheet.create({
     paddingVertical: 36,
   },
   webModalBody: {
-    paddingHorizontal: 28,
     paddingBottom: 28,
+    paddingHorizontal: 28,
   },
   webModalCloseButton: {
     alignItems: "center",
@@ -905,11 +1584,14 @@ const styles = StyleSheet.create({
   webModalFrame: {
     borderRadius: 12,
     borderWidth: 2,
-    maxWidth: 880,
+    maxHeight: "100%",
+    maxWidth: 1080,
     width: "100%",
   },
   webModalFrameWrap: {
-    maxWidth: 880,
+    flex: 1,
+    maxHeight: "100%",
+    maxWidth: 1080,
     width: "100%",
   },
   webModalHeader: {
@@ -917,19 +1599,43 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 20,
     justifyContent: "space-between",
+    paddingBottom: 20,
     paddingHorizontal: 28,
     paddingTop: 28,
-    paddingBottom: 20,
   },
   webModalHeaderCopy: {
     flex: 1,
     gap: 8,
   },
-  uploadGlyph: {
+  webModalScroll: {
+    flex: 1,
+    width: "100%",
+  },
+  webModalScrollContent: {
     alignItems: "center",
-    borderRadius: 999,
-    height: 56,
-    justifyContent: "center",
-    width: 56,
+    flexGrow: 1,
+    justifyContent: "flex-start",
+    paddingHorizontal: 28,
+    paddingVertical: 36,
+  },
+  workspaceColumns: {
+    alignItems: "flex-start",
+    flexDirection: "row",
+    gap: 24,
+    width: "100%",
+  },
+  workspaceMainColumn: {
+    alignItems: "center",
+    flex: 1,
+    gap: 12,
+  },
+  workspaceQueueColumn: {
+    flex: 1,
+    minWidth: 320,
+  },
+  wideRow: {
+    flex: 1,
+    flexDirection: "row",
+    gap: 32,
   },
 });

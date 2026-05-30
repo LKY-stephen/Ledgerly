@@ -58,7 +58,33 @@ export interface LedgerReviewValues {
   taxCategory: string;
 }
 
+export type UploadQueueDisplayState =
+  | "failed"
+  | "processing"
+  | "queued"
+  | "ready_for_review"
+  | "recovering";
+
+export type UploadQueueSectionId =
+  | "in_progress"
+  | "needs_retry"
+  | "needs_review"
+  | "queued";
+
+export interface UploadQueueSection {
+  id: UploadQueueSectionId;
+  items: EvidenceQueueItem[];
+}
+
+export interface UploadQueueSummary {
+  inProgress: number;
+  needsRetry: number;
+  needsReview: number;
+  queued: number;
+}
+
 export interface EvidenceQueueItem {
+  attemptCount: number;
   batchCreatedAt: string;
   batchId: string;
   batchState: UploadBatchState;
@@ -67,6 +93,9 @@ export interface EvidenceQueueItem {
   capturedDescription: string;
   capturedSource: string;
   capturedTarget: string;
+  displayState: UploadQueueDisplayState;
+  displayStepLabel: string | null;
+  errorMessage: string | null;
   createdAt: string;
   duplicateKind: DuplicateKind | null;
   evidenceId: string;
@@ -80,6 +109,7 @@ export interface EvidenceQueueItem {
   plannerRunId: string | null;
   plannerSummary: PlannerSummary | null;
   readTasks: PlannerReadTask[];
+  sectionId: UploadQueueSectionId;
   resolutions: CounterpartyResolution[];
   writeProposals: WorkflowWriteProposalItem[];
   candidateRecords: WorkflowCandidateRecord[];
@@ -377,6 +407,37 @@ export function deriveReviewValues(
   };
 }
 
+export function getPreferredPlannerCandidateIndex(input: {
+  candidateRecords: Array<{
+    candidateId: string;
+    state: WorkflowCandidateRecord["state"];
+  }>;
+  writeProposals: Array<{
+    candidateId: string | null;
+    state: WorkflowWriteProposalItem["state"];
+  }>;
+}): number {
+  const unresolvedIndex = input.candidateRecords.findIndex((candidate) => {
+    if (
+      candidate.state === "persisted_final" ||
+      candidate.state === "approved" ||
+      candidate.state === "rejected"
+    ) {
+      return false;
+    }
+
+    const hasPendingProposal = input.writeProposals.some(
+      (proposal) =>
+        proposal.candidateId === candidate.candidateId &&
+        proposal.state === "pending_approval",
+    );
+
+    return hasPendingProposal || candidate.state === "needs_review";
+  });
+
+  return unresolvedIndex >= 0 ? unresolvedIndex : 0;
+}
+
 export function deriveLedgerCategory(
   candidates: EvidenceFieldCandidates | undefined,
 ): LedgerCategory {
@@ -475,6 +536,55 @@ export function prioritizeEvidenceQueue(
       left.batchCreatedAt ?? left.createdAt,
     ),
   );
+}
+
+export function buildUploadQueueSections(
+  queue: EvidenceQueueItem[],
+): UploadQueueSection[] {
+  const groups: Record<UploadQueueSectionId, EvidenceQueueItem[]> = {
+    in_progress: [],
+    needs_retry: [],
+    needs_review: [],
+    queued: [],
+  };
+
+  for (const item of queue) {
+    groups[item.sectionId].push(item);
+  }
+
+  return (
+    [
+      { id: "needs_review", items: groups.needs_review },
+      { id: "needs_retry", items: groups.needs_retry },
+      { id: "in_progress", items: groups.in_progress },
+      { id: "queued", items: groups.queued },
+    ] satisfies UploadQueueSection[]
+  ).filter((section) => section.items.length > 0);
+}
+
+export function buildUploadQueueSummary(
+  queue: EvidenceQueueItem[],
+): UploadQueueSummary {
+  const summary: UploadQueueSummary = {
+    inProgress: 0,
+    needsRetry: 0,
+    needsReview: 0,
+    queued: 0,
+  };
+
+  for (const item of queue) {
+    if (item.sectionId === "needs_review") {
+      summary.needsReview += 1;
+    } else if (item.sectionId === "needs_retry") {
+      summary.needsRetry += 1;
+    } else if (item.sectionId === "in_progress") {
+      summary.inProgress += 1;
+    } else {
+      summary.queued += 1;
+    }
+  }
+
+  return summary;
 }
 
 export function formatDisplayDate(

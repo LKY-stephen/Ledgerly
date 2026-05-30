@@ -30,6 +30,7 @@ import type {
 } from "./ledger-reporting";
 import { getLedgerRuntimeCopy } from "./ledger-localization";
 import { LedgerTaxHelper } from "./ledger-tax-helper";
+import { useLedgerParseQueue } from "./use-ledger-parse-queue";
 import { useLedgerScreen } from "./use-ledger-screen";
 import {
   buildLedgerPeriodIdForYearAndSegment,
@@ -42,6 +43,7 @@ import { useBusinessLedgerReports } from "./use-business-ledger-reports";
 export function LedgerScreen() {
   const router = useRouter();
   const { copy, palette, resolvedLocale } = useAppShell();
+  const parseQueue = useLedgerParseQueue();
   const screenCopy = copy.ledgerScreen;
   const ledgerCopy = copy.ledger;
   const runtimeCopy = getLedgerRuntimeCopy(resolvedLocale);
@@ -170,6 +172,12 @@ export function LedgerScreen() {
     () => getAvailableQuarterPickerOptions(snapshot.periodOptions, draftYearId),
     [draftYearId, snapshot.periodOptions],
   );
+  const reviewReadyCount = useMemo(
+    () =>
+      parseQueue.queue.filter((item) => item.displayState === "ready_for_review")
+        .length,
+    [parseQueue.queue],
+  );
 
   useEffect(() => {
     if (!hasSelectablePeriods && isSelectorOpen) {
@@ -284,7 +292,9 @@ export function LedgerScreen() {
                 { color: primaryButton.text },
               ]}
             >
-              {ledgerCopy.primaryAction}
+              {reviewReadyCount > 0
+                ? `${ledgerCopy.primaryAction} (${reviewReadyCount})`
+                : ledgerCopy.primaryAction}
             </Text>
           </Pressable>
         </View>

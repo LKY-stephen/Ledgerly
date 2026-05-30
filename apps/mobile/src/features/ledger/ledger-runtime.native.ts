@@ -25,14 +25,26 @@ import {
   type WorkflowWriteProposalItem,
 } from "./ledger-domain";
 import {
+  buildFailedBatchClearPlan,
+  createExtractionRun,
+  createPlannerRun,
+  clearFailedBatchRecords,
+  createUploadBatch,
   ensureDefaultEntity,
   finalizeEvidenceReview,
+  findDuplicateEvidenceForFingerprint,
   insertImportedEvidenceBundle,
   loadEvidenceById,
   loadEvidenceQueue,
+  reconcileInactiveReviewBatch,
+  savePlannerArtifacts,
+  updateExtractionRun,
+  updatePlannerRun,
+  updateUploadBatchState,
   updateEvidenceExtraction,
 } from "./ledger-store";
 import {
+  planEvidenceDbUpdates,
   parseFileWithOpenAi,
   type ParseResult,
   type ProviderRuntimeConfig,
@@ -58,6 +70,11 @@ interface UploadCandidate {
   originalFileName: string;
   sizeBytes: number | null;
   uri: string;
+}
+
+interface ImportedQueueBatch {
+  batchId: string;
+  evidenceId: string;
 }
 
 export async function pickDocumentUploadCandidates(): Promise<
@@ -184,7 +201,7 @@ export async function takeCameraPhoto(
 
 export async function importUploadCandidates(
   candidates: UploadCandidate[],
-): Promise<string[]> {
+): Promise<ImportedQueueBatch[]> {
   if (!candidates.length) {
     return [];
   }
@@ -197,57 +214,73 @@ export async function importUploadCandidates(
       await ensureDefaultEntity(writableDatabase, capturedAt);
 
       for (const bundle of bundles) {
+        let duplicateEvidenceId: string | null = null;
+
+        for (const file of bundle.files) {
+          duplicateEvidenceId = await findDuplicateEvidenceForFingerprint(
+            writableDatabase,
+            {
+              evidenceId: bundle.evidenceId,
+              sha256Hex: file.sha256Hex,
+              sizeBytes: file.sizeBytes,
+            },
+          );
+
+          if (duplicateEvidenceId) {
+            break;
+          }
+        }
+
         await insertImportedEvidenceBundle(writableDatabase, bundle);
+        await createUploadBatch(writableDatabase, {
+          batchId: bundle.batchId,
+          createdAt: capturedAt,
+          evidenceId: bundle.evidenceId,
+          sourceSystem: bundle.sourceSystem,
+          state: "uploaded",
+        });
+        await updateUploadBatchState(writableDatabase, {
+          batchId: bundle.batchId,
+          duplicateKind: duplicateEvidenceId ? "file_duplicate" : null,
+          duplicateOfEvidenceId: duplicateEvidenceId,
+          errorMessage: null,
+          state: duplicateEvidenceId ? "duplicate_file" : "uploaded",
+          updatedAt: capturedAt,
+        });
       }
     });
   });
 
-  return bundles.map((bundle) => bundle.evidenceId);
+  return bundles.map((bundle) => ({
+    batchId: bundle.batchId,
+    evidenceId: bundle.evidenceId,
+  }));
 }
 
 export async function loadParseQueue(): Promise<EvidenceQueueItem[]> {
-  return withWritableLocalDatabase(async ({ writableDatabase }) =>
-    loadEvidenceQueue(writableDatabase),
-  );
+  return withWritableLocalDatabase(async ({ writableDatabase }) => {
+    const queue = await loadEvidenceQueue(writableDatabase);
+    const now = new Date().toISOString();
+
+    for (const item of queue) {
+      if (item.displayState !== "ready_for_review") {
+        continue;
+      }
+
+      await reconcileInactiveReviewBatch(writableDatabase, {
+        batchId: item.batchId,
+        updatedAt: now,
+      });
+    }
+
+    return loadEvidenceQueue(writableDatabase);
+  });
 }
 
 export async function parseEvidence(
   evidenceId: string,
 ): Promise<EvidenceQueueItem | null> {
-  const extracted = await withWritableLocalDatabase(
-    async ({ writableDatabase }) => {
-      const evidence = await loadEvidenceById(writableDatabase, evidenceId);
-
-      if (!evidence) {
-        return null;
-      }
-
-      if (
-        evidence.parseStatus === "pending" &&
-        evidence.extractedData?.rawText
-      ) {
-        return evidence;
-      }
-
-      const extractedData = await extractEvidenceData(evidence);
-
-      await updateEvidenceExtraction(writableDatabase, {
-        evidenceId,
-        extractedData,
-        parseStatus: extractedData.failureReason ? "failed" : "pending",
-      });
-
-      return null;
-    },
-  );
-
-  if (extracted) {
-    return extracted;
-  }
-
-  return withWritableLocalDatabase(async ({ writableDatabase }) =>
-    loadEvidenceById(writableDatabase, evidenceId),
-  );
+  return processEvidenceBatch(evidenceId);
 }
 
 export async function retryEvidenceParsing(
@@ -260,48 +293,40 @@ export async function retryEvidenceParsing(
       return null;
     }
 
-    const resetExtractedData: EvidenceExtractedData = {
-      candidates: {
-        amountCents: null,
-        category: null,
-        date: evidence.capturedDate,
-        description:
-          evidence.capturedDescription ||
-          stripExtension(evidence.originalFileName),
-        notes: null,
-        source: null,
-        target: null,
-        taxCategory: null,
-      },
-      fields: {
-        amountCents: null,
-        category: null,
-        date: evidence.capturedDate,
-        description:
-          evidence.capturedDescription ||
-          stripExtension(evidence.originalFileName),
-        notes: null,
-        source: null,
-        target: null,
-        taxCategory: null,
-      },
-      model: null,
-      parser: "openai_gpt",
-      rawLines: [],
-      rawSummary: "",
-      rawText: "",
-      sourceLabel: "retry",
-      warnings: [],
-    };
-
-    await updateEvidenceExtraction(writableDatabase, {
-      evidenceId,
-      extractedData: resetExtractedData,
-      parseStatus: "pending",
+    const now = new Date().toISOString();
+    await updateUploadBatchState(writableDatabase, {
+      batchId: evidence.batchId,
+      duplicateKind: evidence.duplicateKind,
+      errorMessage: null,
+      state: "parsing",
+      updatedAt: now,
     });
 
-    return null;
-  }).then(() => parseEvidence(evidenceId));
+    return loadEvidenceById(writableDatabase, evidenceId);
+  });
+}
+
+export async function clearFailedEvidence(
+  evidenceId: string,
+): Promise<void> {
+  return withWritableLocalDatabase(async ({ database, writableDatabase }) => {
+    const evidence = await loadEvidenceById(writableDatabase, evidenceId);
+
+    if (!evidence || evidence.displayState !== "failed") {
+      throw new Error("Failed task no longer exists.");
+    }
+
+    const plan = await buildFailedBatchClearPlan(writableDatabase, evidence.batchId);
+
+    for (const relativePath of plan.filePathsToDelete) {
+      const absolutePath = await buildAbsoluteVaultPath(relativePath);
+      await FileSystem.deleteAsync(absolutePath, { idempotent: true });
+    }
+
+    await database.withTransactionAsync(async () => {
+      await clearFailedBatchRecords(writableDatabase, plan);
+    });
+  });
 }
 
 export async function confirmEvidenceReview(
@@ -365,12 +390,16 @@ export interface PlannerResult {
   candidateRecords: WorkflowCandidateRecord[];
   error: string | null;
   evidenceId: string;
+  fileName: string;
+  rawJson: JsonValue | null;
+  rawText: string;
   plannerSummary: PlannerSummary | null;
   reviewValues: LedgerReviewValues;
   writeProposals: WorkflowWriteProposalItem[];
 }
 
 export async function runPlanner(input: {
+  batchId?: string;
   fileName: string;
   mimeType: string | null;
   model: string;
@@ -380,16 +409,13 @@ export async function runPlanner(input: {
   rawJson: unknown;
   rawText: string;
 }): Promise<PlannerResult> {
-  const { planEvidenceDbUpdates } = await import("./remote-parse");
-  const { buildRemoteExtractedData } = await import("./ledger-domain");
-  const {
-    createExtractionRun,
-    createPlannerRun,
-    createUploadBatch,
-    savePlannerArtifacts,
-    updateExtractionRun,
-    updateUploadBatchState,
-  } = await import("./ledger-store");
+  if (input.batchId) {
+    const existing = await loadPlannerState(input.batchId);
+
+    if (existing) {
+      return existing;
+    }
+  }
 
   return withWritableLocalDatabase(async ({ writableDatabase }) => {
     const now = new Date().toISOString();
@@ -543,10 +569,170 @@ export async function runPlanner(input: {
       candidateRecords: evidence.candidateRecords,
       error: null,
       evidenceId,
+      fileName: evidence.originalFileName,
+      rawJson: evidence.extractedData?.originData ?? null,
+      rawText: evidence.extractedData?.rawText ?? "",
       plannerSummary: evidence.plannerSummary,
       reviewValues: primaryCandidate?.reviewValues ?? emptyReviewValues(),
       writeProposals: evidence.writeProposals,
     };
+  });
+}
+
+export async function enqueueUploadCandidates(
+  candidates: UploadCandidate[],
+): Promise<ImportedQueueBatch[]> {
+  return importUploadCandidates(candidates);
+}
+
+async function processEvidenceBatch(
+  evidenceId: string,
+): Promise<EvidenceQueueItem | null> {
+  return withWritableLocalDatabase(async ({ database, writableDatabase }) => {
+    const evidence = await loadEvidenceById(writableDatabase, evidenceId);
+
+    if (!evidence) {
+      return null;
+    }
+
+    if (evidence.batchState === "duplicate_file") {
+      return evidence;
+    }
+
+    const now = new Date().toISOString();
+
+    await database.withTransactionAsync(async () => {
+      if (
+        evidence.batchState === "uploaded" ||
+        evidence.batchState === "evidence_registered" ||
+        evidence.batchState === "parsing" ||
+        evidence.parseStatus === "pending"
+      ) {
+        const extractionRunId = `extraction-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+        await updateUploadBatchState(writableDatabase, {
+          batchId: evidence.batchId,
+          duplicateKind: evidence.duplicateKind,
+          errorMessage: null,
+          state: "parsing",
+          updatedAt: now,
+        });
+        await createExtractionRun(writableDatabase, {
+          batchId: evidence.batchId,
+          createdAt: now,
+          evidenceId: evidence.evidenceId,
+          extractionRunId,
+        });
+
+        const extractedData = await extractEvidenceData(evidence);
+
+        await updateEvidenceExtraction(writableDatabase, {
+          evidenceId,
+          extractedData,
+          parseStatus: extractedData.failureReason ? "failed" : "parsed",
+        });
+
+        if (extractedData.failureReason) {
+          await updateExtractionRun(writableDatabase, {
+            errorMessage: extractedData.failureReason,
+            extractionRunId,
+            state: "failed",
+            updatedAt: now,
+          });
+          await updateUploadBatchState(writableDatabase, {
+            batchId: evidence.batchId,
+            duplicateKind: evidence.duplicateKind,
+            errorMessage: extractedData.failureReason,
+            state: "failed",
+            updatedAt: now,
+          });
+          return;
+        }
+
+        await updateExtractionRun(writableDatabase, {
+          extractionRunId,
+          model: extractedData.model ?? null,
+          parsePayload: extractedData.originData ?? null,
+          state: "complete",
+          updatedAt: now,
+        });
+        await updateUploadBatchState(writableDatabase, {
+          batchId: evidence.batchId,
+          duplicateKind: evidence.duplicateKind,
+          errorMessage: null,
+          state: "parse_complete",
+          updatedAt: now,
+        });
+      }
+
+        const refreshedEvidence = await loadEvidenceById(writableDatabase, evidenceId);
+
+      if (!refreshedEvidence) {
+        return;
+      }
+
+      const canPlan =
+        refreshedEvidence.batchState === "parse_complete" ||
+        refreshedEvidence.batchState === "planning";
+
+      if (!canPlan || !refreshedEvidence.extractedData?.originData) {
+        return;
+      }
+
+      const latestExtractionRunId =
+        refreshedEvidence.extractionRunId ??
+        `extraction-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+      const plannerRunId = `planner-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+      await updateUploadBatchState(writableDatabase, {
+        batchId: refreshedEvidence.batchId,
+        duplicateKind: refreshedEvidence.duplicateKind,
+        errorMessage: null,
+        state: "planning",
+        updatedAt: now,
+      });
+
+      await createPlannerRun(writableDatabase, {
+        batchId: refreshedEvidence.batchId,
+        createdAt: now,
+        evidenceId: refreshedEvidence.evidenceId,
+        extractionRunId: latestExtractionRunId,
+        plannerRunId,
+      });
+
+      try {
+        const remotePlan = await planEvidenceDbUpdates({
+          evidenceId: refreshedEvidence.evidenceId,
+          fileName: refreshedEvidence.originalFileName,
+          mimeType: refreshedEvidence.mimeType,
+          rawJson: refreshedEvidence.extractedData.originData,
+        });
+
+        await savePlannerArtifacts(writableDatabase, {
+          batchId: refreshedEvidence.batchId,
+          createdAt: now,
+          evidence: refreshedEvidence,
+          plannerRunId,
+          remotePlan,
+        });
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Planner response failed.";
+        await updatePlannerRun(writableDatabase, {
+          errorMessage: message,
+          plannerRunId,
+          state: "failed",
+          updatedAt: now,
+        });
+        await updateUploadBatchState(writableDatabase, {
+          batchId: refreshedEvidence.batchId,
+          duplicateKind: refreshedEvidence.duplicateKind,
+          errorMessage: message,
+          state: "failed",
+          updatedAt: now,
+        });
+      }
+    });
+
+    return loadEvidenceById(writableDatabase, evidenceId);
   });
 }
 
@@ -592,6 +778,9 @@ export async function approveWriteProposal(
       candidateRecords: evidence.candidateRecords,
       error: null,
       evidenceId: batch.evidenceId,
+      fileName: evidence.originalFileName,
+      rawJson: evidence.extractedData?.originData ?? null,
+      rawText: evidence.extractedData?.rawText ?? "",
       plannerSummary: evidence.plannerSummary,
       reviewValues: primaryCandidate?.reviewValues ?? emptyReviewValues(),
       writeProposals: evidence.writeProposals,
@@ -636,6 +825,9 @@ export async function rejectWriteProposal(
       candidateRecords: evidence.candidateRecords,
       error: null,
       evidenceId: batch.evidenceId,
+      fileName: evidence.originalFileName,
+      rawJson: evidence.extractedData?.originData ?? null,
+      rawText: evidence.extractedData?.rawText ?? "",
       plannerSummary: evidence.plannerSummary,
       reviewValues: primaryCandidate?.reviewValues ?? emptyReviewValues(),
       writeProposals: evidence.writeProposals,
@@ -647,6 +839,11 @@ export async function loadPlannerState(
   batchId: string,
 ): Promise<PlannerResult | null> {
   return withWritableLocalDatabase(async ({ writableDatabase }) => {
+    await reconcileInactiveReviewBatch(writableDatabase, {
+      batchId,
+      updatedAt: new Date().toISOString(),
+    });
+
     const batch = await writableDatabase.getFirstAsync<{ evidenceId: string }>(
       "SELECT evidence_id AS evidenceId FROM upload_batches WHERE batch_id = ?;",
       batchId,
@@ -670,6 +867,9 @@ export async function loadPlannerState(
       candidateRecords: evidence.candidateRecords,
       error: null,
       evidenceId: batch.evidenceId,
+      fileName: evidence.originalFileName,
+      rawJson: evidence.extractedData?.originData ?? null,
+      rawText: evidence.extractedData?.rawText ?? "",
       plannerSummary: evidence.plannerSummary,
       reviewValues: primaryCandidate?.reviewValues ?? emptyReviewValues(),
       writeProposals: evidence.writeProposals,

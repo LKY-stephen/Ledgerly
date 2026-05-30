@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  buildUploadQueueSummary,
   buildRecordSchemeTemplate,
   buildRemoteExtractedData,
   formatExtractedDataJson,
   formatFirstParsePayloadJson,
+  getPreferredPlannerCandidateIndex,
   prioritizeEvidenceQueue,
 } from "../src/features/ledger/ledger-domain";
 
@@ -102,6 +104,7 @@ describe("ledger parse json preview", () => {
     const queue = prioritizeEvidenceQueue(
       [
         {
+          attemptCount: 1,
           batchCreatedAt: "2026-04-02T10:00:00.000Z",
           batchId: "batch-old",
           batchState: "parse_pending",
@@ -112,9 +115,12 @@ describe("ledger parse json preview", () => {
           capturedTarget: "",
           candidateRecords: [],
           createdAt: "2026-04-02T10:00:00.000Z",
+          displayState: "queued",
+          displayStepLabel: "Queued",
           duplicateKind: null,
           evidenceId: "evidence-old",
           evidenceKind: "document",
+          errorMessage: null,
           extractionRunId: null,
           extractedData: null,
           filePath: "old.pdf",
@@ -124,10 +130,12 @@ describe("ledger parse json preview", () => {
           plannerRunId: null,
           plannerSummary: null,
           readTasks: [],
+          sectionId: "queued",
           resolutions: [],
           writeProposals: [],
         },
         {
+          attemptCount: 1,
           batchCreatedAt: "2026-04-03T10:00:00.000Z",
           batchId: "batch-new",
           batchState: "parse_pending",
@@ -138,9 +146,12 @@ describe("ledger parse json preview", () => {
           capturedTarget: "",
           candidateRecords: [],
           createdAt: "2026-04-03T10:00:00.000Z",
+          displayState: "queued",
+          displayStepLabel: "Queued",
           duplicateKind: null,
           evidenceId: "evidence-new",
           evidenceKind: "document",
+          errorMessage: null,
           extractionRunId: null,
           extractedData: null,
           filePath: "new.pdf",
@@ -150,6 +161,7 @@ describe("ledger parse json preview", () => {
           plannerRunId: null,
           plannerSummary: null,
           readTasks: [],
+          sectionId: "queued",
           resolutions: [],
           writeProposals: [],
         },
@@ -158,6 +170,172 @@ describe("ledger parse json preview", () => {
     );
 
     expect(queue.map((item) => item.evidenceId)).toEqual(["evidence-new", "evidence-old"]);
+  });
+
+  it("builds queue summary counts from the latest section taxonomy", () => {
+    const summary = buildUploadQueueSummary([
+      {
+        attemptCount: 1,
+        batchCreatedAt: "2026-04-02T10:00:00.000Z",
+        batchId: "batch-review",
+        batchState: "review_required",
+        capturedAmountCents: 0,
+        capturedDate: "2026-04-02",
+        capturedDescription: "",
+        capturedSource: "",
+        capturedTarget: "",
+        candidateRecords: [],
+        createdAt: "2026-04-02T10:00:00.000Z",
+        displayState: "ready_for_review",
+        displayStepLabel: "Ready for review",
+        duplicateKind: null,
+        evidenceId: "evidence-review",
+        evidenceKind: "document",
+        errorMessage: null,
+        extractionRunId: null,
+        extractedData: null,
+        filePath: "review.pdf",
+        mimeType: "application/pdf",
+        originalFileName: "review.pdf",
+        parseStatus: "parsed",
+        plannerRunId: null,
+        plannerSummary: null,
+        readTasks: [],
+        sectionId: "needs_review",
+        resolutions: [],
+        writeProposals: [],
+      },
+      {
+        attemptCount: 2,
+        batchCreatedAt: "2026-04-03T10:00:00.000Z",
+        batchId: "batch-retry",
+        batchState: "failed",
+        capturedAmountCents: 0,
+        capturedDate: "2026-04-03",
+        capturedDescription: "",
+        capturedSource: "",
+        capturedTarget: "",
+        candidateRecords: [],
+        createdAt: "2026-04-03T10:00:00.000Z",
+        displayState: "failed",
+        displayStepLabel: "Parsing receipt failed",
+        duplicateKind: null,
+        evidenceId: "evidence-retry",
+        evidenceKind: "document",
+        errorMessage: "Retry later",
+        extractionRunId: null,
+        extractedData: null,
+        filePath: "retry.pdf",
+        mimeType: "application/pdf",
+        originalFileName: "retry.pdf",
+        parseStatus: "failed",
+        plannerRunId: null,
+        plannerSummary: null,
+        readTasks: [],
+        sectionId: "needs_retry",
+        resolutions: [],
+        writeProposals: [],
+      },
+      {
+        attemptCount: 1,
+        batchCreatedAt: "2026-04-04T10:00:00.000Z",
+        batchId: "batch-progress",
+        batchState: "parsing",
+        capturedAmountCents: 0,
+        capturedDate: "2026-04-04",
+        capturedDescription: "",
+        capturedSource: "",
+        capturedTarget: "",
+        candidateRecords: [],
+        createdAt: "2026-04-04T10:00:00.000Z",
+        displayState: "recovering",
+        displayStepLabel: "Recovering task",
+        duplicateKind: null,
+        evidenceId: "evidence-progress",
+        evidenceKind: "document",
+        errorMessage: null,
+        extractionRunId: null,
+        extractedData: null,
+        filePath: "progress.pdf",
+        mimeType: "application/pdf",
+        originalFileName: "progress.pdf",
+        parseStatus: "failed",
+        plannerRunId: null,
+        plannerSummary: null,
+        readTasks: [],
+        sectionId: "in_progress",
+        resolutions: [],
+        writeProposals: [],
+      },
+      {
+        attemptCount: 1,
+        batchCreatedAt: "2026-04-05T10:00:00.000Z",
+        batchId: "batch-queued",
+        batchState: "uploaded",
+        capturedAmountCents: 0,
+        capturedDate: "2026-04-05",
+        capturedDescription: "",
+        capturedSource: "",
+        capturedTarget: "",
+        candidateRecords: [],
+        createdAt: "2026-04-05T10:00:00.000Z",
+        displayState: "queued",
+        displayStepLabel: "Queued",
+        duplicateKind: null,
+        evidenceId: "evidence-queued",
+        evidenceKind: "document",
+        errorMessage: null,
+        extractionRunId: null,
+        extractedData: null,
+        filePath: "queued.pdf",
+        mimeType: "application/pdf",
+        originalFileName: "queued.pdf",
+        parseStatus: "pending",
+        plannerRunId: null,
+        plannerSummary: null,
+        readTasks: [],
+        sectionId: "queued",
+        resolutions: [],
+        writeProposals: [],
+      },
+    ]);
+
+    expect(summary).toEqual({
+      inProgress: 1,
+      needsRetry: 1,
+      needsReview: 1,
+      queued: 1,
+    });
+  });
+
+  it("prefers the first unresolved planner candidate with pending approval", () => {
+    expect(
+      getPreferredPlannerCandidateIndex({
+        candidateRecords: [
+          { candidateId: "candidate-1", state: "persisted_final" },
+          { candidateId: "candidate-2", state: "validated" },
+        ],
+        writeProposals: [
+          { candidateId: "candidate-1", state: "executed" },
+          { candidateId: "candidate-2", state: "pending_approval" },
+        ],
+      }),
+    ).toBe(1);
+  });
+
+  it("keeps the earliest actionable planner candidate selected", () => {
+    expect(
+      getPreferredPlannerCandidateIndex({
+        candidateRecords: [
+          { candidateId: "candidate-1", state: "validated" },
+          { candidateId: "candidate-2", state: "validated" },
+        ],
+        writeProposals: [
+          { candidateId: "candidate-1", state: "pending_approval" },
+          { candidateId: "candidate-2", state: "pending_approval" },
+        ],
+      }),
+    ).toBe(0);
   });
 
   it("stores remote originData and falls back rawText to the serialized JSON payload", () => {
