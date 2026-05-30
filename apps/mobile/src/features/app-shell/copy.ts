@@ -249,6 +249,9 @@ export interface AppCopy {
       proposalTypeUpdateWorkflowState: string;
       recordSavedSummary: string;
       recordSavedTitle: string;
+      counterpartyReject: string;
+      duplicateApprove: string;
+      duplicateReject: string;
       reject: string;
       rejectionFailed: string;
       retry: string;
@@ -839,6 +842,9 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
           "All proposals have been approved and the record has been persisted.",
         recordSavedTitle: "Record Saved",
         reject: "Reject",
+        duplicateApprove: "Merge Receipt",
+        duplicateReject: "Keep Separate",
+        counterpartyReject: "Keep New Counterparty",
         rejectionFailed: "Rejection failed.",
         retry: "Retry",
         reviewStateApproved: "Approved",
@@ -876,21 +882,21 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
         emptySelection: "No files were selected.",
         eyebrow: "Upload center",
         errorFallback: "Upload import failed.",
-        hint: "No real files are uploaded in this phase. Source cards are UI-only placeholders.",
+        hint: "Confirm a file and it will enter the local queue below for parsing and review.",
         parseAction: "Parse",
         parsing: "Parsing...",
         parsingStatusPrefix: "Parsing",
-        previewSummary: "Confirm the selected file before starting parse and review.",
+        previewSummary: "Confirm the selected file before it enters the local processing queue.",
         previewTitle: "Selected file",
         selectFiles: "Select Files",
         selectPhotos: "Select Photos",
         sourceTitle: "Upload source",
         summary:
-          "Upload receipts, PDFs, or photos. The file is sent to OpenAI for parsing and the raw JSON result is displayed on the next screen.",
+          "Upload receipts, PDFs, or photos into a local-first queue. Each confirmed item is processed in order and returns later as a review task when attention is needed.",
         takePhoto: "Take Photo",
         title: "Upload workspace",
         uploadCardSummary:
-          "Select a file, send it to OpenAI, and view the raw JSON response.",
+          "Add a file to the local queue. Review and recovery happen in the queue rail.",
         uploadCardTitle: "Upload & Parse",
       },
     },
@@ -1443,6 +1449,9 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
         recordSavedSummary: "所有提案都已批准，这条记录已经写入本地存储。",
         recordSavedTitle: "记录已保存",
         reject: "拒绝",
+        duplicateApprove: "合并票据",
+        duplicateReject: "保留分开",
+        counterpartyReject: "保留新交易对手",
         rejectionFailed: "拒绝失败。",
         retry: "重试",
         reviewStateApproved: "已批准",
@@ -1478,21 +1487,21 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
         emptySelection: "未选择任何文件。",
         eyebrow: "上传中心",
         errorFallback: "上传导入失败。",
-        hint: "本阶段不会上传真实文件，来源卡片仅用于 UI 与导航验证。",
+        hint: "确认文件后，它会进入下方的本地队列，等待解析和复核。",
         parseAction: "解析",
         parsing: "解析中...",
         parsingStatusPrefix: "正在解析",
-        previewSummary: "确认当前文件后再开始解析和复核准备。",
+        previewSummary: "确认当前文件后，它会进入本地处理队列。",
         previewTitle: "已选文件",
         selectFiles: "选择文件",
         selectPhotos: "选择照片",
         sourceTitle: "上传来源",
         summary:
-          "上传票据、PDF 或照片后，文件会被发送给 OpenAI 解析，原始 JSON 结果会在下一页展示。",
+          "把票据、PDF 或照片加入本地优先队列。每个已确认条目会按顺序处理，并在需要人工判断时返回为复核任务。",
         takePhoto: "拍照",
         title: "上传工作台",
         uploadCardSummary:
-          "选择一个文件，发送给 OpenAI，并查看返回的原始 JSON 结果。",
+          "把文件加入本地队列，解析和复核都在工作流栏里完成。",
         uploadCardTitle: "上传并解析",
       },
     },

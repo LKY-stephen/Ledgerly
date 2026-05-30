@@ -5,15 +5,33 @@ import type {
   LedgerReviewValues,
   ProposalApprovalOptions,
 } from "./ledger-domain";
-import { createEmptyReviewValues } from "./ledger-domain";
+import {
+  createEmptyReviewValues,
+  getPreferredPlannerCandidateIndex,
+} from "./ledger-domain";
 import {
   approveWriteProposal,
+  loadPlannerState,
   rejectWriteProposal,
   runPlanner,
   type PlannerResult,
 } from "./ledger-runtime";
 
+function getPreferredCandidateIndex(result: PlannerResult): number {
+  return getPreferredPlannerCandidateIndex({
+    candidateRecords: result.candidateRecords.map((candidate) => ({
+      candidateId: candidate.candidateId,
+      state: candidate.state,
+    })),
+    writeProposals: result.writeProposals.map((proposal) => ({
+      candidateId: proposal.candidateId,
+      state: proposal.state,
+    })),
+  });
+}
+
 export function usePlannerWorkflow(input: {
+  batchId?: string | null;
   fileName: string;
   mimeType: string | null;
   model: string;
@@ -45,12 +63,37 @@ export function usePlannerWorkflow(input: {
     plannerResult?.candidateRecords[selectedCandidateIndex]?.reviewValues ??
     createEmptyReviewValues();
 
+  const hydratePlannerState = useCallback(async () => {
+    if (!input.batchId) {
+      return false;
+    }
+
+    const existing = await loadPlannerState(input.batchId);
+
+    if (!existing) {
+      return false;
+    }
+
+    setPlannerResult(existing);
+    setSelectedCandidateIndex(getPreferredCandidateIndex(existing));
+    return true;
+  }, [input.batchId]);
+
   const startPlanner = useCallback(async () => {
+    if (input.batchId) {
+      const hydrated = await hydratePlannerState();
+
+      if (hydrated) {
+        return;
+      }
+    }
+
     setIsPlanning(true);
     setError(null);
 
     try {
       const result = await runPlanner({
+        batchId: input.batchId ?? undefined,
         fileName: input.fileName,
         mimeType: input.mimeType,
         model: input.model,
@@ -70,7 +113,7 @@ export function usePlannerWorkflow(input: {
       });
 
       setPlannerResult(result);
-      setSelectedCandidateIndex(0);
+      setSelectedCandidateIndex(getPreferredCandidateIndex(result));
     } catch (err) {
       setError(err instanceof Error ? err.message : parseCopy.plannerFailed);
     } finally {
@@ -78,6 +121,7 @@ export function usePlannerWorkflow(input: {
     }
   }, [
     input.fileName,
+    input.batchId,
     aiProvider,
     geminiApiKey,
     geminiAuthMode,
@@ -89,6 +133,7 @@ export function usePlannerWorkflow(input: {
     openAiApiKey,
     input.rawJson,
     input.rawText,
+    hydratePlannerState,
     parseCopy.plannerFailed,
   ]);
 
@@ -119,11 +164,7 @@ export function usePlannerWorkflow(input: {
         );
 
         setPlannerResult(result);
-        setSelectedCandidateIndex((current) =>
-          result.candidateRecords.length === 0
-            ? 0
-            : Math.min(current, result.candidateRecords.length - 1),
-        );
+        setSelectedCandidateIndex(getPreferredCandidateIndex(result));
 
         if (
           result.batchState === "approved" ||
@@ -154,11 +195,15 @@ export function usePlannerWorkflow(input: {
         );
 
         setPlannerResult(result);
-        setSelectedCandidateIndex((current) =>
-          result.candidateRecords.length === 0
-            ? 0
-            : Math.min(current, result.candidateRecords.length - 1),
-        );
+        setSelectedCandidateIndex(getPreferredCandidateIndex(result));
+
+        if (
+          result.batchState === "approved" ||
+          result.batchState === "partially_approved" ||
+          result.batchState === "rejected"
+        ) {
+          bumpStorageRevision();
+        }
       } catch (err) {
         setError(
           err instanceof Error ? err.message : parseCopy.rejectionFailed,
@@ -167,7 +212,7 @@ export function usePlannerWorkflow(input: {
         setIsApproving(false);
       }
     },
-    [parseCopy.rejectionFailed, plannerResult],
+    [bumpStorageRevision, parseCopy.rejectionFailed, plannerResult],
   );
 
   const updateField = useCallback(
