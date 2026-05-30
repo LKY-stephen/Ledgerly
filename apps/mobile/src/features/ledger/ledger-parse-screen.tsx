@@ -44,6 +44,7 @@ export function LedgerParseScreen() {
   const successColors = getFeedbackColors(palette, "success");
   const warningColors = getFeedbackColors(palette, "warning");
   const params = useLocalSearchParams<{
+    batchId?: string;
     fileName?: string;
     rawJson?: string;
     rawText?: string;
@@ -53,6 +54,7 @@ export function LedgerParseScreen() {
     parserKind?: string;
   }>();
 
+  const batchId = params.batchId?.trim() || null;
   const fileName = params.fileName ?? parseCopy.unknownFile;
   const rawJson = params.rawJson ?? "";
   const rawText = params.rawText ?? "";
@@ -79,6 +81,7 @@ export function LedgerParseScreen() {
     startPlanner,
     updateField,
   } = usePlannerWorkflow({
+    batchId,
     fileName,
     mimeType,
     model,
@@ -88,6 +91,15 @@ export function LedgerParseScreen() {
     rawText,
   });
 
+  const hydratedFileName = plannerResult?.fileName?.trim() || "";
+  const displayFileName = hydratedFileName || fileName;
+  const hydratedRawJsonText = plannerResult?.rawJson
+    ? JSON.stringify(plannerResult.rawJson, null, 2)
+    : "";
+  const displayRawJson = rawJson || hydratedRawJsonText;
+  const displayRawText = rawText || plannerResult?.rawText || "";
+
+  const canHydratePlanner = Boolean(batchId) && !plannerResult;
   const canStartPlanner =
     hasData && !parseError && parsedRawJson !== null && !plannerResult;
   const isPreparingReview = canStartPlanner || (isPlanning && !plannerResult);
@@ -97,11 +109,20 @@ export function LedgerParseScreen() {
     !parseError &&
     parsedRawJson !== null &&
     Boolean(plannerError);
+  const isHydrationPending = canHydratePlanner && !plannerResult && !plannerError;
   const allApproved = plannerResult?.batchState === "approved";
   const activeCandidate = plannerResult?.candidateRecords[selectedCandidateIndex] ?? null;
-  const visibleProposals = plannerResult?.writeProposals.filter((proposal) =>
-    !proposal.candidateId || proposal.candidateId === activeCandidate?.candidateId,
-  ) ?? [];
+  const visibleProposals =
+    plannerResult?.writeProposals.filter(
+      (proposal) =>
+        proposal.state === "pending_approval" &&
+        (!proposal.candidateId ||
+          proposal.candidateId === activeCandidate?.candidateId),
+    ) ?? [];
+  const pendingProposalCount =
+    plannerResult?.writeProposals.filter(
+      (proposal) => proposal.state === "pending_approval",
+    ).length ?? 0;
   const [duplicateKeepModes, setDuplicateKeepModes] = useState<
     Record<string, DuplicateMergeKeepMode>
   >({});
@@ -119,19 +140,19 @@ export function LedgerParseScreen() {
   ];
 
   useEffect(() => {
-    if (!canStartPlanner || isPlanning || plannerError) {
+    if ((!canStartPlanner && !canHydratePlanner) || isPlanning || plannerError) {
       return;
     }
 
     void startPlanner();
-  }, [canStartPlanner, isPlanning, plannerError, startPlanner]);
+  }, [canHydratePlanner, canStartPlanner, isPlanning, plannerError, startPlanner]);
 
   useEffect(() => {
     if (!allApproved) {
       return;
     }
 
-    router.replace("/(game)");
+    router.replace("/ledger/upload");
   }, [allApproved, router]);
 
   return (
@@ -154,7 +175,7 @@ export function LedgerParseScreen() {
             if (router.canGoBack()) {
               router.back();
             } else {
-              router.replace("/(game)");
+              router.replace("/ledger/upload");
             }
           }}
           palette={palette}
@@ -176,7 +197,7 @@ export function LedgerParseScreen() {
               numberOfLines={1}
               style={[styles.fileName, { color: palette.ink }]}
             >
-              {fileName}
+              {displayFileName}
             </Text>
           </View>
           {model ? (
@@ -209,7 +230,7 @@ export function LedgerParseScreen() {
         <View style={isExpanded ? styles.twoColumn : undefined}>
           {/* Left column: parse output / empty states */}
           <View style={isExpanded ? styles.columnLeft : undefined}>
-            {showSourceDetailFirst && hasData ? (
+            {showSourceDetailFirst && (displayRawJson || displayRawText) ? (
               <View
                 style={[
                   styles.card,
@@ -233,11 +254,13 @@ export function LedgerParseScreen() {
                     selectable
                     style={[styles.jsonText, { color: palette.ink }]}
                   >
-                    {formattedJson || rawText || parseCopy.noData}
+                    {formatJson(displayRawJson) || displayRawText || parseCopy.noData}
                   </Text>
                 </View>
               </View>
-            ) : !parseError ? (
+            ) : !parseError &&
+              !isHydrationPending &&
+              !(displayRawJson || displayRawText) ? (
               <View
                 style={[
                   styles.emptyState,
@@ -353,7 +376,7 @@ export function LedgerParseScreen() {
                   <StatPill
                     label={parseCopy.statProposals}
                     palette={palette}
-                    value={plannerResult.writeProposals.length}
+                    value={pendingProposalCount}
                   />
                 </View>
               </View>
@@ -475,7 +498,7 @@ export function LedgerParseScreen() {
               </View>
             ) : null}
 
-            {!showSourceDetailFirst && hasData ? (
+            {!showSourceDetailFirst && (displayRawJson || displayRawText) ? (
               <View
                 style={[
                   styles.card,
@@ -501,7 +524,7 @@ export function LedgerParseScreen() {
                     selectable
                     style={[styles.jsonText, { color: palette.ink }]}
                   >
-                    {formattedJson || rawText || parseCopy.noData}
+                    {formatJson(displayRawJson) || displayRawText || parseCopy.noData}
                   </Text>
                 </View>
               </View>
@@ -610,7 +633,7 @@ export function LedgerParseScreen() {
             if (router.canGoBack()) {
               router.back();
             } else {
-              router.replace("/(game)");
+              router.replace("/ledger/upload");
             }
           }}
           style={({ pressed }) => [
@@ -748,7 +771,7 @@ function GenericProposalCard(props: {
         onReject={props.onReject}
         palette={props.palette}
         proposal={props.proposal}
-        rejectLabel={props.parseCopy.reject}
+        rejectLabel={props.parseCopy.counterpartyReject ?? props.parseCopy.reject}
       />
     </View>
   );
@@ -826,13 +849,13 @@ function CounterpartyMergeProposalCard(props: {
         />
       </View>
       <ProposalActions
-        approveLabel={props.parseCopy.approve}
+        approveLabel={props.parseCopy.duplicateApprove ?? props.parseCopy.approve}
         isApproving={props.isApproving}
         onApprove={props.onApprove}
         onReject={props.onReject}
         palette={props.palette}
         proposal={props.proposal}
-        rejectLabel={props.parseCopy.reject}
+        rejectLabel={props.parseCopy.duplicateReject ?? props.parseCopy.reject}
       />
     </View>
   );

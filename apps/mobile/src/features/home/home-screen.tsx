@@ -21,6 +21,7 @@ import {
   formatDisplayDate,
   type HomeTrendPoint,
 } from "../ledger/ledger-domain";
+import { useLedgerParseQueue } from "../ledger/use-ledger-parse-queue";
 import { useHomeScreenData } from "./use-home-screen-data";
 import { useAppShell } from "../app-shell/provider";
 import { getButtonColors, withAlpha } from "../app-shell/theme-utils";
@@ -72,6 +73,7 @@ export function HomeScreen() {
     refresh,
     snapshot,
   } = useHomeScreenData();
+  const parseQueue = useLedgerParseQueue();
   const agent = useAgentContext();
   const [chatExpanded, setChatExpanded] = useState(false);
   const screenCopy = copy.homeScreen;
@@ -186,6 +188,12 @@ export function HomeScreen() {
       null,
     [defaultTrendDate, selectedTrendDate, snapshot.trend],
   );
+  const reviewReadyCount = useMemo(
+    () =>
+      parseQueue.queue.filter((item) => item.displayState === "ready_for_review")
+        .length,
+    [parseQueue.queue],
+  );
 
   useEffect(() => {
     if (!snapshot.trend.length) {
@@ -293,7 +301,9 @@ export function HomeScreen() {
                   <View style={styles.heroActionContent}>
                     <AppIcon color={primaryButton.text} name="add" size={11} />
                     <Text style={[styles.heroActionLabel, { color: primaryButton.text }]}>
-                      {screenCopy.newRecords}
+                      {reviewReadyCount > 0
+                        ? `${screenCopy.newRecords} (${reviewReadyCount})`
+                        : screenCopy.newRecords}
                     </Text>
                   </View>
                 </Pressable>
@@ -528,7 +538,9 @@ export function HomeScreen() {
                       ]}
                     >
                       <Text style={[styles.secondaryActionLabel, { color: palette.ink }]}>
-                        {screenCopy.newRecords}
+                        {reviewReadyCount > 0
+                          ? `${screenCopy.newRecords} (${reviewReadyCount})`
+                          : screenCopy.newRecords}
                       </Text>
                     </Pressable>
                   ) : null}

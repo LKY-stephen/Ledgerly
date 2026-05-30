@@ -8,6 +8,7 @@ import {
   type LedgerReviewValues,
 } from "./ledger-domain";
 import {
+  clearFailedEvidence,
   confirmEvidenceReview,
   loadParseQueue,
   parseEvidence,
@@ -20,12 +21,22 @@ export function useLedgerParseQueue() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isParsing, setIsParsing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [clearingBatchId, setClearingBatchId] = useState<string | null>(null);
+  const [retryingEvidenceId, setRetryingEvidenceId] = useState<string | null>(
+    null,
+  );
   const [queue, setQueue] = useState<EvidenceQueueItem[]>([]);
   const [review, setReview] = useState<LedgerReviewValues>(
     createEmptyReviewValues,
   );
 
-  const currentItem = queue[0] ?? null;
+  const currentItem =
+    queue.find((item) => item.displayState === "ready_for_review") ?? null;
+  const workerItem =
+    queue.find(
+      (item) =>
+        item.displayState === "queued" || item.displayState === "recovering",
+    ) ?? null;
 
   useEffect(() => {
     void refresh();
@@ -41,9 +52,7 @@ export function useLedgerParseQueue() {
 
   useEffect(() => {
     if (
-      !currentItem ||
-      currentItem.parseStatus !== "pending" ||
-      currentItem.extractedData?.rawText ||
+      !workerItem ||
       isParsing
     ) {
       return;
@@ -52,7 +61,7 @@ export function useLedgerParseQueue() {
     setIsParsing(true);
     setError(null);
 
-    parseEvidence(currentItem.evidenceId)
+    parseEvidence(workerItem.evidenceId)
       .then(() => refresh())
       .catch((nextError: unknown) => {
         setError(
@@ -67,9 +76,7 @@ export function useLedgerParseQueue() {
         setIsParsing(false);
       });
   }, [
-    currentItem?.evidenceId,
-    currentItem?.parseStatus,
-    currentItem?.extractedData?.rawText,
+    workerItem?.evidenceId,
     isParsing,
   ]);
 
@@ -92,16 +99,18 @@ export function useLedgerParseQueue() {
     }
   }
 
-  async function retry(): Promise<void> {
-    if (!currentItem) {
+  async function retry(
+    item: EvidenceQueueItem | null = currentItem ?? workerItem ?? null,
+  ): Promise<void> {
+    if (!item) {
       return;
     }
 
-    setIsParsing(true);
+    setRetryingEvidenceId(item.evidenceId);
     setError(null);
 
     try {
-      await retryEvidenceParsing(currentItem.evidenceId);
+      await retryEvidenceParsing(item.evidenceId);
       await refresh();
     } catch (nextError: unknown) {
       setError(
@@ -112,7 +121,31 @@ export function useLedgerParseQueue() {
             : "Evidence retry failed.",
       );
     } finally {
-      setIsParsing(false);
+      setRetryingEvidenceId(null);
+    }
+  }
+
+  async function clear(item: EvidenceQueueItem): Promise<void> {
+    if (item.displayState !== "failed") {
+      return;
+    }
+
+    setClearingBatchId(item.batchId);
+    setError(null);
+
+    try {
+      await clearFailedEvidence(item.evidenceId);
+      await refresh();
+    } catch (nextError: unknown) {
+      setError(
+        nextError instanceof Error
+          ? nextError.message
+          : resolvedLocale === "zh-CN"
+            ? "清除失败任务失败。"
+            : "Clearing failed task failed.",
+      );
+    } finally {
+      setClearingBatchId(null);
     }
   }
 
@@ -150,14 +183,17 @@ export function useLedgerParseQueue() {
   }
 
   return {
+    clear,
     currentItem,
     error,
+    clearingBatchId,
     isLoaded,
     isParsing,
     isSubmitting,
     queue,
     refresh,
     retry,
+    retryingEvidenceId,
     review,
     submit,
     updateField,

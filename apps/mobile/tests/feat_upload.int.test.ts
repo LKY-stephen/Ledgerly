@@ -14,6 +14,8 @@ import {
   type ImportedEvidenceBundle,
 } from "../src/features/ledger/ledger-domain";
 import {
+  buildFailedBatchClearPlan,
+  clearFailedBatchRecords,
   approveWorkflowWriteProposal,
   createExtractionRun,
   createPlannerRun,
@@ -23,6 +25,8 @@ import {
   insertImportedEvidenceBundle,
   loadEvidenceById,
   loadEvidenceQueue,
+  reconcileInactiveReviewBatch,
+  updateUploadBatchState,
   rejectWorkflowWriteProposal,
   savePlannerArtifacts,
   updateEvidenceExtraction,
@@ -316,6 +320,73 @@ describe("feat_upload data flow", () => {
     const bundle = createLivePhotoBundle();
     await ensureDefaultEntity(writableDatabase, bundle.capturedAt);
     await insertImportedEvidenceBundle(writableDatabase, bundle);
+    await updateEvidenceExtraction(writableDatabase, {
+      evidenceId: bundle.evidenceId,
+      extractedData: buildRemoteExtractedData({
+        fileName: bundle.files[0]!.originalFileName,
+        parsePayload: {
+          candidates: {
+            amountCents: 5299,
+            category: "expense",
+            date: "2026-02-27",
+            description: "Apple Store accessories",
+            notes: null,
+            source: "Business Card",
+            target: "Apple Store",
+            taxCategory: "office",
+          },
+          fields: {
+            amountCents: 5299,
+            category: "expense",
+            date: "2026-02-27",
+            description: "Apple Store accessories",
+            notes: null,
+            source: "Business Card",
+            target: "Apple Store",
+            taxCategory: "office",
+          },
+          model: "gpt-5",
+          parser: "openai_gpt",
+          rawSummary: "Apple Store receipt",
+          rawText: "Apple Store 02/27/2026 $52.99",
+          records: [
+            {
+              candidates: {
+                amountCents: 5299,
+                category: "expense",
+                date: "2026-02-27",
+                description: "Apple Store accessories",
+                notes: null,
+                source: "Business Card",
+                target: "Apple Store",
+                taxCategory: "office",
+              },
+              fields: {
+                amountCents: 5299,
+                category: "expense",
+                date: "2026-02-27",
+                description: "Apple Store accessories",
+                notes: null,
+                source: "Business Card",
+                target: "Apple Store",
+                taxCategory: "office",
+              },
+            },
+          ],
+          warnings: [],
+        },
+        scheme: {},
+        sourceLabel: "OpenAI GPT",
+      }),
+      parseStatus: "pending",
+    });
+    await createUploadBatch(writableDatabase, {
+      batchId: bundle.batchId,
+      createdAt: bundle.capturedAt,
+      evidenceId: bundle.evidenceId,
+      sourceSystem: bundle.sourceSystem,
+      state: "uploaded",
+    });
 
     const queue = await loadEvidenceQueue(writableDatabase);
     expect(queue).toHaveLength(1);
@@ -503,6 +574,13 @@ describe("feat_upload data flow", () => {
     const bundle = createLivePhotoBundle();
     await ensureDefaultEntity(writableDatabase, bundle.capturedAt);
     await insertImportedEvidenceBundle(writableDatabase, bundle);
+    await createUploadBatch(writableDatabase, {
+      batchId: bundle.batchId,
+      createdAt: bundle.capturedAt,
+      evidenceId: bundle.evidenceId,
+      sourceSystem: bundle.sourceSystem,
+      state: "failed",
+    });
 
     await updateEvidenceExtraction(writableDatabase, {
       evidenceId: "evidence-live-photo",
@@ -519,6 +597,305 @@ describe("feat_upload data flow", () => {
     const queue = await loadEvidenceQueue(writableDatabase);
     expect(queue[0]?.parseStatus).toBe("failed");
     expect(queue[0]?.extractedData?.failureReason).toBe("Remote GPT parsing failed.");
+  });
+
+  it("moves a retried failed batch back into the in-progress queue immediately", async () => {
+    const database = createStorageDatabase();
+    const writableDatabase = createWritableDatabase(database);
+    const bundle = createLivePhotoBundle();
+    await ensureDefaultEntity(writableDatabase, bundle.capturedAt);
+    await insertImportedEvidenceBundle(writableDatabase, bundle);
+    await createUploadBatch(writableDatabase, {
+      batchId: bundle.batchId,
+      createdAt: bundle.capturedAt,
+      evidenceId: bundle.evidenceId,
+      sourceSystem: bundle.sourceSystem,
+      state: "failed",
+    });
+    await updateEvidenceExtraction(writableDatabase, {
+      evidenceId: bundle.evidenceId,
+      extractedData: buildFailedExtractedData({
+        fallbackDate: "2026-04-01",
+        failureReason: "Remote GPT parsing failed.",
+        fileName: "receipt.heic",
+        parser: "openai_gpt",
+        sourceLabel: "OpenAI GPT",
+      }),
+      parseStatus: "failed",
+    });
+
+    await updateUploadBatchState(writableDatabase, {
+      batchId: bundle.batchId,
+      duplicateKind: null,
+      errorMessage: null,
+      state: "parsing",
+      updatedAt: "2026-04-01T09:01:00.000Z",
+    });
+
+    const queue = await loadEvidenceQueue(writableDatabase);
+    expect(queue[0]?.displayState).toBe("recovering");
+    expect(queue[0]?.sectionId).toBe("in_progress");
+    expect(queue[0]?.errorMessage).toBeNull();
+  });
+
+  it("clears a failed batch completely when no persisted records depend on it", async () => {
+    const database = createStorageDatabase();
+    const writableDatabase = createWritableDatabase(database);
+    const bundle = createLivePhotoBundle();
+    await ensureDefaultEntity(writableDatabase, bundle.capturedAt);
+    await insertImportedEvidenceBundle(writableDatabase, bundle);
+    await createUploadBatch(writableDatabase, {
+      batchId: bundle.batchId,
+      createdAt: bundle.capturedAt,
+      evidenceId: bundle.evidenceId,
+      sourceSystem: bundle.sourceSystem,
+      state: "failed",
+    });
+    await createExtractionRun(writableDatabase, {
+      batchId: bundle.batchId,
+      createdAt: bundle.capturedAt,
+      evidenceId: bundle.evidenceId,
+      extractionRunId: "extraction-failed-clear",
+    });
+    await createPlannerRun(writableDatabase, {
+      batchId: bundle.batchId,
+      createdAt: bundle.capturedAt,
+      evidenceId: bundle.evidenceId,
+      extractionRunId: "extraction-failed-clear",
+      plannerRunId: "planner-failed-clear",
+    });
+    await writableDatabase.runAsync(
+      `INSERT INTO workflow_audit_events (
+        event_id,
+        batch_id,
+        planner_run_id,
+        candidate_id,
+        write_proposal_id,
+        event_type,
+        message,
+        payload_json,
+        created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+      "audit-failed-clear",
+      bundle.batchId,
+      "planner-failed-clear",
+      null,
+      null,
+      "planner_failed",
+      "Planner failed for fixture.",
+      null,
+      bundle.capturedAt,
+    );
+    await updateEvidenceExtraction(writableDatabase, {
+      evidenceId: bundle.evidenceId,
+      extractedData: buildFailedExtractedData({
+        fallbackDate: "2026-04-01",
+        failureReason: "Remote GPT parsing failed.",
+        fileName: "receipt.heic",
+        parser: "openai_gpt",
+        sourceLabel: "OpenAI GPT",
+      }),
+      parseStatus: "failed",
+    });
+
+    const plan = await buildFailedBatchClearPlan(writableDatabase, bundle.batchId);
+
+    expect(plan.keepEvidenceRecord).toBe(false);
+    expect(plan.filePathsToDelete).toEqual(bundle.files.map((file) => file.relativePath));
+
+    await clearFailedBatchRecords(writableDatabase, plan);
+
+    const remainingEvidence = database
+      .prepare("SELECT COUNT(*) AS count FROM evidences WHERE evidence_id = ?;")
+      .get(bundle.evidenceId) as { count: number };
+    const remainingFiles = database
+      .prepare("SELECT COUNT(*) AS count FROM evidence_files WHERE evidence_id = ?;")
+      .get(bundle.evidenceId) as { count: number };
+    const remainingBatches = database
+      .prepare("SELECT COUNT(*) AS count FROM upload_batches WHERE batch_id = ?;")
+      .get(bundle.batchId) as { count: number };
+    const remainingAudits = database
+      .prepare("SELECT COUNT(*) AS count FROM workflow_audit_events WHERE batch_id = ?;")
+      .get(bundle.batchId) as { count: number };
+
+    expect(remainingEvidence.count).toBe(0);
+    expect(remainingFiles.count).toBe(0);
+    expect(remainingBatches.count).toBe(0);
+    expect(remainingAudits.count).toBe(0);
+    expect(await loadEvidenceQueue(writableDatabase)).toHaveLength(0);
+  });
+
+  it("keeps shared evidence rows when clearing a failed batch that already supports persisted records", async () => {
+    const database = createStorageDatabase();
+    const writableDatabase = createWritableDatabase(database);
+    const bundle = createLivePhotoBundle();
+    await ensureDefaultEntity(writableDatabase, bundle.capturedAt);
+    await insertImportedEvidenceBundle(writableDatabase, bundle);
+    await createUploadBatch(writableDatabase, {
+      batchId: bundle.batchId,
+      createdAt: bundle.capturedAt,
+      evidenceId: bundle.evidenceId,
+      sourceSystem: bundle.sourceSystem,
+      state: "failed",
+    });
+    await updateEvidenceExtraction(writableDatabase, {
+      evidenceId: bundle.evidenceId,
+      extractedData: buildFailedExtractedData({
+        fallbackDate: "2026-04-01",
+        failureReason: "Planner failed after partial success.",
+        fileName: "receipt.heic",
+        parser: "openai_gpt",
+        sourceLabel: "OpenAI GPT",
+      }),
+      parseStatus: "failed",
+    });
+    await writableDatabase.runAsync(
+      `INSERT INTO records (
+        record_id,
+        entity_id,
+        record_status,
+        source_system,
+        description,
+        memo,
+        occurred_on,
+        currency,
+        amount_cents,
+        source_label,
+        target_label,
+        source_counterparty_id,
+        target_counterparty_id,
+        record_kind,
+        category_code,
+        subcategory_code,
+        tax_category_code,
+        tax_line_code,
+        business_use_bps,
+        created_at,
+        updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+      "record-preserved-1",
+      "entity-main",
+      "posted",
+      "fixture",
+      "Preserved record",
+      null,
+      "2026-04-01",
+      "USD",
+      5299,
+      "Business Card",
+      "Apple Store",
+      null,
+      null,
+      "expense",
+      null,
+      null,
+      null,
+      null,
+      10_000,
+      "2026-04-01T09:12:00.000Z",
+      "2026-04-01T09:12:00.000Z",
+    );
+    await writableDatabase.runAsync(
+      `INSERT INTO record_evidence_links (
+        record_id,
+        evidence_id,
+        link_role,
+        is_primary,
+        created_at
+      ) VALUES (?, ?, ?, ?, ?);`,
+      "record-preserved-1",
+      bundle.evidenceId,
+      "primary",
+      1,
+      "2026-04-01T09:12:00.000Z",
+    );
+
+    const plan = await buildFailedBatchClearPlan(writableDatabase, bundle.batchId);
+
+    expect(plan.keepEvidenceRecord).toBe(true);
+    expect(plan.filePathsToDelete).toEqual([]);
+
+    await clearFailedBatchRecords(writableDatabase, plan);
+
+    const remainingEvidence = database
+      .prepare(
+        "SELECT parse_status AS parseStatus FROM evidences WHERE evidence_id = ?;",
+      )
+      .get(bundle.evidenceId) as { parseStatus: string };
+    const remainingFiles = database
+      .prepare("SELECT COUNT(*) AS count FROM evidence_files WHERE evidence_id = ?;")
+      .get(bundle.evidenceId) as { count: number };
+    const remainingLinks = database
+      .prepare(
+        "SELECT COUNT(*) AS count FROM record_evidence_links WHERE evidence_id = ?;",
+      )
+      .get(bundle.evidenceId) as { count: number };
+    const remainingBatches = database
+      .prepare("SELECT COUNT(*) AS count FROM upload_batches WHERE batch_id = ?;")
+      .get(bundle.batchId) as { count: number };
+
+    expect(remainingEvidence.parseStatus).toBe("parsed");
+    expect(remainingFiles.count).toBe(bundle.files.length);
+    expect(remainingLinks.count).toBe(1);
+    expect(remainingBatches.count).toBe(0);
+    expect(await loadEvidenceQueue(writableDatabase)).toHaveLength(0);
+  });
+
+  it("preserves queued work even when another batch is already review-ready", async () => {
+    const database = createStorageDatabase();
+    const writableDatabase = createWritableDatabase(database);
+    const readyBundle = createReceiptBundle({
+      batchId: "batch-ready",
+      capturedAt: "2026-04-01T09:00:00.000Z",
+      evidenceId: "evidence-ready",
+      fileName: "ready.pdf",
+      filePath: "evidence-objects/entity-main/uploads/2026/04/ready.pdf",
+    });
+    const queuedBundle = createReceiptBundle({
+      batchId: "batch-queued",
+      capturedAt: "2026-04-02T09:00:00.000Z",
+      evidenceId: "evidence-queued",
+      fileName: "queued.pdf",
+      filePath: "evidence-objects/entity-main/uploads/2026/04/queued.pdf",
+    });
+
+    await ensureDefaultEntity(writableDatabase, readyBundle.capturedAt);
+    await insertImportedEvidenceBundle(writableDatabase, readyBundle);
+    await createUploadBatch(writableDatabase, {
+      batchId: readyBundle.batchId,
+      createdAt: readyBundle.capturedAt,
+      evidenceId: readyBundle.evidenceId,
+      sourceSystem: readyBundle.sourceSystem,
+      state: "review_required",
+    });
+
+    await insertImportedEvidenceBundle(writableDatabase, queuedBundle);
+    await createUploadBatch(writableDatabase, {
+      batchId: queuedBundle.batchId,
+      createdAt: queuedBundle.capturedAt,
+      evidenceId: queuedBundle.evidenceId,
+      sourceSystem: queuedBundle.sourceSystem,
+      state: "uploaded",
+    });
+
+    const queue = await loadEvidenceQueue(writableDatabase);
+    expect(queue).toHaveLength(2);
+    expect(
+      queue.some(
+        (item) =>
+          item.evidenceId === "evidence-ready" &&
+          item.sectionId === "needs_review",
+      ),
+    ).toBe(true);
+    expect(
+      queue.some(
+        (item) =>
+          item.evidenceId === "evidence-queued" && item.sectionId === "queued",
+      ),
+    ).toBe(true);
+    expect(
+      queue.find((item) => item.sectionId === "queued")?.evidenceId,
+    ).toBe("evidence-queued");
   });
 
   it("allows re-uploading the same file payload into separate evidences", async () => {
@@ -1157,5 +1534,511 @@ describe("feat_upload data flow", () => {
     expect(finalEvidence?.candidateRecords[0]?.recordId).toBe(
       `record-${bundle.evidenceId}`,
     );
+  });
+
+  it("removes a fully approved review item from the active queue", async () => {
+    const database = createStorageDatabase();
+    const writableDatabase = createWritableDatabase(database);
+    const bundle = createReceiptBundle({
+      batchId: "batch-queue-approved",
+      capturedAt: "2026-04-01T09:00:00.000Z",
+      evidenceId: "evidence-queue-approved",
+      fileName: "queue-approved.pdf",
+      filePath: "evidence-objects/entity-main/uploads/2026/04/queue-approved.pdf",
+    });
+    await ensureDefaultEntity(writableDatabase, bundle.capturedAt);
+    await insertImportedEvidenceBundle(writableDatabase, bundle);
+    await updateEvidenceExtraction(writableDatabase, {
+      evidenceId: bundle.evidenceId,
+      extractedData: buildRemoteExtractedData({
+        fileName: bundle.files[0]!.originalFileName,
+        parsePayload: {
+          candidates: {
+            amountCents: 5299,
+            category: "expense",
+            date: "2026-02-27",
+            description: "Apple Store accessories",
+            notes: null,
+            source: "Business Card",
+            target: "Apple Store",
+            taxCategory: "office",
+          },
+          fields: {
+            amountCents: 5299,
+            category: "expense",
+            date: "2026-02-27",
+            description: "Apple Store accessories",
+            notes: null,
+            source: "Business Card",
+            target: "Apple Store",
+            taxCategory: "office",
+          },
+          model: "gpt-5",
+          parser: "openai_gpt",
+          rawSummary: "Apple Store receipt",
+          rawText: "Apple Store 02/27/2026 $52.99",
+          records: [
+            {
+              candidates: {
+                amountCents: 5299,
+                category: "expense",
+                date: "2026-02-27",
+                description: "Apple Store accessories",
+                notes: null,
+                source: "Business Card",
+                target: "Apple Store",
+                taxCategory: "office",
+              },
+              fields: {
+                amountCents: 5299,
+                category: "expense",
+                date: "2026-02-27",
+                description: "Apple Store accessories",
+                notes: null,
+                source: "Business Card",
+                target: "Apple Store",
+                taxCategory: "office",
+              },
+            },
+          ],
+          warnings: [],
+        },
+        scheme: {},
+        sourceLabel: "OpenAI GPT",
+      }),
+      parseStatus: "pending",
+    });
+    await createUploadBatch(writableDatabase, {
+      batchId: bundle.batchId,
+      createdAt: bundle.capturedAt,
+      evidenceId: bundle.evidenceId,
+      sourceSystem: bundle.sourceSystem,
+      state: "parse_complete",
+    });
+    await createExtractionRun(writableDatabase, {
+      batchId: bundle.batchId,
+      createdAt: bundle.capturedAt,
+      evidenceId: bundle.evidenceId,
+      extractionRunId: "extraction-queue-approved",
+    });
+    await createPlannerRun(writableDatabase, {
+      batchId: bundle.batchId,
+      createdAt: bundle.capturedAt,
+      evidenceId: bundle.evidenceId,
+      extractionRunId: "extraction-queue-approved",
+      plannerRunId: "planner-queue-approved",
+    });
+
+    const evidenceBeforeSave = await loadEvidenceById(writableDatabase, bundle.evidenceId);
+    expect(evidenceBeforeSave).not.toBeNull();
+
+    await savePlannerArtifacts(writableDatabase, {
+      batchId: bundle.batchId,
+      createdAt: bundle.capturedAt,
+      evidence: evidenceBeforeSave!,
+      plannerRunId: "planner-queue-approved",
+      remotePlan: {
+        businessEvents: ["Receipt payment"],
+        candidateRecords: [
+          {
+            amountCents: 5299,
+            currency: "USD",
+            date: "2026-02-27",
+            description: "Apple Store accessories",
+            evidenceId: bundle.evidenceId,
+            recordKind: "expense",
+            sourceLabel: "Business Card",
+            targetLabel: "Apple Store",
+          },
+        ],
+        classifiedFacts: [],
+        counterpartyResolutions: [],
+        duplicateHints: [],
+        readTasks: [
+          {
+            readTaskId: "read-queue-approved-counterparty",
+            rationale: "Check local counterparties.",
+            status: "pending",
+            taskType: "counterparty_lookup",
+          },
+          {
+            readTaskId: "read-queue-approved-1",
+            rationale: "Check local matches.",
+            status: "pending",
+            taskType: "duplicate_lookup",
+          },
+        ],
+        summary: "One expense record from the uploaded receipt.",
+        warnings: [],
+        writeProposals: [
+          {
+            proposalType: "persist_candidate_record",
+            reviewFields: ["amount", "date", "source", "target"],
+            values: { candidateIndex: 0 },
+          },
+        ],
+      },
+    });
+
+    let queue = await loadEvidenceQueue(writableDatabase);
+    expect(queue.some((item) => item.batchId === bundle.batchId)).toBe(true);
+
+    const persistProposal = (await loadEvidenceById(
+      writableDatabase,
+      bundle.evidenceId,
+    ))!.writeProposals.find((proposal) => proposal.proposalType === "persist_candidate_record");
+
+    await approveWorkflowWriteProposal(writableDatabase, {
+      evidenceId: bundle.evidenceId,
+      review: {
+        amount: "52.99",
+        category: "expense",
+        date: "2026-02-27",
+        description: "Apple Store accessories",
+        notes: "approved from queue",
+        source: "Business Card",
+        target: "Apple Store",
+        taxCategory: "office",
+      },
+      updatedAt: "2026-04-01T09:06:00.000Z",
+      writeProposalId: persistProposal!.writeProposalId,
+    });
+
+    queue = await loadEvidenceQueue(writableDatabase);
+    expect(queue.some((item) => item.batchId === bundle.batchId)).toBe(false);
+  });
+
+  it("removes a duplicate review item from the active queue after keep-separate skip", async () => {
+    const database = createStorageDatabase();
+    const writableDatabase = createWritableDatabase(database);
+    const bundle = createReceiptBundle({
+      batchId: "batch-duplicate-skip",
+      capturedAt: "2026-02-27T11:00:00.000Z",
+      evidenceId: "evidence-duplicate-skip",
+      fileName: "receipt-feb-27-skip.pdf",
+      filePath: "evidence-objects/entity-main/uploads/2026/02/receipt-feb-27-skip.pdf",
+    });
+
+    await ensureDefaultEntity(writableDatabase, bundle.capturedAt);
+    await insertImportedEvidenceBundle(writableDatabase, bundle);
+    await seedCounterparty(writableDatabase, {
+      counterpartyId: "counterparty-source-existing",
+      displayName: "Business Card",
+      role: "source",
+    });
+    await seedCounterparty(writableDatabase, {
+      counterpartyId: "counterparty-target-existing",
+      displayName: "Apple Store",
+      role: "target",
+    });
+    await seedConflictingReceiptEvidence(database, writableDatabase);
+
+    await updateEvidenceExtraction(writableDatabase, {
+      evidenceId: bundle.evidenceId,
+      extractedData: buildRemoteExtractedData({
+        fileName: bundle.files[0]!.originalFileName,
+        parsePayload: {
+          candidates: {
+            amountCents: 5299,
+            category: "expense",
+            date: "2026-02-27",
+            description: "Apple Store accessories",
+            notes: null,
+            source: "Business Card",
+            target: "Apple Store",
+            taxCategory: "office",
+          },
+          fields: {
+            amountCents: 5299,
+            category: "expense",
+            date: "2026-02-27",
+            description: "Apple Store accessories",
+            notes: null,
+            source: "Business Card",
+            target: "Apple Store",
+            taxCategory: "office",
+          },
+          model: "gpt-5",
+          parser: "openai_gpt",
+          rawSummary: "Apple Store receipt",
+          rawText: "Apple Store 02/27/2026 $52.99",
+          records: [
+            {
+              candidates: {
+                amountCents: 5299,
+                category: "expense",
+                date: "2026-02-27",
+                description: "Apple Store accessories",
+                notes: null,
+                source: "Business Card",
+                target: "Apple Store",
+                taxCategory: "office",
+              },
+              fields: {
+                amountCents: 5299,
+                category: "expense",
+                date: "2026-02-27",
+                description: "Apple Store accessories",
+                notes: null,
+                source: "Business Card",
+                target: "Apple Store",
+                taxCategory: "office",
+              },
+            },
+          ],
+          warnings: [],
+        },
+        scheme: {},
+        sourceLabel: "OpenAI GPT",
+      }),
+      parseStatus: "pending",
+    });
+
+    await createUploadBatch(writableDatabase, {
+      batchId: bundle.batchId,
+      createdAt: bundle.capturedAt,
+      evidenceId: bundle.evidenceId,
+      sourceSystem: "feat-upload-test",
+      state: "parse_complete",
+    });
+    await createExtractionRun(writableDatabase, {
+      batchId: bundle.batchId,
+      createdAt: bundle.capturedAt,
+      evidenceId: bundle.evidenceId,
+      extractionRunId: "extraction-duplicate-skip",
+    });
+    await createPlannerRun(writableDatabase, {
+      batchId: bundle.batchId,
+      createdAt: bundle.capturedAt,
+      evidenceId: bundle.evidenceId,
+      extractionRunId: "extraction-duplicate-skip",
+      plannerRunId: "planner-duplicate-skip",
+    });
+
+    const evidenceBeforeSave = await loadEvidenceById(writableDatabase, bundle.evidenceId);
+    expect(evidenceBeforeSave).not.toBeNull();
+
+    await savePlannerArtifacts(writableDatabase, {
+      batchId: bundle.batchId,
+      createdAt: bundle.capturedAt,
+      evidence: evidenceBeforeSave!,
+      plannerRunId: "planner-duplicate-skip",
+      remotePlan: createPlannerPayload(bundle.evidenceId),
+    });
+
+    let queue = await loadEvidenceQueue(writableDatabase);
+    const queueItem = queue.find((item) => item.batchId === bundle.batchId);
+    expect(queueItem?.displayState).toBe("ready_for_review");
+    expect(queueItem?.displayStepLabel).toBe("Review duplicate match");
+
+    const duplicateProposal = (await loadEvidenceById(
+      writableDatabase,
+      bundle.evidenceId,
+    ))!.writeProposals.find((proposal) => proposal.proposalType === "resolve_duplicate_receipt");
+    expect(duplicateProposal).toBeDefined();
+
+    await rejectWorkflowWriteProposal(writableDatabase, {
+      updatedAt: "2026-02-27T11:05:00.000Z",
+      writeProposalId: duplicateProposal!.writeProposalId,
+    });
+
+    const skippedEvidence = await loadEvidenceById(writableDatabase, bundle.evidenceId);
+    expect(skippedEvidence?.batchState).toBe("approved");
+    expect(skippedEvidence?.candidateRecords[0]?.state).toBe("approved");
+
+    queue = await loadEvidenceQueue(writableDatabase);
+    expect(queue.some((item) => item.batchId === bundle.batchId)).toBe(false);
+  });
+
+  it("auto-archives a review batch when no actionable proposals remain", async () => {
+    const database = createStorageDatabase();
+    const writableDatabase = createWritableDatabase(database);
+    const bundle = createReceiptBundle({
+      batchId: "batch-no-action-left",
+      capturedAt: "2026-02-27T12:00:00.000Z",
+      evidenceId: "evidence-no-action-left",
+      fileName: "receipt-no-action-left.pdf",
+      filePath:
+        "evidence-objects/entity-main/uploads/2026/02/receipt-no-action-left.pdf",
+    });
+
+    await ensureDefaultEntity(writableDatabase, bundle.capturedAt);
+    await insertImportedEvidenceBundle(writableDatabase, bundle);
+    await updateEvidenceExtraction(writableDatabase, {
+      evidenceId: bundle.evidenceId,
+      extractedData: buildRemoteExtractedData({
+        fileName: bundle.files[0]!.originalFileName,
+        parsePayload: {
+          candidates: {
+            amountCents: 5299,
+            category: "expense",
+            date: "2026-02-27",
+            description: "Apple Store accessories",
+            notes: null,
+            source: "Business Card",
+            target: "Apple Store",
+            taxCategory: "office",
+          },
+          fields: {
+            amountCents: 5299,
+            category: "expense",
+            date: "2026-02-27",
+            description: "Apple Store accessories",
+            notes: null,
+            source: "Business Card",
+            target: "Apple Store",
+            taxCategory: "office",
+          },
+          model: "gpt-5",
+          parser: "openai_gpt",
+          rawSummary: "Apple Store receipt",
+          rawText: "Apple Store 02/27/2026 $52.99",
+          records: [
+            {
+              candidates: {
+                amountCents: 5299,
+                category: "expense",
+                date: "2026-02-27",
+                description: "Apple Store accessories",
+                notes: null,
+                source: "Business Card",
+                target: "Apple Store",
+                taxCategory: "office",
+              },
+              fields: {
+                amountCents: 5299,
+                category: "expense",
+                date: "2026-02-27",
+                description: "Apple Store accessories",
+                notes: null,
+                source: "Business Card",
+                target: "Apple Store",
+                taxCategory: "office",
+              },
+            },
+          ],
+          warnings: [],
+        },
+        scheme: {},
+        sourceLabel: "OpenAI GPT",
+      }),
+      parseStatus: "pending",
+    });
+    await createUploadBatch(writableDatabase, {
+      batchId: bundle.batchId,
+      createdAt: bundle.capturedAt,
+      evidenceId: bundle.evidenceId,
+      sourceSystem: "feat-upload-test",
+      state: "parse_complete",
+    });
+    await createExtractionRun(writableDatabase, {
+      batchId: bundle.batchId,
+      createdAt: bundle.capturedAt,
+      evidenceId: bundle.evidenceId,
+      extractionRunId: "extraction-no-action-left",
+    });
+    await createPlannerRun(writableDatabase, {
+      batchId: bundle.batchId,
+      createdAt: bundle.capturedAt,
+      evidenceId: bundle.evidenceId,
+      extractionRunId: "extraction-no-action-left",
+      plannerRunId: "planner-no-action-left",
+    });
+
+    const evidenceBeforeSave = await loadEvidenceById(
+      writableDatabase,
+      bundle.evidenceId,
+    );
+    expect(evidenceBeforeSave).not.toBeNull();
+
+    await savePlannerArtifacts(writableDatabase, {
+      batchId: bundle.batchId,
+      createdAt: bundle.capturedAt,
+      evidence: evidenceBeforeSave!,
+      plannerRunId: "planner-no-action-left",
+      remotePlan: {
+        businessEvents: ["Receipt payment"],
+        candidateRecords: [
+          {
+            amountCents: 5299,
+            currency: "USD",
+            date: "2026-02-27",
+            description: "Apple Store accessories",
+            evidenceId: bundle.evidenceId,
+            recordKind: "expense",
+            sourceLabel: "Business Card",
+            targetLabel: "Apple Store",
+          },
+        ],
+        classifiedFacts: [],
+        counterpartyResolutions: [],
+        duplicateHints: [],
+        readTasks: [
+          {
+            readTaskId: "read-no-action-left-1",
+            rationale: "Lookup counterparties.",
+            status: "pending",
+            taskType: "counterparty_lookup",
+          },
+          {
+            readTaskId: "read-no-action-left-2",
+            rationale: "Check duplicate receipts.",
+            status: "pending",
+            taskType: "duplicate_lookup",
+          },
+        ],
+        summary: "One expense record from the uploaded receipt.",
+        warnings: [],
+        writeProposals: [
+          {
+            proposalType: "persist_candidate_record",
+            reviewFields: ["amount", "date", "source", "target"],
+            values: { candidateIndex: 0 },
+          },
+        ],
+      },
+    });
+
+    await writableDatabase.runAsync(
+      `UPDATE workflow_write_proposals
+       SET state = 'rejected',
+           updated_at = ?
+       WHERE planner_run_id = ?;`,
+      "2026-02-27T12:04:00.000Z",
+      "planner-no-action-left",
+    );
+    await writableDatabase.runAsync(
+      `UPDATE candidate_records
+       SET state = 'validated',
+           updated_at = ?
+       WHERE batch_id = ?;`,
+      "2026-02-27T12:04:00.000Z",
+      bundle.batchId,
+    );
+
+    await reconcileInactiveReviewBatch(writableDatabase, {
+      batchId: bundle.batchId,
+      updatedAt: "2026-02-27T12:05:00.000Z",
+    });
+
+    const archivedEvidence = await loadEvidenceById(
+      writableDatabase,
+      bundle.evidenceId,
+    );
+    expect(archivedEvidence?.batchState).toBe("approved");
+    expect(archivedEvidence?.candidateRecords[0]?.state).toBe("approved");
+    expect(
+      archivedEvidence?.writeProposals.some(
+        (proposal) => proposal.state === "pending_approval",
+      ),
+    ).toBe(false);
+
+    await reconcileInactiveReviewBatch(writableDatabase, {
+      batchId: bundle.batchId,
+      updatedAt: "2026-02-27T12:05:00.000Z",
+    });
+
+    const queue = await loadEvidenceQueue(writableDatabase);
+    expect(queue.some((item) => item.batchId === bundle.batchId)).toBe(false);
   });
 });
