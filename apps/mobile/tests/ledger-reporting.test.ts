@@ -137,12 +137,14 @@ describe("ledger reporting", () => {
     expect(snapshot.profitAndLoss.metricCards.map((card) => card.value)).toEqual([
       "$1,200.00",
       "$250.00",
+      "$950.00",
     ]);
     expect(snapshot.profitAndLoss.netIncomeLabel).toBe("$950.00");
     expect(snapshot.profitAndLoss.expenseRows[0]?.label).toBe("Adobe");
     expect(snapshot.balanceSheet.metricCards.map((card) => card.value)).toEqual([
       "$1,750.00",
       "$0.00",
+      "$1,750.00",
     ]);
     expect(snapshot.balanceSheet.carryForwardRows.map((row) => row.amount)).toEqual([
       "$0.00",
@@ -237,10 +239,12 @@ describe("ledger reporting", () => {
     expect(businessSnapshot.balanceSheet.metricCards.map((card) => card.value)).toEqual([
       "$1,750.00",
       "$0.00",
+      "$1,750.00",
     ]);
     expect(personalSnapshot.balanceSheet.metricCards.map((card) => card.value)).toEqual([
       "$1,750.00",
       "$0.00",
+      "$1,750.00",
     ]);
     expect(businessSnapshot.balanceSheet.carryForwardRows.map((row) => row.amount)).toEqual([
       "$0.00",
@@ -358,6 +362,7 @@ describe("ledger reporting", () => {
     expect(businessSnapshot.balanceSheet.metricCards.map((card) => card.value)).toEqual([
       "$1,750.00",
       "$0.00",
+      "$1,750.00",
     ]);
     expect(businessSnapshot.balanceSheet.carryForwardRows.map((row) => row.amount)).toEqual([
       "$0.00",
@@ -367,6 +372,7 @@ describe("ledger reporting", () => {
     expect(personalSnapshot.balanceSheet.metricCards.map((card) => card.value)).toEqual([
       "$1,660.00",
       "$0.00",
+      "$1,660.00",
     ]);
     expect(personalSnapshot.balanceSheet.carryForwardRows.map((row) => row.amount)).toEqual([
       "$0.00",
@@ -411,6 +417,7 @@ describe("ledger reporting", () => {
     expect(personalSnapshot.generalLedger.metricCards.map((card) => card.value)).toEqual([
       "$60.00",
       "1",
+      "2",
     ]);
     expect(personalSnapshot.profitAndLoss.metricCards.map((card) => card.value)).toEqual([
       "$950.00",
@@ -503,6 +510,7 @@ describe("ledger reporting", () => {
     expect(businessSnapshot.profitAndLoss.metricCards.map((card) => card.value)).toEqual([
       "$1,000.00",
       "$300.00",
+      "$700.00",
     ]);
     expect(businessSnapshot.profitAndLoss.netIncomeLabel).toBe("$700.00");
     expect(businessSnapshot.balanceSheet.carryForwardRows.map((row) => row.amount)).toEqual([
@@ -619,10 +627,12 @@ describe("ledger reporting", () => {
     expect(snapshotWithoutPriorActivity.balanceSheet.metricCards.map((card) => card.value)).toEqual([
       "$950.00",
       "$0.00",
+      "$950.00",
     ]);
     expect(snapshotWithPriorActivity.balanceSheet.metricCards.map((card) => card.value)).toEqual([
       "$1,750.00",
       "$0.00",
+      "$1,750.00",
     ]);
     expect(snapshotWithPriorActivity.balanceSheet.carryForwardRows.map((row) => row.amount)).toEqual([
       "$0.00",
@@ -944,10 +954,12 @@ describe("ledger reporting", () => {
     expect(businessSnapshot.profitAndLoss.metricCards.map((card) => card.value)).toEqual([
       "$0.00",
       "$0.00",
+      "$0.00",
     ]);
     expect(businessSnapshot.balanceSheet.metricCards.map((card) => card.value)).toEqual([
       "$800.00",
       "$0.00",
+      "$800.00",
     ]);
     expect(businessSnapshot.balanceSheet.carryForwardRows.map((row) => row.amount)).toEqual([
       "$800.00",
@@ -957,6 +969,7 @@ describe("ledger reporting", () => {
     expect(personalSnapshot.balanceSheet.metricCards.map((card) => card.value)).toEqual([
       "$750.00",
       "$0.00",
+      "$750.00",
     ]);
     expect(personalSnapshot.balanceSheet.carryForwardRows.map((row) => row.amount)).toEqual([
       "$800.00",
@@ -1072,6 +1085,7 @@ describe("ledger reporting", () => {
     expect(personalSnapshot.balanceSheet.metricCards.map((card) => card.value)).toEqual([
       "$1,000.00",
       "$0.00",
+      "$1,000.00",
     ]);
     expect(personalSnapshot.balanceSheet.assetRows.map((row) => row.amount)).toEqual([
       "$1,000.00",
@@ -1089,6 +1103,7 @@ describe("ledger reporting", () => {
     expect(businessSnapshot.balanceSheet.metricCards.map((card) => card.value)).toEqual([
       "$1,000.00",
       "$0.00",
+      "$1,000.00",
     ]);
     expect(personalSnapshot.balanceSheet.netPositionLabel).toContain(
       "limited derived personal view rather than a full asset and debt statement",
@@ -1154,6 +1169,7 @@ describe("ledger reporting", () => {
     expect(snapshot.profitAndLoss.metricCards.map((card) => card.value)).toEqual([
       "$1,000.00",
       "$200.00",
+      "$800.00",
     ]);
     expect(snapshot.profitAndLoss.netIncomeLabel).toBe("$800.00");
     expect(snapshot.yearOptions.map((option) => option.id)).toEqual(["2026", "2024"]);
@@ -1221,10 +1237,12 @@ describe("ledger reporting", () => {
     expect(snapshot.balanceSheet.metricCards.map((card) => card.value)).toEqual([
       "$0.00",
       "$150.00",
+      "-$150.00",
     ]);
     expect(snapshot.profitAndLoss.metricCards.map((card) => card.value)).toEqual([
       "$0.00",
       "$350.00",
+      "-$350.00",
     ]);
     expect(snapshot.profitAndLoss.netIncomeLabel).toBe("-$350.00");
     expect(snapshot.balanceSheet.equationSummary).toBe(

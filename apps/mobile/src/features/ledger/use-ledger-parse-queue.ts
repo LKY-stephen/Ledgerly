@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { useAppShell } from "../app-shell/provider";
 import {
@@ -38,9 +38,28 @@ export function useLedgerParseQueue() {
         item.displayState === "queued" || item.displayState === "recovering",
     ) ?? null;
 
+  const refresh = useCallback(async (): Promise<void> => {
+    setError(null);
+
+    try {
+      const nextQueue = await loadParseQueue();
+      setQueue(nextQueue);
+    } catch (nextError: unknown) {
+      setError(
+        nextError instanceof Error
+          ? nextError.message
+          : resolvedLocale === "zh-CN"
+            ? "解析队列加载失败。"
+            : "Parse queue failed to load.",
+      );
+    } finally {
+      setIsLoaded(true);
+    }
+  }, [resolvedLocale]);
+
   useEffect(() => {
     void refresh();
-  }, [storageRevision]);
+  }, [refresh, storageRevision]);
 
   useEffect(() => {
     if (currentItem) {
@@ -79,25 +98,6 @@ export function useLedgerParseQueue() {
     workerItem?.evidenceId,
     isParsing,
   ]);
-
-  async function refresh(): Promise<void> {
-    setError(null);
-
-    try {
-      const nextQueue = await loadParseQueue();
-      setQueue(nextQueue);
-    } catch (nextError: unknown) {
-      setError(
-        nextError instanceof Error
-          ? nextError.message
-          : resolvedLocale === "zh-CN"
-            ? "解析队列加载失败。"
-            : "Parse queue failed to load.",
-      );
-    } finally {
-      setIsLoaded(true);
-    }
-  }
 
   async function retry(
     item: EvidenceQueueItem | null = currentItem ?? workerItem ?? null,

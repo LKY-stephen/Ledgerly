@@ -4,7 +4,7 @@ import {
   LedgerReportBody,
   type LedgerReportCopy,
 } from "@ledgerly/ui";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import {
   Modal,
@@ -18,7 +18,9 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { CfoAvatar } from "../../components/cfo-avatar";
+import { BackHeaderBar } from "../../components/back-header-bar";
+import { useBackOrHome } from "../../hooks/use-back-or-home";
+import { useResponsive } from "../../hooks/use-responsive";
 import { useAppShell } from "../app-shell/provider";
 import { getButtonColors, withAlpha } from "../app-shell/theme-utils";
 import type {
@@ -32,6 +34,7 @@ import { getLedgerRuntimeCopy } from "./ledger-localization";
 import { LedgerTaxHelper } from "./ledger-tax-helper";
 import { useLedgerParseQueue } from "./use-ledger-parse-queue";
 import { useLedgerScreen } from "./use-ledger-screen";
+import type { ReportRouteLaunchOverride } from "./report-route-state";
 import {
   buildLedgerPeriodIdForYearAndSegment,
   getAvailableQuarterPickerOptions,
@@ -42,6 +45,17 @@ import { useBusinessLedgerReports } from "./use-business-ledger-reports";
 
 export function LedgerScreen() {
   const router = useRouter();
+  const backOrHome = useBackOrHome();
+  const { isExpanded, isMedium, windowWidth } = useResponsive();
+  const useNarrowWebReportControls =
+    Platform.OS === "web" && windowWidth < 1024;
+  const isWideWeb = Platform.OS === "web" && (isExpanded || isMedium);
+  const isDesktopLedgerWeb = Platform.OS === "web" && isExpanded;
+  const params = useLocalSearchParams<{
+    periodId?: string;
+    scope?: LedgerScopeId;
+    view?: LedgerViewId;
+  }>();
   const { copy, palette, resolvedLocale } = useAppShell();
   const parseQueue = useLedgerParseQueue();
   const screenCopy = copy.ledgerScreen;
@@ -57,6 +71,32 @@ export function LedgerScreen() {
   const [draftQuarterId, setDraftQuarterId] =
     useState<LedgerQuarterSegmentId | null>(null);
   const [draftYearId, setDraftYearId] = useState<string>("");
+  const launchOverride = useMemo<ReportRouteLaunchOverride | null>(() => {
+    const periodId =
+      typeof params.periodId === "string" && params.periodId.trim().length > 0
+        ? params.periodId.trim()
+        : null;
+    const scope =
+      params.scope === "business" || params.scope === "personal"
+        ? params.scope
+        : undefined;
+    const view =
+      params.view === "general-ledger" ||
+      params.view === "balance-sheet" ||
+      params.view === "profit-loss"
+        ? params.view
+        : undefined;
+
+    if (!periodId && !scope && !view) {
+      return null;
+    }
+
+    return {
+      periodId,
+      scope,
+      view,
+    };
+  }, [params.periodId, params.scope, params.view]);
   const {
     error,
     isLoaded,
@@ -69,7 +109,7 @@ export function LedgerScreen() {
     selectedView,
     selectedYearId,
     snapshot,
-  } = useLedgerScreen();
+  } = useLedgerScreen(launchOverride);
 
   const selectedPeriod = snapshot.selectedPeriod;
   const businessReports = useBusinessLedgerReports({
@@ -88,6 +128,7 @@ export function LedgerScreen() {
     selectedScope === "business" && businessReports.status === "ready"
       ? businessReports.snapshot
       : snapshot;
+  const reportLayoutMode = isExpanded || isMedium ? "split" : "stack";
   const reportCopy = useMemo<LedgerReportCopy>(
     () => ({
       cashAndBankLabel: runtimeCopy.journal.cashAndBank,
@@ -133,6 +174,7 @@ export function LedgerScreen() {
     { id: "balance-sheet", label: screenCopy.sections.viewBalance },
     { id: "profit-loss", label: screenCopy.sections.viewPnl },
   ];
+  const isProfitAndLossView = selectedView === "profit-loss";
   const ledgerScopes: ReadonlyArray<{
     accessibilityLabel: string;
     icon: keyof typeof Ionicons.glyphMap;
@@ -178,6 +220,16 @@ export function LedgerScreen() {
         .length,
     [parseQueue.queue],
   );
+  const currentReportButtonLabel = useMemo(() => {
+    switch (selectedView) {
+      case "general-ledger":
+        return "Ledger";
+      case "balance-sheet":
+        return "Balance";
+      default:
+        return "P&L";
+    }
+  }, [selectedView]);
 
   useEffect(() => {
     if (!hasSelectablePeriods && isSelectorOpen) {
@@ -247,6 +299,17 @@ export function LedgerScreen() {
     closeSelector();
   };
 
+  const cycleLedgerView = () => {
+    const viewOrder: LedgerViewId[] = [
+      "general-ledger",
+      "balance-sheet",
+      "profit-loss",
+    ];
+    const currentIndex = viewOrder.indexOf(selectedView);
+    const nextView = viewOrder[(currentIndex + 1) % viewOrder.length] ?? "general-ledger";
+    selectView(nextView);
+  };
+
   return (
     <SafeAreaView
       edges={["top", "left", "right"]}
@@ -260,12 +323,20 @@ export function LedgerScreen() {
         }
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.topRow}>
-          <View style={styles.brandRow}>
-            <CfoAvatar size={32} />
-            <Text style={[styles.brand, { color: palette.ink }]}>
-              {copy.common.appName}
-            </Text>
+        <View style={[styles.topRow, isDesktopLedgerWeb ? styles.topRowDesktop : null]}>
+          <View style={styles.topRowMain}>
+            <View
+              style={[
+                styles.topRowIdentity,
+                isDesktopLedgerWeb ? styles.topRowIdentityDesktop : null,
+              ]}
+              >
+                <BackHeaderBar
+                  onBack={backOrHome}
+                  palette={palette}
+                  title={copy.common.appName}
+                />
+              </View>
           </View>
           <Pressable
             accessibilityRole="button"
@@ -299,15 +370,34 @@ export function LedgerScreen() {
           </Pressable>
         </View>
 
-        <View style={styles.topControls}>
-          <View style={styles.topControlsMainColumn}>
-            <View style={styles.periodHeader}>
+        <View
+          style={[
+            styles.topControls,
+            useNarrowWebReportControls ? styles.topControlsNarrow : null,
+            isDesktopLedgerWeb ? styles.topControlsDesktop : null,
+          ]}
+        >
+          <View
+            style={[
+              styles.topControlsMainColumn,
+              useNarrowWebReportControls ? styles.topControlsMainColumnNarrow : null,
+              isDesktopLedgerWeb ? styles.topControlsMainColumnDesktop : null,
+            ]}
+          >
+            <View
+              style={[
+                styles.periodHeader,
+                isDesktopLedgerWeb ? styles.periodHeaderDesktop : null,
+              ]}
+            >
               <Pressable
                 accessibilityRole="button"
                 disabled={!hasSelectablePeriods}
                 onPress={hasSelectablePeriods ? openSelector : undefined}
                 style={({ pressed }) => [
                   styles.periodCard,
+                  useNarrowWebReportControls ? styles.periodCardNarrow : null,
+                  isDesktopLedgerWeb ? styles.periodCardDesktop : null,
                   {
                     backgroundColor: palette.paper,
                     borderColor: palette.border,
@@ -319,31 +409,133 @@ export function LedgerScreen() {
                 ]}
                 testID="ledger-period-picker-button"
               >
-                <View style={styles.periodCopy}>
+                <View
+                  style={[
+                    styles.periodCopy,
+                    useNarrowWebReportControls ? styles.periodCopyNarrow : null,
+                    isDesktopLedgerWeb ? styles.periodCopyDesktop : null,
+                  ]}
+                >
                   <Text style={[styles.periodEyebrow, { color: palette.inkMuted }]}>
                     {screenCopy.range.reportingRange}
                   </Text>
                   <Text
-                    adjustsFontSizeToFit
-                    minimumFontScale={0.8}
                     numberOfLines={1}
-                    style={[styles.periodTitle, { color: palette.ink }]}
+                    style={[
+                      styles.periodTitle,
+                      useNarrowWebReportControls ? styles.periodTitleNarrow : null,
+                      { color: palette.ink },
+                    ]}
                   >
                     {selectedPeriod.label}
                   </Text>
-                  <Text style={[styles.periodSummary, { color: palette.inkMuted }]}>
+                  <Text
+                    ellipsizeMode="tail"
+                    numberOfLines={1}
+                    style={[
+                      styles.periodSummary,
+                      useNarrowWebReportControls ? styles.periodSummaryNarrow : null,
+                      { color: palette.inkMuted },
+                    ]}
+                  >
                     {selectedPeriod.summary}
                   </Text>
                 </View>
-                <Ionicons color={palette.ink} name="chevron-forward" size={18} />
+                <View
+                  style={[
+                    styles.periodChevronWrap,
+                    isDesktopLedgerWeb ? styles.periodChevronWrapDesktop : null,
+                    useNarrowWebReportControls ? styles.periodChevronWrapNarrow : null,
+                    {
+                      backgroundColor: palette.shellElevated,
+                      borderColor: palette.border,
+                    },
+                  ]}
+                >
+                  <Ionicons color={palette.ink} name="chevron-forward" size={16} />
+                </View>
               </Pressable>
             </View>
 
-            <View
-              style={[
-                styles.scopeSwitch,
-                { backgroundColor: palette.paper, borderColor: palette.border },
-              ]}
+            {useNarrowWebReportControls ? (
+              <View style={styles.narrowControlRow}>
+                <View
+                  style={[
+                    styles.scopeSwitch,
+                    styles.scopeSwitchNarrow,
+                    isProfitAndLossView ? styles.scopeSwitchDisabled : null,
+                    { backgroundColor: palette.paper, borderColor: palette.border },
+                  ]}
+                  pointerEvents={isProfitAndLossView ? "none" : "auto"}
+                  testID="ledger-scope-switch"
+                >
+                  {ledgerScopes.map((scope) => {
+                    const isActive = scope.id === selectedScope;
+
+                    return (
+                      <Pressable
+                        key={scope.id}
+                        accessibilityLabel={scope.accessibilityLabel}
+                        accessibilityRole="button"
+                        disabled={isProfitAndLossView}
+                        onPress={() => selectScope(scope.id)}
+                        style={({ pressed }) => [
+                          styles.scopeIconPill,
+                          !isActive && pressed && !isProfitAndLossView
+                            ? { backgroundColor: palette.paperMuted }
+                            : null,
+                          isActive
+                            ? [
+                                styles.scopePillActive,
+                                {
+                                  backgroundColor: primaryButton.background,
+                                  borderColor: primaryButton.border,
+                                  borderWidth: 2,
+                                },
+                              ]
+                            : null,
+                          isProfitAndLossView ? styles.scopePillDisabled : null,
+                        ]}
+                      >
+                        <Ionicons
+                          color={isActive ? primaryButton.text : palette.ink}
+                          name={scope.icon}
+                          size={15}
+                        />
+                      </Pressable>
+                    );
+                  })}
+                </View>
+
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={cycleLedgerView}
+                  style={({ pressed }) => [
+                    styles.narrowReportButton,
+                    {
+                      backgroundColor: pressed
+                        ? palette.paperMuted
+                        : palette.paper,
+                      borderColor: palette.border,
+                    },
+                  ]}
+                  testID="ledger-report-cycle-button"
+                >
+                  <Text style={[styles.narrowReportButtonLabel, { color: palette.ink }]}>
+                    {currentReportButtonLabel}
+                  </Text>
+                  <Ionicons color={palette.inkMuted} name="sync-outline" size={14} />
+                </Pressable>
+              </View>
+            ) : (
+              <View
+                style={[
+                  styles.scopeSwitch,
+                  isDesktopLedgerWeb ? styles.scopeSwitchDesktop : null,
+                  isProfitAndLossView ? styles.scopeSwitchDisabled : null,
+                  { backgroundColor: palette.paper, borderColor: palette.border },
+                ]}
+              pointerEvents={isProfitAndLossView ? "none" : "auto"}
               testID="ledger-scope-switch"
             >
               {ledgerScopes.map((scope) => {
@@ -354,10 +546,11 @@ export function LedgerScreen() {
                     key={scope.id}
                     accessibilityLabel={scope.accessibilityLabel}
                     accessibilityRole="button"
+                    disabled={isProfitAndLossView}
                     onPress={() => selectScope(scope.id)}
                     style={({ pressed }) => [
                       styles.scopePill,
-                      !isActive && pressed
+                      !isActive && pressed && !isProfitAndLossView
                         ? { backgroundColor: palette.paperMuted }
                         : null,
                       isActive
@@ -370,7 +563,8 @@ export function LedgerScreen() {
                             },
                           ]
                         : null,
-                      pressed ? styles.scopePillPressed : null,
+                      pressed && !isProfitAndLossView ? styles.scopePillPressed : null,
+                      isProfitAndLossView ? styles.scopePillDisabled : null,
                     ]}
                   >
                     <Ionicons
@@ -384,61 +578,132 @@ export function LedgerScreen() {
                         {
                           color: isActive ? primaryButton.text : palette.ink,
                         },
+                        isProfitAndLossView ? styles.scopePillLabelDisabled : null,
                       ]}
                     >
                       {scope.label}
                     </Text>
                   </Pressable>
                 );
-              })}
-            </View>
+                  })}
+                </View>
+            )}
           </View>
 
-          <View
-            style={[
-              styles.segmentedControl,
-              { backgroundColor: palette.paper, borderColor: palette.border },
-            ]}
-          >
-            {ledgerViews.map((tab) => {
-              const isActive = tab.id === selectedView;
-
-              return (
-                <Pressable
-                  key={tab.id}
-                  accessibilityRole="button"
-                  onPress={() => selectView(tab.id)}
-                  style={({ pressed }) => [
-                    styles.segmentedItem,
-                    !isActive && pressed
-                      ? { backgroundColor: palette.paperMuted }
-                      : null,
-                    isActive
-                      ? [
-                          styles.segmentedItemActive,
-                          {
-                            backgroundColor: primaryButton.background,
-                            borderColor: primaryButton.border,
-                            borderWidth: 2,
-                          },
-                        ]
-                      : null,
+          {isWideWeb && !useNarrowWebReportControls ? (
+            <View
+              style={[
+                styles.segmentedControl,
+                styles.segmentedControlWide,
+                isDesktopLedgerWeb ? styles.segmentedControlDesktop : null,
+                { backgroundColor: palette.paper, borderColor: palette.border },
+              ]}
+            >
+              {isDesktopLedgerWeb ? (
+                <Text
+                  style={[
+                    styles.segmentedEyebrow,
+                    { color: palette.inkMuted },
                   ]}
                 >
-                  <Text
-                    style={[
-                      styles.segmentedLabel,
-                      {
-                        color: isActive ? primaryButton.text : palette.ink,
-                      },
+                  Reports
+                </Text>
+              ) : null}
+              {ledgerViews.map((tab) => {
+                const isActive = tab.id === selectedView;
+
+                return (
+                  <Pressable
+                    key={tab.id}
+                    accessibilityRole="button"
+                    onPress={() => selectView(tab.id)}
+                    style={({ pressed }) => [
+                      styles.segmentedItem,
+                      styles.segmentedItemWide,
+                      isDesktopLedgerWeb ? styles.segmentedItemDesktop : null,
+                      !isActive && pressed
+                        ? { backgroundColor: palette.paperMuted }
+                        : null,
+                      isActive
+                        ? [
+                            styles.segmentedItemActive,
+                            {
+                              backgroundColor: primaryButton.background,
+                              borderColor: primaryButton.border,
+                              borderWidth: 2,
+                            },
+                          ]
+                        : null,
                     ]}
                   >
-                    {tab.label}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
+                    <Text
+                      numberOfLines={1}
+                      style={[
+                        styles.segmentedLabel,
+                        isDesktopLedgerWeb ? styles.segmentedLabelDesktop : null,
+                        {
+                          color: isActive ? primaryButton.text : palette.ink,
+                        },
+                      ]}
+                    >
+                      {tab.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          ) : useNarrowWebReportControls ? null : (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={[
+                styles.segmentedControl,
+                styles.segmentedControlMobile,
+                { backgroundColor: palette.paper, borderColor: palette.border },
+              ]}
+            >
+              {ledgerViews.map((tab) => {
+                const isActive = tab.id === selectedView;
+
+                return (
+                  <Pressable
+                    key={tab.id}
+                    accessibilityRole="button"
+                    onPress={() => selectView(tab.id)}
+                    style={({ pressed }) => [
+                      styles.segmentedItem,
+                      styles.segmentedItemMobile,
+                      !isActive && pressed
+                        ? { backgroundColor: palette.paperMuted }
+                        : null,
+                      isActive
+                        ? [
+                            styles.segmentedItemActive,
+                            {
+                              backgroundColor: primaryButton.background,
+                              borderColor: primaryButton.border,
+                              borderWidth: 2,
+                            },
+                          ]
+                        : null,
+                    ]}
+                  >
+                    <Text
+                      numberOfLines={1}
+                      style={[
+                        styles.segmentedLabel,
+                        {
+                          color: isActive ? primaryButton.text : palette.ink,
+                        },
+                      ]}
+                    >
+                      {tab.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          )}
         </View>
 
         {!isLoaded || isReportBodyLoading ? (
@@ -474,23 +739,36 @@ export function LedgerScreen() {
             }
           />
         ) : (
-          <LedgerReportBody
-            copy={reportCopy}
-            onSelectEntry={(entry) => {
-              setSelectedEntry(entry as GeneralLedgerEntry);
-            }}
-            palette={palette}
-            selectedScope={selectedScope}
-            selectedView={selectedView}
-            snapshot={activeSnapshot}
-            testID={`ledger-${selectedScope}-${selectedView}-report-body`}
-          />
+          <View
+            style={[
+              styles.reportCanvasCard,
+              {
+                backgroundColor: palette.paper,
+                borderColor: palette.border,
+              },
+            ]}
+          >
+            <LedgerReportBody
+              copy={reportCopy}
+              layoutMode={reportLayoutMode}
+              onSelectEntry={(entry) => {
+                setSelectedEntry(entry as GeneralLedgerEntry);
+              }}
+              palette={palette}
+              selectedScope={selectedScope}
+              selectedView={selectedView}
+              snapshot={activeSnapshot}
+              testID={`ledger-${selectedScope}-${selectedView}-report-body`}
+            />
+          </View>
         )}
 
-        <LedgerTaxHelper
-          selectedScope={selectedScope}
-          yearOptions={snapshot.yearOptions}
-        />
+        <View style={isDesktopLedgerWeb ? styles.taxHelperWrapDesktop : null}>
+          <LedgerTaxHelper
+            selectedScope={selectedScope}
+            yearOptions={snapshot.yearOptions}
+          />
+        </View>
 
         <View style={styles.endCap}>
           <View
@@ -1069,10 +1347,17 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     letterSpacing: -0.4,
   },
+  brandDesktop: {
+    fontSize: 17,
+    letterSpacing: -0.2,
+  },
   brandRow: {
     alignItems: "center",
     flexDirection: "row",
     gap: 10,
+  },
+  brandRowDesktop: {
+    paddingLeft: 6,
   },
   container: {
     gap: 14,
@@ -1407,6 +1692,29 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: 4,
   },
+  periodCopyDesktop: {
+    gap: 2,
+  },
+  periodCopyNarrow: {
+    gap: 2,
+    minWidth: 0,
+  },
+  periodChevronWrap: {
+    alignItems: "center",
+    borderRadius: 999,
+    borderWidth: 2,
+    height: 36,
+    justifyContent: "center",
+    width: 36,
+  },
+  periodChevronWrapDesktop: {
+    height: 34,
+    width: 34,
+  },
+  periodChevronWrapNarrow: {
+    height: 32,
+    width: 32,
+  },
   periodEyebrow: {
     color: "rgba(0, 32, 69, 0.5)",
     fontSize: 11,
@@ -1416,6 +1724,9 @@ const styles = StyleSheet.create({
   },
   periodHeader: {
     alignItems: "stretch",
+  },
+  periodHeaderDesktop: {
+    flex: 1,
   },
   periodCard: {
     alignItems: "center",
@@ -1430,6 +1741,17 @@ const styles = StyleSheet.create({
     minHeight: 96,
     padding: 14,
   },
+  periodCardDesktop: {
+    flex: 1,
+    minHeight: 82,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  periodCardNarrow: {
+    minHeight: 72,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
   periodCardDisabled: {
     opacity: 0.72,
   },
@@ -1438,6 +1760,12 @@ const styles = StyleSheet.create({
   },
   periodSelectorContent: {
     paddingRight: 14,
+  },
+  reportCanvasCard: {
+    borderRadius: 16,
+    borderWidth: 2,
+    overflow: "hidden",
+    padding: 16,
   },
   yearChip: {
     backgroundColor: "#FFFFFF",
@@ -1461,12 +1789,25 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 17,
   },
+  periodSummaryCompact: {
+    fontSize: 11,
+    lineHeight: 15,
+  },
+  periodSummaryNarrow: {
+    fontSize: 11,
+    lineHeight: 14,
+  },
   periodTitle: {
     color: "#002045",
     fontSize: 26,
     fontWeight: "800",
     letterSpacing: -0.7,
     lineHeight: 32,
+  },
+  periodTitleNarrow: {
+    fontSize: 20,
+    letterSpacing: -0.3,
+    lineHeight: 22,
   },
   signalChip: {
     alignSelf: "flex-start",
@@ -1698,16 +2039,55 @@ const styles = StyleSheet.create({
     borderColor: "rgba(0, 32, 69, 0.08)",
     borderRadius: 12,
     borderWidth: 2,
+    flexDirection: "row",
+    gap: 8,
+    padding: 4,
+  },
+  segmentedControlMobile: {
+    paddingRight: 12,
+  },
+  segmentedControlDesktop: {
+    gap: 2,
+    minWidth: 186,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+  },
+  segmentedEyebrow: {
+    fontSize: 10,
+    fontWeight: "800",
+    letterSpacing: 1.1,
+    marginBottom: 2,
+    paddingHorizontal: 6,
+    textTransform: "uppercase",
+  },
+  segmentedControlWide: {
+    alignSelf: "stretch",
     flexDirection: "column",
     gap: 4,
-    padding: 4,
-    width: 132,
+    minWidth: 172,
+    padding: 6,
   },
   segmentedItem: {
     borderRadius: 12,
-    minHeight: 54,
     paddingHorizontal: 10,
     paddingVertical: 10,
+  },
+  segmentedItemMobile: {
+    minHeight: 48,
+    minWidth: 132,
+  },
+  segmentedItemDesktop: {
+    alignItems: "flex-start",
+    justifyContent: "center",
+    minHeight: 34,
+    paddingHorizontal: 14,
+    paddingVertical: 4,
+  },
+  segmentedItemWide: {
+    minHeight: 34,
+    minWidth: 0,
+    paddingHorizontal: 14,
+    width: "100%",
   },
   segmentedItemActive: {
     backgroundColor: "#002045",
@@ -1719,6 +2099,11 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
     textAlign: "center",
     textTransform: "uppercase",
+  },
+  segmentedLabelDesktop: {
+    fontSize: 11,
+    lineHeight: 14,
+    textAlign: "left",
   },
   segmentedLabelActive: {
     color: "#FFFFFF",
@@ -1820,7 +2205,22 @@ const styles = StyleSheet.create({
   topRow: {
     alignItems: "center",
     flexDirection: "row",
+    gap: 14,
     justifyContent: "space-between",
+  },
+  topRowDesktop: {
+    alignItems: "flex-start",
+  },
+  topRowIdentity: {
+    minWidth: 0,
+  },
+  topRowIdentityDesktop: {
+    minWidth: 280,
+  },
+  topRowMain: {
+    flex: 1,
+    gap: 10,
+    minWidth: 0,
   },
   transactionAmount: {
     color: "#002045",
@@ -1922,9 +2322,30 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 10,
   },
+  topControlsNarrow: {
+    flexDirection: "column",
+    gap: 8,
+  },
+  topControlsDesktop: {
+    alignItems: "stretch",
+    gap: 10,
+  },
   topControlsMainColumn: {
     flex: 1,
     gap: 10,
+  },
+  topControlsMainColumnNarrow: {
+    gap: 8,
+  },
+  topControlsMainColumnDesktop: {
+    gap: 8,
+    justifyContent: "space-between",
+    minHeight: 0,
+  },
+  taxHelperWrapDesktop: {
+    alignSelf: "flex-start",
+    maxWidth: 440,
+    width: "100%",
   },
   scopePill: {
     alignItems: "center",
@@ -1941,11 +2362,17 @@ const styles = StyleSheet.create({
   scopePillActive: {
     backgroundColor: "#002045",
   },
+  scopePillDisabled: {
+    opacity: 0.58,
+  },
   scopePillLabel: {
     color: "rgba(0, 32, 69, 0.6)",
     fontSize: 12,
     fontWeight: "800",
     letterSpacing: 0.3,
+  },
+  scopePillLabelDisabled: {
+    opacity: 0.9,
   },
   scopePillLabelActive: {
     color: "#FFFFFF",
@@ -1962,6 +2389,51 @@ const styles = StyleSheet.create({
     gap: 4,
     minHeight: 44,
     padding: 5,
+  },
+  scopeSwitchNarrow: {
+    alignItems: "center",
+    flexShrink: 0,
+    gap: 6,
+    minHeight: 36,
+    padding: 4,
+  },
+  scopeSwitchDesktop: {
+    minHeight: 58,
+  },
+  scopeSwitchDisabled: {
+    opacity: 0.82,
+  },
+  scopeIconPill: {
+    alignItems: "center",
+    borderRadius: 999,
+    height: 32,
+    justifyContent: "center",
+    width: 32,
+  },
+  narrowControlRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 8,
+    minWidth: 0,
+  },
+  narrowReportButton: {
+    alignItems: "center",
+    borderRadius: 999,
+    borderWidth: 2,
+    flex: 1,
+    flexDirection: "row",
+    gap: 6,
+    justifyContent: "center",
+    minHeight: 36,
+    minWidth: 0,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  narrowReportButtonLabel: {
+    fontSize: 12,
+    fontWeight: "800",
+    letterSpacing: 0.3,
+    lineHeight: 14,
   },
   utilityButtonPressed: {
     backgroundColor: "#F0F4F8",

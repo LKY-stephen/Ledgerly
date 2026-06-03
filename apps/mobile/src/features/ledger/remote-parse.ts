@@ -1052,10 +1052,13 @@ async function performOpenAiRequest(
     });
 
     const useProxy = isWebRuntime() && !isFirstPartyApiHost(settings.baseUrl);
-    const proxyUrl =
-      typeof window !== "undefined" && window.location.hostname === "localhost"
-        ? (process.env.EXPO_PUBLIC_CORS_PROXY_URL ?? defaultLocalCorsProxyUrl).trim()
-        : "/api/cors-proxy";
+    const isLocalLoopbackHost =
+      typeof window !== "undefined" &&
+      (window.location.hostname === "localhost" ||
+        window.location.hostname === "127.0.0.1");
+    const proxyUrl = isLocalLoopbackHost
+      ? (process.env.EXPO_PUBLIC_CORS_PROXY_URL ?? defaultLocalCorsProxyUrl).trim()
+      : "/api/cors-proxy";
     const fetchUrl = useProxy ? proxyUrl : targetUrl;
     const fetchHeaders: Record<string, string> = {
       Authorization: `Bearer ${settings.openAiApiKey}`,
@@ -1377,7 +1380,7 @@ function isReasoningModel(model: string): boolean {
   return name.startsWith("o1") || name.startsWith("o3") || name.startsWith("o4");
 }
 
-const firstPartyApiHosts = ["api.openai.com", "generativelanguage.googleapis.com", "api-infer.agentsey.ai"];
+const firstPartyApiHosts = ["api.openai.com", "generativelanguage.googleapis.com"];
 
 function isFirstPartyApiHost(baseUrl: string): boolean {
   try {

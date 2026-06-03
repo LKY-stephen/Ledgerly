@@ -97,6 +97,7 @@ describe("creator ledger demo seed", () => {
     expect(businessLedgerSnapshot.profitAndLoss.metricCards.map((card) => card.value)).toEqual([
       "$5,230.00",
       "$735.00",
+      "$4,495.00",
     ]);
     expect(businessLedgerSnapshot.profitAndLoss.netIncomeLabel).toBe("$4,495.00");
     expect(businessLedgerSnapshot.profitAndLoss.revenueRows.map((row) => row.label)).toEqual([
@@ -120,6 +121,7 @@ describe("creator ledger demo seed", () => {
     expect(zhLedgerSnapshot.profitAndLoss.metricCards.map((card) => card.label)).toEqual([
       "总收入",
       "总支出",
+      "净利润",
     ]);
   });
 });

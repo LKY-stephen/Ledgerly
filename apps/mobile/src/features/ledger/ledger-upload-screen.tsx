@@ -14,9 +14,14 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { BackHeaderBar } from "../../components/back-header-bar";
 import { CfoAvatar } from "../../components/cfo-avatar";
+import { useBackOrHome } from "../../hooks/use-back-or-home";
 import { useResponsive } from "../../hooks/use-responsive";
 import { useAppShell } from "../app-shell/provider";
-import { getButtonColors, getFeedbackColors } from "../app-shell/theme-utils";
+import {
+  getButtonColors,
+  getFeedbackColors,
+  withAlpha,
+} from "../app-shell/theme-utils";
 import {
   buildUploadQueueSummary,
   buildUploadQueueSections,
@@ -49,10 +54,12 @@ export function LedgerUploadScreen({
   embedded?: boolean;
 } = {}) {
   const router = useRouter();
-  const { isExpanded, isMedium } = useResponsive();
+  const backOrHome = useBackOrHome();
+  const { isExpanded, isMedium, windowWidth } = useResponsive();
   const isWeb = Platform.OS === "web";
   const isWide = isExpanded || isMedium;
-  const useSplitLayout = isWide;
+  const isDesktopWeb = isWeb && windowWidth >= 1180;
+  const useSplitLayout = isExpanded;
   const isMobileStack = !isWide && !embedded;
   const {
     bumpStorageRevision,
@@ -204,6 +211,7 @@ export function LedgerUploadScreen({
       errorColors={errorColors}
       handleImport={handleImport}
       handleQueueSelected={handleQueueSelected}
+      isDesktopWeb={isDesktopWeb}
       isBusy={isBusy}
       isMobileStack={isMobileStack}
       isWide={isWide}
@@ -238,16 +246,15 @@ export function LedgerUploadScreen({
       testID="ledger-upload-screen"
     >
       {isWeb && !embedded ? (
-        <View style={styles.webModalBackdrop}>
+        <View
+          style={[
+            styles.webModalBackdrop,
+            { backgroundColor: withAlpha(palette.ink, palette.name === "dark" ? 0.42 : 0.16) },
+          ]}
+        >
           <Pressable
             accessibilityRole="button"
-            onPress={() => {
-              if (router.canGoBack()) {
-                router.back();
-              } else {
-                router.replace("/(game)");
-              }
-            }}
+            onPress={backOrHome}
             style={StyleSheet.absoluteFillObject}
             testID="ledger-upload-backdrop-close"
           />
@@ -293,13 +300,7 @@ export function LedgerUploadScreen({
                   </View>
                   <Pressable
                     accessibilityRole="button"
-                    onPress={() => {
-                      if (router.canGoBack()) {
-                        router.back();
-                      } else {
-                        router.replace("/(game)");
-                      }
-                    }}
+                    onPress={backOrHome}
                     style={({ pressed }) => [
                       styles.webModalCloseButton,
                       {
@@ -330,13 +331,7 @@ export function LedgerUploadScreen({
               ]}
             >
               <BackHeaderBar
-                onBack={() => {
-                  if (router.canGoBack()) {
-                    router.back();
-                  } else {
-                    router.replace("/(game)");
-                  }
-                }}
+                onBack={backOrHome}
                 palette={palette}
                 rightAccessory={<CfoAvatar />}
                 title={copy.common.appName}
@@ -410,6 +405,7 @@ function UploadWorkspaceCard({
   errorColors,
   handleImport,
   handleQueueSelected,
+  isDesktopWeb,
   isBusy,
   isMobileStack,
   isWide,
@@ -436,6 +432,7 @@ function UploadWorkspaceCard({
   errorColors: ReturnType<typeof getFeedbackColors>;
   handleImport: (source: "camera" | "documents" | "photos") => Promise<void>;
   handleQueueSelected: () => Promise<void>;
+  isDesktopWeb: boolean;
   isBusy: boolean;
   isMobileStack: boolean;
   isWide: boolean;
@@ -457,7 +454,7 @@ function UploadWorkspaceCard({
   uploadCopy: ReturnType<typeof useAppShell>["copy"]["ledger"]["upload"];
   onClearSelection: () => void;
 }) {
-  const useQueueColumns = Platform.OS === "web" && isWide && !embedded;
+  const useQueueColumns = isDesktopWeb && !embedded;
   const queueRail = embedded ? (
     <EmbeddedQueueSummary
       onOpenFullQueue={onOpenFullQueue}
@@ -1165,7 +1162,7 @@ const styles = StyleSheet.create({
   },
   buttonStackWide: {
     alignSelf: "center",
-    maxWidth: 380,
+    maxWidth: 420,
   },
   container: {
     gap: 14,
@@ -1174,8 +1171,8 @@ const styles = StyleSheet.create({
   },
   containerWide: {
     flex: 1,
-    paddingHorizontal: 40,
-    paddingVertical: 40,
+    paddingHorizontal: 32,
+    paddingVertical: 28,
   },
   dropCard: {
     alignItems: "center",
@@ -1194,8 +1191,8 @@ const styles = StyleSheet.create({
   dropCardWide: {
     flex: 1,
     justifyContent: "flex-start",
-    paddingHorizontal: 32,
-    paddingVertical: 32,
+    paddingHorizontal: 24,
+    paddingVertical: 24,
   },
   dropCardColumns: {
     alignItems: "stretch",
@@ -1508,6 +1505,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 10,
+    justifyContent: "flex-start",
   },
   queueSummaryValue: {
     fontSize: 15,
@@ -1566,12 +1564,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     flex: 1,
     justifyContent: "center",
-    paddingHorizontal: 28,
-    paddingVertical: 36,
+    paddingHorizontal: 18,
+    paddingVertical: 20,
   },
   webModalBody: {
-    paddingBottom: 28,
-    paddingHorizontal: 28,
+    paddingBottom: 22,
+    paddingHorizontal: 22,
   },
   webModalCloseButton: {
     alignItems: "center",
@@ -1582,16 +1580,16 @@ const styles = StyleSheet.create({
     width: 40,
   },
   webModalFrame: {
-    borderRadius: 12,
+    borderRadius: 24,
     borderWidth: 2,
     maxHeight: "100%",
-    maxWidth: 1080,
+    maxWidth: 1120,
     width: "100%",
   },
   webModalFrameWrap: {
     flex: 1,
     maxHeight: "100%",
-    maxWidth: 1080,
+    maxWidth: 1120,
     width: "100%",
   },
   webModalHeader: {
@@ -1599,9 +1597,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 20,
     justifyContent: "space-between",
-    paddingBottom: 20,
-    paddingHorizontal: 28,
-    paddingTop: 28,
+    paddingBottom: 18,
+    paddingHorizontal: 22,
+    paddingTop: 22,
   },
   webModalHeaderCopy: {
     flex: 1,
@@ -1615,23 +1613,26 @@ const styles = StyleSheet.create({
     alignItems: "center",
     flexGrow: 1,
     justifyContent: "flex-start",
-    paddingHorizontal: 28,
-    paddingVertical: 36,
+    paddingHorizontal: 18,
+    paddingVertical: 20,
   },
   workspaceColumns: {
-    alignItems: "flex-start",
+    alignItems: "stretch",
     flexDirection: "row",
-    gap: 24,
+    gap: 20,
     width: "100%",
   },
   workspaceMainColumn: {
     alignItems: "center",
     flex: 1,
     gap: 12,
+    minWidth: 0,
   },
   workspaceQueueColumn: {
-    flex: 1,
-    minWidth: 320,
+    flexBasis: 360,
+    flexGrow: 0,
+    flexShrink: 0,
+    minWidth: 340,
   },
   wideRow: {
     flex: 1,

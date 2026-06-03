@@ -338,6 +338,20 @@ describe("ledger parse json preview", () => {
     ).toBe(0);
   });
 
+  it("still treats a validated candidate without pending approval as unresolved", () => {
+    expect(
+      getPreferredPlannerCandidateIndex({
+        candidateRecords: [
+          { candidateId: "candidate-1", state: "validated" },
+          { candidateId: "candidate-2", state: "persisted_final" },
+        ],
+        writeProposals: [
+          { candidateId: "candidate-1", state: "executed" },
+        ],
+      }),
+    ).toBe(0);
+  });
+
   it("stores remote originData and falls back rawText to the serialized JSON payload", () => {
     const parsePayload = {
       candidates: {

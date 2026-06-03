@@ -473,6 +473,12 @@ export function buildLedgerSnapshotFromRows(
               ? String(normalizedRows.length)
               : formatCurrencyFromCents(totalJournalEntryCents),
         },
+        {
+          accent: "neutral",
+          id: "entry-count",
+          label: runtimeCopy.journal.transactionsMetric,
+          value: String(generalLedgerEntries.length),
+        },
       ],
       recordCountLabel: formatLedgerEntryCount(generalLedgerEntries.length, locale),
     },
@@ -1063,6 +1069,17 @@ function buildProfitAndLossSnapshot(
         label: runtimeCopy.journal.expenseMetric,
         value: formatCurrencyFromCents(businessExpenseTotalCents),
       },
+      {
+        accent:
+          businessProfitCents > 0
+            ? "success"
+            : businessProfitCents < 0
+              ? "danger"
+              : "neutral",
+        id: "net-income-total",
+        label: locale === "zh-CN" ? "净利润" : "Net Income",
+        value: formatCurrencyFromCents(normalizeSignedZeroCents(businessProfitCents)),
+      },
     ],
     netIncomeLabel: formatCurrencyFromCents(normalizeSignedZeroCents(businessProfitCents)),
     revenueRows: buildGroupedSectionRows(incomeRows, "income", locale),
@@ -1289,9 +1306,20 @@ function buildBalanceSheetSnapshot(
       },
       {
         accent: fundingGapCents > 0 ? "danger" : "neutral",
-        id: "funding-gap-total",
-        label: buildBalanceSheetFundingGapLabel(fundingGapCents, input.locale),
+        id: "liability-total",
+        label: getLedgerRuntimeCopy(input.locale).balance.liabilitiesMetric,
         value: formatCurrencyFromCents(fundingGapCents),
+      },
+      {
+        accent:
+          closingAssetCents > 0
+            ? "success"
+            : closingAssetCents < 0
+              ? "danger"
+              : "neutral",
+        id: "net-position-total",
+        label: getNetAssetLabel(input.locale),
+        value: formatCurrencyFromCents(closingAssetCents),
       },
     ],
     netPositionLabel,
@@ -1491,17 +1519,6 @@ function buildBalanceSheetEquityRow(
         : runtimeCopy.balance.deficitLabel,
     note: runtimeCopy.balance.equityNote,
   };
-}
-
-function buildBalanceSheetFundingGapLabel(
-  fundingGapCents: number,
-  locale: ResolvedLocale,
-): string {
-  if (fundingGapCents <= 0) {
-    return getLedgerRuntimeCopy(locale).balance.liabilitiesMetric;
-  }
-
-  return getLedgerRuntimeCopy(locale).balance.fundingGapMetric;
 }
 
 function buildBalanceSheetEquationSummary(

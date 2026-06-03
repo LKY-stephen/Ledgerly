@@ -1,9 +1,10 @@
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { BackHeaderBar } from "../../components/back-header-bar";
 import { AppIcon } from "../../components/app-icon";
+import { useBackOrHome } from "../../hooks/use-back-or-home";
 import { useResponsive } from "../../hooks/use-responsive";
 import { useAppShell } from "../app-shell/provider";
 import { formatDiscoverPublishedDate } from "./discover-localization";
@@ -18,7 +19,7 @@ function resolveSlug(value: string | string[] | undefined) {
 }
 
 export function DiscoverDetailScreen() {
-  const router = useRouter();
+  const backOrHome = useBackOrHome();
   const { isExpanded } = useResponsive();
   const { slug } = useLocalSearchParams<{ slug?: string | string[] }>();
   const { copy, palette, resolvedLocale } = useAppShell();
@@ -36,13 +37,7 @@ export function DiscoverDetailScreen() {
         ]}
       >
         <BackHeaderBar
-          onBack={() => {
-            if (router.canGoBack()) {
-              router.back();
-            } else {
-              router.replace("/(game)");
-            }
-          }}
+          onBack={backOrHome}
           palette={palette}
           title={copy.common.appName}
         />

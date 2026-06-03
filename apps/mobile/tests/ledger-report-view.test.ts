@@ -6,6 +6,7 @@ vi.mock("@expo/vector-icons", () => ({
 
 vi.mock("react-native", () => ({
   Modal: (props: unknown) => ({ props, type: "Modal" }),
+  Platform: { OS: "web" },
   Pressable: (props: unknown) => ({ props, type: "Pressable" }),
   ScrollView: (props: unknown) => ({ props, type: "ScrollView" }),
   StyleSheet: {

@@ -10,6 +10,16 @@ import {
   type LedgerViewId,
 } from "./ledger-reporting";
 import {
+  defaultReportView,
+  resolveReportRouteState,
+  reduceReportRouteState,
+  type ReportRouteLaunchOverride,
+} from "./report-route-state";
+import {
+  loadPersistedReportRouteState,
+  persistReportRouteState,
+} from "./report-route-cache.native";
+import {
   buildLedgerPeriodIdForSegment,
   buildLedgerPeriodIdForYear,
 } from "./ledger-screen-state";
@@ -37,7 +47,9 @@ export interface UseLedgerScreenResult {
   snapshot: LedgerScreenSnapshot;
 }
 
-export function useLedgerScreen(): UseLedgerScreenResult {
+export function useLedgerScreen(
+  launchOverride?: ReportRouteLaunchOverride | null,
+): UseLedgerScreenResult {
   const { resolvedLocale, storageRevision } = useAppShell();
   const database = useSQLiteContext();
   const [error, setError] = useState<string | null>(null);
@@ -46,14 +58,72 @@ export function useLedgerScreen(): UseLedgerScreenResult {
   const [refreshNonce, setRefreshNonce] = useState(0);
   const [selectedPeriodId, setSelectedPeriodId] = useState<string | null>(null);
   const [selectedScope, setSelectedScope] = useState<LedgerScopeId>("business");
-  const [selectedView, setSelectedView] = useState<LedgerViewId>("general-ledger");
+  const [lastNonProfitLossScope, setLastNonProfitLossScope] =
+    useState<LedgerScopeId>("business");
+  const [selectedView, setSelectedView] = useState<LedgerViewId>(defaultReportView);
   const [snapshot, setSnapshot] = useState<LedgerScreenSnapshot>(() =>
     createEmptyLedgerSnapshot(resolvedLocale),
   );
+  const [hasHydratedRouteState, setHasHydratedRouteState] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    void loadPersistedReportRouteState()
+      .then((persisted) => {
+        if (!isMounted) {
+          return;
+        }
+
+        const resolved = resolveReportRouteState({
+          launchOverride,
+          persisted,
+        });
+
+        setSelectedPeriodId(resolved.periodId);
+        setSelectedScope(resolved.scope);
+        setLastNonProfitLossScope(resolved.lastNonProfitLossScope);
+        setSelectedView(resolved.view);
+      })
+      .finally(() => {
+        if (isMounted) {
+          setHasHydratedRouteState(true);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [launchOverride]);
 
   useEffect(() => {
     setSelectedPeriodId(null);
   }, [storageRevision]);
+
+  useEffect(() => {
+    if (!hasHydratedRouteState) {
+      return;
+    }
+
+    void persistReportRouteState(
+      reduceReportRouteState({
+        nextPeriodId: selectedPeriodId,
+        nextScope: selectedScope,
+        nextView: selectedView,
+        previous: {
+          lastNonProfitLossScope,
+          periodId: selectedPeriodId,
+          view: selectedView,
+        },
+      }),
+    );
+  }, [
+    hasHydratedRouteState,
+    lastNonProfitLossScope,
+    selectedPeriodId,
+    selectedScope,
+    selectedView,
+  ]);
 
   useEffect(() => {
     let isMounted = true;
@@ -109,8 +179,26 @@ export function useLedgerScreen(): UseLedgerScreenResult {
     selectPeriodSegment: (segmentId) => {
       setSelectedPeriodId(buildLedgerPeriodIdForSegment(snapshot.selectedPeriod.year, segmentId));
     },
-    selectScope: setSelectedScope,
-    selectView: setSelectedView,
+    selectScope: (scopeId) => {
+      setSelectedScope(scopeId);
+
+      if (selectedView !== "profit-loss") {
+        setLastNonProfitLossScope(scopeId);
+      }
+    },
+    selectView: (view) => {
+      if (view === "profit-loss") {
+        setSelectedView("profit-loss");
+        setSelectedScope("business");
+        return;
+      }
+
+      setSelectedView(view);
+
+      if (selectedView === "profit-loss") {
+        setSelectedScope(lastNonProfitLossScope);
+      }
+    },
     selectYear: (yearId) => {
       const nextPeriodId = buildLedgerPeriodIdForYear(yearId, snapshot.selectedPeriod.segmentId);
 

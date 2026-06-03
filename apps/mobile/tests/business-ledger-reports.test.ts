@@ -156,11 +156,13 @@ describe("business ledger reports", () => {
     expect(snapshot.profitAndLoss.metricCards.map((card) => card.value)).toEqual([
       "$1,200.00",
       "$250.00",
+      "$950.00",
     ]);
     expect(snapshot.profitAndLoss.netIncomeLabel).toBe("$950.00");
     expect(snapshot.balanceSheet.metricCards.map((card) => card.value)).toEqual([
       "$1,750.00",
       "$0.00",
+      "$1,750.00",
     ]);
   });
 

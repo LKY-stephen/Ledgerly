@@ -840,4 +840,51 @@ describe("remote parse client", () => {
     expect(result.error).toContain("Missing OpenAI API key");
     expect(result.rawJson).toBeNull();
   });
+
+  it("uses the local cors proxy for openai-compatible web calls on 127.0.0.1", async () => {
+    vi.mocked(loadPersistedAiProvider).mockResolvedValue("infer");
+    vi.mocked(loadPersistedInferApiKey).mockResolvedValue("sk-infer-test");
+    vi.mocked(loadPersistedInferBaseUrl).mockResolvedValue("https://api-infer.agentsey.ai");
+    vi.mocked(loadPersistedInferModel).mockResolvedValue("claude-haiku-4-5");
+    process.env.EXPO_PUBLIC_CORS_PROXY_URL = "http://127.0.0.1:19007";
+
+    vi.stubGlobal("window", {
+      location: { hostname: "127.0.0.1" },
+    });
+    vi.stubGlobal("document", {});
+
+    const fetchSpy = vi.fn(async (url: string | URL | Request) => {
+      expect(String(url)).toBe("http://127.0.0.1:19007");
+      return new Response(
+        JSON.stringify({
+          output_text: JSON.stringify(
+            createParsePayload({
+              model: null,
+              rawText: "Loopback proxy raw text",
+            }),
+          ),
+        }),
+        {
+          headers: { "content-type": "application/json" },
+          status: 200,
+        },
+      );
+    });
+    vi.stubGlobal("fetch", fetchSpy);
+
+    await parseFileWithOpenAiFromBlob({
+      blob: new Blob(["png-bytes"], { type: "image/png" }),
+      fileName: "receipt.png",
+      mimeType: "image/png",
+    });
+
+    expect(fetchSpy).toHaveBeenCalled();
+    const init = fetchSpy.mock.calls[0]?.[1 as never] as RequestInit | undefined;
+    expect(String(fetchSpy.mock.calls[0]?.[0])).toBe("http://127.0.0.1:19007");
+    expect(init?.headers).toMatchObject({
+      "Content-Type": "application/json",
+      Authorization: "Bearer sk-infer-test",
+      "x-proxy-target": "https://api-infer.agentsey.ai/responses",
+    });
+  });
 });
