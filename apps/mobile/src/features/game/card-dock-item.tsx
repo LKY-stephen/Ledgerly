@@ -1,3 +1,4 @@
+import { useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import type { SurfaceTokens } from "@ledgerly/ui";
 
@@ -35,6 +36,7 @@ export function CardDockItem({
   isStickmanNearby = false,
   palette,
 }: Props) {
+  const router = useRouter();
   const { activateCard, state } = useGame();
   const isActive = state.activeCard === cardId;
   const { cardWidth, cardHeight } = useCardDimensions();
@@ -50,7 +52,14 @@ export function CardDockItem({
 
   return (
     <Pressable
-      onPress={() => activateCard(cardId)}
+      onPress={() => {
+        if (cardId === "report") {
+          router.push("/ledger");
+          return;
+        }
+
+        activateCard(cardId);
+      }}
       style={({ pressed }) => [
         styles.card,
         {

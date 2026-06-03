@@ -1,5 +1,4 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
   FlatList,
@@ -11,6 +10,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { BackHeaderBar } from "../../components/back-header-bar";
 import { CfoAvatar } from "../../components/cfo-avatar";
+import { useBackOrHome } from "../../hooks/use-back-or-home";
 import { useResponsive } from "../../hooks/use-responsive";
 import { useAppShell } from "../app-shell/provider";
 import { withAlpha } from "../app-shell/theme-utils";
@@ -21,7 +21,7 @@ import type {
 import { loadJournalScreenEntries } from "../ledger/ledger-runtime";
 
 export function JournalScreen() {
-  const router = useRouter();
+  const backOrHome = useBackOrHome();
   const { copy, palette, resolvedLocale } = useAppShell();
   const { isExpanded } = useResponsive();
   const journalCopy = copy.journalScreen;
@@ -148,13 +148,7 @@ export function JournalScreen() {
         ]}
       >
         <BackHeaderBar
-          onBack={() => {
-            if (router.canGoBack()) {
-              router.back();
-            } else {
-              router.replace("/");
-            }
-          }}
+          onBack={backOrHome}
           palette={palette}
           rightAccessory={<CfoAvatar />}
           title={copy.common.appName}

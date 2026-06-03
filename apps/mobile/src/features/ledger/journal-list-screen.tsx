@@ -5,6 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { BackHeaderBar } from "../../components/back-header-bar";
 import { CfoAvatar } from "../../components/cfo-avatar";
+import { useBackOrHome } from "../../hooks/use-back-or-home";
 import { useAppShell } from "../app-shell/provider";
 import { getButtonColors, withAlpha } from "../app-shell/theme-utils";
 import { formatCurrencyFromCents, formatDisplayDate } from "./ledger-domain";
@@ -26,6 +27,7 @@ function ActivityIcon({ color, icon }: { color: string; icon: string }) {
 
 export function JournalListScreen() {
   const router = useRouter();
+  const backOrHome = useBackOrHome();
   const { copy, palette, resolvedLocale } = useAppShell();
   const primaryButton = getButtonColors(palette, "primary");
   const {
@@ -56,7 +58,7 @@ export function JournalListScreen() {
         ]}
       >
         <BackHeaderBar
-          onBack={() => router.back()}
+          onBack={backOrHome}
           palette={palette}
           rightAccessory={<CfoAvatar />}
           title={copy.common.appName}
