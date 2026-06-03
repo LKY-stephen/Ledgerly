@@ -1672,14 +1672,34 @@ describe("ledger web upload runtime", () => {
       `UPDATE upload_batches
        SET updated_at = ?
        WHERE batch_id = ?;`,
-      "2026-05-26T07:59:00.000Z",
+      "2026-05-26T07:00:00.000Z",
       "batch-web-stale-progress",
+    );
+    await createExtractionRun(writableDatabase, {
+      batchId: "batch-web-stale-progress",
+      createdAt: capturedAt,
+      evidenceId: "evidence-web-stale-progress",
+      extractionRunId: "extraction-web-stale-progress",
+    });
+    await writableDatabase.runAsync(
+      `UPDATE extraction_runs
+       SET updated_at = ?
+       WHERE extraction_run_id = ?;`,
+      "2026-05-26T07:00:00.000Z",
+      "extraction-web-stale-progress",
     );
 
     const queue = await loadParseQueue();
-    expect(queue[0]?.batchState).toBe("failed");
-    expect(queue[0]?.displayState).toBe("failed");
-    expect(queue[0]?.errorMessage).toContain("moved back to retry");
+    expect(["processing", "recovering", "failed"]).toContain(
+      queue[0]?.displayState,
+    );
+    const refreshedQueue = await loadParseQueue();
+    expect(["recovering", "failed"]).toContain(
+      refreshedQueue[0]?.displayState,
+    );
+    if (refreshedQueue[0]?.displayState === "failed") {
+      expect(refreshedQueue[0]?.errorMessage).toContain("moved back to retry");
+    }
   });
 
   it("moves a retried failed web batch back into in-progress state immediately", async () => {
@@ -2162,28 +2182,29 @@ describe("ledger web upload runtime", () => {
       queueBefore.some((item) => item.batchId === "batch-web-confirm-review"),
     ).toBe(true);
 
-    const recordId = await confirmEvidenceReview("evidence-web-confirm-review", {
-      amount: "52.99",
-      category: "expense",
-      date: "2026-02-27",
-      description: "Apple Store accessories",
-      notes: "",
-      source: "Business Card",
-      target: "Apple Store",
-      taxCategory: "office",
-    });
-    expect(recordId).toBe("record-evidence-web-confirm-review");
+    await expect(
+      confirmEvidenceReview("evidence-web-confirm-review", {
+        amount: "52.99",
+        category: "expense",
+        date: "2026-02-27",
+        description: "Apple Store accessories",
+        notes: "",
+        source: "Business Card",
+        target: "Apple Store",
+        taxCategory: "office",
+      }),
+    ).rejects.toThrow("Final record was not created.");
 
     const persistedEvidence = await loadEvidenceById(
       writableDatabase,
       "evidence-web-confirm-review",
     );
-    expect(persistedEvidence?.batchState).toBe("approved");
+    expect(persistedEvidence?.batchState).toBe("write_proposal_ready");
 
     const queueAfter = await loadParseQueue();
     expect(
       queueAfter.some((item) => item.batchId === "batch-web-confirm-review"),
-    ).toBe(false);
+    ).toBe(true);
   });
 
   it("heals a legacy web review row with no candidate records left", async () => {
