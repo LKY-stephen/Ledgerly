@@ -1018,7 +1018,7 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
         unavailableTitle: "Ledger data unavailable",
         viewBalance: "Balance",
         viewJournal: "General Ledger",
-        viewPnl: "P&L",
+        viewPnl: "Profit & Loss",
       },
     },
     login: {
@@ -1615,7 +1615,7 @@ export const appCopy: Record<ResolvedLocale, AppCopy> = {
         unavailableTitle: "记账数据暂不可用",
         viewBalance: "资产负债",
         viewJournal: "总账",
-        viewPnl: "损益",
+        viewPnl: "损益表",
       },
     },
     login: {

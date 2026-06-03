@@ -68,6 +68,7 @@ interface QueueBaseRow {
   batchId: string | null;
   batchErrorMessage: string | null;
   batchState: UploadBatchState | null;
+  batchUpdatedAt: string | null;
   capturedAmountCents: number;
   capturedDate: string;
   capturedDescription: string;
@@ -80,6 +81,7 @@ interface QueueBaseRow {
   extractionErrorMessage: string | null;
   extractionRunId: string | null;
   extractionRunState: "complete" | "failed" | "parsing" | null;
+  extractionUpdatedAt: string | null;
   extractedData: string | null;
   filePath: string;
   mimeType: string | null;
@@ -88,6 +90,7 @@ interface QueueBaseRow {
   plannerErrorMessage: string | null;
   plannerRunId: string | null;
   plannerRunState: "complete" | "failed" | "planning" | null;
+  plannerUpdatedAt: string | null;
   plannerSummaryJson: string | null;
 }
 
@@ -635,12 +638,15 @@ export async function loadEvidenceQueue(
       upload_batches.state AS batchState,
       upload_batches.duplicate_kind AS duplicateKind,
       upload_batches.created_at AS batchCreatedAt,
+      upload_batches.updated_at AS batchUpdatedAt,
       extraction_runs.error_message AS extractionErrorMessage,
       extraction_runs.extraction_run_id AS extractionRunId,
       extraction_runs.state AS extractionRunState,
+      extraction_runs.updated_at AS extractionUpdatedAt,
       planner_runs.error_message AS plannerErrorMessage,
       planner_runs.planner_run_id AS plannerRunId,
       planner_runs.state AS plannerRunState,
+      planner_runs.updated_at AS plannerUpdatedAt,
       planner_runs.summary_json AS plannerSummaryJson
     FROM evidences
     LEFT JOIN evidence_files
@@ -667,10 +673,7 @@ export async function loadEvidenceQueue(
     WHERE evidences.entity_id = ?
       AND upload_batches.batch_id IS NOT NULL
       AND COALESCE(upload_batches.state, '') != 'duplicate_file'
-      AND (
-        evidences.parse_status IN ('pending', 'failed')
-        OR COALESCE(upload_batches.state, '') NOT IN ('approved', 'rejected')
-      )
+      AND COALESCE(upload_batches.state, '') NOT IN ('approved', 'rejected')
     ORDER BY COALESCE(upload_batches.created_at, evidences.created_at) DESC;`,
     entityId,
   );
@@ -706,10 +709,51 @@ export async function reconcileInactiveReviewBatch(
     input.batchId,
   );
 
-  if (
-    candidateRows.length === 0 ||
-    !candidateRows.every((row) => row.state === "validated")
-  ) {
+  if (candidateRows.length === 0) {
+    const batchRow = await database.getFirstAsync<{
+      evidenceId: string | null;
+      state: UploadBatchState | null;
+    }>(
+      `SELECT
+         evidence_id AS evidenceId,
+         state
+       FROM upload_batches
+       WHERE batch_id = ?;`,
+      input.batchId,
+    );
+    const pendingProposalCountRow = await database.getFirstAsync<{ count: number }>(
+      `SELECT COUNT(*) AS count
+       FROM workflow_write_proposals
+       WHERE state = 'pending_approval'
+         AND planner_run_id IN (
+           SELECT DISTINCT planner_run_id
+           FROM planner_runs
+           WHERE batch_id = ?
+         );`,
+      input.batchId,
+    );
+
+    if (
+      batchRow?.evidenceId &&
+      (pendingProposalCountRow?.count ?? 0) === 0 &&
+      (batchRow.state === "review_required" ||
+        batchRow.state === "write_proposal_ready" ||
+        batchRow.state === "partially_approved")
+    ) {
+      await database.runAsync(
+        `UPDATE evidences
+         SET parse_status = 'parsed'
+         WHERE evidence_id = ?;`,
+        batchRow.evidenceId,
+      );
+      await updateUploadBatchState(database, {
+        batchId: input.batchId,
+        state: "approved",
+        updatedAt: input.updatedAt,
+      });
+      return true;
+    }
+
     return false;
   }
 
@@ -726,6 +770,18 @@ export async function reconcileInactiveReviewBatch(
   );
 
   if ((pendingProposalCountRow?.count ?? 0) > 0) {
+    return false;
+  }
+
+  const resolvedCandidateStates = new Set<CandidateRecordState>([
+    "approved",
+    "failed",
+    "persisted_final",
+    "rejected",
+    "validated",
+  ]);
+
+  if (!candidateRows.every((row) => resolvedCandidateStates.has(row.state))) {
     return false;
   }
 
@@ -1230,12 +1286,15 @@ export async function loadEvidenceQueueByIds(
       upload_batches.state AS batchState,
       upload_batches.duplicate_kind AS duplicateKind,
       upload_batches.created_at AS batchCreatedAt,
+      upload_batches.updated_at AS batchUpdatedAt,
       extraction_runs.error_message AS extractionErrorMessage,
       extraction_runs.extraction_run_id AS extractionRunId,
       extraction_runs.state AS extractionRunState,
+      extraction_runs.updated_at AS extractionUpdatedAt,
       planner_runs.error_message AS plannerErrorMessage,
       planner_runs.planner_run_id AS plannerRunId,
       planner_runs.state AS plannerRunState,
+      planner_runs.updated_at AS plannerUpdatedAt,
       planner_runs.summary_json AS plannerSummaryJson
     FROM evidences
     LEFT JOIN evidence_files
@@ -1292,7 +1351,7 @@ export async function appendWorkflowAuditEvent(
       payload_json,
       created_at
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);`,
-    `audit-${input.eventType}-${input.createdAt}`,
+    `audit-${input.eventType}-${input.createdAt}-${Math.random().toString(36).slice(2, 8)}`,
     input.batchId,
     input.plannerRunId ?? null,
     input.candidateId ?? null,
@@ -1857,11 +1916,6 @@ async function executeCreateCounterpartyProposal(
     plannerRunId: input.proposal.plannerRunId,
     writeProposalId: input.proposal.writeProposalId,
   });
-  await updateUploadBatchState(database, {
-    batchId: input.proposal.batchId,
-    state: "review_required",
-    updatedAt: input.updatedAt,
-  });
 }
 
 async function executeMergeCounterpartyProposal(
@@ -1956,11 +2010,6 @@ async function executeMergeCounterpartyProposal(
     message: `${existingDisplayName} kept as the local counterparty after approval by ${input.actor}.`,
     plannerRunId: input.proposal.plannerRunId,
     writeProposalId: input.proposal.writeProposalId,
-  });
-  await updateUploadBatchState(database, {
-    batchId: input.proposal.batchId,
-    state: "review_required",
-    updatedAt: input.updatedAt,
   });
 }
 

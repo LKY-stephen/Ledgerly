@@ -8,6 +8,12 @@ export default function LedgerFlowLayout() {
         headerShown: false,
       }}
     >
+      <Stack.Screen
+        name="index"
+        options={{
+          presentation: "card",
+        }}
+      />
       <Stack.Screen name="upload" options={{
         presentation: Platform.OS === "web" ? "transparentModal" : "card",
         animation: Platform.OS === "web" ? "fade" : "default",

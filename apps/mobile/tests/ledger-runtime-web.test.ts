@@ -1643,6 +1643,137 @@ describe("ledger web upload runtime", () => {
     expect(queue[0]?.displayState).toBe("ready_for_review");
   });
 
+  it("demotes stale in-progress web batches into retryable failed state on load", async () => {
+    const { webDatabase, writableDatabase } = createTestWebDatabase();
+    vi.spyOn(webSqlite, "getActiveWebDatabase").mockReturnValue(webDatabase);
+    vi.spyOn(webSqlite, "openWebSqliteDatabase").mockResolvedValue(webDatabase);
+
+    const capturedAt = "2026-05-26T08:00:00.000Z";
+    await ensureDefaultEntity(writableDatabase, capturedAt);
+    await insertImportedEvidenceBundle(
+      writableDatabase,
+      createReceiptBundle({
+        batchId: "batch-web-stale-progress",
+        capturedAt,
+        evidenceId: "evidence-web-stale-progress",
+        fileName: "stale-progress.pdf",
+        filePath:
+          "evidence-objects/entity-main/uploads/2026/05/stale-progress.pdf",
+      }),
+    );
+    await createUploadBatch(writableDatabase, {
+      batchId: "batch-web-stale-progress",
+      createdAt: capturedAt,
+      evidenceId: "evidence-web-stale-progress",
+      sourceSystem: "ledger-upload-intake",
+      state: "parsing",
+    });
+    await writableDatabase.runAsync(
+      `UPDATE upload_batches
+       SET updated_at = ?
+       WHERE batch_id = ?;`,
+      "2026-05-26T07:59:00.000Z",
+      "batch-web-stale-progress",
+    );
+
+    const queue = await loadParseQueue();
+    expect(queue[0]?.batchState).toBe("failed");
+    expect(queue[0]?.displayState).toBe("failed");
+    expect(queue[0]?.errorMessage).toContain("moved back to retry");
+  });
+
+  it("moves a retried failed web batch back into in-progress state immediately", async () => {
+    const { webDatabase, writableDatabase } = createTestWebDatabase();
+    vi.spyOn(webSqlite, "getActiveWebDatabase").mockReturnValue(webDatabase);
+    vi.spyOn(webSqlite, "openWebSqliteDatabase").mockResolvedValue(webDatabase);
+
+    const capturedAt = "2026-05-26T09:00:00.000Z";
+    await ensureDefaultEntity(writableDatabase, capturedAt);
+    await insertImportedEvidenceBundle(
+      writableDatabase,
+      createReceiptBundle({
+        batchId: "batch-web-retry-progress",
+        capturedAt,
+        evidenceId: "evidence-web-retry-progress",
+        fileName: "retry-progress.pdf",
+        filePath:
+          "evidence-objects/entity-main/uploads/2026/05/retry-progress.pdf",
+      }),
+    );
+    await createUploadBatch(writableDatabase, {
+      batchId: "batch-web-retry-progress",
+      createdAt: capturedAt,
+      evidenceId: "evidence-web-retry-progress",
+      sourceSystem: "ledger-upload-intake",
+      state: "failed",
+    });
+    await updateEvidenceExtraction(writableDatabase, {
+      evidenceId: "evidence-web-retry-progress",
+      extractedData: buildRemoteExtractedData({
+        fileName: "retry-progress.pdf",
+        parsePayload: {
+          candidates: {
+            amountCents: 1299,
+            category: "expense",
+            date: "2026-05-26",
+            description: "Coffee beans",
+            notes: null,
+            source: "Business Card",
+            target: "Blue Bottle",
+            taxCategory: "meals",
+          },
+          fields: {
+            amountCents: 1299,
+            category: "expense",
+            date: "2026-05-26",
+            description: "Coffee beans",
+            notes: null,
+            source: "Business Card",
+            target: "Blue Bottle",
+            taxCategory: "meals",
+          },
+          model: "gpt-5",
+          parser: "openai_gpt",
+          rawSummary: "Blue Bottle receipt",
+          rawText: "Blue Bottle 05/26/2026 $12.99",
+          records: [
+            {
+              candidates: {
+                amountCents: 1299,
+                category: "expense",
+                date: "2026-05-26",
+                description: "Coffee beans",
+                notes: null,
+                source: "Business Card",
+                target: "Blue Bottle",
+                taxCategory: "meals",
+              },
+              fields: {
+                amountCents: 1299,
+                category: "expense",
+                date: "2026-05-26",
+                description: "Coffee beans",
+                notes: null,
+                source: "Business Card",
+                target: "Blue Bottle",
+                taxCategory: "meals",
+              },
+            },
+          ],
+          warnings: [],
+        },
+        scheme: {},
+        sourceLabel: "OpenAI GPT",
+      }),
+      parseStatus: "failed",
+    });
+
+    const retried = await retryEvidenceParsing("evidence-web-retry-progress");
+    expect(retried?.batchState).toBe("parsing");
+    expect(retried?.displayState).toBe("recovering");
+    expect(retried?.errorMessage).toBeNull();
+  });
+
   it("removes a queue-backed duplicate review task from the active web queue after keep-separate", async () => {
     const { database, webDatabase, writableDatabase } = createTestWebDatabase();
     vi.spyOn(webSqlite, "getActiveWebDatabase").mockReturnValue(webDatabase);
@@ -1871,6 +2002,302 @@ describe("ledger web upload runtime", () => {
     expect(
       queue.some((item) => item.batchId === "batch-web-duplicate-review"),
     ).toBe(false);
+  });
+
+  it("persists a queue-backed web review confirmation out of the active queue", async () => {
+    const { webDatabase, writableDatabase } = createTestWebDatabase();
+    vi.spyOn(webSqlite, "getActiveWebDatabase").mockReturnValue(webDatabase);
+    vi.spyOn(webSqlite, "openWebSqliteDatabase").mockResolvedValue(webDatabase);
+
+    const capturedAt = "2026-05-26T06:00:00.000Z";
+    await ensureDefaultEntity(writableDatabase, capturedAt);
+    await insertImportedEvidenceBundle(
+      writableDatabase,
+      createReceiptBundle({
+        batchId: "batch-web-confirm-review",
+        capturedAt,
+        evidenceId: "evidence-web-confirm-review",
+        fileName: "confirm-review.pdf",
+        filePath:
+          "evidence-objects/entity-main/uploads/2026/05/confirm-review.pdf",
+      }),
+    );
+    await updateEvidenceExtraction(writableDatabase, {
+      evidenceId: "evidence-web-confirm-review",
+      extractedData: buildRemoteExtractedData({
+        fileName: "confirm-review.pdf",
+        parsePayload: {
+          candidates: {
+            amountCents: 5299,
+            category: "expense",
+            date: "2026-02-27",
+            description: "Apple Store accessories",
+            notes: null,
+            source: "Business Card",
+            target: "Apple Store",
+            taxCategory: "office",
+          },
+          fields: {
+            amountCents: 5299,
+            category: "expense",
+            date: "2026-02-27",
+            description: "Apple Store accessories",
+            notes: null,
+            source: "Business Card",
+            target: "Apple Store",
+            taxCategory: "office",
+          },
+          model: "gpt-5",
+          parser: "openai_gpt",
+          rawSummary: "Apple Store receipt",
+          rawText: "Apple Store 02/27/2026 $52.99",
+          records: [
+            {
+              candidates: {
+                amountCents: 5299,
+                category: "expense",
+                date: "2026-02-27",
+                description: "Apple Store accessories",
+                notes: null,
+                source: "Business Card",
+                target: "Apple Store",
+                taxCategory: "office",
+              },
+              fields: {
+                amountCents: 5299,
+                category: "expense",
+                date: "2026-02-27",
+                description: "Apple Store accessories",
+                notes: null,
+                source: "Business Card",
+                target: "Apple Store",
+                taxCategory: "office",
+              },
+            },
+          ],
+          warnings: [],
+        },
+        scheme: {},
+        sourceLabel: "OpenAI GPT",
+      }),
+      parseStatus: "pending",
+    });
+    await createUploadBatch(writableDatabase, {
+      batchId: "batch-web-confirm-review",
+      createdAt: capturedAt,
+      evidenceId: "evidence-web-confirm-review",
+      sourceSystem: "ledger-upload-intake",
+      state: "parse_complete",
+    });
+    await createExtractionRun(writableDatabase, {
+      batchId: "batch-web-confirm-review",
+      createdAt: capturedAt,
+      evidenceId: "evidence-web-confirm-review",
+      extractionRunId: "extraction-web-confirm-review",
+    });
+    await createPlannerRun(writableDatabase, {
+      batchId: "batch-web-confirm-review",
+      createdAt: capturedAt,
+      evidenceId: "evidence-web-confirm-review",
+      extractionRunId: "extraction-web-confirm-review",
+      plannerRunId: "planner-web-confirm-review",
+    });
+
+    const evidenceBeforeSave = await loadEvidenceById(
+      writableDatabase,
+      "evidence-web-confirm-review",
+    );
+    expect(evidenceBeforeSave).not.toBeNull();
+
+    await savePlannerArtifacts(writableDatabase, {
+      batchId: "batch-web-confirm-review",
+      createdAt: capturedAt,
+      evidence: evidenceBeforeSave!,
+      plannerRunId: "planner-web-confirm-review",
+      remotePlan: {
+        businessEvents: ["Receipt payment"],
+        candidateRecords: [
+          {
+            amountCents: 5299,
+            currency: "USD",
+            date: "2026-02-27",
+            description: "Apple Store accessories",
+            evidenceId: "evidence-web-confirm-review",
+            recordKind: "expense",
+            sourceLabel: "Business Card",
+            targetLabel: "Apple Store",
+          },
+        ],
+        classifiedFacts: [],
+        counterpartyResolutions: [],
+        duplicateHints: [],
+        readTasks: [
+          {
+            readTaskId: "read-confirm-review-1",
+            rationale: "Lookup counterparties",
+            status: "pending",
+            taskType: "counterparty_lookup",
+          },
+          {
+            readTaskId: "read-confirm-review-2",
+            rationale: "Check duplicate receipts",
+            status: "pending",
+            taskType: "duplicate_lookup",
+          },
+        ],
+        summary: "One expense record from the uploaded receipt.",
+        warnings: [],
+        writeProposals: [
+          {
+            proposalType: "persist_candidate_record",
+            reviewFields: ["amount", "date", "source", "target"],
+            values: { candidateIndex: 0 },
+          },
+        ],
+      },
+    });
+
+    const queueBefore = await loadParseQueue();
+    expect(
+      queueBefore.some((item) => item.batchId === "batch-web-confirm-review"),
+    ).toBe(true);
+
+    const recordId = await confirmEvidenceReview("evidence-web-confirm-review", {
+      amount: "52.99",
+      category: "expense",
+      date: "2026-02-27",
+      description: "Apple Store accessories",
+      notes: "",
+      source: "Business Card",
+      target: "Apple Store",
+      taxCategory: "office",
+    });
+    expect(recordId).toBe("record-evidence-web-confirm-review");
+
+    const persistedEvidence = await loadEvidenceById(
+      writableDatabase,
+      "evidence-web-confirm-review",
+    );
+    expect(persistedEvidence?.batchState).toBe("approved");
+
+    const queueAfter = await loadParseQueue();
+    expect(
+      queueAfter.some((item) => item.batchId === "batch-web-confirm-review"),
+    ).toBe(false);
+  });
+
+  it("heals a legacy web review row with no candidate records left", async () => {
+    const { webDatabase, writableDatabase } = createTestWebDatabase();
+    vi.spyOn(webSqlite, "getActiveWebDatabase").mockReturnValue(webDatabase);
+    vi.spyOn(webSqlite, "openWebSqliteDatabase").mockResolvedValue(webDatabase);
+
+    const capturedAt = "2026-05-26T07:00:00.000Z";
+    await ensureDefaultEntity(writableDatabase, capturedAt);
+    await insertImportedEvidenceBundle(
+      writableDatabase,
+      createReceiptBundle({
+        batchId: "batch-web-legacy-stale-review",
+        capturedAt,
+        evidenceId: "evidence-web-legacy-stale-review",
+        fileName: "legacy-stale-review.pdf",
+        filePath:
+          "evidence-objects/entity-main/uploads/2026/05/legacy-stale-review.pdf",
+      }),
+    );
+    await updateEvidenceExtraction(writableDatabase, {
+      evidenceId: "evidence-web-legacy-stale-review",
+      extractedData: buildRemoteExtractedData({
+        fileName: "legacy-stale-review.pdf",
+        parsePayload: {
+          candidates: {
+            amountCents: 5299,
+            category: "expense",
+            date: "2026-02-27",
+            description: "Apple Store accessories",
+            notes: null,
+            source: "Business Card",
+            target: "Apple Store",
+            taxCategory: "office",
+          },
+          fields: {
+            amountCents: 5299,
+            category: "expense",
+            date: "2026-02-27",
+            description: "Apple Store accessories",
+            notes: null,
+            source: "Business Card",
+            target: "Apple Store",
+            taxCategory: "office",
+          },
+          model: "gpt-5",
+          parser: "openai_gpt",
+          rawSummary: "Apple Store receipt",
+          rawText: "Apple Store 02/27/2026 $52.99",
+          records: [
+            {
+              candidates: {
+                amountCents: 5299,
+                category: "expense",
+                date: "2026-02-27",
+                description: "Apple Store accessories",
+                notes: null,
+                source: "Business Card",
+                target: "Apple Store",
+                taxCategory: "office",
+              },
+              fields: {
+                amountCents: 5299,
+                category: "expense",
+                date: "2026-02-27",
+                description: "Apple Store accessories",
+                notes: null,
+                source: "Business Card",
+                target: "Apple Store",
+                taxCategory: "office",
+              },
+            },
+          ],
+          warnings: [],
+        },
+        scheme: {},
+        sourceLabel: "OpenAI GPT",
+      }),
+      parseStatus: "parsed",
+    });
+    await createUploadBatch(writableDatabase, {
+      batchId: "batch-web-legacy-stale-review",
+      createdAt: capturedAt,
+      evidenceId: "evidence-web-legacy-stale-review",
+      sourceSystem: "ledger-upload-intake",
+      state: "review_required",
+    });
+
+    const queueBefore = await loadParseQueue();
+    expect(
+      queueBefore.some((item) => item.batchId === "batch-web-legacy-stale-review"),
+    ).toBe(false);
+
+    await writableDatabase.runAsync(
+      `UPDATE upload_batches
+       SET state = 'review_required',
+           updated_at = ?
+       WHERE batch_id = ?;`,
+      "2026-05-26T07:05:00.000Z",
+      "batch-web-legacy-stale-review",
+    );
+
+    const queueAfter = await loadParseQueue();
+    expect(
+      queueAfter.some((item) => item.batchId === "batch-web-legacy-stale-review"),
+    ).toBe(false);
+
+    const batchState = await writableDatabase.getFirstAsync<{ state: string }>(
+      `SELECT state
+       FROM upload_batches
+       WHERE batch_id = ?;`,
+      "batch-web-legacy-stale-review",
+    );
+    expect(batchState?.state).toBe("approved");
   });
 
   it("clears a failed web task and deletes stored files when no persisted records depend on it", async () => {

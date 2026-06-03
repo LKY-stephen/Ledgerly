@@ -277,6 +277,7 @@ describe("creator dashboard workflow", () => {
     expect(businessSnapshot.profitAndLoss.metricCards.map((card) => card.value)).toEqual([
       "$8,120.00",
       "$127.39",
+      "$7,992.61",
     ]);
     expect(businessSnapshot.profitAndLoss.netIncomeLabel).toBe("$7,992.61");
     expect(businessSnapshot.profitAndLoss.revenueRows.map((row) => row.label)).toEqual([
@@ -301,6 +302,7 @@ describe("creator dashboard workflow", () => {
     expect(q1BusinessSnapshot.profitAndLoss.metricCards.map((card) => card.value)).toEqual([
       "$6,970.00",
       "$52.99",
+      "$6,917.01",
     ]);
 
     expect(personalSnapshot.selectedScope).toBe("personal");
@@ -342,10 +344,12 @@ describe("creator dashboard workflow", () => {
     expect(ledgerSnapshot.profitAndLoss.metricCards.map((card) => card.label)).toEqual([
       "总收入",
       "总支出",
+      "净利润",
     ]);
     expect(ledgerSnapshot.balanceSheet.metricCards.map((card) => card.label)).toEqual([
       "总资产",
       "总负债",
+      "净资产",
     ]);
   });
 });

@@ -1,8 +1,10 @@
 import { Feather } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
+  Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -14,10 +16,11 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { BackHeaderBar } from "../../components/back-header-bar";
 import { CfoAvatar } from "../../components/cfo-avatar";
+import { useBackOrHome } from "../../hooks/use-back-or-home";
 import { useResponsive } from "../../hooks/use-responsive";
 import { useAppShell } from "../app-shell/provider";
 import type { ResolvedLocale } from "../app-shell/types";
-import { getButtonColors, getFeedbackColors, withAlpha } from "../app-shell/theme-utils";
+import { getFeedbackColors, withAlpha } from "../app-shell/theme-utils";
 import type { SurfaceTokens } from "@ledgerly/ui";
 import {
   formatLedgerParseCandidateState,
@@ -28,21 +31,23 @@ import type {
   DuplicateMatchedRecordSummary,
   DuplicateMergeKeepMode,
   LedgerCategory,
+  LedgerReviewValues,
+  WorkflowCandidateRecord,
   WorkflowWriteProposalItem,
 } from "./ledger-domain";
+import { getReportRouteLaunchOverrideFromCandidates } from "./report-route-state";
 import { usePlannerWorkflow } from "./use-planner-workflow";
 
 export function LedgerParseScreen() {
   const router = useRouter();
+  const backOrHome = useBackOrHome();
   const { isExpanded, isMedium } = useResponsive();
   const isWide = isExpanded || isMedium;
-  const showSourceDetailFirst = isExpanded;
+  const isDesktopWeb = Platform.OS === "web" && isExpanded;
   const { copy, palette, profileInfo, resolvedLocale } = useAppShell();
   const parseCopy = copy.ledger.parse;
-  const primaryButton = getButtonColors(palette, "primary");
   const errorColors = getFeedbackColors(palette, "error");
   const successColors = getFeedbackColors(palette, "success");
-  const warningColors = getFeedbackColors(palette, "warning");
   const params = useLocalSearchParams<{
     batchId?: string;
     fileName?: string;
@@ -64,7 +69,6 @@ export function LedgerParseScreen() {
   const parserKind = params.parserKind || undefined;
 
   const hasData = rawJson || rawText;
-  const formattedJson = formatJson(rawJson);
 
   const parsedRawJson = rawJson ? tryParse(rawJson) : null;
 
@@ -110,7 +114,6 @@ export function LedgerParseScreen() {
     parsedRawJson !== null &&
     Boolean(plannerError);
   const isHydrationPending = canHydratePlanner && !plannerResult && !plannerError;
-  const allApproved = plannerResult?.batchState === "approved";
   const activeCandidate = plannerResult?.candidateRecords[selectedCandidateIndex] ?? null;
   const visibleProposals =
     plannerResult?.writeProposals.filter(
@@ -119,13 +122,13 @@ export function LedgerParseScreen() {
         (!proposal.candidateId ||
           proposal.candidateId === activeCandidate?.candidateId),
     ) ?? [];
-  const pendingProposalCount =
-    plannerResult?.writeProposals.filter(
-      (proposal) => proposal.state === "pending_approval",
-    ).length ?? 0;
   const [duplicateKeepModes, setDuplicateKeepModes] = useState<
     Record<string, DuplicateMergeKeepMode>
   >({});
+  const [expandedCandidateId, setExpandedCandidateId] = useState<string | null>(null);
+  const [showRawParse, setShowRawParse] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [shouldAutoAdvanceOpen, setShouldAutoAdvanceOpen] = useState(false);
   const categoryOptions: Array<{
     label: string;
     value: LedgerCategory;
@@ -147,13 +150,96 @@ export function LedgerParseScreen() {
     void startPlanner();
   }, [canHydratePlanner, canStartPlanner, isPlanning, plannerError, startPlanner]);
 
+  const sortedCandidates = useMemo(() => {
+    const candidates = plannerResult?.candidateRecords ?? [];
+
+    return candidates
+      .map((candidate, index) => {
+        const pendingProposalCount = plannerResult?.writeProposals.filter(
+          (proposal) =>
+            proposal.candidateId === candidate.candidateId &&
+            proposal.state === "pending_approval",
+        ).length ?? 0;
+        const needsAttention =
+          pendingProposalCount > 0 ||
+          candidate.state === "needs_review" ||
+          candidate.state === "duplicate" ||
+          candidate.state === "candidate";
+
+        return {
+          candidate,
+          index,
+          needsAttention,
+          pendingProposalCount,
+          sortScore: needsAttention ? 0 : 1,
+        };
+      })
+      .sort((left, right) => left.sortScore - right.sortScore);
+  }, [plannerResult]);
+
+  const hasPendingProposals = Boolean(
+    plannerResult?.writeProposals.some(
+      (proposal) => proposal.state === "pending_approval",
+    ),
+  );
+  const hasAttentionRemaining = sortedCandidates.some((item) => item.needsAttention);
+  const isTerminalBatchState =
+    plannerResult?.batchState === "approved" ||
+    plannerResult?.batchState === "rejected" ||
+    plannerResult?.batchState === "partially_approved";
+  const shouldShowWaitingState = Boolean(
+    plannerResult &&
+      !isTerminalBatchState &&
+      !hasAttentionRemaining &&
+      !hasPendingProposals,
+  );
+  const isResolvedCompletionState = Boolean(
+    plannerResult &&
+      isTerminalBatchState &&
+      !hasAttentionRemaining &&
+      !hasPendingProposals &&
+      plannerResult.batchState !== "failed",
+  );
+  const shouldShowReviewWorkspace = Boolean(plannerResult) && !isResolvedCompletionState;
+  const reportLaunchOverride = useMemo(
+    () =>
+      plannerResult
+        ? getReportRouteLaunchOverrideFromCandidates(plannerResult.candidateRecords)
+        : null,
+    [plannerResult],
+  );
+
   useEffect(() => {
-    if (!allApproved) {
+    if (!plannerResult) {
       return;
     }
 
-    router.replace("/ledger/upload");
-  }, [allApproved, router]);
+    if (!hasAttentionRemaining) {
+      setExpandedCandidateId(null);
+      setShouldAutoAdvanceOpen(false);
+      return;
+    }
+
+    if (!shouldAutoAdvanceOpen) {
+      return;
+    }
+
+    const nextCandidateId =
+      plannerResult.candidateRecords[selectedCandidateIndex]?.candidateId ?? null;
+
+    if (!nextCandidateId) {
+      return;
+    }
+
+    setExpandedCandidateId(nextCandidateId);
+    setShowRawParse(false);
+    setShouldAutoAdvanceOpen(false);
+  }, [
+    hasAttentionRemaining,
+    plannerResult,
+    selectedCandidateIndex,
+    shouldAutoAdvanceOpen,
+  ]);
 
   return (
     <SafeAreaView
@@ -171,13 +257,7 @@ export function LedgerParseScreen() {
         ]}
       >
         <BackHeaderBar
-          onBack={() => {
-            if (router.canGoBack()) {
-              router.back();
-            } else {
-              router.replace("/ledger/upload");
-            }
-          }}
+          onBack={backOrHome}
           palette={palette}
           rightAccessory={<CfoAvatar />}
           title={copy.common.appName}
@@ -226,431 +306,332 @@ export function LedgerParseScreen() {
           </View>
         ) : null}
 
-        {/* ---- Main body: two-column on PC, single-column on mobile ---- */}
-        <View style={isExpanded ? styles.twoColumn : undefined}>
-          {/* Left column: parse output / empty states */}
-          <View style={isExpanded ? styles.columnLeft : undefined}>
-            {showSourceDetailFirst && (displayRawJson || displayRawText) ? (
-              <View
-                style={[
-                  styles.card,
-                  { backgroundColor: palette.paper, borderColor: palette.border },
-                ]}
-              >
-                <Text style={[styles.sectionTitle, { color: palette.ink }]}>
-                  {parseCopy.parsedJsonTitle}
-                </Text>
-                <View
-                  style={[
-                    styles.jsonBox,
-                    isExpanded && styles.jsonBoxWide,
-                    {
-                      backgroundColor: palette.shellElevated,
-                      borderColor: palette.border,
-                    },
-                  ]}
-                >
-                  <Text
-                    selectable
-                    style={[styles.jsonText, { color: palette.ink }]}
-                  >
-                    {formatJson(displayRawJson) || displayRawText || parseCopy.noData}
-                  </Text>
-                </View>
-              </View>
-            ) : !parseError &&
-              !isHydrationPending &&
-              !(displayRawJson || displayRawText) ? (
-              <View
-                style={[
-                  styles.emptyState,
-                  { backgroundColor: palette.paper, borderColor: palette.border },
-                ]}
-              >
-                <Text style={[styles.emptyTitle, { color: palette.ink }]}>
-                  {parseCopy.emptyTitle}
-                </Text>
-                <Text style={[styles.emptySub, { color: palette.inkMuted }]}>
-                  {parseCopy.emptySummary}
-                </Text>
-              </View>
-            ) : null}
+        {isPreparingReview ? (
+          <View
+            style={[
+              styles.card,
+              { backgroundColor: palette.paper, borderColor: palette.border },
+            ]}
+            testID="planner-preparing-card"
+          >
+            <View style={styles.loadingHeader}>
+              <ActivityIndicator color={palette.accent} size="small" />
+              <Text style={[styles.sectionTitle, { color: palette.ink }]}>
+                {parseCopy.preparingReviewTitle}
+              </Text>
+            </View>
+            <Text style={[styles.summaryText, { color: palette.inkMuted }]}>
+              {parseCopy.preparingReviewSummary}
+            </Text>
           </View>
+        ) : null}
 
-          {/* Right column: planner actions + edit + proposals */}
-          <View style={[isExpanded ? styles.columnRight : undefined, { gap: 14 }]}>
-            {isPreparingReview ? (
-              <View
-                style={[
-                  styles.card,
-                  { backgroundColor: palette.paper, borderColor: palette.border },
-                ]}
-                testID="planner-preparing-card"
-              >
-                <View style={styles.loadingHeader}>
-                  <ActivityIndicator color={palette.accent} size="small" />
-                  <Text style={[styles.sectionTitle, { color: palette.ink }]}>
-                    {parseCopy.preparingReviewTitle}
-                  </Text>
-                </View>
-                <Text style={[styles.summaryText, { color: palette.inkMuted }]}>
-                  {parseCopy.preparingReviewSummary}
-                </Text>
-                <Text style={[styles.loadingCaption, { color: palette.inkMuted }]}>
-                  {parseCopy.mapping}
-                </Text>
-              </View>
-            ) : null}
+        {shouldShowWaitingState ? (
+          <View
+            style={[
+              styles.card,
+              { backgroundColor: palette.paper, borderColor: palette.border },
+            ]}
+            testID="planner-waiting-card"
+          >
+            <View style={styles.loadingHeader}>
+              <ActivityIndicator color={palette.accent} size="small" />
+              <Text style={[styles.sectionTitle, { color: palette.ink }]}>
+                {parseCopy.preparingReviewTitle}
+              </Text>
+            </View>
+            <Text style={[styles.summaryText, { color: palette.inkMuted }]}>
+              {parseCopy.preparingReviewSummary}
+            </Text>
+          </View>
+        ) : null}
 
-            {plannerError ? (
-              <View
-                style={[
-                  styles.card,
+        {plannerError ? (
+          <View
+            style={[
+              styles.card,
+              {
+                backgroundColor: errorColors.background,
+                borderColor: errorColors.border,
+              },
+            ]}
+          >
+            <Text style={[styles.errorTitle, { color: errorColors.text }]}>
+              {parseCopy.plannerErrorTitle}
+            </Text>
+            <Text selectable style={[styles.errorText, { color: errorColors.text }]}>
+              {plannerError}
+            </Text>
+            {canRetryPlanner ? (
+              <Pressable
+                accessibilityRole="button"
+                onPress={startPlanner}
+                style={({ pressed }) => [
+                  styles.retryButton,
                   {
-                    backgroundColor: errorColors.background,
-                    borderColor: errorColors.border,
+                    backgroundColor: pressed
+                      ? withAlpha(palette.destructive, 0.82)
+                      : palette.destructive,
                   },
                 ]}
               >
-                <Text style={[styles.errorTitle, { color: errorColors.text }]}>
-                  {parseCopy.plannerErrorTitle}
-                </Text>
-                <Text selectable style={[styles.errorText, { color: errorColors.text }]}>
-                  {plannerError}
-                </Text>
-                {canRetryPlanner ? (
+                <Text style={styles.actionButtonLabel}>{parseCopy.retry}</Text>
+              </Pressable>
+            ) : null}
+          </View>
+        ) : null}
+
+        {shouldShowReviewWorkspace && plannerResult ? (
+          isWide ? (
+            <View style={[styles.twoColumn, isDesktopWeb ? styles.twoColumnDesktop : null]}>
+              <View style={[styles.columnLeft, isDesktopWeb ? styles.columnLeftDesktop : null]}>
+                {sortedCandidates.map(({ candidate, index, needsAttention, pendingProposalCount }) => (
                   <Pressable
+                    key={candidate.candidateId}
                     accessibilityRole="button"
-                    onPress={startPlanner}
-                    style={({ pressed }) => [
-                      styles.retryButton,
+                    onPress={() => {
+                      selectCandidate(index);
+                      setExpandedCandidateId(candidate.candidateId);
+                    }}
+                    style={[
+                      styles.card,
+                      isDesktopWeb ? styles.candidateCardDesktop : null,
                       {
-                        backgroundColor: pressed
-                          ? withAlpha(palette.destructive, 0.82)
-                          : palette.destructive,
+                        backgroundColor:
+                          expandedCandidateId === candidate.candidateId
+                            ? palette.accentSoft
+                            : palette.paper,
+                        borderColor:
+                          expandedCandidateId === candidate.candidateId
+                            ? palette.accent
+                            : palette.border,
                       },
                     ]}
                   >
-                    <Text style={styles.actionButtonLabel}>{parseCopy.retry}</Text>
-                  </Pressable>
-                ) : null}
-              </View>
-            ) : null}
-
-            {plannerResult?.plannerSummary ? (
-              <View
-                style={[
-                  styles.card,
-                  { backgroundColor: palette.paper, borderColor: palette.border },
-                ]}
-              >
-                <Text style={[styles.sectionTitle, { color: palette.ink }]}>
-                  {parseCopy.plannerSummaryTitle}
-                </Text>
-                <Text style={[styles.summaryText, { color: palette.inkMuted }]}>
-                  {plannerResult.plannerSummary.summary}
-                </Text>
-                {plannerResult.plannerSummary.warnings.length > 0 ? (
-                  <View style={styles.warningList}>
-                    {plannerResult.plannerSummary.warnings.map((warning, index) => (
-                      <Text
-                        key={index}
-                        style={[styles.warningText, { color: warningColors.text }]}
-                      >
-                        {warning}
+                    <View style={styles.cardHeader}>
+                      <Text style={[styles.fileName, { color: palette.ink }]}>
+                        {reviewLabel(candidate.reviewValues.amount, candidate.reviewValues.date)}
                       </Text>
-                    ))}
-                  </View>
-                ) : null}
-                <View style={styles.statsRow}>
-                  <StatPill
-                    label={parseCopy.statReadTasks}
-                    palette={palette}
-                    value={plannerResult.plannerSummary.readTasks.length}
-                  />
-                  <StatPill
-                    label={parseCopy.statCandidates}
-                    palette={palette}
-                    value={plannerResult.candidateRecords.length}
-                  />
-                  <StatPill
-                    label={parseCopy.statProposals}
-                    palette={palette}
-                    value={pendingProposalCount}
-                  />
-                </View>
+                      <View
+                        style={[
+                          styles.statePill,
+                          {
+                            backgroundColor: needsAttention
+                              ? stateColor("needs_review")
+                              : palette.success,
+                          },
+                        ]}
+                      >
+                        <Text style={styles.statePillText}>
+                          {pendingProposalCount > 0
+                            ? `${pendingProposalCount} review`
+                            : formatLedgerParseCandidateState(candidate.state, resolvedLocale)}
+                        </Text>
+                      </View>
+                    </View>
+                    <Text
+                      numberOfLines={2}
+                      style={[styles.summaryText, { color: palette.inkMuted }]}
+                    >
+                      {formatCounterpartyLabel(candidate.reviewValues.source, candidate.reviewValues.target)}
+                    </Text>
+                    <Text
+                      numberOfLines={2}
+                      style={[styles.editFieldLabel, styles.candidateBadgeText, { color: palette.inkMuted }]}
+                    >
+                      {formatCategoryBadge(candidate.reviewValues.category, parseCopy)}
+                    </Text>
+                  </Pressable>
+                ))}
               </View>
-            ) : null}
+              <View style={[styles.columnRight, isDesktopWeb ? styles.columnRightDesktop : null]}>
+                {expandedCandidateId && activeCandidate ? (
+                  <OpenedCandidateCard
+                    activeCandidate={activeCandidate}
+                    approveProposal={approveProposal}
+                    categoryOptions={categoryOptions}
+                    duplicateKeepModes={duplicateKeepModes}
+                    isApproving={isApproving}
+                    isEditOpen={isEditOpen}
+                    onCloseEdit={() => setIsEditOpen(false)}
+                    onOpenEdit={() => setIsEditOpen(true)}
+                    onResolutionProgress={() => setShouldAutoAdvanceOpen(true)}
+                    onRejectProposal={rejectProposal}
+                    onToggleRawParse={() => setShowRawParse((current) => !current)}
+                    palette={palette}
+                    parseCopy={parseCopy}
+                    resolvedLocale={resolvedLocale}
+                    review={review}
+                    setDuplicateKeepModes={setDuplicateKeepModes}
+                    showRawParse={showRawParse}
+                    updateField={updateField}
+                    visibleProposals={visibleProposals}
+                    displayRawJson={displayRawJson}
+                    displayRawText={displayRawText}
+                    mimeType={mimeType}
+                  />
+                ) : (
+                  <View
+                    style={[
+                      styles.card,
+                      { backgroundColor: palette.paper, borderColor: palette.border },
+                    ]}
+                  >
+                    <Text style={[styles.sectionTitle, { color: palette.ink }]}>
+                      {parseCopy.editRecordTitle}
+                    </Text>
+                    <Text style={[styles.summaryText, { color: palette.inkMuted }]}>
+                      {parseCopy.mapping}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </View>
+          ) : (
+            <View style={styles.sectionStack}>
+              {sortedCandidates.map(({ candidate, index, needsAttention, pendingProposalCount }) => {
+                const expanded = expandedCandidateId === candidate.candidateId;
+                const selected = index === selectedCandidateIndex;
 
-            {plannerResult && !allApproved ? (
-              <View
-                style={[
-                  styles.card,
-                  { backgroundColor: palette.paper, borderColor: palette.border },
-                ]}
-              >
-                <Text style={[styles.sectionTitle, { color: palette.ink }]}>
-                  {plannerResult.candidateRecords.length > 1
-                    ? `${parseCopy.editRecordTitle} ${selectedCandidateIndex + 1}/${plannerResult.candidateRecords.length}`
-                    : parseCopy.editRecordTitle}
-                </Text>
-                {plannerResult.candidateRecords.length > 1 ? (
-                  <View style={styles.candidateChipRow}>
-                    {plannerResult.candidateRecords.map((candidate, index) => {
-                      const selected = index === selectedCandidateIndex;
-
-                      return (
-                        <Pressable
-                          key={candidate.candidateId}
-                          accessibilityRole="button"
-                          onPress={() => selectCandidate(index)}
+                return (
+                  <View
+                    key={candidate.candidateId}
+                    style={[
+                      styles.card,
+                      {
+                        backgroundColor: palette.paper,
+                        borderColor: expanded ? palette.accent : palette.border,
+                      },
+                    ]}
+                  >
+                    <Pressable
+                      accessibilityRole="button"
+                      onPress={() => {
+                        selectCandidate(index);
+                        setExpandedCandidateId((current) =>
+                          current === candidate.candidateId ? null : candidate.candidateId,
+                        );
+                      }}
+                    >
+                      <View style={styles.cardHeader}>
+                        <Text style={[styles.fileName, { color: palette.ink }]}>
+                          {reviewLabel(candidate.reviewValues.amount, candidate.reviewValues.date)}
+                        </Text>
+                        <View
                           style={[
-                            styles.candidateChip,
+                            styles.statePill,
                             {
-                              backgroundColor: selected
-                                ? palette.accentSoft
-                                : palette.shellElevated,
-                              borderColor: selected
-                                ? palette.accent
-                                : palette.border,
+                              backgroundColor: needsAttention
+                                ? stateColor("needs_review")
+                                : palette.success,
                             },
                           ]}
-                          testID={`candidate-${index + 1}`}
                         >
-                          <Text
-                            style={[
-                              styles.candidateChipLabel,
-                              {
-                                color: selected ? palette.accent : palette.ink,
-                              },
-                            ]}
-                          >
-                            {`${parseCopy.reviewStateCandidate} ${index + 1}`}
+                          <Text style={styles.statePillText}>
+                            {pendingProposalCount > 0
+                              ? `${pendingProposalCount} review`
+                              : formatLedgerParseCandidateState(candidate.state, resolvedLocale)}
                           </Text>
-                        </Pressable>
-                      );
-                    })}
-                  </View>
-                ) : null}
-                {activeCandidate ? (
-                  <View style={styles.statePillRow}>
-                    <View
-                      style={[
-                        styles.statePill,
-                        {
-                          backgroundColor: stateColor(
-                            activeCandidate.state,
-                          ),
-                        },
-                      ]}
-                    >
-                      <Text style={styles.statePillText}>
-                        {formatLedgerParseCandidateState(
-                          activeCandidate.state,
-                          resolvedLocale,
-                        )}
+                        </View>
+                      </View>
+                      <Text style={[styles.summaryText, { color: palette.inkMuted }]}>
+                        {formatCounterpartyLabel(candidate.reviewValues.source, candidate.reviewValues.target)}
                       </Text>
-                    </View>
+                      <Text style={[styles.editFieldLabel, { color: palette.inkMuted }]}>
+                        {formatCategoryBadge(candidate.reviewValues.category, parseCopy)}
+                      </Text>
+                    </Pressable>
+
+                    {expanded && selected ? (
+                      <OpenedCandidateCard
+                        activeCandidate={activeCandidate}
+                        approveProposal={approveProposal}
+                        categoryOptions={categoryOptions}
+                        duplicateKeepModes={duplicateKeepModes}
+                        isApproving={isApproving}
+                        isEditOpen={isEditOpen}
+                        onCloseEdit={() => setIsEditOpen(false)}
+                        onOpenEdit={() => setIsEditOpen(true)}
+                        onResolutionProgress={() => setShouldAutoAdvanceOpen(true)}
+                        onRejectProposal={rejectProposal}
+                        onToggleRawParse={() => setShowRawParse((current) => !current)}
+                        palette={palette}
+                        parseCopy={parseCopy}
+                        resolvedLocale={resolvedLocale}
+                        review={review}
+                        setDuplicateKeepModes={setDuplicateKeepModes}
+                        showRawParse={showRawParse}
+                        updateField={updateField}
+                        visibleProposals={visibleProposals}
+                        displayRawJson={displayRawJson}
+                        displayRawText={displayRawText}
+                        mimeType={mimeType}
+                      />
+                    ) : null}
                   </View>
-                ) : null}
-                <CategorySelector
-                  label={parseCopy.categoryLabel}
-                  options={categoryOptions}
-                  palette={palette}
-                  selectedValue={review.category}
-                  onSelect={(value) => updateField("category", value)}
-                />
-                <EditField
-                  fieldId="amount"
-                  label={parseCopy.fieldAmount}
-                  onChangeText={(value) => updateField("amount", value)}
-                  palette={palette}
-                  value={review.amount}
-                />
-                <EditField
-                  fieldId="date"
-                  label={parseCopy.fieldDate}
-                  onChangeText={(value) => updateField("date", value)}
-                  palette={palette}
-                  value={review.date}
-                />
-                <EditField
-                  fieldId="source"
-                  label={parseCopy.fieldSource}
-                  onChangeText={(value) => updateField("source", value)}
-                  palette={palette}
-                  value={review.source}
-                />
-                <EditField
-                  fieldId="target"
-                  label={parseCopy.fieldTarget}
-                  onChangeText={(value) => updateField("target", value)}
-                  palette={palette}
-                  value={review.target}
-                />
-                <EditField
-                  fieldId="description"
-                  label={parseCopy.fieldDescription}
-                  onChangeText={(value) => updateField("description", value)}
-                  palette={palette}
-                  value={review.description}
-                />
-              </View>
-            ) : null}
+                );
+              })}
+            </View>
+          )
+        ) : !parseError && !isHydrationPending && !isResolvedCompletionState ? (
+          <View
+            style={[
+              styles.emptyState,
+              { backgroundColor: palette.paper, borderColor: palette.border },
+            ]}
+          >
+            <Text style={[styles.emptyTitle, { color: palette.ink }]}>
+              {parseCopy.emptyTitle}
+            </Text>
+            <Text style={[styles.emptySub, { color: palette.inkMuted }]}>
+              {parseCopy.emptySummary}
+            </Text>
+          </View>
+        ) : null}
 
-            {!showSourceDetailFirst && (displayRawJson || displayRawText) ? (
-              <View
-                style={[
-                  styles.card,
-                  { backgroundColor: palette.paper, borderColor: palette.border },
-                ]}
-              >
-                <Text style={[styles.sectionTitle, { color: palette.ink }]}>
-                  {parseCopy.parsedJsonTitle}
-                </Text>
-                <Text style={[styles.summaryText, { color: palette.inkMuted }]}>
-                  {parseCopy.mapping}
-                </Text>
-                <View
-                  style={[
-                    styles.jsonBox,
-                    {
-                      backgroundColor: palette.shellElevated,
-                      borderColor: palette.border,
+        {isResolvedCompletionState ? (
+          <View
+            style={[
+              styles.card,
+              {
+                backgroundColor: successColors.background,
+                borderColor: successColors.border,
+              },
+            ]}
+          >
+            <Text style={[styles.sectionTitle, { color: successColors.text }]}>
+              {parseCopy.recordSavedTitle}
+            </Text>
+            <Text style={[styles.summaryText, { color: successColors.text }]}>
+              {parseCopy.recordSavedSummary}
+            </Text>
+            <View style={styles.proposalActions}>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() =>
+                  router.push({
+                    pathname: "/ledger",
+                    params: {
+                      periodId: reportLaunchOverride?.periodId ?? undefined,
+                      scope: reportLaunchOverride?.scope ?? undefined,
+                      view: reportLaunchOverride?.view ?? undefined,
                     },
-                  ]}
-                >
-                  <Text
-                    selectable
-                    style={[styles.jsonText, { color: palette.ink }]}
-                  >
-                    {formatJson(displayRawJson) || displayRawText || parseCopy.noData}
-                  </Text>
-                </View>
-              </View>
-            ) : null}
-
-            {plannerResult &&
-            visibleProposals.length > 0 &&
-            !allApproved ? (
-              <View style={styles.proposalsSection}>
-                <Text
-                  style={[
-                    styles.sectionTitle,
-                    { color: palette.ink, marginBottom: 12 },
-                  ]}
-                >
-                  {parseCopy.writeProposalsTitle}
-                </Text>
-                {visibleProposals.map((proposal) => {
-                  if (proposal.proposalType === "resolve_duplicate_receipt") {
-                    const keepMode =
-                      duplicateKeepModes[proposal.writeProposalId] ?? "keep_existing";
-
-                    return (
-                      <DuplicateReceiptProposalCard
-                        key={proposal.writeProposalId}
-                        isApproving={isApproving}
-                        keepMode={keepMode}
-                        onApprove={() =>
-                          approveProposal(proposal.writeProposalId, {
-                            duplicateResolution: { keepMode },
-                          })
-                        }
-                        onKeepModeChange={(nextMode) =>
-                          setDuplicateKeepModes((current) => ({
-                            ...current,
-                            [proposal.writeProposalId]: nextMode,
-                          }))
-                        }
-                        onReject={() => rejectProposal(proposal.writeProposalId)}
-                        palette={palette}
-                        parseCopy={parseCopy}
-                        proposal={proposal}
-                        resolvedLocale={resolvedLocale}
-                        review={review}
-                      />
-                    );
-                  }
-
-                  if (proposal.proposalType === "merge_counterparty") {
-                    return (
-                      <CounterpartyMergeProposalCard
-                        key={proposal.writeProposalId}
-                        isApproving={isApproving}
-                        onApprove={() => approveProposal(proposal.writeProposalId)}
-                        onReject={() => rejectProposal(proposal.writeProposalId)}
-                        palette={palette}
-                        parseCopy={parseCopy}
-                        proposal={proposal}
-                        resolvedLocale={resolvedLocale}
-                        review={review}
-                      />
-                    );
-                  }
-
-                  return (
-                    <GenericProposalCard
-                      key={proposal.writeProposalId}
-                      isApproving={isApproving}
-                      onApprove={() => approveProposal(proposal.writeProposalId)}
-                      onReject={() => rejectProposal(proposal.writeProposalId)}
-                      palette={palette}
-                      parseCopy={parseCopy}
-                      proposal={proposal}
-                      resolvedLocale={resolvedLocale}
-                    />
-                  );
-                })}
-              </View>
-            ) : null}
-
-            {allApproved ? (
-              <View
-                style={[
-                  styles.card,
+                  })
+                }
+                style={({ pressed }) => [
+                  styles.rejectButton,
                   {
-                    backgroundColor: successColors.background,
-                    borderColor: successColors.border,
+                    backgroundColor: pressed
+                      ? withAlpha(palette.accent, 0.82)
+                      : palette.accent,
                   },
                 ]}
               >
-                <Text style={[styles.sectionTitle, { color: successColors.text }]}>
-                  {parseCopy.recordSavedTitle}
-                </Text>
-                <Text style={[styles.summaryText, { color: successColors.text }]}>
-                  {parseCopy.recordSavedSummary}
-                </Text>
-              </View>
-            ) : null}
+                <Text style={styles.actionButtonLabel}>View reports</Text>
+              </Pressable>
+            </View>
           </View>
-        </View>
-
-        {/* ---- Bottom: back button (always full width) ---- */}
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => {
-            if (router.canGoBack()) {
-              router.back();
-            } else {
-              router.replace("/ledger/upload");
-            }
-          }}
-          style={({ pressed }) => [
-            styles.backButton,
-            {
-              backgroundColor: pressed
-                ? primaryButton.pressedBackground
-                : primaryButton.background,
-            },
-          ]}
-        >
-          <Text
-            style={[styles.backButtonLabel, { color: primaryButton.text }]}
-          >
-            {parseCopy.backToUpload}
-          </Text>
-        </Pressable>
+        ) : null}
       </ScrollView>
     </SafeAreaView>
   );
@@ -681,6 +662,319 @@ function EditField(props: {
         testID={`edit-${props.fieldId}`}
         value={props.value}
       />
+    </View>
+  );
+}
+
+function OpenedCandidateCard(props: {
+  activeCandidate: WorkflowCandidateRecord | null;
+  approveProposal: (
+    writeProposalId: string,
+    options?: { duplicateResolution?: { keepMode: DuplicateMergeKeepMode } },
+  ) => Promise<void>;
+  categoryOptions: Array<{ label: string; value: LedgerCategory }>;
+  displayRawJson: string;
+  displayRawText: string;
+  duplicateKeepModes: Record<string, DuplicateMergeKeepMode>;
+  isApproving: boolean;
+  isEditOpen: boolean;
+  mimeType: string | null;
+  onCloseEdit: () => void;
+  onOpenEdit: () => void;
+  onResolutionProgress: () => void;
+  onRejectProposal: (writeProposalId: string) => Promise<void>;
+  onToggleRawParse: () => void;
+  palette: SurfaceTokens;
+  parseCopy: Record<string, string>;
+  resolvedLocale: ResolvedLocale;
+  review: {
+    amount: string;
+    category: LedgerCategory;
+    date: string;
+    description: string;
+    source: string;
+    target: string;
+  };
+  setDuplicateKeepModes: React.Dispatch<
+    React.SetStateAction<Record<string, DuplicateMergeKeepMode>>
+  >;
+  showRawParse: boolean;
+  updateField: (field: keyof LedgerReviewValues, value: string) => void;
+  visibleProposals: WorkflowWriteProposalItem[];
+}) {
+  const isPictureBased = Boolean(props.mimeType?.startsWith("image/"));
+  const secondaryActionTextColor =
+    props.palette.name === "dark" ? props.palette.ink : props.palette.paper;
+
+  return (
+    <View
+      style={[
+        styles.card,
+        { backgroundColor: props.palette.paper, borderColor: props.palette.border },
+      ]}
+    >
+      <View style={styles.cardHeader}>
+        <Text style={[styles.fileName, { color: props.palette.ink }]}>
+          {reviewLabel(props.review.amount, props.review.date)}
+        </Text>
+        <View
+          style={[
+            styles.statePill,
+            {
+              backgroundColor: stateColor(props.activeCandidate?.state ?? "candidate"),
+            },
+          ]}
+        >
+          <Text style={styles.statePillText}>
+            {formatLedgerParseCandidateState(
+              props.activeCandidate?.state ?? "candidate",
+              props.resolvedLocale,
+            )}
+          </Text>
+        </View>
+      </View>
+
+      <RecordSummaryCard
+        amount={props.review.amount}
+        date={props.review.date}
+        description={props.review.description}
+        palette={props.palette}
+        parseCopy={props.parseCopy}
+        source={props.review.source}
+        target={props.review.target}
+        title={formatCounterpartyLabel(props.review.source, props.review.target)}
+      />
+
+      <View style={styles.proposalActions}>
+        {!isPictureBased ? (
+          <Pressable
+            accessibilityRole="button"
+            onPress={props.onOpenEdit}
+            style={({ pressed }) => [
+              styles.rejectButton,
+              {
+                backgroundColor: pressed
+                  ? withAlpha(props.palette.accent, 0.82)
+                  : props.palette.accent,
+              },
+            ]}
+          >
+            <Text style={[styles.actionButtonLabel, { color: props.palette.inkOnAcid }]}>
+              Edit
+            </Text>
+          </Pressable>
+        ) : null}
+        {(props.displayRawJson || props.displayRawText) ? (
+          <Pressable
+            accessibilityRole="button"
+            onPress={props.onToggleRawParse}
+            style={({ pressed }) => [
+              styles.rejectButton,
+              {
+                backgroundColor: pressed
+                  ? withAlpha(props.palette.ink, 0.82)
+                  : props.palette.ink,
+              },
+            ]}
+          >
+            <Text style={[styles.actionButtonLabel, { color: secondaryActionTextColor }]}>
+              {props.showRawParse ? "Hide raw parse" : "View raw parse"}
+            </Text>
+          </Pressable>
+        ) : null}
+      </View>
+
+      {props.showRawParse ? (
+        <View
+          style={[
+            styles.jsonBox,
+            {
+              backgroundColor: props.palette.shellElevated,
+              borderColor: props.palette.border,
+            },
+          ]}
+        >
+          <Text selectable style={[styles.jsonText, { color: props.palette.ink }]}>
+            {formatJson(props.displayRawJson) || props.displayRawText || props.parseCopy.noData}
+          </Text>
+        </View>
+      ) : null}
+
+      {props.visibleProposals.length > 0 ? (
+        <View style={styles.proposalsSection}>
+          {props.visibleProposals.map((proposal) => {
+            if (proposal.proposalType === "resolve_duplicate_receipt") {
+              const keepMode =
+                props.duplicateKeepModes[proposal.writeProposalId] ?? "keep_existing";
+
+              return (
+                <DuplicateReceiptProposalCard
+                  key={proposal.writeProposalId}
+                  isApproving={props.isApproving}
+                  keepMode={keepMode}
+                  onApprove={() => {
+                    props.onResolutionProgress();
+                    return props.approveProposal(proposal.writeProposalId, {
+                      duplicateResolution: { keepMode },
+                    });
+                  }}
+                  onKeepModeChange={(nextMode) =>
+                    props.setDuplicateKeepModes((current) => ({
+                      ...current,
+                      [proposal.writeProposalId]: nextMode,
+                    }))
+                  }
+                  onReject={() => {
+                    props.onResolutionProgress();
+                    return props.onRejectProposal(proposal.writeProposalId);
+                  }}
+                  palette={props.palette}
+                  parseCopy={props.parseCopy}
+                  proposal={proposal}
+                  resolvedLocale={props.resolvedLocale}
+                  review={props.review}
+                />
+              );
+            }
+
+            if (proposal.proposalType === "merge_counterparty") {
+              return (
+                <CounterpartyMergeProposalCard
+                  key={proposal.writeProposalId}
+                  isApproving={props.isApproving}
+                  onApprove={() => {
+                    props.onResolutionProgress();
+                    return props.approveProposal(proposal.writeProposalId);
+                  }}
+                  onReject={() => {
+                    props.onResolutionProgress();
+                    return props.onRejectProposal(proposal.writeProposalId);
+                  }}
+                  palette={props.palette}
+                  parseCopy={props.parseCopy}
+                  proposal={proposal}
+                  resolvedLocale={props.resolvedLocale}
+                  review={props.review}
+                />
+              );
+            }
+
+            return (
+              <GenericProposalCard
+                key={proposal.writeProposalId}
+                isApproving={props.isApproving}
+                onApprove={() => {
+                  props.onResolutionProgress();
+                  return props.approveProposal(proposal.writeProposalId);
+                }}
+                onReject={() => {
+                  props.onResolutionProgress();
+                  return props.onRejectProposal(proposal.writeProposalId);
+                }}
+                palette={props.palette}
+                parseCopy={props.parseCopy}
+                proposal={proposal}
+                resolvedLocale={props.resolvedLocale}
+              />
+            );
+          })}
+        </View>
+      ) : null}
+
+      <Modal
+        animationType="slide"
+        transparent
+        visible={props.isEditOpen}
+        onRequestClose={props.onCloseEdit}
+      >
+        <View
+          style={[
+            styles.modalBackdrop,
+            {
+              backgroundColor: withAlpha(
+                props.palette.ink,
+                props.palette.name === "dark" ? 0.52 : 0.28,
+              ),
+            },
+          ]}
+        >
+          <Pressable onPress={props.onCloseEdit} style={StyleSheet.absoluteFillObject} />
+          <View
+            style={[
+              styles.recordModalCard,
+              { backgroundColor: props.palette.shellMuted, borderColor: props.palette.border },
+            ]}
+          >
+            <View style={styles.modalHeader}>
+              <View style={styles.modalHeaderCopy}>
+                <Text style={[styles.modalEyebrow, { color: props.palette.inkMuted }]}>
+                  {props.parseCopy.editRecordTitle}
+                </Text>
+                <Text style={[styles.modalTitle, { color: props.palette.ink }]}>
+                  {reviewLabel(props.review.amount, props.review.date)}
+                </Text>
+              </View>
+              <Pressable
+                accessibilityRole="button"
+                onPress={props.onCloseEdit}
+                style={({ pressed }) => [
+                  styles.modalCloseButton,
+                  {
+                    backgroundColor: pressed
+                      ? props.palette.paperMuted
+                      : props.palette.paper,
+                    borderColor: props.palette.border,
+                  },
+                ]}
+              >
+                <Feather color={props.palette.ink} name="x" size={18} />
+              </Pressable>
+            </View>
+            <CategorySelector
+              label={props.parseCopy.categoryLabel}
+              options={props.categoryOptions}
+              palette={props.palette}
+              selectedValue={props.review.category}
+              onSelect={(value) => props.updateField("category", value)}
+            />
+            <EditField
+              fieldId="amount"
+              label={props.parseCopy.fieldAmount}
+              onChangeText={(value) => props.updateField("amount", value)}
+              palette={props.palette}
+              value={props.review.amount}
+            />
+            <EditField
+              fieldId="date"
+              label={props.parseCopy.fieldDate}
+              onChangeText={(value) => props.updateField("date", value)}
+              palette={props.palette}
+              value={props.review.date}
+            />
+            <EditField
+              fieldId="source"
+              label={props.parseCopy.fieldSource}
+              onChangeText={(value) => props.updateField("source", value)}
+              palette={props.palette}
+              value={props.review.source}
+            />
+            <EditField
+              fieldId="target"
+              label={props.parseCopy.fieldTarget}
+              onChangeText={(value) => props.updateField("target", value)}
+              palette={props.palette}
+              value={props.review.target}
+            />
+            <EditField
+              fieldId="description"
+              label={props.parseCopy.fieldDescription}
+              onChangeText={(value) => props.updateField("description", value)}
+              palette={props.palette}
+              value={props.review.description}
+            />
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -1054,6 +1348,9 @@ function ProposalActions(props: {
     return null;
   }
 
+  const rejectTextColor =
+    props.palette.name === "dark" ? props.palette.inkOnHot : props.palette.paper;
+
   return (
     <View style={styles.proposalActions}>
       <Pressable
@@ -1071,7 +1368,9 @@ function ProposalActions(props: {
         ]}
         testID={`approve-${props.proposal.writeProposalId}`}
       >
-        <Text style={styles.actionButtonLabel}>{props.approveLabel}</Text>
+        <Text style={[styles.actionButtonLabel, { color: props.palette.inkOnAcid }]}>
+          {props.approveLabel}
+        </Text>
       </Pressable>
       <Pressable
         accessibilityRole="button"
@@ -1088,7 +1387,9 @@ function ProposalActions(props: {
         ]}
         testID={`reject-${props.proposal.writeProposalId}`}
       >
-        <Text style={styles.actionButtonLabel}>{props.rejectLabel}</Text>
+        <Text style={[styles.actionButtonLabel, { color: rejectTextColor }]}>
+          {props.rejectLabel}
+        </Text>
       </Pressable>
     </View>
   );
@@ -1163,6 +1464,34 @@ function DetailRow(props: {
   );
 }
 
+function reviewLabel(amount: string, date: string): string {
+  const normalizedAmount = amount.trim() || "Amount pending";
+  const normalizedDate = date.trim() || "Date pending";
+  return `${normalizedAmount} · ${normalizedDate}`;
+}
+
+function formatCounterpartyLabel(source: string, target: string): string {
+  const sourceLabel = source.trim() || "Unknown source";
+  const targetLabel = target.trim() || "Unknown target";
+  return `${sourceLabel} -> ${targetLabel}`;
+}
+
+function formatCategoryBadge(
+  category: LedgerCategory,
+  copy: Record<string, string>,
+): string {
+  switch (category) {
+    case "income":
+      return copy.categoryBusinessIncome;
+    case "non_business_income":
+      return copy.categoryNonBusinessIncome;
+    case "spending":
+      return copy.categoryPersonalSpending;
+    default:
+      return copy.categoryExpense;
+  }
+}
+
 function readProposalString(...values: unknown[]): string | null {
   for (const value of values) {
     if (typeof value === "string" && value.trim()) {
@@ -1227,28 +1556,6 @@ function readMatchedRecordSummaries(
 
 function formatAmountCents(amountCents: number): string {
   return Number.isFinite(amountCents) ? (amountCents / 100).toFixed(2) : "";
-}
-
-function StatPill(props: {
-  label: string;
-  palette: SurfaceTokens;
-  value: number;
-}) {
-  return (
-    <View
-      style={[
-        styles.statPillContainer,
-        { backgroundColor: props.palette.shellElevated },
-      ]}
-    >
-      <Text style={[styles.statPillValue, { color: props.palette.ink }]}>
-        {props.value}
-      </Text>
-      <Text style={[styles.statPillLabel, { color: props.palette.inkMuted }]}>
-        {props.label}
-      </Text>
-    </View>
-  );
 }
 
 function stateColor(state: string): string {
@@ -1384,9 +1691,11 @@ function repairTruncatedJson(raw: string): string {
 
 const styles = StyleSheet.create({
   actionButtonLabel: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "800",
+    fontSize: 13,
+    fontWeight: "700",
+    letterSpacing: 0.1,
+    lineHeight: 17,
+    textAlign: "center",
   },
   appBar: {
     borderBottomWidth: 2,
@@ -1397,8 +1706,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderRadius: 999,
     flex: 1,
-    height: 40,
+    minHeight: 42,
     justifyContent: "center",
+    paddingHorizontal: 14,
   },
   backButton: {
     alignItems: "center",
@@ -1435,6 +1745,13 @@ const styles = StyleSheet.create({
     gap: 8,
     padding: 16,
   },
+  candidateBadgeText: {
+    lineHeight: 17,
+  },
+  candidateCardDesktop: {
+    gap: 10,
+    padding: 14,
+  },
   cardHeader: {
     alignItems: "center",
     flexDirection: "row",
@@ -1453,11 +1770,22 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 20,
   },
+  twoColumnDesktop: {
+    alignItems: "flex-start",
+    gap: 18,
+  },
   columnLeft: {
     flex: 1,
   },
+  columnLeftDesktop: {
+    flex: 0.74,
+    maxWidth: 360,
+  },
   columnRight: {
     flex: 1,
+  },
+  columnRightDesktop: {
+    flex: 1.26,
   },
   categoryChip: {
     borderRadius: 999,
@@ -1624,6 +1952,40 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     textAlign: "center",
   },
+  modalBackdrop: {
+    flex: 1,
+    justifyContent: "center",
+    padding: 20,
+  },
+  modalCloseButton: {
+    alignItems: "center",
+    borderRadius: 999,
+    borderWidth: 2,
+    height: 44,
+    justifyContent: "center",
+    width: 44,
+  },
+  modalEyebrow: {
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 1.1,
+    textTransform: "uppercase",
+  },
+  modalHeader: {
+    alignItems: "flex-start",
+    flexDirection: "row",
+    gap: 16,
+    justifyContent: "space-between",
+  },
+  modalHeaderCopy: {
+    flex: 1,
+    gap: 6,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: "800",
+    lineHeight: 28,
+  },
   proposalActions: {
     flexDirection: "row",
     gap: 8,
@@ -1668,8 +2030,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderRadius: 999,
     flex: 1,
-    height: 40,
+    minHeight: 42,
     justifyContent: "center",
+    paddingHorizontal: 14,
   },
   retryButton: {
     alignItems: "center",
@@ -1682,6 +2045,9 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
+  },
+  sectionStack: {
+    gap: 14,
   },
   sectionTitle: {
     fontSize: 16,
@@ -1723,6 +2089,13 @@ const styles = StyleSheet.create({
   summaryText: {
     fontSize: 14,
     lineHeight: 20,
+  },
+  recordModalCard: {
+    borderRadius: 14,
+    borderWidth: 2,
+    gap: 16,
+    maxHeight: "88%",
+    padding: 20,
   },
   warningList: {
     gap: 4,

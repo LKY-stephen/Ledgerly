@@ -62,6 +62,7 @@ import {
   createPlannerRun,
   createUploadBatch,
   ensureDefaultEntity,
+  finalizeEvidenceReview,
   findDuplicateEvidenceForFingerprint,
   insertImportedEvidenceBundle,
   loadEvidenceById,
@@ -100,6 +101,7 @@ export interface PlannerResult {
 }
 
 const plannerStateStore = new Map<string, PlannerResult>();
+const staleBackgroundThresholdMs = 15_000;
 
 function createWebWritableDatabase(
   database: Awaited<ReturnType<typeof openWebSqliteDatabase>>,
@@ -259,7 +261,19 @@ export async function enqueueUploadCandidates(
   await ensureDefaultEntity(writableDb, capturedAt);
 
   for (const candidate of candidates) {
-    const response = await fetch(candidate.uri);
+    let response: Response;
+
+    try {
+      response = await fetch(candidate.uri);
+    } catch (error) {
+      console.error("[DEBUG-upload-fetch-uri]", {
+        message: error instanceof Error ? error.message : String(error),
+        mimeType: candidate.mimeType,
+        originalFileName: candidate.originalFileName,
+        uri: candidate.uri,
+      });
+      throw error;
+    }
     const blob = await response.blob();
     const bytes = new Uint8Array(await blob.arrayBuffer());
     const sha256Hex = await computeSha256Hex(bytes);
@@ -352,16 +366,82 @@ export async function loadParseQueue(): Promise<EvidenceQueueItem[]> {
   const writableDb = createWebWritableDatabase(db);
   const queue = await loadEvidenceQueue(writableDb);
   const now = new Date().toISOString();
+  const nowMs = Date.parse(now);
 
   for (const item of queue) {
-    if (item.displayState !== "ready_for_review") {
+    if (item.displayState === "ready_for_review") {
+      await reconcileInactiveReviewBatch(writableDb, {
+        batchId: item.batchId,
+        updatedAt: now,
+      });
       continue;
     }
 
-    await reconcileInactiveReviewBatch(writableDb, {
-      batchId: item.batchId,
-      updatedAt: now,
-    });
+    if (
+      item.displayState === "processing" ||
+      item.displayState === "recovering" ||
+      item.batchState === "parsing" ||
+      item.batchState === "planning"
+    ) {
+      const itemRow = await writableDb.getFirstAsync<{
+        batchUpdatedAt: string | null;
+        extractionUpdatedAt: string | null;
+        plannerUpdatedAt: string | null;
+      }>(
+        `SELECT
+           upload_batches.updated_at AS batchUpdatedAt,
+           extraction_runs.updated_at AS extractionUpdatedAt,
+           planner_runs.updated_at AS plannerUpdatedAt
+         FROM upload_batches
+         LEFT JOIN extraction_runs
+           ON extraction_runs.extraction_run_id = ?
+         LEFT JOIN planner_runs
+           ON planner_runs.planner_run_id = ?
+         WHERE upload_batches.batch_id = ?;`,
+        item.extractionRunId,
+        item.plannerRunId,
+        item.batchId,
+      );
+      const lastUpdatedMs = Math.max(
+        Date.parse(itemRow?.batchUpdatedAt ?? "") || 0,
+        Date.parse(itemRow?.extractionUpdatedAt ?? "") || 0,
+        Date.parse(itemRow?.plannerUpdatedAt ?? "") || 0,
+      );
+
+      if (
+        lastUpdatedMs > 0 &&
+        nowMs - lastUpdatedMs < staleBackgroundThresholdMs
+      ) {
+        continue;
+      }
+
+      if (item.extractionRunId) {
+        await updateExtractionRun(writableDb, {
+          errorMessage:
+            "This background task stopped responding and was moved back to retry.",
+          extractionRunId: item.extractionRunId,
+          state: "failed",
+          updatedAt: now,
+        });
+      }
+      if (item.plannerRunId) {
+        await updatePlannerRun(writableDb, {
+          errorMessage:
+            "This background task stopped responding and was moved back to retry.",
+          plannerRunId: item.plannerRunId,
+          state: "failed",
+          updatedAt: now,
+        });
+      }
+      await updateUploadBatchState(writableDb, {
+        batchId: item.batchId,
+        duplicateKind: item.duplicateKind,
+        errorMessage:
+          "This background task stopped responding and was moved back to retry.",
+        state: "failed",
+        updatedAt: now,
+      });
+    }
   }
 
   return loadEvidenceQueue(writableDb);
@@ -651,8 +731,6 @@ export async function confirmEvidenceReview(
   evidenceId: string,
   review: LedgerReviewValues,
 ): Promise<string> {
-  void review;
-
   let db = getActiveWebDatabase();
 
   if (!db) {
@@ -666,22 +744,14 @@ export async function confirmEvidenceReview(
   if (!evidence) {
     throw new Error("Selected evidence no longer exists.");
   }
+  const createdAt = new Date().toISOString();
 
-  const pendingProposal = evidence.writeProposals.find(
-    (proposal) => proposal.state === "pending_approval",
-  );
-
-  if (pendingProposal) {
-    const nextState = await approveWriteProposal(
-      evidence.batchId,
-      pendingProposal.writeProposalId,
-      review,
-    );
-
-    return nextState.candidateRecords[0]?.recordId ?? `record-${evidenceId}`;
-  }
-
-  return `record-${evidenceId}`;
+  return finalizeEvidenceReview(writableDb, {
+    createdAt,
+    evidenceId,
+    review,
+    sourceSystem: "ledger-parse-review",
+  });
 }
 
 export async function loadHomeScreenSnapshot(
@@ -1247,41 +1317,45 @@ export async function loadPlannerState(
   batchId: string,
 ): Promise<PlannerResult | null> {
   const inMemory = plannerStateStore.get(batchId);
-
-  if (inMemory) {
-    return inMemory;
-  }
-
   let db = getActiveWebDatabase();
 
   if (!db) {
+    if (inMemory && typeof indexedDB === "undefined") {
+      return inMemory;
+    }
+
     db = await openWebSqliteDatabase();
     await initializeLocalDatabase(db);
   }
 
   const writableDb = createWebWritableDatabase(db);
-  await reconcileInactiveReviewBatch(writableDb, {
-    batchId,
-    updatedAt: new Date().toISOString(),
-  });
   const batch = await db.getFirstAsync<{ evidenceId: string }>(
     "SELECT evidence_id AS evidenceId FROM upload_batches WHERE batch_id = ?;",
     batchId,
   );
 
-  if (!batch?.evidenceId) {
-    return null;
+  if (batch?.evidenceId) {
+    await reconcileInactiveReviewBatch(writableDb, {
+      batchId,
+      updatedAt: new Date().toISOString(),
+    });
+
+    const evidence = await loadEvidenceById(writableDb, batch.evidenceId);
+
+    if (!evidence) {
+      return null;
+    }
+
+    const result = buildPlannerResultFromEvidence(evidence);
+    plannerStateStore.set(batchId, result);
+    return result;
   }
 
-  const evidence = await loadEvidenceById(writableDb, batch.evidenceId);
-
-  if (!evidence) {
-    return null;
+  if (inMemory) {
+    return inMemory;
   }
 
-  const result = buildPlannerResultFromEvidence(evidence);
-  plannerStateStore.set(batchId, result);
-  return result;
+  return null;
 }
 
 function buildPlannerResultFromEvidence(evidence: EvidenceQueueItem): PlannerResult {

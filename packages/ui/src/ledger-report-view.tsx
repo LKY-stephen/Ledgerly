@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import {
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -146,6 +147,7 @@ export interface LedgerReportCopy {
 
 export interface LedgerReportBodyProps {
   copy: LedgerReportCopy;
+  layoutMode?: "split" | "stack";
   onSelectEntry: (entry: LedgerGeneralLedgerEntryView) => void;
   palette?: SurfaceTokens;
   selectedScope: LedgerReportScopeId;
@@ -163,6 +165,7 @@ export interface LedgerGeneralLedgerDetailModalProps {
 
 export function LedgerReportBody({
   copy,
+  layoutMode = "stack",
   onSelectEntry,
   palette = surfaceTokens,
   selectedScope,
@@ -170,63 +173,147 @@ export function LedgerReportBody({
   snapshot,
   testID,
 }: LedgerReportBodyProps) {
+  const isSplit = layoutMode === "split";
+  const generalLedgerSummary = (
+    <>
+      <MetricGrid cards={snapshot.generalLedger.metricCards} palette={palette} />
+      <View style={styles.sectionHeader}>
+        <Text style={[styles.sectionTitle, { color: palette.ink }]}>
+          {selectedScope === "personal"
+            ? copy.sections.journalPersonal
+            : copy.sections.journalRecent}
+        </Text>
+        <Text style={[styles.sectionMeta, { color: palette.inkMuted }]}>
+          {snapshot.generalLedger.recordCountLabel}
+        </Text>
+      </View>
+    </>
+  );
+  const generalLedgerContent = (
+    <>
+      <View style={styles.sectionStack}>
+        {snapshot.generalLedger.entries.map((entry) => (
+          <GeneralLedgerCard
+            cashAndBankLabel={copy.cashAndBankLabel}
+            entry={entry}
+            key={entry.id}
+            labels={copy.sections}
+            onSelectEntry={onSelectEntry}
+            palette={palette}
+          />
+        ))}
+      </View>
+      <GeneralLedgerEquationCard
+        equation={snapshot.generalLedger.equation}
+        palette={palette}
+      />
+    </>
+  );
+  const balanceSummary = (
+    <>
+      <MetricGrid cards={snapshot.balanceSheet.metricCards} palette={palette} />
+      <LedgerInlineStatusCard
+        body={snapshot.balanceSheet.netPositionLabel}
+        palette={palette}
+        title={snapshot.balanceSheet.equationLabel}
+      />
+    </>
+  );
+  const balanceContent = (
+    <>
+      <LedgerValueSectionCard
+        palette={palette}
+        rows={snapshot.balanceSheet.assetRows}
+        title={copy.sections.assets}
+      />
+      <LedgerValueSectionCard
+        palette={palette}
+        rows={snapshot.balanceSheet.liabilityRows}
+        title={copy.sections.liabilities}
+      />
+      <LedgerValueSectionCard
+        palette={palette}
+        rows={snapshot.balanceSheet.equityRows}
+        title={copy.sections.equity}
+      />
+      <GeneralLedgerEquationCard
+        equation={snapshot.balanceSheet.equation}
+        palette={palette}
+      />
+    </>
+  );
+  const businessProfitSummary = (
+    <>
+      <MetricGrid cards={snapshot.profitAndLoss.metricCards} palette={palette} />
+      <View
+        style={[
+          styles.equationCard,
+          {
+            backgroundColor: palette.paper,
+            borderColor: palette.border,
+          },
+        ]}
+      >
+        <Text style={[styles.equationEyebrow, { color: palette.inkMuted }]}>
+          {copy.sections.netIncome}
+        </Text>
+        <Text
+          adjustsFontSizeToFit
+          minimumFontScale={0.7}
+          numberOfLines={1}
+          style={[styles.netIncomeValue, { color: palette.ink }]}
+        >
+          {snapshot.profitAndLoss.netIncomeLabel}
+        </Text>
+        <Text style={[styles.equationSummary, { color: palette.inkMuted }]}>
+          {copy.sections.netIncomeSummary}
+        </Text>
+      </View>
+    </>
+  );
+  const businessProfitContent = (
+    <>
+      <LedgerValueSectionCard
+        palette={palette}
+        rows={snapshot.profitAndLoss.revenueRows}
+        title={copy.sections.revenue}
+      />
+      <LedgerValueSectionCard
+        palette={palette}
+        rows={snapshot.profitAndLoss.expenseRows}
+        title={copy.sections.expenses}
+      />
+    </>
+  );
+
   return (
     <View style={styles.reportBody} testID={testID}>
       {selectedView === "general-ledger" ? (
-        <>
-          <MetricGrid cards={snapshot.generalLedger.metricCards} palette={palette} />
-          <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: palette.ink }]}>
-              {selectedScope === "personal"
-                ? copy.sections.journalPersonal
-                : copy.sections.journalRecent}
-            </Text>
-            <Text style={[styles.sectionMeta, { color: palette.inkMuted }]}>
-              {snapshot.generalLedger.recordCountLabel}
-            </Text>
+        isSplit ? (
+          <View style={styles.splitLayout}>
+            <View style={styles.splitSidebar}>{generalLedgerSummary}</View>
+            <View style={styles.splitMain}>{generalLedgerContent}</View>
           </View>
-          <View style={styles.sectionStack}>
-            {snapshot.generalLedger.entries.map((entry) => (
-              <GeneralLedgerCard
-                cashAndBankLabel={copy.cashAndBankLabel}
-                entry={entry}
-                key={entry.id}
-                labels={copy.sections}
-                onSelectEntry={onSelectEntry}
-                palette={palette}
-              />
-            ))}
-          </View>
-          <GeneralLedgerEquationCard
-            equation={snapshot.generalLedger.equation}
-            palette={palette}
-          />
-        </>
+        ) : (
+          <>
+            {generalLedgerSummary}
+            {generalLedgerContent}
+          </>
+        )
       ) : null}
 
       {selectedView === "balance-sheet" ? (
-        <>
-          <MetricGrid cards={snapshot.balanceSheet.metricCards} palette={palette} />
-          <LedgerValueSectionCard
-            palette={palette}
-            rows={snapshot.balanceSheet.assetRows}
-            title={copy.sections.assets}
-          />
-          <LedgerValueSectionCard
-            palette={palette}
-            rows={snapshot.balanceSheet.liabilityRows}
-            title={copy.sections.liabilities}
-          />
-          <LedgerValueSectionCard
-            palette={palette}
-            rows={snapshot.balanceSheet.equityRows}
-            title={copy.sections.equity}
-          />
-          <GeneralLedgerEquationCard
-            equation={snapshot.balanceSheet.equation}
-            palette={palette}
-          />
-        </>
+        isSplit ? (
+          <View style={styles.splitLayout}>
+            <View style={styles.splitSidebar}>{balanceSummary}</View>
+            <View style={styles.splitMain}>{balanceContent}</View>
+          </View>
+        ) : (
+          <>
+            {balanceSummary}
+            {balanceContent}
+          </>
+        )
       ) : null}
 
       {selectedView === "profit-loss" ? (
@@ -240,43 +327,17 @@ export function LedgerReportBody({
             />
           </>
         ) : (
-          <>
-            <MetricGrid cards={snapshot.profitAndLoss.metricCards} palette={palette} />
-            <LedgerValueSectionCard
-              palette={palette}
-              rows={snapshot.profitAndLoss.revenueRows}
-              title={copy.sections.revenue}
-            />
-            <LedgerValueSectionCard
-              palette={palette}
-              rows={snapshot.profitAndLoss.expenseRows}
-              title={copy.sections.expenses}
-            />
-            <View
-              style={[
-                styles.equationCard,
-                {
-                  backgroundColor: palette.paper,
-                  borderColor: palette.border,
-                },
-              ]}
-            >
-              <Text style={[styles.equationEyebrow, { color: palette.inkMuted }]}>
-                {copy.sections.netIncome}
-              </Text>
-              <Text
-                adjustsFontSizeToFit
-                minimumFontScale={0.7}
-                numberOfLines={1}
-                style={[styles.netIncomeValue, { color: palette.ink }]}
-              >
-                {snapshot.profitAndLoss.netIncomeLabel}
-              </Text>
-              <Text style={[styles.equationSummary, { color: palette.inkMuted }]}>
-                {copy.sections.netIncomeSummary}
-              </Text>
+          isSplit ? (
+            <View style={styles.splitLayout}>
+              <View style={styles.splitSidebar}>{businessProfitSummary}</View>
+              <View style={styles.splitMain}>{businessProfitContent}</View>
             </View>
-          </>
+          ) : (
+            <>
+              {businessProfitSummary}
+              {businessProfitContent}
+            </>
+          )
         )
       ) : null}
     </View>
@@ -319,6 +380,7 @@ export function LedgerGeneralLedgerDetailModal({
       <View
         style={[
           styles.modalBackdrop,
+          Platform.OS !== "web" ? styles.modalBackdropMobile : null,
           {
             backgroundColor: withAlpha(
               palette.ink,
@@ -328,7 +390,13 @@ export function LedgerGeneralLedgerDetailModal({
         ]}
       >
         <Pressable onPress={onClose} style={StyleSheet.absoluteFillObject} />
-        <View style={[styles.recordModalCard, { backgroundColor: palette.shellMuted }]}>
+        <View
+          style={[
+            styles.recordModalCard,
+            Platform.OS !== "web" ? styles.recordModalCardMobile : null,
+            { backgroundColor: palette.shellMuted },
+          ]}
+        >
           <View style={styles.modalHeader}>
             <View style={styles.modalHeaderCopy}>
               <Text style={[styles.modalEyebrow, { color: palette.inkMuted }]}>
@@ -999,26 +1067,29 @@ const styles = StyleSheet.create({
   metricCard: {
     borderRadius: 12,
     borderWidth: 2,
-    flex: 1,
+    flexBasis: 156,
+    flexGrow: 1,
     gap: 6,
     minHeight: 114,
-    minWidth: 0,
+    minWidth: 156,
     overflow: "hidden",
     paddingHorizontal: 18,
     paddingVertical: 18,
   },
   metricGrid: {
     flexDirection: "row",
+    flexWrap: "wrap",
     gap: 12,
   },
   metricLabel: {
     fontSize: 12,
     fontWeight: "800",
     letterSpacing: 0.3,
+    lineHeight: 17,
   },
   metricValue: {
     flexShrink: 1,
-    fontSize: 24,
+    fontSize: 25,
     fontVariant: ["tabular-nums"],
     fontWeight: "800",
     lineHeight: 30,
@@ -1027,6 +1098,10 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     padding: 20,
+  },
+  modalBackdropMobile: {
+    justifyContent: "flex-end",
+    padding: 0,
   },
   modalCloseButton: {
     alignItems: "center",
@@ -1136,8 +1211,28 @@ const styles = StyleSheet.create({
     maxHeight: "84%",
     padding: 20,
   },
+  recordModalCardMobile: {
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
+    maxHeight: "92%",
+    minHeight: "82%",
+    paddingBottom: 28,
+  },
   reportBody: {
-    gap: 14,
+    gap: 18,
+  },
+  splitLayout: {
+    alignItems: "flex-start",
+    flexDirection: "row",
+    gap: 18,
+  },
+  splitMain: {
+    flex: 1.55,
+    gap: 16,
+  },
+  splitSidebar: {
+    flex: 1,
+    gap: 16,
   },
   sectionHeader: {
     alignItems: "baseline",
@@ -1150,7 +1245,7 @@ const styles = StyleSheet.create({
     fontWeight: "800",
   },
   sectionStack: {
-    gap: 12,
+    gap: 14,
   },
   sectionTitle: {
     flex: 1,
@@ -1162,7 +1257,7 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontVariant: ["tabular-nums"],
     fontWeight: "800",
-    minWidth: 108,
+    minWidth: 120,
     textAlign: "right",
   },
   sheetCard: {

@@ -30,6 +30,7 @@ import {
   rejectWorkflowWriteProposal,
   savePlannerArtifacts,
   updateEvidenceExtraction,
+  updateExtractionRun,
 } from "../src/features/ledger/ledger-store";
 
 function createStorageDatabase(): DatabaseSync {
@@ -1371,6 +1372,182 @@ describe("feat_upload data flow", () => {
     ).toBe("rejected");
   });
 
+  it("removes fully reviewed batches from the needs-review queue once no proposal action remains", async () => {
+    const database = createStorageDatabase();
+    const writableDatabase = createWritableDatabase(database);
+    await ensureDefaultEntity(writableDatabase, "2026-06-01T08:00:00.000Z");
+
+    const bundle = createReceiptBundle({
+      batchId: "batch-reviewed-terminal",
+      capturedAt: "2026-06-01T08:00:00.000Z",
+      evidenceId: "evidence-reviewed-terminal",
+      fileName: "reviewed-terminal.pdf",
+      filePath:
+        "evidence-objects/entity-main/uploads/2026/06/reviewed-terminal.pdf",
+    });
+
+    await insertImportedEvidenceBundle(writableDatabase, bundle);
+    await createUploadBatch(writableDatabase, {
+      batchId: bundle.batchId,
+      createdAt: bundle.capturedAt,
+      evidenceId: bundle.evidenceId,
+      sourceSystem: bundle.sourceSystem,
+      state: "uploaded",
+    });
+    await updateEvidenceExtraction(writableDatabase, {
+      evidenceId: bundle.evidenceId,
+      extractedData: buildRemoteExtractedData({
+        fileName: bundle.files[0]!.originalFileName,
+        parsePayload: {
+          candidates: {
+            amountCents: 5299,
+            category: "expense",
+            date: "2026-06-01",
+            description: "Reviewed terminal receipt",
+            notes: null,
+            source: "Business Card",
+            target: "Office Supply",
+            taxCategory: null,
+          },
+          fields: {
+            amountCents: 5299,
+            category: "expense",
+            date: "2026-06-01",
+            description: "Reviewed terminal receipt",
+            notes: null,
+            source: "Business Card",
+            target: "Office Supply",
+            taxCategory: null,
+          },
+          model: "gpt-5",
+          parser: "openai_gpt",
+          rawSummary: "Reviewed terminal receipt",
+          rawText: "Reviewed terminal receipt 06/01/2026 $52.99",
+          records: [
+            {
+              candidates: {
+                amountCents: 5299,
+                category: "expense",
+                date: "2026-06-01",
+                description: "Reviewed terminal receipt",
+                notes: null,
+                source: "Business Card",
+                target: "Office Supply",
+                taxCategory: null,
+              },
+              fields: {
+                amountCents: 5299,
+                category: "expense",
+                date: "2026-06-01",
+                description: "Reviewed terminal receipt",
+                notes: null,
+                source: "Business Card",
+                target: "Office Supply",
+                taxCategory: null,
+              },
+            },
+          ],
+          warnings: [],
+        },
+        scheme: {},
+        sourceLabel: "OpenAI GPT",
+      }),
+      parseStatus: "parsed",
+    });
+    await createExtractionRun(writableDatabase, {
+      batchId: bundle.batchId,
+      createdAt: bundle.capturedAt,
+      evidenceId: bundle.evidenceId,
+      extractionRunId: "extraction-reviewed-terminal",
+    });
+    await updateExtractionRun(writableDatabase, {
+      extractionRunId: "extraction-reviewed-terminal",
+      parsePayload: { rawText: "Reviewed terminal receipt" },
+      state: "complete",
+      updatedAt: bundle.capturedAt,
+    });
+    await createPlannerRun(writableDatabase, {
+      batchId: bundle.batchId,
+      createdAt: bundle.capturedAt,
+      evidenceId: bundle.evidenceId,
+      extractionRunId: "extraction-reviewed-terminal",
+      plannerRunId: "planner-reviewed-terminal",
+    });
+    const hydratedEvidence = await loadEvidenceById(
+      writableDatabase,
+      bundle.evidenceId,
+    );
+    expect(hydratedEvidence?.extractedData).toBeTruthy();
+    await savePlannerArtifacts(writableDatabase, {
+      batchId: bundle.batchId,
+      createdAt: bundle.capturedAt,
+      evidence: hydratedEvidence!,
+      plannerRunId: "planner-reviewed-terminal",
+      remotePlan: {
+        ...createPlannerPayload(bundle.evidenceId),
+        writeProposals: [
+          {
+            proposalType: "create_counterparty",
+            role: "source",
+            values: { displayName: "Business Card", role: "source" },
+          },
+          {
+            proposalType: "persist_candidate_record",
+            reviewFields: ["amount", "date", "source", "target"],
+            values: { candidateIndex: 0 },
+          },
+        ],
+      },
+    });
+
+    const pendingQueue = await loadEvidenceQueue(writableDatabase);
+    expect(pendingQueue[0]?.displayState).toBe("ready_for_review");
+
+    const createCounterpartyProposal = pendingQueue[0]?.writeProposals.find(
+      (proposal) => proposal.proposalType === "create_counterparty",
+    );
+    const persistProposal = pendingQueue[0]?.writeProposals.find(
+      (proposal) => proposal.proposalType === "persist_candidate_record",
+    );
+
+    expect(createCounterpartyProposal).toBeTruthy();
+    expect(persistProposal).toBeTruthy();
+
+    await approveWorkflowWriteProposal(writableDatabase, {
+      evidenceId: bundle.evidenceId,
+      updatedAt: "2026-06-01T08:05:00.000Z",
+      writeProposalId: createCounterpartyProposal!.writeProposalId,
+    });
+
+    await approveWorkflowWriteProposal(writableDatabase, {
+      evidenceId: bundle.evidenceId,
+      review: {
+        amount: "52.99",
+        category: "expense",
+        date: "2026-06-01",
+        description: "Reviewed terminal receipt",
+        notes: "",
+        source: "Business Card",
+        target: "Office Supply",
+        taxCategory: "",
+      },
+      updatedAt: "2026-06-01T08:06:00.000Z",
+      writeProposalId: persistProposal!.writeProposalId,
+    });
+
+    const finalEvidence = await loadEvidenceById(
+      writableDatabase,
+      bundle.evidenceId,
+    );
+    expect(finalEvidence?.batchState).toBe("approved");
+    expect(finalEvidence?.candidateRecords[0]?.state).toBe("persisted_final");
+
+    const finalQueue = await loadEvidenceQueue(writableDatabase);
+    expect(
+      finalQueue.find((item) => item.batchId === bundle.batchId),
+    ).toBeUndefined();
+  });
+
   it("replaces the older duplicate record set when the operator keeps the new record", async () => {
     const database = createStorageDatabase();
     const writableDatabase = createWritableDatabase(database);
@@ -2037,6 +2214,198 @@ describe("feat_upload data flow", () => {
       batchId: bundle.batchId,
       updatedAt: "2026-02-27T12:05:00.000Z",
     });
+
+    const queue = await loadEvidenceQueue(writableDatabase);
+    expect(queue.some((item) => item.batchId === bundle.batchId)).toBe(false);
+  });
+
+  it("heals stale review batches whose candidate is already terminal", async () => {
+    const database = createStorageDatabase();
+    const writableDatabase = createWritableDatabase(database);
+    const bundle = createReceiptBundle({
+      batchId: "batch-stale-terminal-review",
+      capturedAt: "2026-02-27T12:00:00.000Z",
+      evidenceId: "evidence-stale-terminal-review",
+      fileName: "receipt-stale-terminal-review.pdf",
+      filePath:
+        "evidence-objects/entity-main/uploads/2026/02/receipt-stale-terminal-review.pdf",
+    });
+
+    await ensureDefaultEntity(writableDatabase, bundle.capturedAt);
+    await insertImportedEvidenceBundle(writableDatabase, bundle);
+    await updateEvidenceExtraction(writableDatabase, {
+      evidenceId: bundle.evidenceId,
+      extractedData: buildRemoteExtractedData({
+        fileName: bundle.files[0]!.originalFileName,
+        parsePayload: {
+          candidates: {
+            amountCents: 5299,
+            category: "expense",
+            date: "2026-02-27",
+            description: "Apple Store accessories",
+            notes: null,
+            source: "Business Card",
+            target: "Apple Store",
+            taxCategory: "office",
+          },
+          fields: {
+            amountCents: 5299,
+            category: "expense",
+            date: "2026-02-27",
+            description: "Apple Store accessories",
+            notes: null,
+            source: "Business Card",
+            target: "Apple Store",
+            taxCategory: "office",
+          },
+          model: "gpt-5",
+          parser: "openai_gpt",
+          rawSummary: "Apple Store receipt",
+          rawText: "Apple Store 02/27/2026 $52.99",
+          records: [
+            {
+              candidates: {
+                amountCents: 5299,
+                category: "expense",
+                date: "2026-02-27",
+                description: "Apple Store accessories",
+                notes: null,
+                source: "Business Card",
+                target: "Apple Store",
+                taxCategory: "office",
+              },
+              fields: {
+                amountCents: 5299,
+                category: "expense",
+                date: "2026-02-27",
+                description: "Apple Store accessories",
+                notes: null,
+                source: "Business Card",
+                target: "Apple Store",
+                taxCategory: "office",
+              },
+            },
+          ],
+          warnings: [],
+        },
+        scheme: {},
+        sourceLabel: "OpenAI GPT",
+      }),
+      parseStatus: "pending",
+    });
+    await createUploadBatch(writableDatabase, {
+      batchId: bundle.batchId,
+      createdAt: bundle.capturedAt,
+      evidenceId: bundle.evidenceId,
+      sourceSystem: "feat-upload-test",
+      state: "parse_complete",
+    });
+    await createExtractionRun(writableDatabase, {
+      batchId: bundle.batchId,
+      createdAt: bundle.capturedAt,
+      evidenceId: bundle.evidenceId,
+      extractionRunId: "extraction-stale-terminal-review",
+    });
+    await createPlannerRun(writableDatabase, {
+      batchId: bundle.batchId,
+      createdAt: bundle.capturedAt,
+      evidenceId: bundle.evidenceId,
+      extractionRunId: "extraction-stale-terminal-review",
+      plannerRunId: "planner-stale-terminal-review",
+    });
+
+    const evidenceBeforeSave = await loadEvidenceById(
+      writableDatabase,
+      bundle.evidenceId,
+    );
+    expect(evidenceBeforeSave).not.toBeNull();
+
+    await savePlannerArtifacts(writableDatabase, {
+      batchId: bundle.batchId,
+      createdAt: bundle.capturedAt,
+      evidence: evidenceBeforeSave!,
+      plannerRunId: "planner-stale-terminal-review",
+      remotePlan: {
+        businessEvents: ["Receipt payment"],
+        candidateRecords: [
+          {
+            amountCents: 5299,
+            currency: "USD",
+            date: "2026-02-27",
+            description: "Apple Store accessories",
+            evidenceId: bundle.evidenceId,
+            recordKind: "expense",
+            sourceLabel: "Business Card",
+            targetLabel: "Apple Store",
+          },
+        ],
+        classifiedFacts: [],
+        counterpartyResolutions: [],
+        duplicateHints: [],
+        readTasks: [
+          {
+            readTaskId: "read-stale-terminal-review-1",
+            rationale: "Lookup counterparties.",
+            status: "pending",
+            taskType: "counterparty_lookup",
+          },
+          {
+            readTaskId: "read-stale-terminal-review-2",
+            rationale: "Check duplicate receipts.",
+            status: "pending",
+            taskType: "duplicate_lookup",
+          },
+        ],
+        summary: "One expense record from the uploaded receipt.",
+        warnings: [],
+        writeProposals: [
+          {
+            proposalType: "persist_candidate_record",
+            reviewFields: ["amount", "date", "source", "target"],
+            values: { candidateIndex: 0 },
+          },
+        ],
+      },
+    });
+
+    await writableDatabase.runAsync(
+      `UPDATE workflow_write_proposals
+       SET state = 'approved',
+           updated_at = ?
+       WHERE planner_run_id = ?;`,
+      "2026-02-27T12:03:00.000Z",
+      "planner-stale-terminal-review",
+    );
+    await writableDatabase.runAsync(
+      `UPDATE candidate_records
+       SET state = 'approved',
+           updated_at = ?
+       WHERE batch_id = ?;`,
+      "2026-02-27T12:03:00.000Z",
+      bundle.batchId,
+    );
+    await updateUploadBatchState(writableDatabase, {
+      batchId: bundle.batchId,
+      state: "review_required",
+      updatedAt: "2026-02-27T12:03:00.000Z",
+    });
+
+    const staleEvidence = await loadEvidenceById(
+      writableDatabase,
+      bundle.evidenceId,
+    );
+    expect(staleEvidence?.displayState).toBe("ready_for_review");
+
+    await reconcileInactiveReviewBatch(writableDatabase, {
+      batchId: bundle.batchId,
+      updatedAt: "2026-02-27T12:04:00.000Z",
+    });
+
+    const healedEvidence = await loadEvidenceById(
+      writableDatabase,
+      bundle.evidenceId,
+    );
+    expect(healedEvidence?.batchState).toBe("approved");
 
     const queue = await loadEvidenceQueue(writableDatabase);
     expect(queue.some((item) => item.batchId === bundle.batchId)).toBe(false);
