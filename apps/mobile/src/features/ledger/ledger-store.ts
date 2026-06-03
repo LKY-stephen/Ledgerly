@@ -1426,16 +1426,19 @@ function deriveQueueDisplayState(row: QueueBaseRow): UploadQueueDisplayState {
     return "ready_for_review";
   }
 
-  if (row.extractionRunState === "parsing" || row.plannerRunState === "planning") {
-    return "processing";
-  }
-
   if (row.batchState === "parsing" || row.batchState === "planning") {
     return "recovering";
   }
 
+  if (row.batchState === "failed") {
+    return "failed";
+  }
+
+  if (row.extractionRunState === "parsing" || row.plannerRunState === "planning") {
+    return "processing";
+  }
+
   if (
-    row.batchState === "failed" ||
     row.extractionRunState === "failed" ||
     row.plannerRunState === "failed" ||
     row.parseStatus === "failed"
