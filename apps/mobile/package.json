@@ -6,6 +6,7 @@
     "build": "__UNSAFE_EXPO_HOME_DIRECTORY=.expo-home expo export --platform web",
     "dev": "expo start --clear",
     "format": "prettier --check '**/*.{ts,tsx,json}'",
+    "generate:alan-stickman-atlases": "node ./scripts/generate-alan-stickman-atlases.mjs",
     "lint": "eslint app src tests --ext .ts,.tsx",
     "smoke": "pnpm test",
     "start": "expo start",
@@ -54,6 +55,7 @@
   "devDependencies": {
     "@types/react": "~19.2.2",
     "@types/sql.js": "^1.4.11",
+    "pngjs": "3.4.0",
     "typescript": "~5.9.2"
   },
   "private": true

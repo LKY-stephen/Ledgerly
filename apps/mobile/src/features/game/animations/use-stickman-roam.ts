@@ -5,10 +5,12 @@ import { surfaceTokens } from "@ledgerly/ui";
 import type { StickmanSceneAnchorId } from "../game-ui";
 
 export interface StickmanRoamAnchor {
+  facing?: "left" | "right";
   id: StickmanSceneAnchorId;
   pauseMs?: number;
   weight?: number;
   x: number;
+  y?: number;
 }
 
 interface Options {
@@ -21,8 +23,12 @@ interface StickmanRoamResult {
   activeAnchorId: StickmanSceneAnchorId | null;
   facing: "left" | "right";
   isWalking: boolean;
+  travelAnchorId: StickmanSceneAnchorId | null;
   travelStyle: {
-    transform: readonly [{ translateX: Animated.Value }];
+    transform: readonly [
+      { translateX: Animated.Value },
+      { translateY: Animated.Value },
+    ];
   };
 }
 
@@ -59,37 +65,51 @@ export function useStickmanRoam({
   isPanelOpen,
 }: Options): StickmanRoamResult {
   const initialX = anchors[0]?.x ?? 0;
+  const initialY = anchors[0]?.y ?? 0;
   const travelX = useRef(new Animated.Value(initialX)).current;
+  const travelY = useRef(new Animated.Value(initialY)).current;
   const currentXRef = useRef(initialX);
+  const currentYRef = useRef(initialY);
   const previousIdRef = useRef<StickmanSceneAnchorId | null>(anchors[0]?.id ?? null);
   const [activeAnchorId, setActiveAnchorId] =
     useState<StickmanSceneAnchorId | null>(anchors[0]?.id ?? null);
   const [facing, setFacing] = useState<"left" | "right">("right");
   const [isWalking, setIsWalking] = useState(false);
+  const [travelAnchorId, setTravelAnchorId] =
+    useState<StickmanSceneAnchorId | null>(null);
 
   useEffect(() => {
-    const listenerId = travelX.addListener(({ value }) => {
+    const xListenerId = travelX.addListener(({ value }) => {
       currentXRef.current = value;
+    });
+    const yListenerId = travelY.addListener(({ value }) => {
+      currentYRef.current = value;
     });
 
     return () => {
-      travelX.removeListener(listenerId);
+      travelX.removeListener(xListenerId);
+      travelY.removeListener(yListenerId);
     };
-  }, [travelX]);
+  }, [travelX, travelY]);
 
   useEffect(() => {
     if (!anchors.length) {
       return;
     }
 
-    const boundedX = anchors.some(
-      (anchor) => Math.abs(anchor.x - currentXRef.current) < 2,
-    )
-      ? currentXRef.current
-      : anchors[0]?.x ?? 0;
+    const boundedAnchor = anchors.find(
+      (anchor) =>
+        Math.abs(anchor.x - currentXRef.current) < 2 &&
+        Math.abs((anchor.y ?? 0) - currentYRef.current) < 2,
+    );
+    const boundedX = boundedAnchor ? currentXRef.current : anchors[0]?.x ?? 0;
+    const boundedY = boundedAnchor ? currentYRef.current : anchors[0]?.y ?? 0;
 
     currentXRef.current = boundedX;
+    currentYRef.current = boundedY;
     travelX.setValue(boundedX);
+    travelY.setValue(boundedY);
+    setTravelAnchorId(null);
     setActiveAnchorId((previous) =>
       previous && anchors.some((anchor) => anchor.id === previous)
         ? previous
@@ -100,7 +120,7 @@ export function useStickmanRoam({
       anchors.some((anchor) => anchor.id === previousIdRef.current)
         ? previousIdRef.current
         : anchors[0]?.id ?? null;
-  }, [anchors, travelX]);
+  }, [anchors, travelX, travelY]);
 
   useEffect(() => {
     if (!anchors.length) {
@@ -117,31 +137,45 @@ export function useStickmanRoam({
 
       previousIdRef.current = next.id;
 
-      const distance = Math.abs(next.x - currentXRef.current);
+      const nextY = next.y ?? 0;
+      const deltaX = next.x - currentXRef.current;
+      const deltaY = nextY - currentYRef.current;
+      const distance = Math.hypot(deltaX, deltaY);
       const duration = Math.max(
         880,
         Math.round(520 + distance * (7.5 - energy * 2.2) + (isPanelOpen ? 180 : 0)),
       );
       const pauseMs =
         next.pauseMs ??
-        Math.max(260, Math.round(540 - energy * 180 + (isPanelOpen ? 160 : 0)));
+          Math.max(260, Math.round(540 - energy * 180 + (isPanelOpen ? 160 : 0)));
 
-      setFacing(next.x >= currentXRef.current ? "right" : "left");
+      setFacing(next.facing ?? (deltaX >= 0 ? "right" : "left"));
       setIsWalking(distance > 8);
+      setTravelAnchorId(next.id);
       setActiveAnchorId(null);
 
-      Animated.timing(travelX, {
-        toValue: next.x,
-        duration,
-        easing: Easing.inOut(Easing.ease),
-        useNativeDriver: true,
-      }).start(({ finished }) => {
+      Animated.parallel([
+        Animated.timing(travelX, {
+          toValue: next.x,
+          duration,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(travelY, {
+          toValue: nextY,
+          duration,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ]).start(({ finished }) => {
         if (!finished || cancelled) {
           return;
         }
 
         currentXRef.current = next.x;
+        currentYRef.current = nextY;
         setIsWalking(false);
+        setTravelAnchorId(null);
         setActiveAnchorId(next.id);
 
         pauseTimer = setTimeout(moveToNext, pauseMs);
@@ -158,15 +192,19 @@ export function useStickmanRoam({
       travelX.stopAnimation((value) => {
         currentXRef.current = value;
       });
+      travelY.stopAnimation((value) => {
+        currentYRef.current = value;
+      });
     };
-  }, [anchors, energy, isPanelOpen, travelX]);
+  }, [anchors, energy, isPanelOpen, travelX, travelY]);
 
   return {
     activeAnchorId,
     facing,
     isWalking,
+    travelAnchorId,
     travelStyle: {
-      transform: [{ translateX: travelX }] as const,
+      transform: [{ translateX: travelX }, { translateY: travelY }] as const,
     },
   };
 }

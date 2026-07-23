@@ -10,6 +10,7 @@ interface Options {
   character: CharacterType;
   energy: number;
   isPanelOpen: boolean;
+  reduceMotion?: boolean;
   reactionKey: number;
   boostKey?: number;
 }
@@ -18,6 +19,7 @@ export function useCharacterMotion({
   character,
   energy,
   isPanelOpen,
+  reduceMotion = false,
   reactionKey,
   boostKey = 0,
 }: Options) {
@@ -32,6 +34,10 @@ export function useCharacterMotion({
     ambient.stopAnimation();
     ambient.setValue(0);
 
+    if (reduceMotion) {
+      return;
+    }
+
     const loop = Animated.loop(
       Animated.timing(ambient, {
         toValue: 1,
@@ -43,10 +49,20 @@ export function useCharacterMotion({
 
     loop.start();
     return () => loop.stop();
-  }, [ambient, profile.duration]);
+  }, [ambient, profile.duration, reduceMotion]);
 
   useEffect(() => {
-    if (reactionKey === 0 || reactionKey === previousReactionKey.current) {
+    if (reduceMotion) {
+      previousReactionKey.current = reactionKey;
+      reaction.stopAnimation();
+      reaction.setValue(0);
+      return;
+    }
+
+    if (
+      reactionKey === 0 ||
+      reactionKey === previousReactionKey.current
+    ) {
       previousReactionKey.current = reactionKey;
       return;
     }
@@ -69,10 +85,20 @@ export function useCharacterMotion({
         useNativeDriver: true,
       }),
     ]).start();
-  }, [reaction, reactionKey]);
+  }, [reaction, reactionKey, reduceMotion]);
 
   useEffect(() => {
-    if (boostKey === 0 || boostKey === previousBoostKey.current) {
+    if (reduceMotion) {
+      previousBoostKey.current = boostKey;
+      boost.stopAnimation();
+      boost.setValue(0);
+      return;
+    }
+
+    if (
+      boostKey === 0 ||
+      boostKey === previousBoostKey.current
+    ) {
       previousBoostKey.current = boostKey;
       return;
     }
@@ -95,7 +121,7 @@ export function useCharacterMotion({
         useNativeDriver: true,
       }),
     ]).start();
-  }, [boost, boostKey]);
+  }, [boost, boostKey, reduceMotion]);
 
   const ambientX = ambient.interpolate({
     inputRange: [0, 0.25, 0.5, 0.75, 1],

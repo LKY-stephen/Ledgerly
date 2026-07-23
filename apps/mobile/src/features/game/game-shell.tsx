@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Animated,
   Pressable,
@@ -10,31 +10,40 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 
+import { useReducedMotionPreference } from "../../hooks/use-reduced-motion-preference";
 import { useAppShell } from "../app-shell/provider";
 import { CardDock } from "./card-dock";
 import { CenterPanel } from "./center-panel";
 import { DiscardPile } from "./discard-pile";
 import { useCharacterMotion } from "./animations/use-character-motion";
+import { useStickmanDrag } from "./animations/use-stickman-drag";
 import { useStickmanRoam } from "./animations/use-stickman-roam";
 import { Stickman } from "./stickman/stickman";
 import { CatSvg } from "./cat-svg";
 import { useGame } from "./game-context";
 import { useCardDimensions } from "./card-dock-item";
 import {
+  getCenterPanelLayout,
   getNextQuickTheme,
   getStickmanEnergy,
   getStickmanNearbyCardId,
+  getStickmanPanelEdgeLayout,
+  isStickmanPanelAnchor,
+  type SceneRect,
 } from "./game-ui";
 
 export function GameShell() {
   const { palette, setThemePreference } = useAppShell();
   const insets = useSafeAreaInsets();
   const { height, width } = useWindowDimensions();
-  const { state } = useGame();
+  const { state, setAnimation } = useGame();
+  const isReducedMotionEnabled = useReducedMotionPreference();
   const isDark = palette.name === "dark";
   const quickTheme = getNextQuickTheme(isDark ? "dark" : "light");
   const [stickmanTouchCount, setStickmanTouchCount] = useState(0);
   const [catTouchCount, setCatTouchCount] = useState(0);
+  const [measuredPanelFrame, setMeasuredPanelFrame] =
+    useState<SceneRect | null>(null);
 
   const handleQuickThemeToggle = () => {
     void setThemePreference(quickTheme);
@@ -43,13 +52,64 @@ export function GameShell() {
   const { cardHeight, cardWidth } = useCardDimensions();
   const stickmanWidth = Math.min(180, Math.max(124, width * 0.28));
   const dockHeight = cardHeight + 40;
-  const groundY = height - dockHeight - insets.bottom - 16;
+  const panelLayout = getCenterPanelLayout({
+    dockHeight,
+    safeAreaBottom: insets.bottom,
+    viewportHeight: height,
+    viewportWidth: width,
+  });
+  const groundY = panelLayout.groundY;
   const stickmanHeight = Math.min(140, height * 0.18);
   const stickmanY = groundY - stickmanHeight - 8;
   const stickmanBaseTop = stickmanY - (state.speechBubble ? 56 : 0);
+  const fallbackPanelFrame = useMemo<SceneRect>(
+    () => ({
+      height: panelLayout.height,
+      width: panelLayout.width,
+      x: panelLayout.left,
+      y: panelLayout.top,
+    }),
+    [panelLayout.height, panelLayout.left, panelLayout.top, panelLayout.width],
+  );
+  const panelFrame = measuredPanelFrame ?? fallbackPanelFrame;
+  const panelEdgeLayout = useMemo(
+    () =>
+      getStickmanPanelEdgeLayout({
+        panelFrame,
+        speechBubbleHeight: state.speechBubble ? 64 : 0,
+        stickmanHeight,
+        stickmanWidth,
+        viewportWidth: width,
+      }),
+    [
+      panelFrame.height,
+      panelFrame.width,
+      panelFrame.x,
+      panelFrame.y,
+      state.speechBubble,
+      stickmanHeight,
+      stickmanWidth,
+      width,
+    ],
+  );
   const stickmanEnergy = getStickmanEnergy(state.cardsPlayedThisSession);
   const catEnergy = Math.min(0.35 + stickmanEnergy * 0.3, 0.8);
   const dockStart = (width - cardWidth * 4 - 24 * 3) / 2;
+  const handlePanelFrameChange = useCallback((nextFrame: SceneRect) => {
+    setMeasuredPanelFrame((previousFrame) => {
+      if (
+        previousFrame &&
+        Math.abs(previousFrame.x - nextFrame.x) < 0.5 &&
+        Math.abs(previousFrame.y - nextFrame.y) < 0.5 &&
+        Math.abs(previousFrame.width - nextFrame.width) < 0.5 &&
+        Math.abs(previousFrame.height - nextFrame.height) < 0.5
+      ) {
+        return previousFrame;
+      }
+
+      return nextFrame;
+    });
+  }, []);
   const roamAnchors = useMemo(() => {
     const clampLane = (value: number) =>
       Math.max(12, Math.min(width - stickmanWidth - 12, value));
@@ -71,12 +131,7 @@ export function GameShell() {
     }));
 
     if (state.activeCard) {
-      return [
-        { id: "panel:left" as const, pauseMs: 520, weight: 1.35, x: leftLane },
-        { id: "panel:right" as const, pauseMs: 520, weight: 1.35, x: rightLane },
-        { id: "discard" as const, pauseMs: 620, weight: 1.1, x: discardLane },
-        { id: "cat" as const, pauseMs: 620, weight: 1.1, x: catLane },
-      ];
+      return panelEdgeLayout.anchors;
     }
 
     return [
@@ -86,8 +141,15 @@ export function GameShell() {
       { id: "discard" as const, pauseMs: 620, weight: 1.1, x: discardLane },
       { id: "lane:right" as const, pauseMs: 280, weight: 0.9, x: rightLane },
     ];
-  }, [cardWidth, dockStart, state.activeCard, stickmanWidth, width]);
-  const { activeAnchorId, facing, isWalking, travelStyle } = useStickmanRoam({
+  }, [
+    cardWidth,
+    dockStart,
+    panelEdgeLayout.anchors,
+    state.activeCard,
+    stickmanWidth,
+    width,
+  ]);
+  const { activeAnchorId, facing, isWalking, travelAnchorId, travelStyle } = useStickmanRoam({
     anchors: roamAnchors,
     energy: stickmanEnergy,
     isPanelOpen: state.activeCard !== null,
@@ -96,6 +158,7 @@ export function GameShell() {
     character: "stickman",
     energy: stickmanEnergy,
     isPanelOpen: state.activeCard !== null,
+    reduceMotion: isReducedMotionEnabled,
     reactionKey: stickmanTouchCount,
     boostKey: state.cardsPlayedThisSession,
   });
@@ -103,19 +166,38 @@ export function GameShell() {
     character: "cat",
     energy: catEnergy,
     isPanelOpen: state.activeCard !== null,
+    reduceMotion: isReducedMotionEnabled,
     reactionKey: catTouchCount,
     boostKey: catTouchCount,
   });
   const stickmanNearbyCardId = getStickmanNearbyCardId(activeAnchorId);
   const stickmanNearDiscard = activeAnchorId === "discard";
-  const stickmanNearPanel =
-    activeAnchorId === "panel:left" || activeAnchorId === "panel:right";
+  const stickmanNearPanel = isStickmanPanelAnchor(activeAnchorId);
+  const stickmanAtPanel =
+    isStickmanPanelAnchor(activeAnchorId) ||
+    isStickmanPanelAnchor(travelAnchorId);
+  const stickmanTop = stickmanAtPanel ? panelEdgeLayout.baseTop : stickmanBaseTop;
+  const stickmanActionAnchorId = activeAnchorId ?? travelAnchorId;
+  const { dragHandlers: stickmanDragHandlers, dragStyle: stickmanDragStyle } =
+    useStickmanDrag({
+      enabled: true,
+      onDragEnd: () => setAnimation("idle"),
+      onDragStart: () => setAnimation("dragging"),
+    });
 
   useEffect(() => {
     if (activeAnchorId === "cat") {
       setCatTouchCount((count) => count + 1);
     }
   }, [activeAnchorId]);
+
+  useEffect(() => {
+    if (state.activeCard) {
+      return;
+    }
+
+    setMeasuredPanelFrame(null);
+  }, [state.activeCard]);
 
   return (
     <View style={[styles.root, { backgroundColor: palette.paper }]}>
@@ -174,6 +256,7 @@ export function GameShell() {
           styles.stickmanTravel,
           {
             top: groundY + 10,
+            opacity: state.activeCard ? 0 : 1,
             width: stickmanWidth,
           },
           travelStyle,
@@ -203,16 +286,19 @@ export function GameShell() {
 
       {/* Stickman */}
       <Animated.View
+        pointerEvents="box-none"
         style={[
           styles.stickmanTravel,
+          stickmanAtPanel && styles.stickmanPanelLayer,
           {
-            top: stickmanBaseTop,
+            top: stickmanTop,
             width: stickmanWidth,
           },
           travelStyle,
         ]}
       >
         <Pressable
+          {...stickmanDragHandlers}
           accessibilityLabel="Nudge the stickman"
           onPress={() => setStickmanTouchCount((count) => count + 1)}
           style={({ pressed }) => [
@@ -220,24 +306,27 @@ export function GameShell() {
             { opacity: pressed ? 0.94 : 1 },
           ]}
         >
-          <Animated.View
-            style={[
-              styles.characterMotion,
-              {
-                width: stickmanWidth,
-              },
-              stickmanMotion,
-            ]}
-          >
-            <Stickman
-              activeAnchorId={activeAnchorId}
-              facing={facing}
-              height={stickmanHeight}
-              isWalking={isWalking}
-              palette={palette}
-              energy={stickmanEnergy}
-              interactionCount={stickmanTouchCount}
-            />
+          <Animated.View style={stickmanDragStyle}>
+            <Animated.View
+              style={[
+                styles.characterMotion,
+                {
+                  width: stickmanWidth,
+                },
+                stickmanMotion,
+              ]}
+            >
+              <Stickman
+                activeAnchorId={stickmanActionAnchorId}
+                facing={facing}
+                height={stickmanHeight}
+                isWalking={isWalking}
+                palette={palette}
+                energy={stickmanEnergy}
+                interactionCount={stickmanTouchCount}
+                isReducedMotionEnabled={isReducedMotionEnabled}
+              />
+            </Animated.View>
           </Animated.View>
         </Pressable>
       </Animated.View>
@@ -266,7 +355,12 @@ export function GameShell() {
       </View>
 
       {/* Center panel (active card content) */}
-      {state.activeCard && <CenterPanel isStickmanNearby={stickmanNearPanel} />}
+      {state.activeCard && (
+        <CenterPanel
+          isStickmanNearby={stickmanNearPanel}
+          onPanelFrameChange={handlePanelFrameChange}
+        />
+      )}
     </View>
   );
 }
@@ -331,6 +425,10 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 0,
     alignItems: "center",
+  },
+  stickmanPanelLayer: {
+    zIndex: 20,
+    elevation: 20,
   },
   characterMotion: {
     alignItems: "center",
