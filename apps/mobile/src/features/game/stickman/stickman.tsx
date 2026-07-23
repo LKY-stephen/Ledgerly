@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import type { SurfaceTokens } from "@ledgerly/ui";
 
@@ -7,8 +7,11 @@ import {
   getStickmanTouchReaction,
   type StickmanSceneAnchorId,
 } from "../game-ui";
-import { StickmanSvg } from "./stickman-svg";
-import type { StickmanPoseId } from "./stickman-poses";
+import { AlanStickmanSprite } from "./alan-stickman-sprite";
+import {
+  getAlanActionForAnchor,
+  getAlanActionForGamePhase,
+} from "./alan-stickman-actions";
 import { SpeechBubble } from "./speech-bubble";
 
 const cardSpeech: Record<CardId, string> = {
@@ -26,6 +29,7 @@ interface Props {
   palette: SurfaceTokens;
   energy: number;
   interactionCount: number;
+  isReducedMotionEnabled: boolean;
 }
 
 export function Stickman({
@@ -36,42 +40,18 @@ export function Stickman({
   palette,
   energy,
   interactionCount,
+  isReducedMotionEnabled,
 }: Props) {
   const { state, setAnimation, setMood, setSpeech } = useGame();
-  const [idleBeat, setIdleBeat] = useState(0);
-  const [walkBeat, setWalkBeat] = useState(0);
+  const [isNudging, setIsNudging] = useState(false);
+  const [isRecoveringFromFloor, setIsRecoveringFromFloor] = useState(false);
   const resetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const nudgeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const interactionBlocked =
     state.activeCard !== null ||
     state.animationPhase === "spikeThrow" ||
     state.animationPhase === "pocketShrink" ||
     state.animationPhase === "dragging";
-
-  useEffect(() => {
-    if (state.stickmanMood !== "idle" || !isWalking) {
-      return;
-    }
-
-    const intervalMs = Math.max(120, Math.round(220 - energy * 65));
-    const timer = setInterval(() => {
-      setWalkBeat((value) => value + 1);
-    }, intervalMs);
-
-    return () => clearInterval(timer);
-  }, [energy, isWalking, state.stickmanMood]);
-
-  useEffect(() => {
-    if (state.stickmanMood !== "idle" || isWalking) {
-      return;
-    }
-
-    const intervalMs = Math.max(320, Math.round(560 - energy * 120));
-    const timer = setInterval(() => {
-      setIdleBeat((value) => value + 1);
-    }, intervalMs);
-
-    return () => clearInterval(timer);
-  }, [energy, isWalking, state.stickmanMood]);
 
   useEffect(() => {
     if (!state.activeCard) {
@@ -99,22 +79,34 @@ export function Stickman({
 
   // Spike anticipation sequence
   useEffect(() => {
-    if (state.animationPhase === "spikeThrow") {
-      setMood("spike_prep");
-      const t1 = setTimeout(() => {
-        setMood("spike_air");
-        setSpeech("SPIKE!");
-      }, 200);
-      const t2 = setTimeout(() => {
-        setMood("idle");
-        setSpeech(null);
-        setAnimation("idle");
-      }, 600);
-      return () => {
-        clearTimeout(t1);
-        clearTimeout(t2);
-      };
+    if (state.animationPhase !== "spikeThrow") {
+      setIsRecoveringFromFloor(false);
+      return;
     }
+
+    setIsRecoveringFromFloor(false);
+    setMood("spike_prep");
+
+    const fallTimer = setTimeout(() => {
+      setMood("spike_air");
+      setSpeech("SPIKE!");
+    }, 200);
+    const recoveryTimer = setTimeout(() => {
+      setIsRecoveringFromFloor(true);
+      setMood("got_it");
+    }, 420);
+    const resetTimer = setTimeout(() => {
+      setIsRecoveringFromFloor(false);
+      setMood("idle");
+      setSpeech(null);
+      setAnimation("idle");
+    }, 780);
+
+    return () => {
+      clearTimeout(fallTimer);
+      clearTimeout(recoveryTimer);
+      clearTimeout(resetTimer);
+    };
   }, [state.animationPhase, setAnimation, setMood, setSpeech]);
 
   // Pocket animation sequence
@@ -133,6 +125,7 @@ export function Stickman({
 
   useEffect(() => {
     if (interactionCount === 0 || interactionBlocked) {
+      setIsNudging(false);
       return;
     }
 
@@ -147,15 +140,27 @@ export function Stickman({
 
     setMood(reaction.mood);
     setSpeech(reaction.speech);
+    setIsNudging(true);
+
+    if (nudgeTimerRef.current) {
+      clearTimeout(nudgeTimerRef.current);
+    }
 
     resetTimerRef.current = setTimeout(() => {
       setMood("idle");
       setSpeech(null);
     }, 850);
 
+    nudgeTimerRef.current = setTimeout(() => {
+      setIsNudging(false);
+    }, 480);
+
     return () => {
       if (resetTimerRef.current) {
         clearTimeout(resetTimerRef.current);
+      }
+      if (nudgeTimerRef.current) {
+        clearTimeout(nudgeTimerRef.current);
       }
     };
   }, [
@@ -166,35 +171,20 @@ export function Stickman({
     setSpeech,
   ]);
 
-  const poseId: StickmanPoseId = useMemo(() => {
-    if (state.stickmanMood !== "idle") {
-      return state.stickmanMood;
-    }
-
-    if (isWalking) {
-      const walkCycle: StickmanPoseId[] = ["walk_a", "walk_b", "walk_c", "walk_d"];
-      return walkCycle[walkBeat % walkCycle.length] ?? "walk_a";
-    }
-
-    if (activeAnchorId === "cat") {
-      return idleBeat % 2 === 0 ? "think" : "idle_shift";
-    }
-
-    if (activeAnchorId?.startsWith("dock:")) {
-      return idleBeat % 2 === 0 ? "got_it" : "idle_shift";
-    }
-
-    if (activeAnchorId === "discard") {
-      return idleBeat % 2 === 0 ? "pocket" : "idle_shift";
-    }
-
-    if (activeAnchorId === "panel:left" || activeAnchorId === "panel:right") {
-      return idleBeat % 2 === 0 ? "think" : "got_it";
-    }
-
-    const idleCycle: StickmanPoseId[] = ["idle", "idle_breathe", "idle_shift", "idle_breathe"];
-    return idleCycle[idleBeat % idleCycle.length] ?? "idle";
-  }, [activeAnchorId, idleBeat, isWalking, state.stickmanMood, walkBeat]);
+  const spriteActionId =
+    getAlanActionForGamePhase({
+      animationPhase: state.animationPhase,
+      isRecoveringFromFloor,
+      isNudging,
+      isReducedMotionEnabled,
+      stickmanMood: state.stickmanMood,
+    }) ??
+    getAlanActionForAnchor({
+      activeAnchorId,
+      energy,
+      isReducedMotionEnabled,
+      isWalking,
+    });
 
   return (
     <View style={styles.root}>
@@ -203,16 +193,12 @@ export function Stickman({
           <SpeechBubble text={state.speechBubble} palette={palette} />
         </View>
       )}
-      <StickmanSvg
-        facing={facing}
-        isWalking={isWalking}
-        mood={state.stickmanMood}
-        height={height}
-        poseId={poseId}
+      <AlanStickmanSprite
+        actionId={spriteActionId}
         energy={energy}
-        accent={palette.accent}
-        accentSoft={palette.accentSoft}
-        stroke={palette.stickmanStroke}
+        facing={facing}
+        height={height}
+        isReducedMotionEnabled={isReducedMotionEnabled}
       />
     </View>
   );

@@ -2,13 +2,17 @@ import { describe, expect, it } from "vitest";
 
 import {
   gameHomeButtonLabel,
+  getCenterPanelLayout,
+  getCenterPanelHeaderTextColor,
   getCharacterMotionProfile,
   getDockCardNearbyTransform,
   getDockCardScale,
   getGameCardPresentation,
   getStickmanEnergy,
   getStickmanNearbyCardId,
+  getStickmanPanelEdgeLayout,
   getStickmanTouchReaction,
+  isStickmanPanelAnchor,
 } from "../src/features/game/game-ui";
 import { surfaceThemes } from "../../../packages/ui/src/tokens";
 
@@ -73,6 +77,100 @@ describe("game UI helpers", () => {
   it("maps roaming dock anchors back to the matching card id", () => {
     expect(getStickmanNearbyCardId("dock:show")).toBe("show");
     expect(getStickmanNearbyCardId("discard")).toBeNull();
+  });
+
+  it("identifies every panel-edge anchor as a panel proximity anchor", () => {
+    expect(isStickmanPanelAnchor("panel:left")).toBe(true);
+    expect(isStickmanPanelAnchor("panel:right")).toBe(true);
+    expect(isStickmanPanelAnchor("panel:right:top")).toBe(true);
+    expect(isStickmanPanelAnchor("panel:right:middle")).toBe(true);
+    expect(isStickmanPanelAnchor("panel:right:bottom")).toBe(true);
+    expect(isStickmanPanelAnchor("discard")).toBe(false);
+  });
+
+  it("derives the opened center-panel geometry from the shared scene layout", () => {
+    const layout = getCenterPanelLayout({
+      dockHeight: 180,
+      safeAreaBottom: 20,
+      viewportHeight: 844,
+      viewportWidth: 390,
+    });
+
+    expect(layout).toMatchObject({
+      groundY: 628,
+      height: 500,
+      left: 54,
+      right: 16,
+      top: 118,
+      width: 320,
+    });
+  });
+
+  it("uses theme ink for center-panel chrome text in dark mode", () => {
+    expect(getCenterPanelHeaderTextColor(surfaceThemes.dark)).toBe(
+      surfaceThemes.dark.ink,
+    );
+    expect(getCenterPanelHeaderTextColor(surfaceThemes.dark)).not.toBe(
+      surfaceThemes.dark.inkOnAcid,
+    );
+  });
+
+  it("places panel climb anchors against the measured rendered panel border", () => {
+    const layout = getStickmanPanelEdgeLayout({
+      panelFrame: {
+        height: 400,
+        width: 360,
+        x: 200,
+        y: 88,
+      },
+      speechBubbleHeight: 64,
+      stickmanHeight: 140,
+      stickmanWidth: 120,
+      viewportWidth: 700,
+    });
+
+    expect(layout.baseTop).toBe(88);
+    expect(layout.anchors.map((anchor) => anchor.id)).toEqual([
+      "panel:right:bottom",
+      "panel:right:middle",
+      "panel:right:top",
+    ]);
+    expect(layout.anchors.every((anchor) => anchor.x === 448)).toBe(true);
+    expect(layout.anchors[0]?.y).toBeCloseTo(178);
+    expect(layout.anchors[1]?.y).toBeCloseTo(112);
+    expect(layout.anchors[2]?.y).toBeCloseTo(32);
+  });
+
+  it("updates panel climb anchors when the measured panel frame moves", () => {
+    const common = {
+      speechBubbleHeight: 0,
+      stickmanHeight: 120,
+      stickmanWidth: 124,
+      viewportWidth: 500,
+    };
+    const first = getStickmanPanelEdgeLayout({
+      ...common,
+      panelFrame: {
+        height: 300,
+        width: 320,
+        x: 40,
+        y: 72,
+      },
+    });
+    const moved = getStickmanPanelEdgeLayout({
+      ...common,
+      panelFrame: {
+        height: 300,
+        width: 320,
+        x: 96,
+        y: 110,
+      },
+    });
+
+    expect(first.baseTop).toBe(72);
+    expect(moved.baseTop).toBe(110);
+    expect(first.anchors[0]?.x).toBe(244);
+    expect(moved.anchors[0]?.x).toBe(300);
   });
 
   it("exposes semantic card presentation for the request card", () => {

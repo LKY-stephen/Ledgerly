@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated,
+  type LayoutChangeEvent,
   Platform,
   Pressable,
   StyleSheet,
@@ -13,10 +14,13 @@ import { useAppShell } from "../app-shell/provider";
 import { useGame, type CardId } from "./game-context";
 import {
   gameHomeButtonLabel,
+  getCenterPanelLayout,
+  getCenterPanelHeaderTextColor,
   gameSettingsCardLabel,
   getGameCardColors,
   getGameCardPresentation,
   getSuitColor,
+  type SceneRect,
 } from "./game-ui";
 import { useCardFlip } from "./animations/use-card-flip";
 import { useDragPhysics } from "./animations/use-drag-physics";
@@ -33,9 +37,13 @@ const labelMap: Record<CardId, string> = {
 
 interface Props {
   isStickmanNearby?: boolean;
+  onPanelFrameChange?: (frame: SceneRect) => void;
 }
 
-export function CenterPanel({ isStickmanNearby = false }: Props) {
+export function CenterPanel({
+  isStickmanNearby = false,
+  onPanelFrameChange,
+}: Props) {
   const { palette } = useAppShell();
   const insets = useSafeAreaInsets();
   const { height: viewportHeight, width: viewportWidth } = useWindowDimensions();
@@ -45,16 +53,7 @@ export function CenterPanel({ isStickmanNearby = false }: Props) {
   const { panelStyle, slashOpacity, slashTranslateX } = useCardFlip(isVisible);
   const [isPocketing, setIsPocketing] = useState(false);
   const pocketStyle = usePocketAnimation(isPocketing);
-
-  const { panHandlers, animatedStyle: dragStyle } = useDragPhysics({
-    onFling: () => {
-      if (state.activeCard) {
-        discardCard(state.activeCard);
-      }
-    },
-    onDragStart: () => setAnimation("dragging"),
-    onDragEnd: () => setAnimation("idle"),
-  });
+  const panelRef = useRef<View | null>(null);
 
   const handlePocket = () => {
     if (!state.activeCard) return;
@@ -82,20 +81,96 @@ export function CenterPanel({ isStickmanNearby = false }: Props) {
     deactivateCard();
   };
 
-  if (!state.activeCard) return null;
-
-  const card = state.activeCard;
+  const card = state.activeCard ?? "new";
   const isSettingsCard = card === "settings";
   const presentation = getGameCardPresentation(card);
   const panelColors = getGameCardColors(presentation.variant, palette);
+  const headerTextColor = getCenterPanelHeaderTextColor(palette);
   const suitColor = getSuitColor({ cardId: card, palette });
   const dockHeight = cardHeight + 40;
-  const groundY = viewportHeight - dockHeight - insets.bottom - 16;
-  const panelWidth = Math.max(Math.min(Math.round(viewportWidth * 0.664), viewportWidth - 28), 320);
-  const desiredPanelHeight = Math.round(viewportHeight * 0.593);
-  const maxHeightAboveHorizon = Math.max(groundY - 10 - 48, 240);
-  const panelHeight = Math.max(Math.min(desiredPanelHeight, maxHeightAboveHorizon), 240);
-  const horizonAlignedTop = Math.max(groundY - panelHeight - 10, 48);
+  const panelLayout = getCenterPanelLayout({
+    dockHeight,
+    safeAreaBottom: insets.bottom,
+    viewportHeight,
+    viewportWidth,
+  });
+  const fallbackPanelFrame = useMemo<SceneRect>(
+    () => ({
+      height: panelLayout.height,
+      width: panelLayout.width,
+      x: panelLayout.left,
+      y: panelLayout.top,
+    }),
+    [panelLayout.height, panelLayout.left, panelLayout.top, panelLayout.width],
+  );
+  const reportPanelFrame = useCallback(
+    (fallbackFrame = fallbackPanelFrame) => {
+      const panelNode = panelRef.current;
+
+      if (panelNode?.measureInWindow) {
+        panelNode.measureInWindow((x, y, width, height) => {
+          if (width > 0 && height > 0) {
+            onPanelFrameChange?.({ height, width, x, y });
+            return;
+          }
+
+          onPanelFrameChange?.(fallbackFrame);
+        });
+        return;
+      }
+
+      onPanelFrameChange?.(fallbackFrame);
+    },
+    [fallbackPanelFrame, onPanelFrameChange],
+  );
+  const handlePanelLayout = useCallback(
+    (event: LayoutChangeEvent) => {
+      const { height, width, x, y } = event.nativeEvent.layout;
+      reportPanelFrame({
+        height,
+        width,
+        x,
+        y,
+      });
+    },
+    [reportPanelFrame],
+  );
+  const handlePanelDragEnd = useCallback(() => {
+    setAnimation("idle");
+    requestAnimationFrame(() => reportPanelFrame());
+  }, [reportPanelFrame, setAnimation]);
+  const { panHandlers, animatedStyle: dragStyle } = useDragPhysics({
+    onFling: () => {
+      if (state.activeCard) {
+        discardCard(state.activeCard);
+      }
+    },
+    onDragStart: () => setAnimation("dragging"),
+    onDragEnd: handlePanelDragEnd,
+  });
+
+  useEffect(() => {
+    if (!isVisible) {
+      return;
+    }
+
+    reportPanelFrame();
+    const firstFrame = requestAnimationFrame(() => reportPanelFrame());
+    const settleTimer = setTimeout(reportPanelFrame, palette.motion.base + 80);
+
+    return () => {
+      cancelAnimationFrame(firstFrame);
+      clearTimeout(settleTimer);
+    };
+  }, [
+    isVisible,
+    palette.motion.base,
+    reportPanelFrame,
+    viewportHeight,
+    viewportWidth,
+  ]);
+
+  if (!state.activeCard) return null;
 
   return (
     <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
@@ -140,8 +215,8 @@ export function CenterPanel({ isStickmanNearby = false }: Props) {
           {
             alignItems: "flex-end",
             justifyContent: "flex-start",
-            paddingTop: horizonAlignedTop,
-            paddingRight: 16,
+            paddingTop: panelLayout.top,
+            paddingRight: panelLayout.right,
           },
           panelStyle,
           dragStyle,
@@ -150,15 +225,17 @@ export function CenterPanel({ isStickmanNearby = false }: Props) {
       >
         <View
           {...(isPocketing ? {} : panHandlers)}
+          onLayout={handlePanelLayout}
+          ref={panelRef}
           style={[
             styles.panel,
             {
               backgroundColor: palette.panelSurface,
               borderColor: isStickmanNearby ? palette.hot : panelColors.border,
               borderRadius: palette.panelRadius,
-              height: panelHeight,
+              height: panelLayout.height,
               shadowColor: isStickmanNearby ? palette.hot : panelColors.border,
-              width: panelWidth,
+              width: panelLayout.width,
             },
           ]}
         >
@@ -167,7 +244,7 @@ export function CenterPanel({ isStickmanNearby = false }: Props) {
             <Text style={[styles.headerSuit, { color: suitColor }]}>
               {presentation.suit}
             </Text>
-            <Text style={[styles.headerLabel, { color: panelColors.text }]}>
+            <Text style={[styles.headerLabel, { color: headerTextColor }]}>
               {labelMap[card]}
             </Text>
 
@@ -210,7 +287,7 @@ export function CenterPanel({ isStickmanNearby = false }: Props) {
 
             {/* Close */}
             <Pressable onPress={deactivateCard} hitSlop={12}>
-              <Text style={[styles.closeBtn, { color: panelColors.text }]}>✕</Text>
+              <Text style={[styles.closeBtn, { color: headerTextColor }]}>✕</Text>
             </Pressable>
           </View>
 

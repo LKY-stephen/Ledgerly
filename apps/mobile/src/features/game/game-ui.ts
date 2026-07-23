@@ -14,7 +14,47 @@ export type StickmanSceneAnchorId =
   | "lane:right"
   | "panel:left"
   | "panel:right"
+  | "panel:right:top"
+  | "panel:right:middle"
+  | "panel:right:bottom"
   | `dock:${CardId}`;
+
+export interface CenterPanelLayoutInput {
+  dockHeight: number;
+  safeAreaBottom: number;
+  viewportHeight: number;
+  viewportWidth: number;
+}
+
+export interface CenterPanelLayout {
+  groundY: number;
+  height: number;
+  left: number;
+  right: number;
+  top: number;
+  width: number;
+}
+
+export interface SceneRect {
+  height: number;
+  width: number;
+  x: number;
+  y: number;
+}
+
+export interface StickmanPanelEdgeAnchor {
+  facing: "left";
+  id: "panel:right:top" | "panel:right:middle" | "panel:right:bottom";
+  pauseMs: number;
+  weight: number;
+  x: number;
+  y: number;
+}
+
+export interface StickmanPanelEdgeLayout {
+  anchors: StickmanPanelEdgeAnchor[];
+  baseTop: number;
+}
 
 export interface CharacterMotionProfile {
   rangeX: number;
@@ -140,6 +180,10 @@ export function getGameCardColors(variant: GameCardVariant, palette: SurfaceToke
   }
 }
 
+export function getCenterPanelHeaderTextColor(palette: SurfaceTokens): string {
+  return palette.ink;
+}
+
 export function getDiscardFace(cardId: CardId, palette: SurfaceTokens): { bg: string; text: string } {
   const presentation = getGameCardPresentation(cardId);
   const colors = getGameCardColors(presentation.variant, palette);
@@ -202,6 +246,90 @@ export function getStickmanEnergy(cardsPlayedThisSession: number): number {
   }
 
   return Math.min(cardsPlayedThisSession / maxStickmanEnergyPlays, 1);
+}
+
+export function getCenterPanelLayout({
+  dockHeight,
+  safeAreaBottom,
+  viewportHeight,
+  viewportWidth,
+}: CenterPanelLayoutInput): CenterPanelLayout {
+  const groundY = viewportHeight - dockHeight - safeAreaBottom - 16;
+  const width = Math.max(
+    Math.min(Math.round(viewportWidth * 0.664), viewportWidth - 28),
+    320,
+  );
+  const desiredHeight = Math.round(viewportHeight * 0.593);
+  const maxHeightAboveHorizon = Math.max(groundY - 10 - 48, 240);
+  const height = Math.max(Math.min(desiredHeight, maxHeightAboveHorizon), 240);
+  const top = Math.max(groundY - height - 10, 48);
+  const right = 16;
+
+  return {
+    groundY,
+    height,
+    left: viewportWidth - right - width,
+    right,
+    top,
+    width,
+  };
+}
+
+export function getStickmanPanelEdgeLayout(input: {
+  panelFrame: SceneRect;
+  speechBubbleHeight: number;
+  stickmanHeight: number;
+  stickmanWidth: number;
+  viewportWidth: number;
+}): StickmanPanelEdgeLayout {
+  const {
+    panelFrame,
+    speechBubbleHeight,
+    stickmanHeight,
+    stickmanWidth,
+    viewportWidth,
+  } = input;
+  const clampLane = (value: number) =>
+    Math.max(12, Math.min(viewportWidth - stickmanWidth - 12, value));
+  const panelEdgeX = clampLane(
+    panelFrame.x + panelFrame.width - stickmanWidth + 8,
+  );
+  const maxPanelClimbY = Math.max(
+    0,
+    panelFrame.height - stickmanHeight - speechBubbleHeight - 18,
+  );
+  const getPanelClimbY = (ratio: number) =>
+    Math.min(maxPanelClimbY, Math.max(0, panelFrame.height * ratio));
+
+  return {
+    baseTop: panelFrame.y,
+    anchors: [
+      {
+        facing: "left",
+        id: "panel:right:bottom",
+        pauseMs: 420,
+        weight: 1.1,
+        x: panelEdgeX,
+        y: getPanelClimbY(0.48),
+      },
+      {
+        facing: "left",
+        id: "panel:right:middle",
+        pauseMs: 640,
+        weight: 1.35,
+        x: panelEdgeX,
+        y: getPanelClimbY(0.28),
+      },
+      {
+        facing: "left",
+        id: "panel:right:top",
+        pauseMs: 560,
+        weight: 1.15,
+        x: panelEdgeX,
+        y: getPanelClimbY(0.08),
+      },
+    ],
+  };
 }
 
 export function getCharacterMotionProfile(input: {
@@ -269,4 +397,10 @@ export function getStickmanNearbyCardId(
   }
 
   return anchorId.slice(5) as CardId;
+}
+
+export function isStickmanPanelAnchor(
+  anchorId: StickmanSceneAnchorId | null,
+): boolean {
+  return anchorId?.startsWith("panel:") ?? false;
 }
